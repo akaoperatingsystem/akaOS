@@ -14,7 +14,7 @@ You can download the latest ISO from the [akaOS Releases](https://github.com/aka
 |----------------|--------------------|---------------------|
 | CPU            | 1 GHz (x86_64)     | Dual-core 2 GHz+ (x86_64)  |
 | RAM            | 1 GB             | 2 GB or more        |
-| Storage        | 4 GB (install)     | 10 GB+              |
+| Storage        | 4 GB      | 10 GB+              |
 | Graphics       | Any GPU supporting 1024×768 | Modern GPU with 1080p support |
 | Boot Mode      | BIOS or UEFI       | BIOS or UEFI                |
 | Internet       | Required for installing akaOS           | Required for installing akaOS |
