@@ -6,7 +6,7 @@ CC      = gcc
 AS      = nasm
 
 # 64-bit freestanding kernel flags
-CFLAGS  = -m64 -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel -Ikernel/libc -Iroot/games/doomgeneric/doomgeneric \
+CFLAGS  = -m64 -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel -Ikernel/libc -Iroot/games/doomgeneric \
           -fno-pie -fno-pic -mno-red-zone -fno-stack-protector \
           -mno-sse -mno-sse2 -mno-mmx -mcmodel=kernel \
           -Wno-unused-parameter
