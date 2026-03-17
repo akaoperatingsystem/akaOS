@@ -166,7 +166,7 @@ static void cmd_echo(const char *args) {
 
 static void cmd_uname(const char *args) {
     args = skip_spaces(args);
-    if (strcmp(args,"-a")==0) vga_print("akaOS akaOS 1.0.0 x86_64 akaOS\n");
+    if (strcmp(args,"-a")==0) vga_print("akaOS akaOS 1.1 x86_64 akaOS\n");
     else vga_print("akaOS\n");
 }
 static void cmd_whoami(const char *a) { (void)a; vga_print("root\n"); }

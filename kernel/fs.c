@@ -171,7 +171,7 @@ void fs_init(void) {
     /* /etc/os-release */
     fs_node_t *osrel = create_child(etc, "os-release", FS_FILE);
     if (osrel) {
-        const char *data = "NAME=\"akaOS\"\nVERSION=\"1.0\"\nARCH=\"x86_64\"\n";
+        const char *data = "NAME=\"akaOS\"\nVERSION=\"1.1\"\nARCH=\"x86_64\"\n";
         strcpy(osrel->content, data);
         osrel->size = strlen(data);
     }

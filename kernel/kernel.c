@@ -45,7 +45,7 @@ __attribute__((
 
 __attribute__((
     used,
-    section(".limine_requests"))) static volatile struct limine_memmap_request
+    section(".limine_requests"))) volatile struct limine_memmap_request
     memmap_request = {.id = LIMINE_MEMMAP_REQUEST, .revision = 0};
 
 __attribute__((
@@ -58,6 +58,11 @@ __attribute__((
     section(".limine_requests"))) static volatile struct limine_module_request
     module_request = {.id = LIMINE_MODULE_REQUEST, .revision = 0};
 
+__attribute__((
+    used,
+    section(".limine_requests"))) static volatile struct limine_kernel_address_request
+    kernel_address_request = {.id = LIMINE_KERNEL_ADDRESS_REQUEST, .revision = 0};
+
 // End marker
 __attribute__((
     used, section(".limine_requests_end"))) static LIMINE_REQUESTS_END_MARKER;
@@ -65,12 +70,14 @@ __attribute__((
 /* Global HHDM offset — needed to access physical memory in higher-half kernel
  */
 uint64_t hhdm_offset = 0;
+uint64_t kernel_phys_base = 0;
+uint64_t kernel_virt_base = 0;
 
 static int have_framebuffer = 0;
 uint32_t sys_total_memory_mb = 0;
 
 static void show_boot_screen(void) {
-  vga_print_color("\n  akaOS v1.0 — x86_64\n\n", VGA_LIGHT_GREEN, VGA_BLACK);
+  vga_print_color("\n  akaOS 1.1 — x86_64\n\n", VGA_LIGHT_GREEN, VGA_BLACK);
 
   vga_print_color("  [OK] ", VGA_LIGHT_GREEN, VGA_BLACK);
   if (have_framebuffer)
@@ -92,6 +99,10 @@ void kernel_main(void) {
   /* Get HHDM offset first — needed for all physical memory access */
   if (hhdm_request.response != NULL) {
     hhdm_offset = hhdm_request.response->offset;
+  }
+  if (kernel_address_request.response != NULL) {
+    kernel_phys_base = kernel_address_request.response->physical_base;
+    kernel_virt_base = kernel_address_request.response->virtual_base;
   }
 
   /* Extract boot modules (WAD loaded by Limine) */

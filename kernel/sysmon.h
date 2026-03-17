@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#define MAX_CORES 16
+#define MAX_CORES 64
 #define MAX_PROCS 16
 
 /* Static process structure to simulate htop rows */

@@ -9,6 +9,7 @@
 extern volatile int gui_mode_active;
 extern void gui_term_putchar(char c);
 extern void gui_term_set_color(uint32_t fg);
+extern void gui_term_clear(void);
 
 /* Text mode VGA memory (fallback when no framebuffer) */
 extern uint64_t hhdm_offset;
@@ -77,7 +78,7 @@ void vga_init(void) {
 }
 
 void vga_clear(void) {
-    if (gui_mode_active) return;
+    if (gui_mode_active) { gui_term_clear(); return; }
     if (use_framebuffer) fb_clear(fb_bg);
     else for (int i = 0; i < 80*25; i++) TEXT_VGA[i] = text_entry(' ', text_color);
     cur_row = 0; cur_col = 0;

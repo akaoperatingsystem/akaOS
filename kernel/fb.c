@@ -95,9 +95,20 @@ static inline void bb_pixel(int x, int y, uint32_t c) {
 void fb_put_pixel(int x, int y, uint32_t color) { bb_pixel(x, y, color); }
 
 void fb_fill_rect(int x, int y, int w, int h, uint32_t color) {
-    for (int j = y; j < y + h; j++)
-        for (int i = x; i < x + w; i++)
-            bb_pixel(i, j, color);
+    if (w <= 0 || h <= 0) return;
+
+    int x0 = x, y0 = y, x1 = x + w, y1 = y + h;
+    if (x0 < 0) x0 = 0;
+    if (y0 < 0) y0 = 0;
+    if (x1 > (int)logical_w) x1 = (int)logical_w;
+    if (y1 > (int)logical_h) y1 = (int)logical_h;
+    if (x0 >= x1 || y0 >= y1) return;
+
+    int row_w = x1 - x0;
+    for (int j = y0; j < y1; j++) {
+        uint32_t *row = &backbuf[j * logical_w + x0];
+        for (int i = 0; i < row_w; i++) row[i] = color;
+    }
 }
 
 void fb_draw_rect(int x, int y, int w, int h, uint32_t color) {
@@ -110,7 +121,7 @@ void fb_draw_rect(int x, int y, int w, int h, uint32_t color) {
 }
 
 void fb_draw_hline(int x, int y, int w, uint32_t color) {
-    for (int i = x; i < x + w; i++) bb_pixel(i, y, color);
+    fb_fill_rect(x, y, w, 1, color);
 }
 
 void fb_draw_char(int x, int y, char c, uint32_t fg, uint32_t bg, int scale) {
@@ -168,6 +179,18 @@ void fb_clear(uint32_t color) {
 void fb_flip(void) {
     if (!fb_addr) return;
     uint32_t pitch_px = fb_pitch / 4;
+
+    /* Fast path: 1:1 copy (no scaling, no depth conversion) */
+    if (fb_scale == 1 && fb_color_depth == 32) {
+        uint32_t copy_w = fb_w;
+        uint32_t copy_h = fb_h;
+        if (copy_w > logical_w) copy_w = logical_w;
+        if (copy_h > logical_h) copy_h = logical_h;
+        for (uint32_t y = 0; y < copy_h; y++) {
+            memcpy(&fb_addr[y * pitch_px], &backbuf[y * logical_w], copy_w * 4);
+        }
+        return;
+    }
     
     for (uint32_t ly = 0; ly < logical_h; ly++) {
         uint32_t py_base = ly * fb_scale;
