@@ -45,10 +45,11 @@ make run-uefi   # Build and run akaOS (UEFI)
 ### Other Architectures
 You can specify the target architecture using the `ARCH` variable:
 
-| Architecture | ISO Command | Run Command |
-| :--- | :--- | :--- |
-| **x86-32** | `make ARCH=x86_32 iso` | `make ARCH=x86_32 run` |
-| **ARM64** | `make ARCH=aarch64 iso` | `make ARCH=aarch64 run` |
+| Architecture | Build Command | ISO Command | Run Command |
+| :--- | :--- | :--- | :--- |
+| **x86-64** | `make` | `make iso` | `make run` |
+| **x86-32** | `make ARCH=x86_32` | `make ARCH=x86_32 iso` | `make ARCH=x86_32 run` |
+| **ARM64** | `make ARCH=aarch64` | `make ARCH=aarch64 iso` | `make ARCH=aarch64 run` |
 
 ### Cleanup
 To remove all build artifacts and the Limine repository:
