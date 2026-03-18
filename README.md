@@ -47,7 +47,6 @@ You can specify the target architecture using the `ARCH` variable:
 
 | Architecture | Build Command | ISO Command | Run Command |
 | :--- | :--- | :--- | :--- |
-| **x86-64** | `make` | `make iso` | `make run` |
 | **x86-32** | `make ARCH=x86_32` | `make ARCH=x86_32 iso` | `make ARCH=x86_32 run` |
 | **ARM64** | `make ARCH=aarch64` | `make ARCH=aarch64 iso` | `make ARCH=aarch64 run` |
 
