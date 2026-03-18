@@ -36,8 +36,10 @@ akaOS uses a versatile `Makefile` to manage builds across architectures.
 
 ### x86-64 (BIOS & UEFI)
 ```bash
-make run       # Build and run akaOS (BIOS)
-make run-uefi  # Build and run akaOS (UEFI)
+make            # Build the kernel
+make iso        # Build the bootable ISO
+make run        # Build and run akaOS (BIOS)
+make run-uefi   # Build and run akaOS (UEFI)
 ```
 
 ### Other Architectures
