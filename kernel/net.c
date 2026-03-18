@@ -2,6 +2,7 @@
  * akaOS — Network Stack (PCI + e1000 + ARP/IP/ICMP)
  * ============================================================ */
 #include "net.h"
+#include "arch.h"
 #include "io.h"
 #include "string.h"
 #include "time.h"
@@ -83,12 +84,10 @@ static void *net_pmm_alloc(size_t size, size_t align, uint64_t *out_phys) {
  * PCI — proper 32-bit I/O
  * ============================================================ */
 static void pci_write32(uint16_t port, uint32_t val) {
-    asm volatile("outl %0, %1" : : "a"(val), "Nd"(port));
+    outl(port, val);
 }
 static uint32_t pci_read32(uint16_t port) {
-    uint32_t val;
-    asm volatile("inl %1, %0" : "=a"(val) : "Nd"(port));
-    return val;
+    return inl(port);
 }
 static uint32_t pci_config_read(uint8_t bus, uint8_t dev, uint8_t func, uint8_t off) {
     uint32_t addr = (1u<<31)|((uint32_t)bus<<16)|((uint32_t)dev<<11)
@@ -168,7 +167,7 @@ static void e1000_send(uint8_t *data, uint16_t len) {
     ew(REG_TDT, tx_i);
     /* Wait for TX complete (with timeout) */
     for (int t=0; t<500000 && !(txd[o].sta&1); t++) {
-        asm volatile("pause");
+        arch_halt();
     }
     tx_packets++;
 }
@@ -364,7 +363,7 @@ static int tcp_connect(uint32_t ip, uint16_t port, int timeout_ms) {
         if (tcp0.state == TCP_EST)
             return 0;
         if (gui_mode_active) gui_pump();
-        asm volatile("hlt");
+        arch_halt();
     }
     return -1;
 }
@@ -405,7 +404,7 @@ static int tcp_recv_some(uint8_t *out, int out_sz, int timeout_ms) {
         if (tcp0.state == TCP_FIN_WAIT)
             return 0;
         if (gui_mode_active) gui_pump();
-        asm volatile("hlt");
+        arch_halt();
     }
     return 0;
 }
@@ -533,7 +532,7 @@ static int arp_resolve(uint32_t ip, uint8_t *out, int tmo) {
             return 0;
         }
         if (gui_mode_active) gui_pump();
-        asm volatile("hlt");
+        arch_halt();
     }
     return -1;
 }
@@ -700,7 +699,7 @@ int net_ping(uint32_t ip, int timeout_ms) {
         }
         next:
         if (gui_mode_active) gui_pump();
-        asm volatile("hlt");
+        arch_halt();
     }
     return -1;
 }

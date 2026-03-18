@@ -1,6 +1,7 @@
 /* ============================================================
  * akaOS — Kernel Main (robust boot with fallback)
  * ============================================================ */
+#include "arch.h"
 #include "fb.h"
 #include "fs.h"
 #include "gui.h"
@@ -13,6 +14,7 @@
 #include "vga.h"
 
 #include "limine.h"
+#include "multiboot2.h"
 
 extern void _start(void);
 
@@ -77,7 +79,13 @@ static int have_framebuffer = 0;
 uint32_t sys_total_memory_mb = 0;
 
 static void show_boot_screen(void) {
+#if defined(ARCH_X86_32)
+  vga_print_color("\n  akaOS 1.1 — x86_32\n\n", VGA_LIGHT_GREEN, VGA_BLACK);
+#elif defined(ARCH_AARCH64)
+  vga_print_color("\n  akaOS 1.1 — ARM64\n\n", VGA_LIGHT_GREEN, VGA_BLACK);
+#else
   vga_print_color("\n  akaOS 1.1 — x86_64\n\n", VGA_LIGHT_GREEN, VGA_BLACK);
+#endif
 
   vga_print_color("  [OK] ", VGA_LIGHT_GREEN, VGA_BLACK);
   if (have_framebuffer)
@@ -95,6 +103,36 @@ static void show_boot_screen(void) {
   vga_print("Filesystem mounted\n");
 }
 
+#if defined(ARCH_X86_32)
+void kernel_main(uint32_t magic, uint32_t mb2_addr) {
+  hhdm_offset = 0;
+  kernel_phys_base = 0x100000;
+  kernel_virt_base = 0x100000;
+
+  if (magic == 0x36D76289) { /* Multiboot2 */
+    struct mb2_tag *mod_tag = mb2_find_tag(mb2_addr, MB2_TAG_MODULE);
+    if (mod_tag) {
+      struct mb2_tag_module *mod = (struct mb2_tag_module *)mod_tag;
+      extern void *doom_wad_data;
+      extern size_t doom_wad_size;
+      doom_wad_data = (void *)mod->mod_start;
+      doom_wad_size = mod->mod_end - mod->mod_start;
+    }
+
+    have_framebuffer = (fb_init(mb2_addr) == 0);
+
+    struct mb2_tag *mem_tag = mb2_find_tag(mb2_addr, MB2_TAG_BASIC_MEMINFO);
+    if (mem_tag) {
+      struct mb2_tag_basic_meminfo *mem = (struct mb2_tag_basic_meminfo *)mem_tag;
+      sys_total_memory_mb = (mem->mem_lower + mem->mem_upper) / 1024;
+    } else {
+      sys_total_memory_mb = 128; // Fallback
+    }
+  } else {
+    sys_total_memory_mb = 128; // Fallback
+    have_framebuffer = 0;
+  }
+#else
 void kernel_main(void) {
   /* Get HHDM offset first — needed for all physical memory access */
   if (hhdm_request.response != NULL) {
@@ -135,6 +173,7 @@ void kernel_main(void) {
   } else {
     sys_total_memory_mb = 128; // Fallback
   }
+#endif
 
   /* Initialize VGA (uses framebuffer if available, text mode otherwise) */
   vga_init();
@@ -174,7 +213,7 @@ void kernel_main(void) {
     /* Brief pause */
     uint64_t start = timer_get_ticks();
     while (timer_get_ticks() - start < 150)
-      asm volatile("hlt");
+      arch_halt();
 
     /* Launch GUI */
     gui_init();

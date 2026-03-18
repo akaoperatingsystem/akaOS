@@ -2,6 +2,7 @@
  * akaOS — GUI Desktop (Simplified, Robust)
  * ============================================================ */
 #include "gui.h"
+#include "arch.h"
 #include "fb.h"
 #include "fs.h"
 #include "io.h"
@@ -12,6 +13,20 @@
 #include "string.h"
 #include "sysmon.h"
 #include "time.h"
+#include "vga.h"
+
+#if defined(ARCH_X86_32)
+#define SYS_ARCH_STRING       "i386-elf"
+#define SYS_BOOTLOADER_STRING "GRUB (Multiboot2)"
+#elif defined(ARCH_AARCH64)
+#define SYS_ARCH_STRING       "aarch64-elf"
+#define SYS_BOOTLOADER_STRING "Limine v10.x"
+#else
+#define SYS_ARCH_STRING       "x86_64-elf"
+#define SYS_BOOTLOADER_STRING "Limine v10.x"
+#endif
+
+/* Double buffer is managed by fb.c, we just write to it via fb_* primitives */
 
 #define CHAR_W 8
 #define CHAR_H 8
@@ -520,6 +535,7 @@ static void draw_string_ellipsis(int x, int y, const char *s, uint32_t fg,
                                  uint32_t bg, int scale, int max_px);
 
 static void get_cpu_string(char *buf) {
+#if defined(ARCH_X86_64) || defined(ARCH_X86_32)
   uint32_t m_eax;
   asm volatile("cpuid" : "=a"(m_eax) : "a"(0x80000000) : "ebx", "ecx", "edx");
   uint32_t *ptr = (uint32_t *)buf;
@@ -538,6 +554,13 @@ static void get_cpu_string(char *buf) {
     asm volatile("cpuid" : "=b"(ptr[0]), "=d"(ptr[1]), "=c"(ptr[2]) : "a"(0));
     buf[12] = '\0';
   }
+#else
+  /* ARM64 or other: no CPUID */
+  const char *name = "ARM Cortex";
+  int i = 0;
+  while (name[i] && i < 47) { buf[i] = name[i]; i++; }
+  buf[i] = '\0';
+#endif
 
   /* Trim leading/trailing spaces so long model strings don't waste width. */
   while (*buf == ' ')
@@ -574,7 +597,12 @@ static void draw_about_window(void) {
   /* Top Title */
   fb_draw_string(ax + aw / 2 - (5 * 8), ay + 40, "akaOS", 0x7dcfff, 0x1e1e2e,
                  2); /* Scaled up */
-  fb_draw_string(ax + 20, ay + 80, "Version:     1.1 (x86_64)", 0xAAAAAA,
+  char ver_str[64];
+  memset(ver_str, 0, sizeof(ver_str));
+  strcat(ver_str, "Version:     1.1 (");
+  strcat(ver_str, SYS_ARCH_STRING);
+  strcat(ver_str, ")");
+  fb_draw_string(ax + 20, ay + 80, ver_str, 0xAAAAAA,
                  0x1e1e2e, 1);
 
   /* Real Specs */
@@ -601,9 +629,7 @@ static void draw_about_window(void) {
  * Benchmark Window
  * ============================================================ */
 static inline uint64_t bench_rdtsc(void) {
-  uint32_t lo, hi;
-  asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
-  return ((uint64_t)hi << 32) | lo;
+  return arch_rdtsc();
 }
 
 static int bench_mode = 2; /* 0=CPU, 1=RAM, 2=Both */
@@ -3781,8 +3807,12 @@ static void draw_settings_tab_system(int cx, int cy, int cw, int ch) {
   get_cpu_string(cpu_str);
   draw_string_ellipsis(cx + 20, cy + 32, cpu_str, 0xFFFFFF, 0x1a1b26, 1,
                        cw - 40);
-  draw_string_ellipsis(cx + 20, cy + 46, "Architecture:  x86_64", 0xAAAAAA,
-                       0x1a1b26, 1, cw - 40);
+  char arch_str[64];
+  memset(arch_str, 0, sizeof(arch_str));
+  strcat(arch_str, "Architecture:  ");
+  strcat(arch_str, SYS_ARCH_STRING);
+  draw_string_ellipsis(cx + 20, cy + 46, arch_str, 0xAAAAAA, 0x1a1b26, 1,
+                       cw - 40);
 
   /* Memory */
   fb_draw_string(cx + 10, cy + 72, "Memory", 0x9ece6a, 0x1a1b26, 1);
@@ -3825,7 +3855,14 @@ static void draw_settings_tab_system(int cx, int cy, int cw, int ch) {
   fb_draw_hline(cx + 10, cy + 216, cw - 20, 0x30363d);
   draw_string_ellipsis(cx + 20, cy + 226, "akaOS Kernel 1.1", 0xFFFFFF,
                        0x1a1b26, 1, cw - 40);
-  draw_string_ellipsis(cx + 20, cy + 240, "Boot: Limine v10.x (x86_64)",
+  char boot_str[64];
+  memset(boot_str, 0, sizeof(boot_str));
+  strcat(boot_str, "Boot: ");
+  strcat(boot_str, SYS_BOOTLOADER_STRING);
+  strcat(boot_str, " (");
+  strcat(boot_str, SYS_ARCH_STRING);
+  strcat(boot_str, ")");
+  draw_string_ellipsis(cx + 20, cy + 240, boot_str,
                        0xAAAAAA, 0x1a1b26, 1, cw - 40);
 }
 
@@ -3910,10 +3947,19 @@ static void draw_settings_tab_about(int cx, int cy, int cw, int ch) {
 
   fb_draw_string(cx + 20, cy + 86, "Version:       1.1", 0xAAAAAA, 0x1a1b26,
                  1);
-  fb_draw_string(cx + 20, cy + 100, "Build:         x86_64-elf", 0xAAAAAA,
-                 0x1a1b26, 1);
-  fb_draw_string(cx + 20, cy + 114, "Bootloader:    Limine v10.x", 0xAAAAAA,
-                 0x1a1b26, 1);
+  char build_str[64];
+  memset(build_str, 0, sizeof(build_str));
+  strcat(build_str, "Build:         ");
+  strcat(build_str, SYS_ARCH_STRING);
+  draw_string_ellipsis(cx + 20, cy + 100, build_str, 0xAAAAAA,
+                 0x1a1b26, 1, cw - 40);
+
+  char bootloader_str[64];
+  memset(bootloader_str, 0, sizeof(bootloader_str));
+  strcat(bootloader_str, "Bootloader:    ");
+  strcat(bootloader_str, SYS_BOOTLOADER_STRING);
+  draw_string_ellipsis(cx + 20, cy + 114, bootloader_str, 0xAAAAAA,
+                 0x1a1b26, 1, cw - 40);
   fb_draw_string(cx + 20, cy + 128, "Graphics:      Linear Framebuffer",
                  0xAAAAAA, 0x1a1b26, 1);
   fb_draw_string(cx + 20, cy + 142, "Shell:         Built-in POSIX", 0xAAAAAA,
@@ -4710,15 +4756,15 @@ void gui_run(void) {
                 while (g & 0x02)
                   g = inb(0x64);
                 outb(0x64, 0xFE);
-                asm volatile("cli; hlt");
+                arch_halt_forever();
               } else if (item_y >= shutdown_y && item_y < shutdown_y + 20) {
                 /* Power off (QEMU/Bochs) */
                 outw(0x604, 0x2000);
                 outw(0xB004, 0x2000);
                 outw(0x4004, 0x3400);
-                asm volatile("cli");
+                arch_cli();
                 for (;;)
-                  asm volatile("hlt");
+                  arch_halt();
               }
             }
           }
@@ -6134,7 +6180,7 @@ files_click_done:
     extern void sysmon_record_idle_start(void);
     extern void sysmon_record_idle_end(void);
     sysmon_record_idle_start();
-    asm volatile("hlt");
+    arch_halt();
     sysmon_record_idle_end();
   }
 }

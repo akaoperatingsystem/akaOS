@@ -65,7 +65,7 @@ void exit(int status) {
     }
     vga_print("System halted.\n");
     gui_force_redraw();
-    while (1) asm volatile("cli; hlt");
+    while (1) { /* hang */ }
 }
 
 void abort(void) { exit(1); }
@@ -472,13 +472,17 @@ int putchar(int c) {
 
 int system(const char *command) { (void)command; return -1; }
 
+#if defined(ARCH_X86_64) || defined(ARCH_X86_32)
 __attribute__((target("sse2")))
+#endif
 double atof(const char *nptr) {
     (void)nptr;
     return 0.0;
 }
 
+#if defined(ARCH_X86_64) || defined(ARCH_X86_32)
 __attribute__((target("sse2")))
+#endif
 double fabs(double x) {
     return x < 0.0 ? -x : x;
 }

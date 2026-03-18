@@ -10,6 +10,7 @@
 #define MB2_TAG_END         0
 #define MB2_TAG_CMDLINE     1
 #define MB2_TAG_BOOTLOADER  2
+#define MB2_TAG_MODULE      3
 #define MB2_TAG_BASIC_MEMINFO 4
 #define MB2_TAG_FRAMEBUFFER 8
 
@@ -21,6 +22,14 @@ struct mb2_info {
 struct mb2_tag {
     uint32_t type;
     uint32_t size;
+};
+
+struct mb2_tag_module {
+    uint32_t type;
+    uint32_t size;
+    uint32_t mod_start;
+    uint32_t mod_end;
+    char cmdline[];
 };
 
 struct mb2_tag_basic_meminfo {

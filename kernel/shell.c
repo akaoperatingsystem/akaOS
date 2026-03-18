@@ -6,6 +6,7 @@
 #include "keyboard.h"
 #include "string.h"
 #include "io.h"
+#include "arch.h"
 #include "fs.h"
 #include "time.h"
 #include "net.h"
@@ -199,7 +200,7 @@ static void cmd_clear(const char *a) { (void)a; vga_clear(); }
 static void cmd_reboot(const char *a) {
     (void)a;
     uint8_t g = 0x02; while (g & 0x02) g = inb(0x64); outb(0x64, 0xFE);
-    asm volatile("cli; hlt");
+    arch_halt_forever();
 }
 
 /* Parse IP from string like "10.0.2.2" */

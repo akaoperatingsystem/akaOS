@@ -4,6 +4,7 @@
 #include "mouse.h"
 #include "idt.h"
 #include "io.h"
+#include "arch.h"
 
 static int mouse_x = 512, mouse_y = 384;
 static int mouse_btns = 0;
@@ -61,7 +62,7 @@ static void mouse_irq_handler(struct regs *r) {
 
 void mouse_init(void) {
     /* Disable interrupts during PS/2 config */
-    asm volatile("cli");
+    arch_cli();
 
     /* Enable mouse on PS/2 controller */
     mouse_wait_write();
@@ -99,7 +100,7 @@ void mouse_init(void) {
 
     /* Install handler and re-enable interrupts */
     irq_install_handler(12, mouse_irq_handler);
-    asm volatile("sti");
+    arch_sti();
 }
 
 int mouse_get_x(void)       { return mouse_x; }

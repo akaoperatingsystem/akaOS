@@ -1,6 +1,7 @@
 /* ============================================================
  * akaOS — System Monitor Implementation
  * ============================================================ */
+#include "arch.h"
 #include "sysmon.h"
 #include "string.h"
 #include "time.h"
@@ -75,14 +76,13 @@ void os_process_set_cpu(int pid, uint32_t cpu_percent) {
     }
 }
 
-/* Helper to read the Time Stamp Counter */
+/* Helper to read the Time Stamp Counter (or arch equivalent) */
 static inline uint64_t rdtsc(void) {
-    uint32_t lo, hi;
-    asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)hi << 32) | lo;
+    return arch_rdtsc();
 }
 
 static void detect_cores(void) {
+#if defined(ARCH_X86_64) || defined(ARCH_X86_32)
     uint32_t eax, ebx, ecx, edx;
     /* CPUID level 1: EBX[23:16] = logical processors */
     asm volatile("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(1));
@@ -90,6 +90,9 @@ static void detect_cores(void) {
     if (cores < 1) cores = 1;
     if (cores > MAX_CORES) cores = MAX_CORES;
     cpu_cores = cores;
+#else
+    cpu_cores = 1;
+#endif
 }
 
 void sysmon_init(void) {

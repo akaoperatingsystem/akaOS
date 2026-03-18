@@ -9,12 +9,39 @@
 #include "io.h"
 #include "string.h"
 
+#include "arch.h"
+
 /* PIT base frequency */
 #define PIT_FREQUENCY 1193180
 
 /* Target frequency: 100 Hz (10 ms per tick) */
 #define TARGET_HZ 100
 #define PIT_DIVISOR (PIT_FREQUENCY / TARGET_HZ)
+
+#if defined(ARCH_AARCH64)
+
+static unsigned long long aarch64_timer_freq = 0;
+static unsigned long long aarch64_timer_start = 0;
+
+static inline unsigned long long arch_get_cntfrq(void) {
+    unsigned long long val;
+    asm volatile("mrs %0, cntfrq_el0" : "=r"(val));
+    return val;
+}
+
+void timer_init(void) {
+    aarch64_timer_freq = arch_get_cntfrq();
+    aarch64_timer_start = arch_rdtsc();
+}
+
+uint64_t timer_get_ticks(void) {
+    if (!aarch64_timer_freq) return 0;
+    unsigned long long current = arch_rdtsc();
+    unsigned long long elapsed = current - aarch64_timer_start;
+    return (elapsed * TARGET_HZ) / aarch64_timer_freq;
+}
+
+#else
 
 static volatile uint64_t tick_count = 0;
 
@@ -37,8 +64,10 @@ uint64_t timer_get_ticks(void) {
     return tick_count;
 }
 
+#endif
+
 uint64_t timer_get_seconds(void) {
-    return tick_count / TARGET_HZ;
+    return timer_get_ticks() / TARGET_HZ;
 }
 
 void timer_format_uptime(char *buf, int buf_size) {

@@ -1,6 +1,10 @@
 #include "doomgeneric.h"
 #include "doomkeys.h"
 
+#include "doomkeys.h"
+
+#if defined(ARCH_X86_64) || defined(ARCH_X86_32)
+
 /* Undef macros that conflict with keyboard.h */
 #undef KEY_HOME
 #undef KEY_END
@@ -11,6 +15,7 @@
 #include "keyboard.h"
 #include "time.h"
 #include "string.h"
+#include "arch.h"
 
 /* ===== DG_ScreenBuffer (required by doomgeneric) ===== */
 /* DG_ScreenBuffer is declared extern in doomgeneric.h and defined in doomgeneric.c */
@@ -36,6 +41,7 @@ static void doom_keyboard_hook(int scancode, int pressed) {
 }
 
 static void enable_sse(void) {
+#if defined(ARCH_X86_64) || defined(ARCH_X86_32)
     uint64_t cr0;
     asm volatile("mov %%cr0, %0" : "=r"(cr0));
     cr0 &= ~(1UL << 2);
@@ -45,6 +51,7 @@ static void enable_sse(void) {
     asm volatile("mov %%cr4, %0" : "=r"(cr4));
     cr4 |= (1UL << 9) | (1UL << 10);
     asm volatile("mov %0, %%cr4" :: "r"(cr4));
+#endif
 }
 
 /* ===== DG_Init — called by doomgeneric_Create() ===== */
@@ -164,10 +171,19 @@ void DG_SleepMs(uint32_t ms) {
     uint64_t ticks = (ms + 9U) / 10U;
     uint64_t target = start + ticks;
     while (timer_get_ticks() < target)
-        asm volatile("hlt");
+        arch_halt();
 }
 
 /* ===== DG_SetWindowTitle — no-op ===== */
 void DG_SetWindowTitle(const char *title) {
     (void)title;
 }
+
+#else
+
+/* AArch64 / no-doom stubs */
+uint32_t *DG_ScreenBuffer = 0;
+void doomgeneric_Create(int argc, char **argv) { (void)argc; (void)argv; }
+void doomgeneric_Tick(void) {}
+
+#endif

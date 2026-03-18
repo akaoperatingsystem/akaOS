@@ -173,9 +173,9 @@ int keyboard_has_char(void) {
 }
 
 char keyboard_getchar(void) {
-    while (kb_head == kb_tail)
-        asm volatile ("hlt");
-
+    while (kb_head == kb_tail) {
+        arch_halt();
+    }
     char c = kb_buffer[kb_tail];
     kb_tail = (kb_tail + 1) % KB_BUFFER_SIZE;
     return c;
