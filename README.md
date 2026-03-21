@@ -10,7 +10,7 @@
 
 - **Multi-Architecture Support**: Native support for **x86-64**, **x86-32**, and **aarch64**.
 - **Modern Bootloading**:
-  - **Limine Bootloader**: Powers **x86-64** and **aarch64** (BIOS & UEFI).
+  - **Limine Bootloader**: Powers **x86-64** (BIOS & UEFI) and **aarch64** (UEFI).
   - **GRUB**: Used for **x86-32** legacy support.
 - **Custom GUI**: A sleek graphical desktop environment with window management and micro-animations.
 - **POSIX-like Shell**: Functional terminal with standard Unix-like commands.
