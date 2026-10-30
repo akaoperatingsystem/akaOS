@@ -1,0 +1,6 @@
+# akaOS desktop application registry
+# id|display name|executable|icon
+terminal|Terminal|/bin/terminal|terminal
+notepad|Text Editor|/bin/notepad|notepad
+taskmgr|Task Manager|/bin/taskmgr|taskmgr
+webviewer|Web Viewer|/bin/webviewer|browser

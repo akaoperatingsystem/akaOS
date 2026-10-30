@@ -1,0 +1,15 @@
+--- meson.build.orig	2026-10-27 19:03:52.211366497 +0700
++++ meson.build	2026-10-27 19:03:52.239366490 +0700
+@@ -164,7 +164,11 @@
+   'test-icon-cache',
+ ]
+ 
+-foreach prog: progs + test_progs
++# akaOS: the graphical helper and test programs of libwnck are built for a
++# full desktop host.  The library itself is what the panel and the session
++# need, and the tools are not installed in the akaOS image, so they are not
++# built here.  The upstream sources stay unchanged apart from this block.
++foreach prog: []
+   executable(prog, [prog + '.c'],
+     include_directories: default_includes,
+     dependencies: libwnck_dep,

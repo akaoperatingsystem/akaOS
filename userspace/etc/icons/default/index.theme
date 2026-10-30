@@ -1,0 +1,7 @@
+[Icon Theme]
+Name=akaOS Default Cursor Theme
+Directories=cursors
+
+[cursors]
+Size=24
+Type=Fixed

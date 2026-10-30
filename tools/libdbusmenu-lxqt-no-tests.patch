@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -69,7 +69,10 @@
+ 
+ add_subdirectory(src)
+-add_subdirectory(tests)
++option(AKAOS_BUILD_UPSTREAM_TESTS "Build upstream dbusmenu-lxqt tests" OFF)
++if(AKAOS_BUILD_UPSTREAM_TESTS)
++    add_subdirectory(tests)
++endif()
+ add_subdirectory(tools)
+ 
+ if(WITH_DOC)

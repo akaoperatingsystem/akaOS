@@ -1,0 +1,20 @@
+akaOS has no System V shared memory, so cairo must not build the X11 shared
+memory image path.  The XShm protocol headers are present in the graphics
+sysroot, which makes the build believe that the shared memory path is
+usable.  Dropping the two protocol header checks keeps the shared memory
+code out of the library, and the sources that include the System V shared
+memory headers unconditionally compile against the empty headers that the
+build provides.
+
+--- a/meson.build
++++ b/meson.build
+@@ -374,10 +374,8 @@
+ 
+   extra_headers = ['X11/Xlibint.h', 'X11/Xproto.h']
+   check_headers += [
+     ['X11/extensions/XShm.h', {'extra-headers': extra_headers}],
+-    ['X11/extensions/shmproto.h', {'extra-headers': extra_headers}],
+-    ['X11/extensions/shmstr.h', {'extra-headers': extra_headers}],
+   ]
+   deps += [x11_dep, xext_dep]
+ 

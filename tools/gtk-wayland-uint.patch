@@ -1,0 +1,6 @@
+--- a/gdk/wayland/gdkwaylandcolor.c
++++ b/gdk/wayland/gdkwaylandcolor.c
+@@ -7,1 +7,3 @@
++typedef unsigned int uint;
++
+ typedef struct _ImageDescription ImageDescription;

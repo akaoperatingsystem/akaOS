@@ -1,0 +1,435 @@
+#!/usr/bin/env bash
+# Rebuild only the X11 display server and refresh the bootable images that
+# carry it.
+#
+# The display server changes far more often than the rest of the system, and a
+# complete build recompiles the whole user space, the kernel and the ISO.  This
+# script repeats only the steps that the display server can invalidate:
+#
+#   1. the display server objects and its link,
+#   2. the initramfs archive, with the new server overlaid on the old one,
+#   3. the kernel objects and the kernel link, because the initramfs is
+#      embedded into the kernel image,
+#   4. the ISO, because the kernel is embedded into the ISO.
+#
+# The kernel source list and the user space library list are read out of
+# build.sh, so this script cannot drift away from the real build.
+set -euo pipefail
+
+# The build host can carry include and pkg-config search paths for an unrelated
+# toolchain.  Clang honours CPATH even under -nostdinc, so it is cleared here
+# as well.
+unset CPATH
+unset C_INCLUDE_PATH
+unset CPLUS_INCLUDE_PATH
+unset OBJC_INCLUDE_PATH
+unset LIBRARY_PATH
+unset PKG_CONFIG_PATH
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BUILD_DIR="$ROOT_DIR/build"
+SOURCE_DIR="$ROOT_DIR/userspace/bin/xserver"
+GENERATED_DIR="$BUILD_DIR/generated"
+INCLUDE_DIR="$ROOT_DIR/sdk/include"
+USER_INCLUDE_DIR="$ROOT_DIR/userspace/libc/include"
+BUILD_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+for tool in clang ld.lld objcopy python3; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "Missing build tool: $tool" >&2
+        exit 2
+    fi
+done
+
+if [[ ! -f "$BUILD_DIR/initramfs.img" ]]; then
+    echo "Missing $BUILD_DIR/initramfs.img; run ./build.sh first." >&2
+    exit 2
+fi
+
+# Read a shell array of source paths out of build.sh, so that the lists here
+# always match the ones the real build uses.  The paths in build.sh carry the
+# root directory as a variable, and the variable has to be expanded here: a
+# path that does not exist is never newer than an object, and the object would
+# be left untouched while the source changed.
+read_build_array() {
+    local name="$1"
+    sed -n "/^${name}=(/,/^)/p" "$ROOT_DIR/build.sh" |
+        sed -e '1d' -e '$d' -e 's/^[[:space:]]*"//' -e 's/"[[:space:]]*$//' |
+        grep -v '^$' |
+        sed -e "s|\\\$ROOT_DIR|$ROOT_DIR|g"
+}
+
+# ---------------------------------------------------------------- display server
+echo "[BUILD] X11 display server"
+objects=()
+for unit in main client window events draw resource input setup xcore; do
+    object="$BUILD_DIR/user-xserver-$unit.o"
+    clang --target=x86_64-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -mno-red-zone -mcmodel=small \
+        -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$GENERATED_DIR" \
+        -I"$SOURCE_DIR/include" \
+        -c "$SOURCE_DIR/$unit.c" -o "$object"
+    objects+=("$object")
+done
+
+user_libc_objects=()
+while IFS= read -r source; do
+    object="$BUILD_DIR/user-libc-$(basename "${source%.c}").o"
+    # The library is part of the display server, so a change in it has to
+    # reach the image as well.
+    if [[ ! -f "$object" || "$source" -nt "$object" ]]; then
+        clang --target=x86_64-unknown-none-elf \
+            -std=c17 -O2 -Wall -Wextra -Werror \
+            -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+            -mno-red-zone -mcmodel=small \
+            -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+            -c "$source" -o "$object"
+    fi
+    user_libc_objects+=("$object")
+done < <(read_build_array USER_LIBC_SOURCES)
+
+if [[ ! -f "$BUILD_DIR/user-crt0.o" ]]; then
+    clang --target=x86_64-unknown-none-elf \
+        -ffreestanding -fpie -mno-red-zone -mcmodel=small \
+        -c "$ROOT_DIR/userspace/libc/crt/x86_64/crt0.S" \
+        -o "$BUILD_DIR/user-crt0.o"
+fi
+
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "${objects[@]}" \
+    -o "$BUILD_DIR/XSERVER.ELF"
+
+# ------------------------------------------------------- dynamic loader and libc
+# The dynamic loader is the program that loads every upstream desktop binary,
+# and it statically links the C library.  A change in the loader or in the
+# library therefore has to reach the image together with the display server,
+# or the guest keeps running the old loader and the new trace never appears.
+echo "[BUILD] shared C library"
+shared_objects=()
+while IFS= read -r source; do
+    object="$BUILD_DIR/shared-libc-$(basename "${source%.c}").o"
+    if [[ ! -f "$object" || "$source" -nt "$object" ]]; then
+        clang --target=x86_64-unknown-none-elf \
+            -std=c17 -O2 -Wall -Wextra -Werror \
+            -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+            -mno-red-zone -mcmodel=small \
+            -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+            -c "$source" -o "$object"
+    fi
+    shared_objects+=("$object")
+done < <(read_build_array USER_LIBC_SOURCES)
+
+signal_object="$BUILD_DIR/shared-libc-signal.o"
+clang --target=x86_64-unknown-none-elf \
+    -ffreestanding -fPIC -mno-red-zone -mcmodel=small \
+    -c "$ROOT_DIR/userspace/libc/tests/shared_signal.S" \
+    -o "$signal_object"
+
+ld.lld -m elf_x86_64 -nostdlib -shared -soname libc.so.6 \
+    --hash-style=gnu -z max-page-size=0x1000 --no-undefined \
+    -Bsymbolic-functions \
+    "${shared_objects[@]}" "$signal_object" -o "$BUILD_DIR/libc.so.6"
+
+echo "[BUILD] dynamic loader"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/ld-akaos/main.c" \
+    -o "$BUILD_DIR/user-ld-akaos-main.o"
+
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" \
+    "$BUILD_DIR/user-ld-akaos-main.o" \
+    -o "$BUILD_DIR/LD_AKAOS.ELF"
+
+# ------------------------------------------------- thread compatibility library
+# The upstream builds ask for a library under the name of the thread library,
+# and a program links its libraries in the order of its own list, so the first
+# library that answers for an entry point wins.  The library under that name
+# therefore carries the marker of the runtime ABI and nothing else, and never
+# takes the place of the real GLib of an upstream desktop program.
+echo "[BUILD] thread compatibility library"
+if [[ ! -f "$BUILD_DIR/runtime-io.o" ]]; then
+    clang --target=x86_64-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -mno-red-zone -mcmodel=small \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$ROOT_DIR/userspace/libc/tests/desktop_io.c" \
+        -o "$BUILD_DIR/runtime-io.o"
+fi
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -Os -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+    -mno-red-zone -mcmodel=small \
+    -DAKAOS_RUNTIME_ID=1 \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/libc/tests/desktop_runtime_thread.c" \
+    -o "$BUILD_DIR/runtime-1.o"
+
+ld.lld -m elf_x86_64 -nostdlib -shared -soname libpthread.so \
+    -z max-page-size=0x1000 \
+    "$BUILD_DIR/runtime-1.o" "$BUILD_DIR/runtime-io.o" \
+    -o "$BUILD_DIR/libpthread.so"
+
+# ------------------------------------------------------------- upstream programs
+# The upstream desktop programs and the libraries they link are staged in the
+# image from the graphics sysroot.  A rebuild of one of them has to reach the
+# image as well, or the guest keeps running the program of the last build.
+UPSTREAM_SYSROOT="$BUILD_DIR/upstream-sysroot/graphics-x86_64"
+initramfs_files=(
+    "--file=/bin/xserver:$BUILD_DIR/XSERVER.ELF:exec"
+    "--file=/lib/ld-akaos.so:$BUILD_DIR/LD_AKAOS.ELF:exec"
+    "--file=/lib/libc.so.6:$BUILD_DIR/libc.so.6:0444"
+    "--file=/lib/libc.so:$BUILD_DIR/libc.so.6:0444"
+    "--file=/lib/libpthread.so:$BUILD_DIR/libpthread.so:0444"
+    "--file=/lib/libpthread.so.0:$BUILD_DIR/libpthread.so:0444"
+)
+# The upstream X11 client libraries are staged by build.sh.  A rebuilt
+# library has to reach the image as well, or the guest keeps running the old
+# one while the tests exercise the new source.
+for x11_library in \
+    libX11.so.6 libXext.so.6 libXRes.so.1 libXrender.so.1 libXfixes.so.3 \
+    libXdamage.so.1 libXcomposite.so.1 libXi.so.6 libXrandr.so.2 \
+    libXcursor.so.1 libXtst.so.6 libxcb.so.1 libXau.so.6 \
+    libXdmcp.so.6 libXft.so.2 ; do
+    x11_library_path="$UPSTREAM_SYSROOT/usr/local/lib/$x11_library"
+    if [[ -f "$x11_library_path" ]]; then
+        initramfs_files+=(
+            "--file=/lib/$x11_library:$x11_library_path:0444"
+        )
+    fi
+done
+
+# The X11 probe programs are built by build.sh.  Stage them again so a
+# rebuilt probe reaches the image together with the display server.
+if [[ -f "$BUILD_DIR/X11_CLIENT.ELF" ]]; then
+    initramfs_files+=(
+        "--file=/bin/x11-client:$BUILD_DIR/X11_CLIENT.ELF:exec"
+    )
+fi
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
+    echo "[BUILD] X11 window manager probe"
+    pkg_env=(
+        "PKG_CONFIG_LIBDIR=$UPSTREAM_SYSROOT/usr/local/lib/pkgconfig:$UPSTREAM_SYSROOT/usr/local/share/pkgconfig:$UPSTREAM_SYSROOT/usr/lib/pkgconfig"
+        "PKG_CONFIG_SYSROOT_DIR=$UPSTREAM_SYSROOT"
+    )
+    read -r -a wm_cflags <<< "$(env "${pkg_env[@]}" pkg-config --cflags x11)"
+    read -r -a wm_libs <<< "$(env "${pkg_env[@]}" pkg-config --libs x11)"
+    wm_link_args=()
+    for arg in "${wm_libs[@]}"; do
+        [[ "$arg" == "-pthread" || "$arg" == "-lm" ]] || wm_link_args+=("$arg")
+    done
+    clang --target=x86_64-unknown-none-elf \
+        -std=gnu17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -mno-red-zone -mcmodel=small "${wm_cflags[@]}" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$ROOT_DIR/userspace/bin/x11-wm-client/main.c" \
+        -o "$BUILD_DIR/x11-wm-client.o"
+    ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
+        --dynamic-linker /lib/ld-akaos.so \
+        -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
+        "$BUILD_DIR/user-dynamic-crt0.o" "$BUILD_DIR/x11-wm-client.o" \
+        --no-as-needed "${wm_link_args[@]}" \
+        "$BUILD_DIR/libm.so.6" "$BUILD_DIR/libc.so.6" \
+        -o "$BUILD_DIR/X11_WM_CLIENT.ELF"
+fi
+if [[ -f "$BUILD_DIR/X11_WM_CLIENT.ELF" ]]; then
+    initramfs_files+=(
+        "--file=/bin/x11-wm-client:$BUILD_DIR/X11_WM_CLIENT.ELF:exec"
+    )
+fi
+
+echo "[BUILD] user grep"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/grep/main.c" -o "$BUILD_DIR/user-grep-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-grep-main.o" \
+    -o "$BUILD_DIR/GREP.ELF"
+initramfs_files+=(
+    "--file=/bin/grep:$BUILD_DIR/GREP.ELF:exec"
+)
+
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
+    echo "[BUILD] upstream window manager"
+    initramfs_files+=(
+        "--file=/usr/local/bin/openbox:$UPSTREAM_SYSROOT/usr/local/bin/openbox:exec"
+    )
+    for openbox_library in libobt.so.2 libobrender.so.32 libxml2.so.2 \
+        libpangoxft-1.0.so.0 libpango-1.0.so.0 libXft.so.2 libglib-2.0.so.0; do
+        library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" \
+            -maxdepth 1 -type f -name "${openbox_library}.*" -print | sort -V | tail -n 1)"
+        [[ -n "$library_path" ]] || continue
+        initramfs_files+=(
+            "--file=/usr/local/lib/$openbox_library:$library_path:0444"
+        )
+    done
+fi
+
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/lxpanel" ]]; then
+    echo "[BUILD] upstream LXDE panel"
+    initramfs_files+=(
+        "--dir=/etc"
+        "--dir=/etc/xdg"
+        "--dir=/etc/xdg/menus"
+        "--dir=/usr/share/desktop-directories"
+        "--dir=/usr/local/share/desktop-directories"
+        "--dir=/etc/xdg/lxpanel"
+        "--dir=/etc/xdg/lxpanel/default"
+        "--dir=/etc/xdg/lxpanel/default/panels"
+        "--dir=/etc/xdg/lxpanel/two_panels"
+        "--dir=/etc/xdg/lxpanel/two_panels/panels"
+        "--dir=/usr/local/share/lxpanel"
+        "--dir=/usr/local/share/lxpanel/images"
+        "--dir=/usr/local/share/lxpanel/ui"
+        "--dir=/usr/local/share/libfm"
+        "--dir=/usr/local/share/libfm/images"
+        "--dir=/usr/local/share/libfm/ui"
+        "--dir=/usr/local/lib/lxpanel"
+        "--dir=/usr/local/lib/lxpanel/plugins"
+        "--dir=/usr/local/lib/libfm"
+        "--dir=/usr/local/lib/libfm/modules"
+        "--dir=/usr/local/libexec"
+        "--dir=/usr/local/libexec/menu-cache"
+        "--file=/usr/local/libexec/menu-cache/menu-cached:$UPSTREAM_SYSROOT/usr/local/libexec/menu-cache/menu-cached:exec"
+        "--file=/usr/local/libexec/menu-cache/menu-cache-gen:$UPSTREAM_SYSROOT/usr/local/libexec/menu-cache/menu-cache-gen:exec"
+        "--file=/usr/local/bin/lxpanel:$UPSTREAM_SYSROOT/usr/local/bin/lxpanel:exec"
+        "--file=/usr/local/bin/lxpanelctl:$UPSTREAM_SYSROOT/usr/local/bin/lxpanelctl:exec"
+        "--file=/lib/liblxpanel.so.0:$UPSTREAM_SYSROOT/usr/local/lib/lxpanel/liblxpanel.so.0.0.0:0444"
+        "--file=/etc/xdg/lxpanel/default/config:$UPSTREAM_SYSROOT/etc/xdg/lxpanel/default/config:0444"
+        "--file=/etc/xdg/lxpanel/default/panels/panel:$UPSTREAM_SYSROOT/etc/xdg/lxpanel/default/panels/panel:0444"
+        "--file=/etc/xdg/lxpanel/two_panels/config:$UPSTREAM_SYSROOT/etc/xdg/lxpanel/two_panels/config:0444"
+        "--file=/etc/xdg/lxpanel/two_panels/panels/bottom:$UPSTREAM_SYSROOT/etc/xdg/lxpanel/two_panels/panels/bottom:0444"
+        "--file=/etc/xdg/lxpanel/two_panels/panels/top:$UPSTREAM_SYSROOT/etc/xdg/lxpanel/two_panels/panels/top:0444"
+    )
+    while IFS= read -r lxpanel_plugin; do
+        plugin_name="${lxpanel_plugin##*/}"
+        initramfs_files+=(
+            "--file=/usr/local/lib/lxpanel/plugins/$plugin_name:$lxpanel_plugin:0444"
+        )
+    done < <(find "$UPSTREAM_SYSROOT/usr/local/lib/lxpanel/plugins" -maxdepth 1 -type f -name '*.so' -print 2>/dev/null | sort)
+    while IFS= read -r fm_module; do
+        mod_name="${fm_module##*/}"
+        initramfs_files+=(
+            "--file=/usr/local/lib/libfm/modules/$mod_name:$fm_module:0444"
+        )
+    done < <(find "$UPSTREAM_SYSROOT/usr/local/lib/libfm/modules" -maxdepth 1 -type f -name '*.so' -print 2>/dev/null | sort)
+    for lxpanel_library in libwnck-3.so.0 libfm-gtk3.so.4 libfm.so.4 \
+        libfm-extra.so.4 libmenu-cache.so.3 libkeybinder-3.0.so.0; do
+        library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" \
+            -maxdepth 1 -type f -name "${lxpanel_library}.*" -print | sort -V | tail -n 1)"
+        [[ -n "$library_path" ]] || continue
+        initramfs_files+=(
+            "--file=/lib/$lxpanel_library:$library_path:0444"
+            "--file=/usr/local/lib/$lxpanel_library:$library_path:0444"
+        )
+    done
+    while IFS= read -r data_file; do
+        relative_path="${data_file#"$UPSTREAM_SYSROOT/usr/local/"}"
+        initramfs_files+=(
+            "--file=/usr/local/$relative_path:$data_file:0444"
+        )
+    done < <(find "$UPSTREAM_SYSROOT/usr/local/share/lxpanel/images" \
+                  "$UPSTREAM_SYSROOT/usr/local/share/lxpanel/ui" \
+                  "$UPSTREAM_SYSROOT/usr/local/share/libfm" \
+                  -maxdepth 1 -type f | sort)
+    while IFS= read -r data_file; do
+        relative_path="${data_file#"$UPSTREAM_SYSROOT/usr/local/"}"
+        initramfs_files+=(
+            "--file=/usr/local/$relative_path:$data_file:0444"
+        )
+    done < <(find "$UPSTREAM_SYSROOT/usr/local/share/libfm/images" \
+                  "$UPSTREAM_SYSROOT/usr/local/share/libfm/ui" \
+                  -maxdepth 1 -type f | sort)
+    if [[ -d "$UPSTREAM_SYSROOT/etc/xdg/menus" ]]; then
+        for menu_file in "$UPSTREAM_SYSROOT"/etc/xdg/menus/*.menu; do
+            [[ -f "$menu_file" ]] || continue
+            initramfs_files+=(
+                "--file=/etc/xdg/menus/${menu_file##*/}:$menu_file:0444"
+            )
+        done
+    fi
+    if [[ -d "$UPSTREAM_SYSROOT/usr/local/share/desktop-directories" ]]; then
+        for dir_file in "$UPSTREAM_SYSROOT"/usr/local/share/desktop-directories/*.directory; do
+            [[ -f "$dir_file" ]] || continue
+            initramfs_files+=(
+                "--file=/usr/share/desktop-directories/${dir_file##*/}:$dir_file:0444"
+                "--file=/usr/local/share/desktop-directories/${dir_file##*/}:$dir_file:0444"
+            )
+        done
+    fi
+fi
+
+# -------------------------------------------------------------------- initramfs
+echo "[BUILD] initramfs"
+python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.new" \
+    --base "$BUILD_DIR/initramfs.img" \
+    "${initramfs_files[@]}" \
+    --exclude-long-vfs-names
+mv -f "$BUILD_DIR/initramfs.img.new" "$BUILD_DIR/initramfs.img"
+
+# ----------------------------------------------------------------------- kernel
+echo "[BUILD] XSCore kernel"
+kernel_objects=()
+while IFS= read -r source; do
+    object="$BUILD_DIR/$(basename "${source%.c}").o"
+    if [[ ! -f "$source" ]]; then
+        echo "The kernel source list names a file that does not exist: $source" >&2
+        exit 2
+    fi
+    if [[ ! -f "$object" || "$source" -nt "$object" ]]; then
+        clang --target=x86_64-unknown-none-elf \
+            -std=c17 -O2 -Wall -Wextra -Werror \
+            -ffreestanding -fno-stack-protector -fno-pic -fno-pie \
+            -mno-red-zone -mcmodel=kernel -mno-sse -mno-mmx -mno-80387 \
+            -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+            -I"$INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" -I"$GENERATED_DIR" \
+            -c "$source" -o "$object"
+    fi
+    kernel_objects+=("$object")
+done < <(read_build_array XSCORE_C_SOURCES)
+
+for assembly in "$ROOT_DIR/xscore/arch/x86_64/entry.S" \
+                "$ROOT_DIR/xscore/arch/x86_64/smp_trampoline.S"; do
+    object="$BUILD_DIR/$(basename "${assembly%.S}").o"
+    if [[ ! -f "$object" || "$assembly" -nt "$object" ]]; then
+        clang --target=x86_64-unknown-none-elf \
+            -ffreestanding -fno-pic -fno-pie -mno-red-zone -mcmodel=kernel \
+            -c "$assembly" -o "$object"
+    fi
+    kernel_objects+=("$object")
+done
+
+(cd "$BUILD_DIR" && objcopy -I binary -O elf64-x86-64 -B i386:x86-64 \
+    initramfs.img initramfs_archive.o)
+kernel_objects+=("$BUILD_DIR/initramfs_archive.o")
+
+ld.lld -nostdlib -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/xscore/arch/x86_64/linker.ld" \
+    "${kernel_objects[@]}" -o "$BUILD_DIR/XSCORE.ELF"
+
+ld.lld -nostdlib -static -z max-page-size=0x1000 \
+    -e xscore_multiboot_entry \
+    -T "$ROOT_DIR/xscore/arch/x86_64/linker.ld" \
+    "${kernel_objects[@]}" -o "$BUILD_DIR/XSCORE-BIOS.ELF"
+
+# ------------------------------------------------------------------------- ISO
+echo "[BUILD] dual-firmware ISO"
+bash "$ROOT_DIR/tools/build-bios.sh" --no-build

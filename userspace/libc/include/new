@@ -1,0 +1,56 @@
+#ifndef AKAOS_LIBC_NEW_H
+#define AKAOS_LIBC_NEW_H
+
+#include <stddef.h>
+
+namespace std {
+struct nothrow_t {
+    explicit nothrow_t() noexcept = default;
+};
+extern const nothrow_t nothrow;
+
+#if __cplusplus >= 201703L
+enum class align_val_t : size_t {};
+#endif
+}
+
+void *operator new(size_t size);
+void *operator new[](size_t size);
+void operator delete(void *memory) noexcept;
+void operator delete[](void *memory) noexcept;
+
+void *operator new(size_t size, const std::nothrow_t &) noexcept;
+void *operator new[](size_t size, const std::nothrow_t &) noexcept;
+void operator delete(void *memory, const std::nothrow_t &) noexcept;
+void operator delete[](void *memory, const std::nothrow_t &) noexcept;
+
+inline void *operator new(size_t, void *memory) noexcept { return memory; }
+inline void *operator new[](size_t, void *memory) noexcept { return memory; }
+inline void operator delete(void *, void *) noexcept {}
+inline void operator delete[](void *, void *) noexcept {}
+
+#if __cplusplus >= 201402L
+void operator delete(void *memory, size_t size) noexcept;
+void operator delete[](void *memory, size_t size) noexcept;
+#endif
+
+#if __cplusplus >= 201703L
+void *operator new(size_t size, std::align_val_t alignment);
+void *operator new[](size_t size, std::align_val_t alignment);
+void *operator new(size_t size, std::align_val_t alignment,
+                   const std::nothrow_t &) noexcept;
+void *operator new[](size_t size, std::align_val_t alignment,
+                     const std::nothrow_t &) noexcept;
+void operator delete(void *memory, std::align_val_t alignment) noexcept;
+void operator delete[](void *memory, std::align_val_t alignment) noexcept;
+void operator delete(void *memory, std::align_val_t alignment,
+                     const std::nothrow_t &) noexcept;
+void operator delete[](void *memory, std::align_val_t alignment,
+                       const std::nothrow_t &) noexcept;
+void operator delete(void *memory, size_t size,
+                     std::align_val_t alignment) noexcept;
+void operator delete[](void *memory, size_t size,
+                       std::align_val_t alignment) noexcept;
+#endif
+
+#endif

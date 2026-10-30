@@ -1,0 +1,10 @@
+--- a/gdk/wayland/gdkdevice-wayland.c
++++ b/gdk/wayland/gdkdevice-wayland.c
+@@ -44,5 +44,7 @@
+ #if defined(HAVE_DEV_EVDEV_INPUT_H)
+ #include <dev/evdev/input.h>
+ #elif defined(HAVE_LINUX_INPUT_H)
+ #include <linux/input.h>
++#else
++#include <linux/input-event-codes.h>
+ #endif

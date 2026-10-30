@@ -1,0 +1,7 @@
+AKAOS_1.0 {
+    global: akaos_versioned_answer;
+    local: *;
+};
+AKAOS_2.0 {
+    global: akaos_versioned_answer;
+} AKAOS_1.0;

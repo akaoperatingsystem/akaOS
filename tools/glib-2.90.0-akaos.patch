@@ -1,0 +1,186 @@
+--- a/glib/glib-unix.c
++++ b/glib/glib-unix.c
+@@ -1007,6 +1007,8 @@
+                "g_unix_fd_query_path() not supported on HURD");
+   return NULL;
+ #else
+-  #error "g_unix_fd_query_path() not supported on this platform"
++  g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_NOSYS,
++               "g_unix_fd_query_path() is not supported on this platform");
++  return NULL;
+ #endif
+ }
+--- a/gio/gunixmounts.c
++++ b/gio/gunixmounts.c
+@@ -1108,7 +1108,98 @@
+ 
+ /* Common code {{{2 */
+ #else
+-#error No _g_get_unix_mounts() implementation for system
++static const char *
++get_mtab_monitor_file (void)
++{
++  return "/proc/mounts";
++}
++
++static gboolean
++akaos_mount_option_present (const char *options,
++                            const char *wanted)
++{
++  size_t wanted_length = strlen (wanted);
++  const char *cursor = options;
++
++  while (cursor && *cursor)
++    {
++      const char *end = strchr (cursor, ',');
++      size_t length = end ? (size_t) (end - cursor) : strlen (cursor);
++      if (length == wanted_length &&
++          memcmp (cursor, wanted, wanted_length) == 0)
++        return TRUE;
++      if (!end)
++        break;
++      cursor = end + 1;
++    }
++  return FALSE;
++}
++
++static size_t
++akaos_mount_fields (char *line,
++                   char **fields,
++                   size_t field_count)
++{
++  size_t count = 0;
++  char *cursor = line;
++
++  while (*cursor && count < field_count)
++    {
++      while (g_ascii_isspace (*cursor))
++        cursor++;
++      if (!*cursor || *cursor == '#')
++        break;
++      fields[count++] = cursor;
++      while (*cursor && !g_ascii_isspace (*cursor))
++        cursor++;
++      if (*cursor)
++        *cursor++ = '\0';
++    }
++  return count;
++}
++
++static GUnixMountEntry **
++_g_unix_mounts_get_from_file (const char *table_path,
++                              uint64_t   *time_read_out,
++                              size_t     *n_entries_out)
++{
++  const char *path = table_path ? table_path : "/proc/mounts";
++  FILE *file = g_fopen (path, "r");
++  GPtrArray *entries = g_ptr_array_new_with_free_func (
++      (GDestroyNotify) g_unix_mount_entry_free);
++  char line[1024];
++
++  if (time_read_out != NULL)
++    *time_read_out = get_mounts_timestamp ();
++  if (file != NULL)
++    {
++      while (fgets (line, sizeof (line), file) != NULL)
++        {
++          char *fields[6];
++          if (akaos_mount_fields (line, fields, G_N_ELEMENTS (fields)) < 4)
++            continue;
++          GUnixMountEntry *entry = create_unix_mount_entry (
++              fields[0], fields[1], NULL, fields[2], fields[3],
++              akaos_mount_option_present (fields[3], "ro"));
++          g_ptr_array_add (entries, entry);
++        }
++      fclose (file);
++    }
++
++  if (n_entries_out != NULL)
++    *n_entries_out = entries->len;
++  return (GUnixMountEntry **) g_ptr_array_free (entries, FALSE);
++}
++
++static GList *
++_g_get_unix_mounts (void)
++{
++  GUnixMountEntry **entries = NULL;
++  size_t n_entries = 0;
++  entries = _g_unix_mounts_get_from_file ("/proc/mounts", NULL,
++                                           &n_entries);
++  return unix_mount_entry_array_free_to_list (entries, n_entries);
++}
+ #endif
+ 
+ /* GUnixMountPoints (ie: fstab) implementations {{{1 */
+@@ -1722,7 +1813,52 @@
+ 
+ /* Common code {{{2 */
+ #else
+-#error No g_get_mount_table() implementation for system
++static GUnixMountPoint **
++_g_unix_mount_points_get_from_file (const char *table_path,
++                                    uint64_t   *time_read_out,
++                                    size_t     *n_points_out)
++{
++  const char *path = table_path ? table_path : get_fstab_file ();
++  FILE *file = g_fopen (path, "r");
++  GPtrArray *points = g_ptr_array_new_with_free_func (
++      (GDestroyNotify) g_unix_mount_point_free);
++  char line[1024];
++
++  if (time_read_out != NULL)
++    *time_read_out = get_mount_points_timestamp ();
++  if (file != NULL)
++    {
++      while (fgets (line, sizeof (line), file) != NULL)
++        {
++          char *fields[6];
++          if (akaos_mount_fields (line, fields, G_N_ELEMENTS (fields)) < 4 ||
++              strcmp (fields[2], "swap") == 0)
++            continue;
++          GUnixMountPoint *point = create_unix_mount_point (
++              fields[0], fields[1], fields[2], fields[3],
++              akaos_mount_option_present (fields[3], "ro"),
++              akaos_mount_option_present (fields[3], "user") ||
++                  akaos_mount_option_present (fields[3], "users"),
++              FALSE);
++          g_ptr_array_add (points, point);
++        }
++      fclose (file);
++    }
++
++  if (n_points_out != NULL)
++    *n_points_out = points->len;
++  return (GUnixMountPoint **) g_ptr_array_free (points, FALSE);
++}
++
++static GList *
++_g_get_unix_mount_points (void)
++{
++  GUnixMountPoint **points = NULL;
++  size_t n_points = 0;
++  points = _g_unix_mount_points_get_from_file (get_fstab_file (), NULL,
++                                               &n_points);
++  return unix_mount_point_array_free_to_list (points, n_points);
++}
+ #endif
+ 
+ static guint64
+--- a/gio/gcredentialsprivate.h
++++ b/gio/gcredentialsprivate.h
+@@ -174,6 +174,16 @@
+  void _g_credentials_set_local_peerid (GCredentials *credentials,
+                                        pid_t         pid);
+ 
++#elif defined(__ELF__)
++/* akaOS uses Linux-compatible struct ucred and SO_PEERCRED for local Unix
++ * socket authentication, but it does not implement SCM_CREDENTIALS passing. */
++#define G_CREDENTIALS_SUPPORTED 1
++#define G_CREDENTIALS_USE_LINUX_UCRED 1
++#define G_CREDENTIALS_NATIVE_TYPE G_CREDENTIALS_TYPE_LINUX_UCRED
++#define G_CREDENTIALS_NATIVE_SIZE (sizeof (struct ucred))
++#define G_CREDENTIALS_SOCKET_GET_CREDENTIALS_SUPPORTED 1
++#define G_CREDENTIALS_HAS_PID 1
++
+ #elif defined(_WIN32)
+  #define G_CREDENTIALS_SUPPORTED 1

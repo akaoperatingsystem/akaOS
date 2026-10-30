@@ -1,0 +1,8 @@
+# /etc/sudoers: akaOS privilege delegation rules
+#
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+user    ALL=(ALL:ALL) ALL
+
+# Group privilege specification
+%wheel  ALL=(ALL:ALL) ALL

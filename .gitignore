@@ -1,0 +1,13 @@
+/build/
+/.test-results/
+/AI/
+/.freebuff/
+__pycache__/
+*.py[cod]
+*.log
+.env
+.env.*
+*.key
+*.pem
+/Microsoft/
+=*

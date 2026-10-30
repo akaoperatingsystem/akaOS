@@ -1,0 +1,3 @@
+rootfs  /      akafs   defaults  0 0
+devfs   /dev   devfs   defaults  0 0
+procfs  /proc  procfs  defaults  0 0

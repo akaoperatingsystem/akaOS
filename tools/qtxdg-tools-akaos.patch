@@ -1,0 +1,38 @@
+--- a/src/mat/CMakeLists.txt
++++ b/src/mat/CMakeLists.txt
+@@ -29,3 +29,35 @@
+     EXPORT "qtxdg-tools-targets"
+     COMPONENT Runtime
+ )
++
++if(AKAOS_TARGET)
++    if(NOT DEFINED AKAOS_DYNAMIC_CRT_OBJECT OR
++       NOT EXISTS "${AKAOS_DYNAMIC_CRT_OBJECT}")
++        message(FATAL_ERROR "AKAOS_DYNAMIC_CRT_OBJECT must name akaOS's dynamic CRT object")
++    endif()
++    if(NOT DEFINED AKAOS_QTXDG_MAIN_WRAPPER OR
++       NOT EXISTS "${AKAOS_QTXDG_MAIN_WRAPPER}")
++        message(FATAL_ERROR "AKAOS_QTXDG_MAIN_WRAPPER must name the akaOS C++ entry wrapper")
++    endif()
++    if(NOT DEFINED AKAOS_PROJECT_ROOT OR
++       NOT EXISTS "${AKAOS_PROJECT_ROOT}/userspace/linker/user-dynamic.ld")
++        message(FATAL_ERROR "AKAOS_PROJECT_ROOT must name the akaOS source/build root")
++    endif()
++    set_source_files_properties(qtxdg-mat.cpp PROPERTIES
++        COMPILE_DEFINITIONS "main=qtxdg_mat_cpp_main")
++    target_sources(qtxdg-mat PRIVATE "${AKAOS_QTXDG_MAIN_WRAPPER}")
++    target_sources(qtxdg-mat PRIVATE "${AKAOS_DYNAMIC_CRT_OBJECT}")
++    if(AKAOS_QTXDG_TRACE_MAIN)
++        set_source_files_properties("${AKAOS_QTXDG_MAIN_WRAPPER}" PROPERTIES
++            COMPILE_DEFINITIONS "AKAOS_QTXDG_TRACE_MAIN=1")
++    endif()
++    target_link_options(qtxdg-mat PRIVATE
++        -pie
++        -Wl,--eh-frame-hdr
++        -Wl,-z,max-page-size=0x1000
++        -Wl,--dynamic-linker=/lib/ld-akaos.so
++        "-Wl,-T,${AKAOS_PROJECT_ROOT}/userspace/linker/user-dynamic.ld"
++    )
++    set_property(TARGET qtxdg-mat APPEND PROPERTY LINK_DEPENDS
++        "${AKAOS_PROJECT_ROOT}/userspace/linker/user-dynamic.ld")
++endif()

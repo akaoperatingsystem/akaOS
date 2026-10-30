@@ -1,0 +1,8 @@
+--- a/src/dispatch_common.c
++++ b/src/dispatch_common.c
+@@ -165,7 +165,6 @@
+ #else
+ #include <dlfcn.h>
+-#include <err.h>
+ #include <pthread.h>
+ #endif

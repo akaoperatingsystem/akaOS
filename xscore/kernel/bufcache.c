@@ -1,0 +1,145 @@
+#include <xscore/bufcache.h>
+#include <xscore/virtio_blk.h>
+#include <xscore/serial.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#define BUF_VALID UINT32_C(1)
+#define BUF_DIRTY UINT32_C(2)
+
+struct xscore_buf_entry {
+    uint64_t sector;
+    uint32_t flags;
+    uint64_t access_tick;
+    uint8_t data[XSCORE_BUF_SECTOR_SIZE];
+};
+
+static struct xscore_buf_entry cache[XSCORE_BUF_CACHE_SECTORS];
+static uint64_t global_tick_seq = 0;
+static int cache_initialized = 0;
+
+int xscore_bufcache_initialize(void) {
+    for (size_t i = 0; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
+        cache[i].sector = 0;
+        cache[i].flags = 0;
+        cache[i].access_tick = 0;
+        for (size_t j = 0; j < XSCORE_BUF_SECTOR_SIZE; ++j) {
+            cache[i].data[j] = 0;
+        }
+    }
+    global_tick_seq = 0;
+    cache_initialized = 1;
+    return 1;
+}
+
+static struct xscore_buf_entry *find_entry(uint64_t sector) {
+    for (size_t i = 0; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
+        if ((cache[i].flags & BUF_VALID) && cache[i].sector == sector) {
+            return &cache[i];
+        }
+    }
+    return NULL;
+}
+
+static struct xscore_buf_entry *allocate_entry(uint64_t sector) {
+    /* Look for an unused slot first */
+    for (size_t i = 0; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
+        if (!(cache[i].flags & BUF_VALID)) {
+            cache[i].sector = sector;
+            cache[i].flags = BUF_VALID;
+            cache[i].access_tick = ++global_tick_seq;
+            return &cache[i];
+        }
+    }
+
+    /* Find LRU victim */
+    size_t victim_idx = 0;
+    uint64_t min_tick = cache[0].access_tick;
+    for (size_t i = 1; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
+        if (cache[i].access_tick < min_tick) {
+            min_tick = cache[i].access_tick;
+            victim_idx = i;
+        }
+    }
+
+    struct xscore_buf_entry *victim = &cache[victim_idx];
+    if (victim->flags & BUF_DIRTY) {
+        xscore_virtio_blk_write_sector(victim->sector, victim->data);
+        victim->flags &= ~BUF_DIRTY;
+    }
+
+    victim->sector = sector;
+    victim->flags = BUF_VALID;
+    victim->access_tick = ++global_tick_seq;
+    return victim;
+}
+
+int xscore_bufcache_read(uint64_t sector, void *buffer) {
+    if (!cache_initialized) {
+        xscore_bufcache_initialize();
+    }
+    if (!xscore_virtio_blk_present()) return 0;
+
+    struct xscore_buf_entry *entry = find_entry(sector);
+    if (entry) {
+        entry->access_tick = ++global_tick_seq;
+        uint8_t *dst = (uint8_t *)buffer;
+        for (size_t i = 0; i < XSCORE_BUF_SECTOR_SIZE; ++i) {
+            dst[i] = entry->data[i];
+        }
+        return 1;
+    }
+
+    entry = allocate_entry(sector);
+    if (!xscore_virtio_blk_read_sector(sector, entry->data)) {
+        entry->flags = 0;
+        return 0;
+    }
+
+    uint8_t *dst = (uint8_t *)buffer;
+    for (size_t i = 0; i < XSCORE_BUF_SECTOR_SIZE; ++i) {
+        dst[i] = entry->data[i];
+    }
+    return 1;
+}
+
+int xscore_bufcache_write(uint64_t sector, const void *buffer) {
+    if (!cache_initialized) {
+        xscore_bufcache_initialize();
+    }
+    if (!xscore_virtio_blk_present()) return 0;
+
+    struct xscore_buf_entry *entry = find_entry(sector);
+    if (!entry) {
+        entry = allocate_entry(sector);
+    }
+
+    const uint8_t *src = (const uint8_t *)buffer;
+    for (size_t i = 0; i < XSCORE_BUF_SECTOR_SIZE; ++i) {
+        entry->data[i] = src[i];
+    }
+    entry->flags |= (BUF_VALID | BUF_DIRTY);
+    entry->access_tick = ++global_tick_seq;
+    return 1;
+}
+
+int xscore_bufcache_sync(void) {
+    if (!cache_initialized || !xscore_virtio_blk_present()) return 0;
+
+    for (size_t i = 0; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
+        if ((cache[i].flags & (BUF_VALID | BUF_DIRTY)) == (BUF_VALID | BUF_DIRTY)) {
+            if (xscore_virtio_blk_write_sector(cache[i].sector, cache[i].data)) {
+                cache[i].flags &= ~BUF_DIRTY;
+            }
+        }
+    }
+    return 1;
+}
+
+void xscore_bufcache_invalidate(void) {
+    for (size_t i = 0; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
+        cache[i].flags = 0;
+        cache[i].sector = 0;
+        cache[i].access_tick = 0;
+    }
+}

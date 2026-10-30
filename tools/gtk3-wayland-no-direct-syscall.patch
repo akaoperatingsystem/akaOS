@@ -1,0 +1,9 @@
+--- a/gdk/wayland/gdkdisplay-wayland.c
++++ b/gdk/wayland/gdkdisplay-wayland.c
+@@ -28,7 +28,6 @@
+ #endif
+ 
+ #include <sys/mman.h>
+-#include <sys/syscall.h>
+ 
+ #include <glib.h>

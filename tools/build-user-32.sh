@@ -1,0 +1,742 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/tools/host-common.sh"
+BUILD_DIR="$ROOT_DIR/build/user32"
+INCLUDE_DIR="$ROOT_DIR/sdk/include"
+USER_INCLUDE_DIR="$ROOT_DIR/userspace/libc/include"
+BUILD_TIMESTAMP="${BUILD_TIMESTAMP:-$(date +%m%d%Y%H%M%S)}"
+export BUILD_TIMESTAMP
+mkdir -p "$BUILD_DIR"
+FONT_FILE="$(akaos_find_dejavu_font)"
+
+USER_LIBC_SOURCES=(
+    "$ROOT_DIR/userspace/libc/src/string.c"
+    "$ROOT_DIR/userspace/libc/src/stdlib.c"
+    "$ROOT_DIR/userspace/libc/src/stdio.c"
+    "$ROOT_DIR/userspace/libc/src/malloc.c"
+    "$ROOT_DIR/userspace/libc/src/math.c"
+    "$ROOT_DIR/userspace/libc/src/fenv.c"
+    "$ROOT_DIR/userspace/libc/src/setjmp.c"
+    "$ROOT_DIR/userspace/libc/src/syscall.c"
+    "$ROOT_DIR/userspace/libc/src/time.c"
+    "$ROOT_DIR/userspace/libc/src/account.c"
+    "$ROOT_DIR/userspace/libc/src/posix.c"
+    "$ROOT_DIR/userspace/libc/src/pthread.c"
+    "$ROOT_DIR/userspace/libc/src/atomic64.c"
+    "$ROOT_DIR/userspace/libc/src/toolkit.c"
+    "$ROOT_DIR/userspace/libc/src/dbus.c"
+    "$ROOT_DIR/userspace/libc/src/dbus_codec.c"
+    "$ROOT_DIR/userspace/libc/src/dlfcn.c"
+    "$ROOT_DIR/userspace/libc/src/epoll.c"
+    "$ROOT_DIR/userspace/libc/src/eventfd.c"
+    "$ROOT_DIR/userspace/libc/src/timerfd.c"
+    "$ROOT_DIR/userspace/libc/src/semaphore.c"
+    "$ROOT_DIR/userspace/libc/src/cxxabi.c"
+    "$ROOT_DIR/userspace/libc/src/crt_init.c"
+)
+
+USER_LIBC_OBJECTS=()
+for source in "${USER_LIBC_SOURCES[@]}"; do
+    base="$(basename "$source" .c)"
+    object="$BUILD_DIR/libc-$base.o"
+    source_extra_flags=()
+    if [[ "x86_32" == "x86_32" &&
+          ("$base" == "malloc" || "$base" == "stdio" || "$base" == "string" || "$base" == "math" || "$base" == "time") ]]; then
+        # These libc translation units implement float/long-double APIs.
+        # Keep other i386 userspace code on the no-FPU baseline until the
+        # scheduler's x87 isolation regression proves general application use.
+        source_extra_flags=(-m80387)
+    fi
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+        -mno-sse -mno-mmx -mno-80387 "${source_extra_flags[@]}" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$source" -o "$object"
+    USER_LIBC_OBJECTS+=("$object")
+done
+
+clang --target=i686-unknown-none-elf \
+    -ffreestanding -fpie \
+    -c "$ROOT_DIR/userspace/libc/crt/x86_32/crt0.S" \
+    -o "$BUILD_DIR/user-crt0.o"
+
+clang --target=i686-unknown-none-elf \
+    -ffreestanding -fpie \
+    -c "$ROOT_DIR/userspace/libc/crt/x86_32/dynamic-crt0.S" \
+    -o "$BUILD_DIR/user-dynamic-crt0.o"
+
+COMPILER_BUILTINS=()
+if [[ "x86_32" == "arm32" || "x86_32" == "aarch64" || "x86_32" == "riscv64" ||
+      "x86_32" == "riscv32" ]]; then
+    bash "$ROOT_DIR/tools/build-compiler-builtins.sh" --arch "x86_32"
+    COMPILER_BUILTINS=("$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/x86_32/libakaos-compiler-builtins.a")
+fi
+
+build_user_program() {
+    local name="$1"
+    local source="$2"
+    local output="$3"
+    local main_object="$BUILD_DIR/user-$name-main.o"
+    local user_extra_flags=()
+    if [[ "x86_32" == "x86_32" && ("$name" == "hello" || "$name" == "hello-pie") ]]; then
+        user_extra_flags=(-m80387)
+    fi
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -Os -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+        -mno-sse -mno-mmx -mno-80387 "${user_extra_flags[@]}" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$source" -o "$main_object"
+    ld.lld -m elf_i386 -nostdlib -static -z max-page-size=0x1000 \
+        -T "$ROOT_DIR/userspace/linker/user32.ld" \
+        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "$main_object" \
+        "${COMPILER_BUILTINS[@]}" \
+        -o "$BUILD_DIR/$output"
+}
+
+build_user_cpp_program() {
+    local name="$1"
+    local source="$2"
+    local output="$3"
+    local main_object="$BUILD_DIR/user-$name-main.o"
+    local cxx_runtime_dir="$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/x86_32"
+    bash "$ROOT_DIR/tools/build-libunwind.sh" --arch x86_32
+    clang++ --target=i686-unknown-none-elf \
+        -std=c++17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fstack-protector-strong -fpie \
+        -fexceptions -frtti -D_LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE \
+        -mno-sse -mno-mmx -m80387 \
+        -I"$cxx_runtime_dir/include/c++/v1" -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$source" -o "$main_object"
+    # PIE segments are link-relative (starting at zero); XSCore supplies the
+    # per-process architecture-specific load bias at exec time.
+    ld.lld -m elf_i386 -nostdlib -pie -static --eh-frame-hdr -z max-page-size=0x1000 \
+        -T "$ROOT_DIR/userspace/linker/user.ld" \
+        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "$main_object" \
+        --undefined=__register_frame \
+        "$cxx_runtime_dir/libc++.a" "$cxx_runtime_dir/libc++abi.a" \
+        "$cxx_runtime_dir/libunwind.a" \
+        "${COMPILER_BUILTINS[@]}" \
+        -o "$BUILD_DIR/$output"
+}
+
+build_user_pie_program() {
+    local name="$1"
+    local source="$2"
+    local output="$3"
+    local main_object="$BUILD_DIR/user-$name-main.o"
+    local user_extra_flags=()
+    if [[ "x86_32" == "x86_32" && ("$name" == "hello" || "$name" == "hello-pie") ]]; then
+        user_extra_flags=(-m80387)
+    fi
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+        -mno-sse -mno-mmx -mno-80387 "${user_extra_flags[@]}" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$source" -o "$main_object"
+    # ET_DYN static PIE images use zero-based segments; XSCore applies their
+    # bounded REL/RELA relative relocations at the native user load base.
+    ld.lld -m elf_i386 -nostdlib -pie -static -z max-page-size=0x1000 \
+        -T "$ROOT_DIR/userspace/linker/user.ld" \
+        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "$main_object" \
+        "${COMPILER_BUILTINS[@]}" \
+        -o "$BUILD_DIR/$output"
+}
+
+build_account_program() {
+    local name="$1"
+    local source="$2"
+    local output="$3"
+    local main_object="$BUILD_DIR/user-$name-main.o"
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+        -mno-sse -mno-mmx -mno-80387 \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$source" -o "$main_object"
+    ld.lld -m elf_i386 -nostdlib -static -z max-page-size=0x1000 \
+        -T "$ROOT_DIR/userspace/linker/user32.ld" \
+        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" \
+        "$main_object" "${COMPILER_BUILTINS[@]}" \
+        -o "$BUILD_DIR/$output"
+}
+
+build_shared_object() {
+    local output="$1"
+    local object="$BUILD_DIR/shared-answer.o"
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -mno-sse -mno-mmx -mno-80387 \
+        -c "$ROOT_DIR/userspace/libc/tests/shared_answer.c" -o "$object"
+    ld.lld -m elf_i386 -nostdlib -shared -soname libakaos-demo.so --hash-style=gnu -z max-page-size=0x1000 \
+        "$object" -o "$BUILD_DIR/$output"
+}
+
+build_static_shared_object() {
+    local output="$1"
+    local object="$BUILD_DIR/shared-static.o"
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -ftls-model=initial-exec \
+        -mno-sse -mno-mmx -mno-80387 \
+        -c "$ROOT_DIR/userspace/libc/tests/shared_static.c" -o "$object"
+    ld.lld -m elf_i386 -nostdlib -shared -soname libakaos-static.so \
+        --hash-style=gnu -z max-page-size=0x1000 \
+        "$object" -o "$BUILD_DIR/$output"
+}
+
+build_versioned_shared_object() {
+    local output="$1"
+    local object="$BUILD_DIR/shared-versioned.o"
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -mno-sse -mno-mmx -mno-80387 \
+        -c "$ROOT_DIR/userspace/libc/tests/shared_versioned.c" -o "$object"
+    ld.lld -m elf_i386 -nostdlib -shared -soname libakaos-versioned.so \
+        --hash-style=gnu -z max-page-size=0x1000 \
+        --version-script "$ROOT_DIR/userspace/libc/tests/shared_versioned.map" \
+        "$object" -o "$BUILD_DIR/$output"
+}
+
+build_shared_libc() {
+    local output="$1"
+    local shared_objects=()
+    for source in "${USER_LIBC_SOURCES[@]}"; do
+        base="$(basename "$source" .c)"
+        object="$BUILD_DIR/shared-libc-$base.o"
+        local shared_source_extra_flags=()
+        if [[ "x86_32" == "x86_32" &&
+              ("$base" == "malloc" || "$base" == "stdio" || "$base" == "string" || "$base" == "math" || "$base" == "time") ]]; then
+            shared_source_extra_flags=(-m80387)
+        fi
+        clang --target=i686-unknown-none-elf \
+            -std=c17 -O2 -Wall -Wextra -Werror \
+            -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+            -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+            -mno-sse -mno-mmx -mno-80387 "${shared_source_extra_flags[@]}" \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+            -c "$source" -o "$object"
+        shared_objects+=("$object")
+    done
+    local signal_object="$BUILD_DIR/shared-libc-signal.o"
+    clang --target=i686-unknown-none-elf -ffreestanding -fPIC \
+        -mno-sse -mno-mmx -mno-80387 \
+        -c "$ROOT_DIR/userspace/libc/tests/shared_signal.S" \
+        -o "$signal_object"
+    ld.lld -m elf_i386 -nostdlib -shared -soname "$output" \
+        --hash-style=gnu -z max-page-size=0x1000 --no-undefined \
+        "${shared_objects[@]}" "$signal_object" "${COMPILER_BUILTINS[@]}" \
+        -o "$BUILD_DIR/$output"
+}
+
+build_shared_libm() {
+    local output="$1"
+    local runtime_dir="$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/x86_32"
+    ld.lld -m elf_i386 -nostdlib -shared -soname "$output" \
+        --hash-style=gnu -z max-page-size=0x1000 --no-undefined \
+        "$BUILD_DIR/shared-libc-math.o" "${COMPILER_BUILTINS[@]}" \
+        "$BUILD_DIR/libc.so.6" -o "$BUILD_DIR/$output"
+    ln -sf "$output" "$BUILD_DIR/libm.so"
+}
+
+build_shared_cxx_runtime() {
+    local runtime_dir="$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/x86_32"
+    ld.lld -m elf_i386 -nostdlib -shared --eh-frame-hdr \
+        -soname libunwind.so.1 --hash-style=gnu -z max-page-size=0x1000 \
+        --no-undefined --whole-archive "$runtime_dir/libunwind.a" \
+        --no-whole-archive "${COMPILER_BUILTINS[@]}" \
+        "$BUILD_DIR/libc.so.6" -o "$BUILD_DIR/libunwind.so.1"
+    ld.lld -m elf_i386 -nostdlib -shared --eh-frame-hdr \
+        -soname libc++abi.so.1 --hash-style=gnu -z max-page-size=0x1000 \
+        --no-undefined --whole-archive "$runtime_dir/libc++abi.a" \
+        --no-whole-archive "${COMPILER_BUILTINS[@]}" \
+        "$BUILD_DIR/libunwind.so.1" "$BUILD_DIR/libc.so.6" \
+        -o "$BUILD_DIR/libc++abi.so.1"
+    ld.lld -m elf_i386 -nostdlib -shared --eh-frame-hdr \
+        -soname libc++.so.1 --hash-style=gnu -z max-page-size=0x1000 \
+        --no-undefined --whole-archive "$runtime_dir/libc++.a" \
+        --no-whole-archive "${COMPILER_BUILTINS[@]}" \
+        "$BUILD_DIR/libc++abi.so.1" "$BUILD_DIR/libunwind.so.1" \
+        "$BUILD_DIR/libc.so.6" -o "$BUILD_DIR/libc++.so.1"
+}
+
+build_dynamic_cpp_program() {
+    local source="$1"
+    local output="$2"
+    local runtime_dir="$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/x86_32"
+    local object="$BUILD_DIR/user-cxx-dynamic-main.o"
+    clang++ --target=i686-unknown-none-elf \
+        -std=c++17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fstack-protector-strong -fpie \
+        -fexceptions -frtti -D_LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE \
+        -mno-sse -mno-mmx -m80387 \
+        -I"$runtime_dir/include/c++/v1" -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$source" -o "$object"
+    ld.lld -m elf_i386 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
+        --dynamic-linker /lib/ld-akaos.so \
+        -T "$ROOT_DIR/userspace/linker/user32-dynamic.ld" \
+        "$BUILD_DIR/user-dynamic-crt0.o" "$object" --no-as-needed \
+        "$BUILD_DIR/libc++.so.1" "$BUILD_DIR/libc++abi.so.1" \
+        "$BUILD_DIR/libunwind.so.1" "$BUILD_DIR/libc.so.6" \
+        "${COMPILER_BUILTINS[@]}" -o "$BUILD_DIR/$output"
+}
+
+build_cxx_shared_object() {
+    local output="$1"
+    local object="$BUILD_DIR/shared-cxx.o"
+    local fini_object="$BUILD_DIR/shared-cxx-fini.o"
+    clang++ --target=i686-unknown-none-elf \
+        -std=c++17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -fno-exceptions -fno-rtti \
+        -mno-sse -mno-mmx -mno-80387 \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$ROOT_DIR/userspace/libc/tests/shared_cxx.cpp" -o "$object"
+    clang --target=i686-unknown-none-elf -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -mno-sse -mno-mmx -mno-80387 \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$ROOT_DIR/userspace/libc/crt/cxx-dso-fini.c" -o "$fini_object"
+    ld.lld -m elf_i386 -nostdlib -shared -soname "$output" \
+        --hash-style=gnu -z max-page-size=0x1000 --no-undefined \
+        "$object" "$fini_object" --no-as-needed "$BUILD_DIR/libc.so.6" \
+        -o "$BUILD_DIR/$output"
+}
+
+build_dependent_shared_object() {
+    local output="$1"
+    local object="$BUILD_DIR/shared-dependent.o"
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -mno-sse -mno-mmx -mno-80387 \
+        -c "$ROOT_DIR/userspace/libc/tests/shared_dependent.c" -o "$object"
+    ld.lld -m elf_i386 -nostdlib -shared -soname libakaos-dependent.so -z max-page-size=0x1000 \
+        "$object" "$BUILD_DIR/libakaos-demo.so" \
+        "$BUILD_DIR/libakaos-versioned.so" -o "$BUILD_DIR/$output"
+}
+
+build_loader_fanout_objects() {
+    local provider_objects=()
+    for index in 0 1 2 3 4; do
+        local provider_object="$BUILD_DIR/loader-provider-$index.o"
+        local provider_output="$BUILD_DIR/libakaos-loader-dep-$index.so"
+        clang --target=i686-unknown-none-elf \
+            -std=c17 -O2 -Wall -Wextra -Werror \
+            -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+            -mno-sse -mno-mmx -mno-80387 \
+            -DAKAOS_LOADER_DEPENDENCY_INDEX=$index \
+            -c "$ROOT_DIR/userspace/libc/tests/shared_loader_leaf.c" \
+            -o "$provider_object"
+        ld.lld -m elf_i386 -nostdlib -shared \
+            -soname "libakaos-loader-dep-$index.so" \
+            -z max-page-size=0x1000 "$provider_object" \
+            -o "$provider_output"
+        provider_objects+=("$provider_output")
+    done
+    local fanout_object="$BUILD_DIR/shared-loader-fanout.o"
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -mno-sse -mno-mmx -mno-80387 \
+        -c "$ROOT_DIR/userspace/libc/tests/shared_loader_fanout.c" \
+        -o "$fanout_object"
+    ld.lld -m elf_i386 -nostdlib -shared \
+        -soname libakaos-loader-fanout.so -z max-page-size=0x1000 \
+        --no-undefined "$fanout_object" --no-as-needed \
+        "${provider_objects[@]}" -o "$BUILD_DIR/libakaos-loader-fanout.so"
+}
+
+build_runtime_library() {
+    local output="$1"
+    local runtime_id="$2"
+    local object="$BUILD_DIR/runtime-${runtime_id}.o"
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -Os -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+        -mno-sse -mno-mmx -mno-80387 \
+        -DAKAOS_RUNTIME_ID="${runtime_id}" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$ROOT_DIR/userspace/libc/tests/desktop_runtime.c" -o "$object"
+    ld.lld -m elf_i386 -nostdlib -shared -soname "$output" -z max-page-size=0x1000 \
+        "$object" "$BUILD_DIR/runtime-io.o" -o "$BUILD_DIR/$output"
+}
+
+build_dynamic_program() {
+    local name="$1"
+    local source="$2"
+    local output="$3"
+    local main_object="$BUILD_DIR/user-$name-main.o"
+    clang --target=i686-unknown-none-elf \
+        -std=c17 -O2 -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+        -mno-sse -mno-mmx -mno-80387 \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -c "$source" -o "$main_object"
+    # This is a real ET_DYN executable: PT_INTERP names the native loader and
+    # libc plus the demo provider contribute DT_NEEDED entries and symbol
+    # relocations.  No libc object is linked into the executable; startup,
+    # memory, string, and I/O calls must resolve through libc.so.6.
+    ld.lld -m elf_i386 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
+        --dynamic-linker /lib/ld-akaos.so \
+        -T "$ROOT_DIR/userspace/linker/user32-dynamic.ld" \
+        "$BUILD_DIR/user-dynamic-crt0.o" "$main_object" \
+        --no-as-needed "$BUILD_DIR/libc.so.6" \
+        "$BUILD_DIR/libakaos-demo.so" "${COMPILER_BUILTINS[@]}" \
+        -o "$BUILD_DIR/$output"
+}
+
+clang --target=i686-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
+    -mno-sse -mno-mmx -mno-80387 \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/libc/tests/desktop_io.c" \
+    -o "$BUILD_DIR/runtime-io.o"
+
+echo "[BUILD] akaOS x86_32 userspace binaries"
+build_user_program hello "$ROOT_DIR/userspace/bin/hello/main.c" HELLO.ELF
+build_user_cpp_program cxxabi-test "$ROOT_DIR/userspace/bin/cxxabi-test/main.cpp" CXXABI_TEST.ELF
+build_user_pie_program hello-pie "$ROOT_DIR/userspace/bin/hello/main.c" HELLO_PIE.ELF
+build_user_program cat "$ROOT_DIR/userspace/bin/cat/main.c" CAT.ELF
+build_user_program ls "$ROOT_DIR/userspace/bin/ls/main.c" LS.ELF
+build_user_program grep "$ROOT_DIR/userspace/bin/grep/main.c" GREP.ELF
+build_user_program head "$ROOT_DIR/userspace/bin/head/main.c" HEAD.ELF
+build_user_program tail "$ROOT_DIR/userspace/bin/tail/main.c" TAIL.ELF
+build_user_program wc "$ROOT_DIR/userspace/bin/wc/main.c" WC.ELF
+build_user_program uname "$ROOT_DIR/userspace/bin/uname/main.c" UNAME.ELF
+build_account_program whoami "$ROOT_DIR/userspace/bin/whoami/main.c" WHOAMI.ELF
+build_user_program touch "$ROOT_DIR/userspace/bin/touch/main.c" TOUCH.ELF
+build_user_program mkdir "$ROOT_DIR/userspace/bin/mkdir/main.c" MKDIR.ELF
+build_user_program rm "$ROOT_DIR/userspace/bin/rm/main.c" RM.ELF
+build_user_program cp "$ROOT_DIR/userspace/bin/cp/main.c" CP.ELF
+build_user_program mv "$ROOT_DIR/userspace/bin/mv/main.c" MV.ELF
+build_user_program pwd "$ROOT_DIR/userspace/bin/pwd/main.c" PWD.ELF
+build_user_program echo "$ROOT_DIR/userspace/bin/echo/main.c" ECHO.ELF
+build_user_program clear "$ROOT_DIR/userspace/bin/clear/main.c" CLEAR.ELF
+build_user_program sync "$ROOT_DIR/userspace/bin/sync/main.c" SYNC.ELF
+build_user_program chmod "$ROOT_DIR/userspace/bin/chmod/main.c" CHMOD.ELF
+build_user_program chown "$ROOT_DIR/userspace/bin/chown/main.c" CHOWN.ELF
+build_user_program ted "$ROOT_DIR/userspace/bin/ted/main.c" TED.ELF
+build_user_program init "$ROOT_DIR/userspace/bin/init/main.c" INIT.ELF
+build_account_program login "$ROOT_DIR/userspace/bin/login/main.c" LOGIN.ELF
+build_account_program su "$ROOT_DIR/userspace/bin/su/main.c" SU.ELF
+build_account_program passwd "$ROOT_DIR/userspace/bin/passwd/main.c" PASSWD.ELF
+build_account_program sudo "$ROOT_DIR/userspace/bin/sudo/main.c" SUDO.ELF
+build_user_program reboot "$ROOT_DIR/userspace/bin/reboot/main.c" REBOOT.ELF
+build_user_program poweroff "$ROOT_DIR/userspace/bin/poweroff/main.c" POWEROFF.ELF
+build_user_program lumen "$ROOT_DIR/userspace/bin/lumen/main.c" LUMEN.ELF
+build_user_program palette "$ROOT_DIR/userspace/bin/palette/main.c" PALETTE.ELF
+build_user_program aurora "$ROOT_DIR/userspace/bin/aurora/main.c" AURORA.ELF
+build_user_program terminal "$ROOT_DIR/userspace/bin/terminal/main.c" TERMINAL.ELF
+build_user_program notify "$ROOT_DIR/userspace/bin/notify/main.c" NOTIFY.ELF
+build_user_program beep "$ROOT_DIR/userspace/bin/beep/main.c" BEEP.ELF
+build_user_program ping "$ROOT_DIR/userspace/bin/ping/main.c" PING.ELF
+build_user_program netstat "$ROOT_DIR/userspace/bin/netstat/main.c" NETSTAT.ELF
+build_user_program tty "$ROOT_DIR/userspace/bin/tty/main.c" TTY.ELF
+build_user_program stty "$ROOT_DIR/userspace/bin/stty/main.c" STTY.ELF
+build_user_program ps "$ROOT_DIR/userspace/bin/ps/main.c" PS.ELF
+build_account_program akash "$ROOT_DIR/userspace/bin/akash/main.c" AKASH.ELF
+build_user_program nslookup "$ROOT_DIR/userspace/bin/nslookup/main.c" NSLOOKUP.ELF
+build_user_program curl "$ROOT_DIR/userspace/bin/curl/main.c" CURL.ELF
+build_user_program httpd "$ROOT_DIR/userspace/bin/httpd/main.c" HTTPD.ELF
+build_user_program akaos-config "$ROOT_DIR/userspace/bin/akaos-config/main.c" AKAOS_CONFIG.ELF
+build_user_program sysmon "$ROOT_DIR/userspace/bin/sysmon/main.c" SYSMON.ELF
+build_user_program ip "$ROOT_DIR/userspace/bin/ip/main.c" IP.ELF
+build_user_program mount "$ROOT_DIR/userspace/bin/mount/main.c" MOUNT.ELF
+build_user_program umount "$ROOT_DIR/userspace/bin/umount/main.c" UMOUNT.ELF
+build_user_program telnetd "$ROOT_DIR/userspace/bin/telnetd/main.c" TELNETD.ELF
+build_user_program tftpd "$ROOT_DIR/userspace/bin/tftpd/main.c" TFTPD.ELF
+build_user_program tftp "$ROOT_DIR/userspace/bin/tftp/main.c" TFTP.ELF
+build_user_program desktop "$ROOT_DIR/userspace/bin/desktop/main.c" DESKTOP.ELF
+build_user_program desktop-compat "$ROOT_DIR/userspace/bin/desktop-compat/main.c" DESKTOP_COMPAT.ELF
+build_user_program notepad "$ROOT_DIR/userspace/bin/notepad/main.c" NOTEPAD.ELF
+build_user_program taskmgr "$ROOT_DIR/userspace/bin/taskmgr/main.c" TASKMGR.ELF
+build_user_program webviewer "$ROOT_DIR/userspace/bin/webviewer/main.c" WEBVIEWER.ELF
+build_user_program status_cgi "$ROOT_DIR/userspace/bin/status_cgi/main.c" STATUS_CGI.ELF
+build_user_program less "$ROOT_DIR/userspace/bin/less/main.c" LESS.ELF
+build_user_program more "$ROOT_DIR/userspace/bin/more/main.c" MORE.ELF
+build_user_program find "$ROOT_DIR/userspace/bin/find/main.c" FIND.ELF
+build_user_program sort "$ROOT_DIR/userspace/bin/sort/main.c" SORT.ELF
+build_user_program uniq "$ROOT_DIR/userspace/bin/uniq/main.c" UNIQ.ELF
+build_user_program xargs "$ROOT_DIR/userspace/bin/xargs/main.c" XARGS.ELF
+build_user_program test "$ROOT_DIR/userspace/bin/test/main.c" TEST.ELF
+build_account_program sshd "$ROOT_DIR/userspace/bin/sshd/main.c" SSHD.ELF
+build_account_program ssh "$ROOT_DIR/userspace/bin/ssh/main.c" SSH.ELF
+build_user_program sleep "$ROOT_DIR/userspace/bin/sleep/main.c" SLEEP.ELF
+build_user_program which "$ROOT_DIR/userspace/bin/which/main.c" WHICH.ELF
+build_user_program env "$ROOT_DIR/userspace/bin/env/main.c" ENV.ELF
+build_user_program cut "$ROOT_DIR/userspace/bin/cut/main.c" CUT.ELF
+build_user_program tr "$ROOT_DIR/userspace/bin/tr/main.c" TR.ELF
+build_user_program df "$ROOT_DIR/userspace/bin/df/main.c" DF.ELF
+build_user_program du "$ROOT_DIR/userspace/bin/du/main.c" DU.ELF
+build_user_program kill "$ROOT_DIR/userspace/bin/kill/main.c" KILL.ELF
+build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
+build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
+build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
+build_user_program watch "$ROOT_DIR/userspace/bin/watch/main.c" WATCH.ELF
+build_user_program sed "$ROOT_DIR/userspace/bin/sed/main.c" SED.ELF
+build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF
+build_user_program cmp "$ROOT_DIR/userspace/bin/cmp/main.c" CMP.ELF
+build_user_program patch "$ROOT_DIR/userspace/bin/patch/main.c" PATCH.ELF
+build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
+build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
+build_user_program gunzip "$ROOT_DIR/userspace/bin/gunzip/main.c" GUNZIP.ELF
+build_user_program route "$ROOT_DIR/userspace/bin/route/main.c" ROUTE.ELF
+build_user_program traceroute "$ROOT_DIR/userspace/bin/traceroute/main.c" TRACEROUTE.ELF
+build_user_program dig "$ROOT_DIR/userspace/bin/dig/main.c" DIG.ELF
+build_user_program arp "$ROOT_DIR/userspace/bin/arp/main.c" ARP.ELF
+build_user_program lscpu "$ROOT_DIR/userspace/bin/lscpu/main.c" LSCPU.ELF
+build_user_program lspci "$ROOT_DIR/userspace/bin/lspci/main.c" LSPCI.ELF
+build_user_program gpuinfo "$ROOT_DIR/userspace/bin/gpuinfo/main.c" GPUINFO.ELF
+build_user_program sndinfo "$ROOT_DIR/userspace/bin/sndinfo/main.c" SNDINFO.ELF
+build_user_program acpi "$ROOT_DIR/userspace/bin/acpi/main.c" ACPI.ELF
+build_user_program xsdisplay "$ROOT_DIR/userspace/bin/xsdisplay/main.c" XSDISPLAY.ELF
+build_user_program dbus-daemon "$ROOT_DIR/userspace/bin/dbus-daemon/main.c" DBUS_DAEMON.ELF
+build_user_program dltest "$ROOT_DIR/userspace/bin/dltest/main.c" DLTEST.ELF
+build_user_program display-protocols "$ROOT_DIR/userspace/bin/display-protocols/main.c" DISPLAY_PROTOCOLS.ELF
+build_user_program ld-akaos "$ROOT_DIR/userspace/bin/ld-akaos/main.c" LD_AKAOS.ELF
+build_shared_object libakaos-demo.so
+build_static_shared_object libakaos-static.so
+build_versioned_shared_object libakaos-versioned.so
+build_shared_libc libc.so.6
+build_shared_cxx_runtime
+build_shared_libm libm.so.6
+build_dynamic_cpp_program "$ROOT_DIR/userspace/bin/cxx-dynamic-test/main.cpp" CXX_DYNAMIC_TEST.ELF
+build_cxx_shared_object libakaos-cxx.so
+build_dynamic_program dynamic-hello "$ROOT_DIR/userspace/bin/dynamic-hello/main.c" DYNAMIC_HELLO.ELF
+build_dependent_shared_object libakaos-dependent.so
+build_loader_fanout_objects
+build_runtime_library libpthread.so 1
+build_runtime_library libglib.so 2
+build_runtime_library libgio.so 3
+build_runtime_library libgtk.so 4
+build_runtime_library libgtk-4.so 5
+build_runtime_library libQt6Core.so 6
+build_runtime_library libQt6Gui.so 7
+build_runtime_library libQt6Widgets.so 8
+
+echo "[BUILD] akaOS x86_32 initramfs archive"
+python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
+    --dir "/bin" \
+    --dir "/etc" \
+    --dir "/usr" \
+    --dir "/usr/share" \
+    --dir "/usr/share/fonts" \
+    --dir "/usr/share/fonts/truetype" \
+    --dir "/usr/share/fonts/truetype/akaos" \
+    --file "/usr/share/fonts/truetype/akaos/default.ttf:$FONT_FILE:0444" \
+    --dir "/usr/local" \
+    --dir "/usr/local/lib" \
+    --dir "/usr/local/lib/fonts" \
+    --file "/usr/local/lib/fonts/DejaVuSans.ttf:$FONT_FILE:0444" \
+    --dir "/usr/share/licenses" \
+    --dir "/usr/share/licenses/DejaVu" \
+    --file "/usr/share/licenses/DejaVu/LICENSE.txt:$ROOT_DIR/userspace/licenses/DejaVuSans-LICENSE.txt:0444" \
+    --dir "/root:0700" \
+    --dir "/home" \
+    --dir "/home/user:0755" \
+    --dir "/mnt" \
+    --dir "/tmp" \
+    --file "/bin/hello:$BUILD_DIR/HELLO.ELF:exec" \
+    --file "/bin/cxxabi-test:$BUILD_DIR/CXXABI_TEST.ELF:exec" \
+    --file "/bin/cxx-dynamic-test:$BUILD_DIR/CXX_DYNAMIC_TEST.ELF:exec" \
+    --file "/bin/dynamic-hello:$BUILD_DIR/DYNAMIC_HELLO.ELF:exec" \
+    --file "/bin/hello-pie:$BUILD_DIR/HELLO_PIE.ELF:exec" \
+    --file "/bin/hello-pi:$BUILD_DIR/HELLO_PIE.ELF:exec" \
+    --file "/bin/cat:$BUILD_DIR/CAT.ELF:exec" \
+    --file "/bin/ls:$BUILD_DIR/LS.ELF:exec" \
+    --file "/bin/grep:$BUILD_DIR/GREP.ELF:exec" \
+    --file "/bin/head:$BUILD_DIR/HEAD.ELF:exec" \
+    --file "/bin/tail:$BUILD_DIR/TAIL.ELF:exec" \
+    --file "/bin/wc:$BUILD_DIR/WC.ELF:exec" \
+    --file "/bin/uname:$BUILD_DIR/UNAME.ELF:exec" \
+    --file "/bin/whoami:$BUILD_DIR/WHOAMI.ELF:exec" \
+    --file "/bin/touch:$BUILD_DIR/TOUCH.ELF:exec" \
+    --file "/bin/mkdir:$BUILD_DIR/MKDIR.ELF:exec" \
+    --file "/bin/rm:$BUILD_DIR/RM.ELF:exec" \
+    --file "/bin/cp:$BUILD_DIR/CP.ELF:exec" \
+    --file "/bin/mv:$BUILD_DIR/MV.ELF:exec" \
+    --file "/bin/chmod:$BUILD_DIR/CHMOD.ELF:exec" \
+    --file "/bin/chown:$BUILD_DIR/CHOWN.ELF:exec" \
+    --file "/bin/ted:$BUILD_DIR/TED.ELF:exec" \
+    --file "/bin/pwd:$BUILD_DIR/PWD.ELF:exec" \
+    --file "/bin/echo:$BUILD_DIR/ECHO.ELF:exec" \
+    --file "/bin/clear:$BUILD_DIR/CLEAR.ELF:exec" \
+    --file "/bin/sync:$BUILD_DIR/SYNC.ELF:exec" \
+    --file "/bin/init:$BUILD_DIR/INIT.ELF:exec" \
+    --file "/bin/login:$BUILD_DIR/LOGIN.ELF:4755" \
+    --file "/bin/su:$BUILD_DIR/SU.ELF:4755" \
+    --file "/bin/passwd:$BUILD_DIR/PASSWD.ELF:4755" \
+    --file "/bin/sudo:$BUILD_DIR/SUDO.ELF:4755" \
+    --file "/bin/reboot:$BUILD_DIR/REBOOT.ELF:exec" \
+    --file "/bin/poweroff:$BUILD_DIR/POWEROFF.ELF:exec" \
+    --file "/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec" \
+    --file "/bin/palette:$BUILD_DIR/PALETTE.ELF:exec" \
+    --file "/bin/aurora:$BUILD_DIR/AURORA.ELF:exec" \
+    --file "/bin/terminal:$BUILD_DIR/TERMINAL.ELF:exec" \
+    --file "/bin/notify:$BUILD_DIR/NOTIFY.ELF:exec" \
+    --file "/bin/beep:$BUILD_DIR/BEEP.ELF:exec" \
+    --file "/bin/ping:$BUILD_DIR/PING.ELF:exec" \
+    --file "/bin/netstat:$BUILD_DIR/NETSTAT.ELF:exec" \
+    --file "/bin/tty:$BUILD_DIR/TTY.ELF:exec" \
+    --file "/bin/stty:$BUILD_DIR/STTY.ELF:exec" \
+    --file "/bin/ps:$BUILD_DIR/PS.ELF:exec" \
+    --file "/bin/akash:$BUILD_DIR/AKASH.ELF:exec" \
+    --file "/bin/nslookup:$BUILD_DIR/NSLOOKUP.ELF:exec" \
+    --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec" \
+    --file "/bin/httpd:$BUILD_DIR/HTTPD.ELF:exec" \
+    --file "/bin/akaos-config:$BUILD_DIR/AKAOS_CONFIG.ELF:exec" \
+    --file "/bin/sysmon:$BUILD_DIR/SYSMON.ELF:exec" \
+    --file "/bin/ip:$BUILD_DIR/IP.ELF:exec" \
+    --file "/bin/mount:$BUILD_DIR/MOUNT.ELF:exec" \
+    --file "/bin/umount:$BUILD_DIR/UMOUNT.ELF:exec" \
+    --file "/bin/telnetd:$BUILD_DIR/TELNETD.ELF:exec" \
+    --file "/bin/tftpd:$BUILD_DIR/TFTPD.ELF:exec" \
+    --file "/bin/tftp:$BUILD_DIR/TFTP.ELF:exec" \
+    --file "/bin/desktop:$BUILD_DIR/DESKTOP.ELF:exec" \
+    --file "/bin/startlxde:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/openbox:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/pcmanfm:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/startlxqt:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/lxqt-panel:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/pcmanfm-qt:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/gnome-shell:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/mutter:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/gnome-session:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/notepad:$BUILD_DIR/NOTEPAD.ELF:exec" \
+    --file "/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec" \
+    --file "/bin/webviewer:$BUILD_DIR/WEBVIEWER.ELF:exec" \
+    --file "/bin/status_cgi:$BUILD_DIR/STATUS_CGI.ELF:exec" \
+    --file "/bin/less:$BUILD_DIR/LESS.ELF:exec" \
+    --file "/bin/more:$BUILD_DIR/MORE.ELF:exec" \
+    --file "/bin/find:$BUILD_DIR/FIND.ELF:exec" \
+    --file "/bin/sort:$BUILD_DIR/SORT.ELF:exec" \
+    --file "/bin/uniq:$BUILD_DIR/UNIQ.ELF:exec" \
+    --file "/bin/xargs:$BUILD_DIR/XARGS.ELF:exec" \
+    --file "/bin/test:$BUILD_DIR/TEST.ELF:exec" \
+    --file "/bin/[:$BUILD_DIR/TEST.ELF:exec" \
+    --file "/bin/sshd:$BUILD_DIR/SSHD.ELF:exec" \
+    --file "/bin/ssh:$BUILD_DIR/SSH.ELF:exec" \
+    --file "/bin/sleep:$BUILD_DIR/SLEEP.ELF:exec" \
+    --file "/bin/which:$BUILD_DIR/WHICH.ELF:exec" \
+    --file "/bin/env:$BUILD_DIR/ENV.ELF:exec" \
+    --file "/bin/cut:$BUILD_DIR/CUT.ELF:exec" \
+    --file "/bin/tr:$BUILD_DIR/TR.ELF:exec" \
+    --file "/bin/df:$BUILD_DIR/DF.ELF:exec" \
+    --file "/bin/du:$BUILD_DIR/DU.ELF:exec" \
+    --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec" \
+    --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \
+    --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \
+    --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \
+    --file "/bin/watch:$BUILD_DIR/WATCH.ELF:exec" \
+    --file "/bin/sed:$BUILD_DIR/SED.ELF:exec" \
+    --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \
+    --file "/bin/cmp:$BUILD_DIR/CMP.ELF:exec" \
+    --file "/bin/patch:$BUILD_DIR/PATCH.ELF:exec" \
+    --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec" \
+    --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \
+    --file "/bin/gunzip:$BUILD_DIR/GUNZIP.ELF:exec" \
+    --file "/bin/route:$BUILD_DIR/ROUTE.ELF:exec" \
+    --file "/bin/traceroute:$BUILD_DIR/TRACEROUTE.ELF:exec" \
+    --file "/bin/dig:$BUILD_DIR/DIG.ELF:exec" \
+    --file "/bin/arp:$BUILD_DIR/ARP.ELF:exec" \
+    --file "/bin/lscpu:$BUILD_DIR/LSCPU.ELF:exec" \
+    --file "/bin/lspci:$BUILD_DIR/LSPCI.ELF:exec" \
+    --file "/bin/gpuinfo:$BUILD_DIR/GPUINFO.ELF:exec" \
+    --file "/bin/sndinfo:$BUILD_DIR/SNDINFO.ELF:exec" \
+    --file "/bin/acpi:$BUILD_DIR/ACPI.ELF:exec" \
+    --file "/bin/xsdisplay:$BUILD_DIR/XSDISPLAY.ELF:exec" \
+    --file "/bin/dbus-daemon:$BUILD_DIR/DBUS_DAEMON.ELF:exec" \
+    --file "/bin/dltest:$BUILD_DIR/DLTEST.ELF:exec" \
+    --file "/bin/display-protocols:$BUILD_DIR/DISPLAY_PROTOCOLS.ELF:exec" \
+    --file "/bin/x11-server:$BUILD_DIR/DISPLAY_PROTOCOLS.ELF:exec" \
+    --file "/bin/wayland-compositor:$BUILD_DIR/DISPLAY_PROTOCOLS.ELF:exec" \
+    --dir "/lib" \
+    --file "/lib/ld-akaos.so:$BUILD_DIR/LD_AKAOS.ELF:exec" \
+    --file "/lib/libc.so.6:$BUILD_DIR/libc.so.6:0444" \
+    --file "/lib/libm.so.6:$BUILD_DIR/libm.so.6:0444" \
+    --file "/lib/libc.so:$BUILD_DIR/libc.so.6:0444" \
+    --file "/lib/libc++.so.1:$BUILD_DIR/libc++.so.1:0444" \
+    --file "/lib/libc++.so:$BUILD_DIR/libc++.so.1:0444" \
+    --file "/lib/libc++abi.so.1:$BUILD_DIR/libc++abi.so.1:0444" \
+    --file "/lib/libc++abi.so:$BUILD_DIR/libc++abi.so.1:0444" \
+    --file "/lib/libunwind.so.1:$BUILD_DIR/libunwind.so.1:0444" \
+    --file "/lib/libunwind.so:$BUILD_DIR/libunwind.so.1:0444" \
+    --file "/lib/libakaos-cxx.so:$BUILD_DIR/libakaos-cxx.so:0444" \
+    --file "/lib/libakaos-demo.so:$BUILD_DIR/libakaos-demo.so:0444" \
+    --file "/lib/libakaos-static.so:$BUILD_DIR/libakaos-static.so:0444" \
+    --file "/lib/libakaos-versioned.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-dependent.so:$BUILD_DIR/libakaos-dependent.so:0444" \
+    --file "/lib/libakaos-loader-fanout.so:$BUILD_DIR/libakaos-loader-fanout.so:0444" \
+    --file "/lib/libakaos-loader-dep-0.so:$BUILD_DIR/libakaos-loader-dep-0.so:0444" \
+    --file "/lib/libakaos-loader-dep-1.so:$BUILD_DIR/libakaos-loader-dep-1.so:0444" \
+    --file "/lib/libakaos-loader-dep-2.so:$BUILD_DIR/libakaos-loader-dep-2.so:0444" \
+    --file "/lib/libakaos-loader-dep-3.so:$BUILD_DIR/libakaos-loader-dep-3.so:0444" \
+    --file "/lib/libakaos-loader-dep-4.so:$BUILD_DIR/libakaos-loader-dep-4.so:0444" \
+    --file "/lib/libakaos-capacity-00.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-01.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-02.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-03.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-04.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-05.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-06.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-07.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-08.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-09.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-10.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libakaos-capacity-11.so:$BUILD_DIR/libakaos-versioned.so:0444" \
+    --file "/lib/libpthread.so:$BUILD_DIR/libpthread.so:0444" \
+    --file "/lib/libpthread.so.0:$BUILD_DIR/libpthread.so:0444" \
+    --file "/lib/libglib.so:$BUILD_DIR/libglib.so:0444" \
+    --file "/lib/libglib-2.0.so.0:$BUILD_DIR/libglib.so:0444" \
+    --file "/lib/libgobject-2.0.so.0:$BUILD_DIR/libglib.so:0444" \
+    --file "/lib/libgio.so:$BUILD_DIR/libgio.so:0444" \
+    --file "/lib/libgio-2.0.so.0:$BUILD_DIR/libgio.so:0444" \
+    --file "/lib/libgtk.so:$BUILD_DIR/libgtk.so:0444" \
+    --file "/lib/libgtk-3.so.0:$BUILD_DIR/libgtk.so:0444" \
+    --file "/lib/libgdk-3.so.0:$BUILD_DIR/libgtk.so:0444" \
+    --file "/lib/libgtk-4.so:$BUILD_DIR/libgtk-4.so:0444" \
+    --file "/lib/libgtk-4.so.1:$BUILD_DIR/libgtk-4.so:0444" \
+    --file "/lib/libgdk-4.so.1:$BUILD_DIR/libgtk-4.so:0444" \
+    --file "/lib/libQt6Core.so:$BUILD_DIR/libQt6Core.so:0444" \
+    --file "/lib/libQt6Core.so.6:$BUILD_DIR/libQt6Core.so:0444" \
+    --file "/lib/libQt6Gui.so:$BUILD_DIR/libQt6Gui.so:0444" \
+    --file "/lib/libQt6Gui.so.6:$BUILD_DIR/libQt6Gui.so:0444" \
+    --file "/lib/libQt6Widgets.so:$BUILD_DIR/libQt6Widgets.so:0444" \
+    --file "/lib/libQt6Widgets.so.6:$BUILD_DIR/libQt6Widgets.so:0444" \
+    --file "/etc/passwd:$ROOT_DIR/userspace/etc/passwd:0644" \
+    --file "/etc/group:$ROOT_DIR/userspace/etc/group:0644" \
+    --file "/etc/sudoers:$ROOT_DIR/userspace/etc/sudoers:0440" \
+    --file "/etc/shadow:$ROOT_DIR/userspace/etc/shadow:0600" \
+    --file "/etc/akaos.conf:$ROOT_DIR/userspace/etc/akaos.conf:0644" \
+    --file "/etc/dbus-services.conf:$ROOT_DIR/userspace/etc/dbus-services.conf:0644" \
+    --file "/etc/resolv.conf:$ROOT_DIR/userspace/etc/resolv.conf:0644" \
+    --file "/etc/fstab:$ROOT_DIR/userspace/etc/fstab:0644" \
+    --file "/etc/aurora-apps:$ROOT_DIR/userspace/etc/aurora-apps:0644" \
+    --dir "/var" \
+    --dir "/var/www" \
+    --dir "/var/www/cgi-bin" \
+    --file "/var/www/cgi-bin/status:$BUILD_DIR/STATUS_CGI.ELF:exec" \
+    --file "/var/www/index.html:$ROOT_DIR/userspace/var/www/index.html:0644" \
+    --data "/etc/motd:akaOS XSCore initramfs\n"
+
+(cd "$ROOT_DIR/build" && llvm-objcopy -I binary -O elf32-i386 -B i386 \
+    initramfs32.img initramfs32_archive.o)
+
+echo "[DONE] Built $ROOT_DIR/build/initramfs32.img"
