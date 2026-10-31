@@ -1,7 +1,7 @@
 # akaOS
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.1-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.1-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.2-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.2-green.svg)](sdk/include/akaos/version.h)
 
 akaOS is an independent Unix-like operating system built from scratch around the **XSCore** kernel. It runs entirely on its own kernel and userspace — it does not use the Linux kernel or Linux userspace at runtime. Linux is used solely as a cross-compilation host.
 
@@ -9,18 +9,28 @@ akaOS is an independent Unix-like operating system built from scratch around the
 
 ## Progress
 
-### System Subsystems & Drivers
+### Supported CPU Architectures
+
+| Architecture | Port Status & Kernel Target | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **x86-64 (AMD64)** | Full Image Boot-Tested (UEFI GOP & BIOS Multiboot2, SMP, PCI, VirtIO) | 98% | `[██████████]` 98% |
+| **x86-32 (i386)** | Full Image Boot-Tested (UEFI FAT32 & BIOS ATA/IDE Persistence) | 92% | `[█████████░]` 92% |
+| **AArch64 (ARM 64-bit)** | Native Kernel & Userspace Boot-Tested (MMU, Exceptions, VirtIO-MMIO) | 88% | `[████████░░]` 88% |
+| **ARM32 (ARMv7-A)** | Native Kernel & Userspace Boot-Tested (MMU, Direct Kernel QEMU `virt`) | 85% | `[████████░░]` 85% |
+| **RISC-V64 (RV64GC)** | Native Kernel & Userspace Boot-Tested (Sv39 Paging, VirtIO-MMIO) | 85% | `[████████░░]` 85% |
+| **RISC-V32 (RV32GC)** | Native Kernel & Userspace Boot-Tested (Sv32 Paging, Direct Kernel QEMU `virt`) | 82% | `[████████░░]` 82% |
+
+### System Subsystems & Hardware Drivers
 
 | Target Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
 | **Memory Management** | 4-Level Paging, Physical Page Allocator, NX, Guard Stacks, COW, Demand Paging | 95% | `[█████████░]` 95% |
-| **CPU Architecture HAL** | x86-64, x86-32, AArch64, ARM32, RISC-V64, RISC-V32 Multi-Arch Drivers | 90% | `[█████████░]` 90% |
 | **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Signals | 88% | `[████████░░]` 88% |
 | **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen Compositor, X11 Display Server, Mode Query | 85% | `[████████░░]` 85% |
 | **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
+| **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX ABI Subset | 82% | `[████████░░]` 82% |
 | **Networking Stack** | VirtIO-Net, IPv4/ARP/UDP/TCP Sockets, DNS Resolver, HTTP Server | 80% | `[████████░░]` 80% |
 | **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 70% | `[███████░░░]` 70% |
-| **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX ABI Subset | 82% | `[████████░░]` 82% |
 
 ### Desktop Environments & Window Managers
 
