@@ -2011,6 +2011,10 @@ static int apply_relocations(struct dl_object *object, const struct elf_dyn *dyn
         else if (is_symbol_relocation(type) && resolve_symbol(object, index, &value)) {
             value += (uintptr_t)entry->addend;
         } else {
+            const char *sym_name = object_symbol_name(object, index);
+            printf("akaos ld: unresolved relocation for symbol '%s' (type %u, index %u) in %s\n",
+                   sym_name ? sym_name : "(null)", type, index, object->path ? object->path : "(unknown)");
+            fflush(stdout);
             set_error("dlopen: unsupported or unresolved relocation");
             return 0;
         }
