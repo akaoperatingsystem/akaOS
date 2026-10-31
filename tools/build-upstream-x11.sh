@@ -94,6 +94,7 @@ PACKAGES=(
     "libXcursor|1.2.2|libXcursor-1.2.2.tar.gz|$LIB_URL/libXcursor-1.2.2.tar.gz|98c3a30a3f85274c167d1ac5419d681ce41f14e27bfa5fe3003c8172cd8af104||libXcursor.so.1"
     "libXtst|1.2.5|libXtst-1.2.5.tar.gz|$LIB_URL/libXtst-1.2.5.tar.gz|244ba6e1c5ffa44f1ba251affdfa984d55d99c94bb925a342657e5e7aaf6d39c||libXtst.so.6"
     "libXft|2.3.8|libXft-2.3.8.tar.gz|$LIB_URL/libXft-2.3.8.tar.gz|32e48fe2d844422e64809e4e99b9d8aed26c1b541a5acf837c5037b8d9f278a8||libXft.so.2"
+    "libXinerama|1.1.5|libXinerama-1.1.5.tar.xz|$LIB_URL/libXinerama-1.1.5.tar.xz|5094d1f0fcc1828cb1696d0d39d9e866ae32520c54d01f618f1a3c1e30c2085c||libXinerama.so.1"
 )
 
 selected_packages() {

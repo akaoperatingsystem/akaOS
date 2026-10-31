@@ -2805,6 +2805,44 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" ]]; then
     done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxsession" -type f 2>/dev/null | sort)
 fi
 
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" ]]; then
+    echo "[BUILD] Staging upstream XFCE components & xfwm4"
+    UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+        --file "/usr/local/bin/xfwm4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4:exec"
+        --dir "/usr/local/share/xfwm4"
+        --dir "/usr/local/share/themes"
+    )
+    for xfce_library in libxfce4util.so.7 libxfconf-0.so.3 libxfce4ui-2.so.0 libxfce4kbd-private-3.so.0; do
+        library_path="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib"             -maxdepth 1 -type f -name "${xfce_library}.*" -print | sort -V | tail -n 1)"
+        [[ -n "$library_path" ]] || continue
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/lib/$xfce_library:$library_path:0444"
+            --file "/usr/local/lib/$xfce_library:$library_path:0444"
+        )
+    done
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfconf-query" ]]; then
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/usr/local/bin/xfconf-query:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfconf-query:exec"
+            --file "/usr/local/lib/xfce4/xfconf/xfconfd:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/xfce4/xfconf/xfconfd:exec"
+            --dir "/usr/local/lib/xfce4"
+            --dir "/usr/local/lib/xfce4/xfconf"
+            --dir "/usr/local/share/dbus-1"
+            --dir "/usr/local/share/dbus-1/services"
+        )
+        if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/dbus-1/services/org.xfce.Xfconf.service" ]]; then
+            UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+                --file "/usr/local/share/dbus-1/services/org.xfce.Xfconf.service:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/dbus-1/services/org.xfce.Xfconf.service:0444"
+            )
+        fi
+    fi
+    while IFS= read -r share_file; do
+        relative_path="${share_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/usr/local/$relative_path:$share_file:0444"
+        )
+    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xfwm4" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -type f 2>/dev/null | sort)
+fi
+
 UPSTREAM_FREETYPE_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 ]]; then
     UPSTREAM_FREETYPE_INITRAMFS_ARGS=(
@@ -2833,7 +2871,7 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
         libX11.so.6 libXext.so.6 libXRes.so.1 libXrender.so.1 libXfixes.so.3 \
         libXdamage.so.1 libXcomposite.so.1 libXi.so.6 libXrandr.so.2 \
         libXcursor.so.1 libXtst.so.6 libxcb.so.1 libXau.so.6 \
-        libXdmcp.so.6 libXft.so.2 ; do
+        libXdmcp.so.6 libXft.so.2 libXinerama.so.1 ; do
         if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/$x11_library" ]]; then
             UPSTREAM_X11_INITRAMFS_ARGS+=(
                 --file "/lib/$x11_library:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/$x11_library:0444"
