@@ -108,6 +108,7 @@ uid_t getuid(void);
 uid_t geteuid(void);
 gid_t getgid(void);
 gid_t getegid(void);
+int getgroups(int size, gid_t list[]);
 int setuid(uid_t uid);
 int setgid(gid_t gid);
 int setpgid(pid_t pid, pid_t pgid);

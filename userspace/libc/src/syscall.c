@@ -1702,6 +1702,22 @@ gid_t getegid(void) {
     return (gid_t)syscall3(AKAOS_SYSCALL_GETEGID, 0, 0, 0);
 }
 
+int getgroups(int size, gid_t list[]) {
+    if (size < 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (size == 0) {
+        return 1;
+    }
+    if (!list) {
+        errno = EFAULT;
+        return -1;
+    }
+    list[0] = getegid();
+    return 1;
+}
+
 int setuid(uid_t uid) {
     return (int)translate_result(syscall3(AKAOS_SYSCALL_SETUID, uid, 0, 0));
 }
