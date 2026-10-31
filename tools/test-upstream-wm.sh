@@ -156,7 +156,7 @@ try:
               "/usr/local/bin/lxpanel --profile default & sleep 15; ps; "
               "echo LXPANEL-RUNNING=$?; "
               "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
-              "/usr/local/bin/pcmanfm --desktop --profile default & sleep 12; ps; "
+              "/usr/local/bin/pcmanfm --desktop --profile default & sleep 15; ps; "
               "echo PCMANFM-RUNNING=$?")
     if not wait_for("x11 wm client: reparented into frame", 240):
         print("[FAIL] The upstream window manager did not take the window over.",
