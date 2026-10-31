@@ -381,6 +381,14 @@ struct dirent *readdir(DIR *directory) {
     return &directory->current_entry;
 }
 
+static mode_t process_umask = 0022;
+
+mode_t umask(mode_t mask) {
+    mode_t previous = process_umask;
+    process_umask = mask & 0777;
+    return previous;
+}
+
 int closedir(DIR *directory) {
     if (!directory) {
         errno = EBADF;

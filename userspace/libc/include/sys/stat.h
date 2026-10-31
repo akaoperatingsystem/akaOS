@@ -81,6 +81,7 @@ int akaos_stat(const char *path, struct akaos_stat *status);
 int mkdir(const char *path, mode_t mode);
 int mkdirat(int directory, const char *path, mode_t mode);
 int mkfifo(const char *path, mode_t mode);
+mode_t umask(mode_t mask);
 int chmod(const char *path, mode_t mode);
 int fchmod(int descriptor, mode_t mode);
 int fchmodat(int directory, const char *path, mode_t mode, int flags);
