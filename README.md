@@ -1,7 +1,7 @@
 # akaOS
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.0-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.0-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.1-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.1-green.svg)](sdk/include/akaos/version.h)
 
 akaOS is an independent Unix-like operating system built from scratch around the **XSCore** kernel. It runs entirely on its own kernel and userspace — it does not use the Linux kernel or Linux userspace at runtime. Linux is used solely as a cross-compilation host.
 
