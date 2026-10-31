@@ -7,7 +7,7 @@
 
 #define X_MAX_CLIENTS 8
 #define X_MAX_WINDOWS 512
-#define X_MAX_PIXMAPS 128
+#define X_MAX_PIXMAPS 512
 #define X_MAX_GCS 128
 #define X_MAX_ATOMS 512
 #define X_MAX_PROPERTIES 512
@@ -42,7 +42,7 @@ static inline uint64_t server_now_millis(void) {
 extern int server_trace_enabled;
 
 /* Total backing-store budget shared by all mapped windows and pixmaps. */
-#define X_BACKING_POOL_BYTES (12u * 1024u * 1024u)
+#define X_BACKING_POOL_BYTES (64u * 1024u * 1024u)
 
 #define X_INPUT_BUFFER_SIZE (256u * 1024u)
 #define X_OUTPUT_BUFFER_SIZE (256u * 1024u)
