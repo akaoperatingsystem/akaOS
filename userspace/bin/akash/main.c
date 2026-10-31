@@ -1268,11 +1268,11 @@ static char *trim_str(char *str) {
 static int execute_command_line(const char *cmd_line) {
     if (!cmd_line || !*cmd_line) return 0;
 
-    char expanded[512];
+    char expanded[2048];
     expand_variables(cmd_line, expanded, sizeof(expanded));
 
     int should_run = 1;
-    char sub_cmd[256];
+    char sub_cmd[512];
     int sub_len = 0;
     int in_quote = 0;
 
