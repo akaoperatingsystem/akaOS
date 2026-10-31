@@ -389,6 +389,29 @@ mode_t umask(mode_t mask) {
     return previous;
 }
 
+int daemon(int nochdir, int noclose) {
+    pid_t pid = fork();
+    if (pid < 0) return -1;
+    if (pid > 0) _exit(0);
+
+    if (setsid() < 0) return -1;
+
+    if (!nochdir) {
+        (void)chdir("/");
+    }
+
+    if (!noclose) {
+        int fd = open("/dev/null", O_RDWR, 0);
+        if (fd >= 0) {
+            (void)dup2(fd, STDIN_FILENO);
+            (void)dup2(fd, STDOUT_FILENO);
+            (void)dup2(fd, STDERR_FILENO);
+            if (fd > 2) (void)close(fd);
+        }
+    }
+    return 0;
+}
+
 int closedir(DIR *directory) {
     if (!directory) {
         errno = EBADF;

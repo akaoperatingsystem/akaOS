@@ -134,6 +134,7 @@ pid_t vfork(void);
 int tty_set_echo(int enabled);
 unsigned int sleep(unsigned int seconds);
 int usleep(useconds_t usec);
+int daemon(int nochdir, int noclose);
 _Noreturn void _exit(int status);
 
 #ifdef __cplusplus
