@@ -95,7 +95,13 @@ if [[ ! -f "$STAGE_PREFIX/lib/libxfconf-0.so" ]]; then
     }
 
     echo "[xfconf] building xfconf $VERSION"
-    make -C "$BUILD_DIR_PATH" -j1         LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"         >"$LOG_DIR/xfconf-build.log" 2>&1 || {
+    glib-genmarshal --prefix=_xfconf_marshal "$SOURCE_DIR/common/xfconf-marshal.list" --header > "$BUILD_DIR_PATH/common/xfconf-marshal.h"
+    echo '#include "xfconf-marshal.h"' > "$BUILD_DIR_PATH/common/xfconf-marshal.c"
+    glib-genmarshal --prefix=_xfconf_marshal "$SOURCE_DIR/common/xfconf-marshal.list" --body >> "$BUILD_DIR_PATH/common/xfconf-marshal.c"
+
+    make -C "$BUILD_DIR_PATH" -j1 \
+        LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
+        >"$LOG_DIR/xfconf-build.log" 2>&1 || {
         echo "[xfconf] build failed" >&2
         tail -30 "$LOG_DIR/xfconf-build.log" >&2
         exit 1
