@@ -496,6 +496,7 @@ int64_t xscore_socket_get_option(int sock_id, int level, int option,
 
 int64_t xscore_socket_set_option(int sock_id, int level, int option,
                                  uint32_t value) {
+    (void)value;
     uint32_t current = 0U;
     int64_t result = xscore_socket_get_option(sock_id, level, option, &current);
     if (result < 0) return result;
