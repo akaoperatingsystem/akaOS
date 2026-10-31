@@ -1,7 +1,7 @@
 # akaOS
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.9-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.9-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.10-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.10-green.svg)](sdk/include/akaos/version.h)
 
 akaOS is an independent Unix-like operating system built from scratch around the **XSCore** kernel. It runs entirely on its own kernel and userspace — it does not use the Linux kernel or Linux userspace at runtime. Linux is used solely as a cross-compilation host.
 
@@ -193,6 +193,34 @@ akaOS maintains an extensive automated QEMU test suite:
 # Test user authentication and privilege separation
 ./tools/test-auth.sh
 ```
+
+---
+
+## Contributing, Bug Reports & Pull Requests
+
+We welcome issues, feature requests, bug reports, and pull requests!
+
+### Reporting Bugs
+If you find a bug, crash, or hardware incompatibility:
+1. Open an issue on our [GitHub Issues](https://github.com/akaoperatingsystem/akaOS/issues) tracker.
+2. Include the targeted architecture (`x86-64`, `x86-32`, `AArch64`, `ARM32`, `RISC-V64`, or `RISC-V32`) and firmware (`UEFI` or `BIOS`).
+3. Attach relevant reproduction steps and the serial boot/panic output (or output from `./test.sh`).
+
+### Submitting Pull Requests
+1. **Fork** the repository and create your feature branch:
+   ```sh
+   git checkout -b feature/your-feature-name
+   ```
+2. **Follow Upstream Purity**: If adding support for window managers or desktop environments, do **not** patch or modify upstream code. All compatibility shims must be implemented inside akaOS's own subsystems (kernel, libc, display server, or Wayland bridge).
+3. **Verify Builds & Tests**:
+   ```sh
+   # Verify all 6 architecture ports build cleanly
+   ./tools/build-arch-smoke.sh --all
+
+   # Run automated QEMU regression tests
+   ./test.sh
+   ```
+4. **Submit a Pull Request** against the `main` branch on [GitHub Pull Requests](https://github.com/akaoperatingsystem/akaOS/pulls).
 
 ---
 
