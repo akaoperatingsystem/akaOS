@@ -1,7 +1,7 @@
 # akaOS Development Progress
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.6-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.6-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.7-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.7-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
 
@@ -25,7 +25,7 @@ This document tracks the live implementation progress, hardware readiness, subsy
 | Target Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
 | **Memory Management** | 4-Level Paging, Physical Page Allocator, NX, Guard Stacks, COW, Demand Paging | 95% | `[█████████░]` 95% |
-| **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Signals | 88% | `[████████░░]` 88% |
+| **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Signals, Expanded Process Table (64) | 92% | `[█████████░]` 92% |
 | **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen Compositor, X11 Display Server, Mode Query | 85% | `[████████░░]` 85% |
 | **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
 | **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX ABI Subset | 82% | `[████████░░]` 82% |
