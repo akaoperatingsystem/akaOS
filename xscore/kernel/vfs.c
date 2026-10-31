@@ -1919,7 +1919,7 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
         }
         if (target == proc_processes_node) {
             if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
-            uint8_t generated[512];
+            uint8_t generated[2048];
             size_t size = xscore_process_proc_list((char *)generated, sizeof(generated));
             return xscore_fd_open_generated(table, generated, size);
         }

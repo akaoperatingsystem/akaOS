@@ -1,7 +1,7 @@
 # akaOS Development Progress
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.4-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.4-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.5-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.5-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
 
@@ -41,7 +41,7 @@ All desktop environments and window managers run as **completely unmodified upst
 | Desktop / Window Manager | Upstream Version | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
 | **Openbox WM** | Unmodified Upstream 3.6.1 | 100% | `[██████████]` 100% |
-| **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream | 90% | `[█████████░]` 90% |
+| **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream | 95% | `[██████████]` 95% |
 | **LXQt Desktop & Session** | Unmodified Upstream | 65% | `[██████░░░░]` 65% |
 | **XFCE Desktop & Xfwm4** | Unmodified Upstream | 35% | `[███░░░░░░░]` 35% |
 | **MATE Desktop & Marco** | Unmodified Upstream | 30% | `[███░░░░░░░]` 30% |

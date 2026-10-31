@@ -499,11 +499,10 @@ int64_t xscore_socket_set_option(int sock_id, int level, int option,
     uint32_t current = 0U;
     int64_t result = xscore_socket_get_option(sock_id, level, option, &current);
     if (result < 0) return result;
-    if ((level == AKAOS_IPPROTO_TCP && option == AKAOS_TCP_NODELAY && value) ||
+    if ((level == AKAOS_IPPROTO_TCP && option == AKAOS_TCP_NODELAY) ||
         (level == AKAOS_SOL_SOCKET &&
          (option == AKAOS_SO_KEEPALIVE || option == AKAOS_SO_BROADCAST ||
-          option == AKAOS_SO_REUSEADDR || option == AKAOS_SO_REUSEPORT) &&
-         value == 0U))
+          option == AKAOS_SO_REUSEADDR || option == AKAOS_SO_REUSEPORT)))
         return 0;
     /* Reject options whose behavior the current transport does not implement. */
     return -AKAOS_EOPNOTSUPP;
