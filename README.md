@@ -7,20 +7,34 @@ akaOS is an independent Unix-like operating system built from scratch around the
 
 ---
 
-## Desktop Environments & Window Managers Readiness Dashboard
+## Progress
 
-| Subsystem / Target | Upstream Status | Readiness | Progress Bar |
+### System Subsystems & Drivers
+
+| Target Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **Native X11 Server & Compositor** | Custom `xserver` + `lumen` | 85% | `[████████░░]` 85% |
-| **Openbox WM** | Unmodified Upstream (3.6.1) | 100% | `[██████████]` 100% |
+| **Memory Management** | 4-Level Paging, Physical Page Allocator, NX, Guard Stacks, COW, Demand Paging | 95% | `[█████████░]` 95% |
+| **CPU Architecture HAL** | x86-64, x86-32, AArch64, ARM32, RISC-V64, RISC-V32 Multi-Arch Drivers | 90% | `[█████████░]` 90% |
+| **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Signals | 88% | `[████████░░]` 88% |
+| **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen Compositor, X11 Display Server, Mode Query | 85% | `[████████░░]` 85% |
+| **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
+| **Networking Stack** | VirtIO-Net, IPv4/ARP/UDP/TCP Sockets, DNS Resolver, HTTP Server | 80% | `[████████░░]` 80% |
+| **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 70% | `[███████░░░]` 70% |
+| **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX ABI Subset | 82% | `[████████░░]` 82% |
+
+### Desktop Environments & Window Managers
+
+| Desktop / Window Manager | Upstream Version | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **Openbox WM** | Unmodified Upstream 3.6.1 | 100% | `[██████████]` 100% |
 | **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream | 90% | `[█████████░]` 90% |
-| **LXQt Desktop** | Unmodified Upstream | 65% | `[██████░░░░]` 65% |
+| **LXQt Desktop & Session** | Unmodified Upstream | 65% | `[██████░░░░]` 65% |
 | **XFCE Desktop & Xfwm4** | Unmodified Upstream | 35% | `[███░░░░░░░]` 35% |
 | **MATE Desktop & Marco** | Unmodified Upstream | 30% | `[███░░░░░░░]` 30% |
-| **Cinnamon Desktop & Muffin** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
 | **KDE Plasma & KWin** | Unmodified Upstream | 25% | `[██░░░░░░░░]` 25% |
 | **GNOME Desktop & Mutter** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
-| **Overall Desktop & WM Objective** | Native Unmodified Upstream | 52% | `[█████░░░░░]` 52% |
+| **Cinnamon Desktop & Muffin** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
+| **Overall System Completion** | Full Native Operating System | 65% | `[██████░░░░]` 65% |
 
 akaOS provides verified native boot paths across six CPU architectures: **x86-64**, **x86-32**, **AArch64**, **ARM32**, **RISC-V64**, and **RISC-V32**.
 
