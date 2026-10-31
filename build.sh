@@ -475,6 +475,7 @@ USER_LIBC_SOURCES=(
     "$ROOT_DIR/userspace/libc/src/semaphore.c"
     "$ROOT_DIR/userspace/libc/src/cxxabi.c"
     "$ROOT_DIR/userspace/libc/src/crt_init.c"
+    "$ROOT_DIR/userspace/libc/src/getopt.c"
 )
 USER_LIBC_OBJECTS=()
 for source in "${USER_LIBC_SOURCES[@]}"; do

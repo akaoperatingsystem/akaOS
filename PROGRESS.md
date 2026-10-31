@@ -1,6 +1,6 @@
 # akaOS Development Progress
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.11-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.12-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.10-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
@@ -28,7 +28,7 @@ This document tracks the live implementation progress, hardware readiness, subsy
 | **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Signals, Expanded Process Table (64) | 92% | `[█████████░]` 92% |
 | **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen Compositor, X11 Display Server (SHAPE, X-Resource Ext), Mode Query | 90% | `[█████████░]` 90% |
 | **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
-| **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX ABI (getgroups, umask, stat, sockets) | 86% | `[████████░░]` 86% |
+| **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX ABI (getopt, getgroups, umask, stat, sockets) | 87% | `[█████████░]` 87% |
 | **Networking Stack** | VirtIO-Net, IPv4/ARP/UDP/TCP Sockets, DNS Resolver, HTTP Server | 80% | `[████████░░]` 80% |
 | **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 70% | `[███████░░░]` 70% |
 
