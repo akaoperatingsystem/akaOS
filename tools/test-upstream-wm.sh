@@ -155,7 +155,9 @@ try:
               "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
               "/usr/local/bin/lxpanel --profile default & sleep 15; ps; "
               "echo LXPANEL-RUNNING=$?; "
-              "echo MENU-CACHED-RUNNING=0")
+              "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
+              "/usr/local/bin/pcmanfm --desktop --profile default & sleep 8; ps; "
+              "echo PCMANFM-RUNNING=$?")
     if not wait_for("x11 wm client: reparented into frame", 240):
         print("[FAIL] The upstream window manager did not take the window over.",
               flush=True)
@@ -213,6 +215,17 @@ try:
         print(output[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] LXPanel connected, loaded profile and modules, and remained active.",
+          flush=True)
+    if not wait_for("PCMANFM-RUNNING=0", 60):
+        print("[FAIL] PCManFM did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if "running pcmanfm" not in output:
+        print("[FAIL] pcmanfm was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] PCManFM desktop manager started and remained active alongside Openbox and LXPanel.",
           flush=True)
 finally:
     proc.kill()

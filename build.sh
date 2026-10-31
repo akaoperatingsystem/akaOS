@@ -2709,6 +2709,101 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
     fi
 fi
 
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" ]]; then
+    echo "[BUILD] Staging upstream PCManFM file manager"
+    UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+        --file "/usr/local/bin/pcmanfm:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm:exec"
+        --dir "/etc/xdg/pcmanfm"
+        --dir "/etc/xdg/pcmanfm/default"
+        --dir "/etc/xdg/pcmanfm/LXDE"
+        --dir "/usr/local/share/pcmanfm"
+        --dir "/usr/local/share/pcmanfm/ui"
+    )
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/pcmanfm/default/pcmanfm.conf" ]]; then
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/etc/xdg/pcmanfm/default/pcmanfm.conf:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/pcmanfm/default/pcmanfm.conf:0444"
+        )
+    fi
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/pcmanfm/LXDE/pcmanfm.conf" ]]; then
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/etc/xdg/pcmanfm/LXDE/pcmanfm.conf:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/pcmanfm/LXDE/pcmanfm.conf:0444"
+        )
+    fi
+    while IFS= read -r ui_file; do
+        relative_path="${ui_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/usr/local/$relative_path:$ui_file:0444"
+        )
+    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/pcmanfm/ui" -maxdepth 1 -type f 2>/dev/null | sort)
+fi
+
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde" ]]; then
+    echo "[BUILD] Staging upstream LXDE common session scripts & config"
+    UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+        --file "/usr/local/bin/startlxde:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde:exec"
+        --file "/usr/local/bin/openbox-lxde:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox-lxde:exec"
+        --file "/usr/local/bin/lxde-logout:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxde-logout:exec"
+        --dir "/etc/xdg/lxsession"
+        --dir "/etc/xdg/lxsession/LXDE"
+        --dir "/etc/xdg/openbox/LXDE"
+        --dir "/etc/xdg/lxpanel/LXDE"
+        --dir "/etc/xdg/lxpanel/LXDE/panels"
+        --dir "/usr/local/share/lxde"
+        --dir "/usr/local/share/lxde/images"
+        --dir "/usr/local/share/lxde/wallpapers"
+        --dir "/usr/local/share/xsessions"
+    )
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxsession/LXDE/autostart" ]]; then
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/etc/xdg/lxsession/LXDE/autostart:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxsession/LXDE/autostart:0444"
+            --file "/etc/xdg/lxsession/LXDE/desktop.conf:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxsession/LXDE/desktop.conf:0444"
+        )
+    fi
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/openbox/LXDE/rc.xml" ]]; then
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/etc/xdg/openbox/LXDE/rc.xml:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/openbox/LXDE/rc.xml:0444"
+            --file "/etc/xdg/openbox/LXDE/menu.xml:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/openbox/LXDE/menu.xml:0444"
+        )
+    fi
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/LXDE/config" ]]; then
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/etc/xdg/lxpanel/LXDE/config:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/LXDE/config:0444"
+            --file "/etc/xdg/lxpanel/LXDE/panels/panel:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/LXDE/panels/panel:0444"
+        )
+    fi
+    while IFS= read -r share_file; do
+        relative_path="${share_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/usr/local/$relative_path:$share_file:0444"
+        )
+    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxde" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xsessions" -type f 2>/dev/null | sort)
+fi
+
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" ]]; then
+    echo "[BUILD] Staging upstream LXSession binaries"
+    UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+        --file "/usr/local/bin/lxsession:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession:exec"
+        --file "/usr/local/bin/lxsettings-daemon:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsettings-daemon:exec"
+        --file "/usr/local/bin/lxsession-xdg-autostart:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession-xdg-autostart:exec"
+        --file "/usr/local/bin/lxsession-logout:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession-logout:exec"
+        --file "/usr/local/bin/lxsession-edit:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession-edit:exec"
+        --file "/usr/local/bin/lxsession-db:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession-db:exec"
+        --file "/usr/local/bin/lxlock:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxlock:exec"
+        --file "/usr/local/bin/lxsession-default:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession-default:exec"
+        --file "/usr/local/bin/lxsession-default-terminal:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession-default-terminal:exec"
+        --file "/usr/local/libexec/lxsession-xsettings:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/libexec/lxsession-xsettings:exec"
+        --dir "/usr/local/share/lxsession"
+        --dir "/usr/local/share/lxsession/ui"
+        --dir "/usr/local/share/lxsession/images"
+    )
+    while IFS= read -r share_file; do
+        relative_path="${share_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/usr/local/$relative_path:$share_file:0444"
+        )
+    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxsession" -type f 2>/dev/null | sort)
+fi
+
 UPSTREAM_FREETYPE_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 ]]; then
     UPSTREAM_FREETYPE_INITRAMFS_ARGS=(

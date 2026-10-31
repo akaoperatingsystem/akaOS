@@ -194,24 +194,32 @@ def main():
     ordered_entries = []
     emitted_paths = set()
 
-    def emit_directory(path):
-        entry = entries_by_path.get(path)
-        if (not entry or entry["type"] != ENTRY_TYPE_DIR or
-                path in emitted_paths):
+    def ensure_directory(path):
+        if not path or path == "/" or path in emitted_paths:
             return
         parent = path.rsplit("/", 1)[0]
         if parent:
-            emit_directory(parent)
-        ordered_entries.append(entry)
-        emitted_paths.add(path)
+            ensure_directory(parent)
+        if path not in emitted_paths:
+            entry = entries_by_path.get(path)
+            if not entry:
+                entry = {
+                    "path": path,
+                    "type": ENTRY_TYPE_DIR,
+                    "mode": 0o755,
+                    "data": b"",
+                }
+                entries_by_path[path] = entry
+            ordered_entries.append(entry)
+            emitted_paths.add(path)
 
     for entry in entries:
+        parent = entry["path"].rsplit("/", 1)[0]
+        if parent:
+            ensure_directory(parent)
         if entry["type"] == ENTRY_TYPE_DIR:
-            emit_directory(entry["path"])
+            ensure_directory(entry["path"])
         else:
-            parent = entry["path"].rsplit("/", 1)[0]
-            if parent:
-                emit_directory(parent)
             ordered_entries.append(entry)
             emitted_paths.add(entry["path"])
     entries = ordered_entries

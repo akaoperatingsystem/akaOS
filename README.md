@@ -1,6 +1,26 @@
 # akaOS
 
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.0-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.0-green.svg)](sdk/include/akaos/version.h)
+
 akaOS is an independent Unix-like operating system built from scratch around the **XSCore** kernel. It runs entirely on its own kernel and userspace — it does not use the Linux kernel or Linux userspace at runtime. Linux is used solely as a cross-compilation host.
+
+---
+
+## Desktop Environments & Window Managers Readiness Dashboard
+
+| Subsystem / Target | Upstream Status | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **Native X11 Server & Compositor** | Custom `xserver` + `lumen` | 85% | `[████████░░]` 85% |
+| **Openbox WM** | Unmodified Upstream (3.6.1) | 100% | `[██████████]` 100% |
+| **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream | 90% | `[█████████░]` 90% |
+| **LXQt Desktop** | Unmodified Upstream | 65% | `[██████░░░░]` 65% |
+| **XFCE Desktop & Xfwm4** | Unmodified Upstream | 35% | `[███░░░░░░░]` 35% |
+| **MATE Desktop & Marco** | Unmodified Upstream | 30% | `[███░░░░░░░]` 30% |
+| **Cinnamon Desktop & Muffin** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
+| **KDE Plasma & KWin** | Unmodified Upstream | 25% | `[██░░░░░░░░]` 25% |
+| **GNOME Desktop & Mutter** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
+| **Overall Desktop & WM Objective** | Native Unmodified Upstream | 52% | `[█████░░░░░]` 52% |
 
 akaOS provides verified native boot paths across six CPU architectures: **x86-64**, **x86-32**, **AArch64**, **ARM32**, **RISC-V64**, and **RISC-V32**.
 
