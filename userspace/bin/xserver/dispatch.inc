@@ -1842,6 +1842,115 @@ static void request_free_cursor(struct x_server *server, struct x_client *client
 }
 
 /* -------------------------------------------------------------- extensions */
+#define X_EXT_SHAPE_OPCODE 128
+#define X_EXT_SHAPE_EVENT  64
+#define X_EXT_XRES_OPCODE  129
+
+static void dispatch_shape_request(struct x_server *server,
+                                   struct x_client *client,
+                                   struct x_reader *reader) {
+    (void)server;
+    uint8_t minor = client->request_minor;
+    if (minor == 0) { /* X_ShapeQueryVersion */
+        uint8_t reply[32];
+        memset(reply, 0, sizeof(reply));
+        reply[0] = X_Reply;
+        reply_put_u16(client, reply, 2, (uint16_t)client->sequence);
+        reply_put_u32(client, reply, 4, 0U); /* length = 0 */
+        reply_put_u16(client, reply, 8, 1U); /* major = 1 */
+        reply_put_u16(client, reply, 10, 1U); /* minor = 1 */
+        x_reply_bytes(client, reply, sizeof(reply));
+        return;
+    }
+    if (minor == 5) { /* X_ShapeQueryExtents */
+        uint32_t window_id = rd_u32(client, reader);
+        int index = x_window_index(server, window_id);
+        uint8_t reply[32];
+        memset(reply, 0, sizeof(reply));
+        reply[0] = X_Reply;
+        reply_put_u16(client, reply, 2, (uint16_t)client->sequence);
+        reply_put_u32(client, reply, 4, 0U);
+        reply[8] = 0U; /* boundingShaped = False */
+        reply[9] = 0U; /* clipShaped = False */
+        if (index >= 0) {
+            struct x_window *win = &server->windows[index];
+            reply_put_u16(client, reply, 12, (uint16_t)win->x);
+            reply_put_u16(client, reply, 14, (uint16_t)win->y);
+            reply_put_u16(client, reply, 16, win->width);
+            reply_put_u16(client, reply, 18, win->height);
+            reply_put_u16(client, reply, 20, (uint16_t)win->x);
+            reply_put_u16(client, reply, 22, (uint16_t)win->y);
+            reply_put_u16(client, reply, 24, win->width);
+            reply_put_u16(client, reply, 26, win->height);
+        }
+        x_reply_bytes(client, reply, sizeof(reply));
+        return;
+    }
+    if (minor == 7) { /* X_ShapeInputSelected */
+        uint8_t reply[32];
+        memset(reply, 0, sizeof(reply));
+        reply[0] = X_Reply;
+        reply_put_u16(client, reply, 2, (uint16_t)client->sequence);
+        reply_put_u32(client, reply, 4, 0U);
+        reply[8] = 0U; /* enabled = False */
+        x_reply_bytes(client, reply, sizeof(reply));
+        return;
+    }
+    if (minor == 8) { /* X_ShapeGetRectangles */
+        uint8_t reply[32];
+        memset(reply, 0, sizeof(reply));
+        reply[0] = X_Reply;
+        reply[1] = 0U; /* Unsorted */
+        reply_put_u16(client, reply, 2, (uint16_t)client->sequence);
+        reply_put_u32(client, reply, 4, 0U);
+        reply_put_u32(client, reply, 8, 0U); /* nrects = 0 */
+        x_reply_bytes(client, reply, sizeof(reply));
+        return;
+    }
+    /* Mutation requests like ShapeRectangles, Mask, Combine, Offset, SelectInput have no reply. */
+}
+
+static void dispatch_xres_request(struct x_server *server,
+                                  struct x_client *client,
+                                  struct x_reader *reader) {
+    (void)server;
+    (void)reader;
+    uint8_t minor = client->request_minor;
+    if (minor == 0) { /* X_XResQueryVersion */
+        uint8_t reply[32];
+        memset(reply, 0, sizeof(reply));
+        reply[0] = X_Reply;
+        reply_put_u16(client, reply, 2, (uint16_t)client->sequence);
+        reply_put_u32(client, reply, 4, 0U);
+        reply_put_u16(client, reply, 8, 1U);  /* major = 1 */
+        reply_put_u16(client, reply, 10, 2U); /* minor = 2 */
+        x_reply_bytes(client, reply, sizeof(reply));
+        return;
+    }
+    if (minor == 1) { /* X_XResQueryClients */
+        uint8_t reply[32];
+        memset(reply, 0, sizeof(reply));
+        reply[0] = X_Reply;
+        reply_put_u16(client, reply, 2, (uint16_t)client->sequence);
+        reply_put_u32(client, reply, 4, 0U);
+        reply_put_u32(client, reply, 8, 0U); /* num_clients = 0 */
+        x_reply_bytes(client, reply, sizeof(reply));
+        return;
+    }
+    if (minor == 4) { /* X_XResQueryClientIds */
+        uint8_t reply[32];
+        memset(reply, 0, sizeof(reply));
+        reply[0] = X_Reply;
+        reply_put_u16(client, reply, 2, (uint16_t)client->sequence);
+        reply_put_u32(client, reply, 4, 0U);
+        reply_put_u32(client, reply, 8, 0U); /* num_ids = 0 */
+        x_reply_bytes(client, reply, sizeof(reply));
+        return;
+    }
+    /* Unknown or unsupported minor request */
+    x_reply_error(client, BadRequest, client->request_major, 0U);
+}
+
 static void request_query_extension(struct x_server *server,
                                     struct x_client *client,
                                     struct x_reader *reader) {
@@ -1853,17 +1962,29 @@ static void request_query_extension(struct x_server *server,
         x_reply_error(client, BadLength, 0, 0U);
         return;
     }
-    /* The server implements no extension, so the answer says that none is
-     * present and no name follows. */
+
     xQueryExtensionReply reply;
     memset(&reply, 0, sizeof(reply));
     reply.type = X_Reply;
     reply.sequenceNumber = (CARD16)client->sequence;
     reply.length = 0U;
-    reply.present = (BOOL)client_u8(client, 0U);
-    reply.major_opcode = (CARD8)client_u8(client, 0U);
-    reply.first_event = (CARD8)client_u8(client, 0U);
-    reply.first_error = (CARD8)client_u8(client, 0U);
+
+    if (name_length == 5 && memcmp(name, "SHAPE", 5) == 0) {
+        reply.present = (BOOL)client_u8(client, 1U);
+        reply.major_opcode = (CARD8)client_u8(client, X_EXT_SHAPE_OPCODE);
+        reply.first_event = (CARD8)client_u8(client, X_EXT_SHAPE_EVENT);
+        reply.first_error = (CARD8)client_u8(client, 0U);
+    } else if (name_length == 10 && memcmp(name, "X-Resource", 10) == 0) {
+        reply.present = (BOOL)client_u8(client, 1U);
+        reply.major_opcode = (CARD8)client_u8(client, X_EXT_XRES_OPCODE);
+        reply.first_event = (CARD8)client_u8(client, 0U);
+        reply.first_error = (CARD8)client_u8(client, 0U);
+    } else {
+        reply.present = (BOOL)client_u8(client, 0U);
+        reply.major_opcode = (CARD8)client_u8(client, 0U);
+        reply.first_event = (CARD8)client_u8(client, 0U);
+        reply.first_error = (CARD8)client_u8(client, 0U);
+    }
     x_reply_bytes(client, &reply, sizeof(reply));
 }
 
@@ -1872,13 +1993,29 @@ static void request_list_extensions(struct x_server *server,
                                     struct x_reader *reader) {
     (void)server;
     (void)reader;
+    static const char *exts[] = {"SHAPE", "X-Resource"};
+    size_t count = sizeof(exts) / sizeof(exts[0]);
+    uint8_t buffer[64];
+    size_t used = 0U;
+    for (size_t i = 0; i < count; ++i) {
+        size_t len = strlen(exts[i]);
+        buffer[used++] = (uint8_t)len;
+        memcpy(buffer + used, exts[i], len);
+        used += len;
+    }
+    size_t padded = (used + 3U) & ~3U;
+    while (used < padded) buffer[used++] = 0U;
+
     xListExtensionsReply reply;
     memset(&reply, 0, sizeof(reply));
     reply.type = X_Reply;
-    reply.nExtensions = (CARD8)client_u8(client, 0U);
+    reply.nExtensions = (CARD8)client_u8(client, (uint8_t)count);
     reply.sequenceNumber = (CARD16)client->sequence;
-    reply.length = 0U;
+    reply.length = (CARD32)client_u32(client, (uint32_t)(padded / 4U));
     x_reply_bytes(client, &reply, sizeof(reply));
+    if (padded) {
+        x_reply_bytes(client, buffer, padded);
+    }
 }
 
 /* --------------------------------------------------------------- dispatcher */
@@ -2316,6 +2453,12 @@ static void x_dispatch(struct x_server *server, struct x_client *client,
         break;
     case X_NoOperation:
         /* The request has no reply. */
+        break;
+    case X_EXT_SHAPE_OPCODE:
+        dispatch_shape_request(server, client, &reader);
+        break;
+    case X_EXT_XRES_OPCODE:
+        dispatch_xres_request(server, client, &reader);
         break;
     default:
         x_reply_error(client, BadRequest, request->type, 0U);
