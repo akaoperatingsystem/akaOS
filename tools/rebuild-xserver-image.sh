@@ -267,6 +267,38 @@ initramfs_files+=(
     "--file=/bin/grep:$BUILD_DIR/GREP.ELF:exec"
 )
 
+echo "[BUILD] user akash"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/akash/main.c" -o "$BUILD_DIR/user-akash-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-akash-main.o" \
+    -o "$BUILD_DIR/AKASH.ELF"
+initramfs_files+=(
+    "--file=/bin/akash:$BUILD_DIR/AKASH.ELF:exec"
+)
+
+echo "[BUILD] user ps"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/ps/main.c" -o "$BUILD_DIR/user-ps-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-ps-main.o" \
+    -o "$BUILD_DIR/PS.ELF"
+initramfs_files+=(
+    "--file=/bin/ps:$BUILD_DIR/PS.ELF:exec"
+)
+
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
     echo "[BUILD] upstream window manager"
     initramfs_files+=(

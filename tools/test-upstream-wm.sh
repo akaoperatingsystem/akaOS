@@ -149,14 +149,14 @@ try:
 
     # Run Openbox, the window probe, and then LXPanel. The process table is
     # used instead of shell job variables, which akash does not implement.
-    send_line("lumen --input-test & sleep 1; xserver --trace & sleep 2; "
+    send_line("lumen --input-test & sleep 1; xserver & sleep 2; "
               "env DISPLAY=:0 /usr/local/bin/openbox --sm-disable & sleep 45; "
               "env DISPLAY=:0 x11-wm-client; echo CLIENT-EXIT=$?; "
               "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
               "/usr/local/bin/lxpanel --profile default & sleep 15; ps; "
               "echo LXPANEL-RUNNING=$?; "
               "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
-              "/usr/local/bin/pcmanfm --desktop --profile default & sleep 8; ps; "
+              "/usr/local/bin/pcmanfm --desktop --profile default & sleep 12; ps; "
               "echo PCMANFM-RUNNING=$?")
     if not wait_for("x11 wm client: reparented into frame", 240):
         print("[FAIL] The upstream window manager did not take the window over.",
@@ -197,8 +197,7 @@ try:
         print("[FAIL] LXPanel did not connect to X11.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
-    if not wait_for("xserver: t", 90, after=1):
-        pass
+
     if not wait_for("LXPANEL-RUNNING=0", 60):
         print("[FAIL] LXPanel did not remain active after startup.",
               flush=True)
