@@ -16,4 +16,3 @@ int xscore_heap_free(void *pointer);
 void xscore_heap_get_stats(struct xscore_heap_stats *stats);
 
 #endif
-

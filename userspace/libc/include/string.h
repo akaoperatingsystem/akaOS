@@ -52,4 +52,3 @@ const char *strsignal(int sig);
 #endif
 
 #endif
-

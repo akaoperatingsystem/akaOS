@@ -1155,4 +1155,3 @@ float remquof(float value, float divisor, int *quotient) {
 long double remquol(long double value, long double divisor, int *quotient) {
     return (long double)remquo((double)value, (double)divisor, quotient);
 }
-

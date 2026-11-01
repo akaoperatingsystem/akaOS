@@ -35,4 +35,3 @@ int xscore_gpu_set_mode(uint32_t width, uint32_t height, uint32_t bpp);
 size_t xscore_gpu_format_proc_gpuinfo(char *buf, size_t max_size);
 
 #endif
-

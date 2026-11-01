@@ -355,7 +355,7 @@ typedef struct {
     CARD8          rootDepth;
     CARD8          nDepths;  /* number of xDepth structures following */
 } xWindowRoot;
-
+
 
 /*****************************************************************
  * Structure Defns
@@ -412,7 +412,7 @@ typedef struct {
 } xrgb;
 
 typedef CARD8 KEYCODE;
-
+
 
 /*****************
  * XRep:
@@ -965,7 +965,7 @@ typedef struct {
     CARD32 pad7;
     } xListHostsReply;
 
-
+
 
 
 /*****************************************************************
@@ -1302,7 +1302,7 @@ typedef union {
     xEvent event;
 } xReply;
 
-
+
 
 /*****************************************************************
  * REQUESTS
@@ -2010,7 +2010,7 @@ typedef struct { /* followed by LIST of ATOM */
     INT16 nPositions;
     } xRotatePropertiesReq;
 
-
+
 
 /* Reply codes */
 

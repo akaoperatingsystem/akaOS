@@ -183,4 +183,3 @@ typedef struct {
 } EFI_SYSTEM_TABLE;
 
 #endif
-

@@ -1813,4 +1813,3 @@ void perror(const char *s) {
         fdprintf(STDERR_FILENO, "%s\n", strerror(errno));
     }
 }
-

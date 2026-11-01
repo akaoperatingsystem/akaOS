@@ -22,4 +22,3 @@ int xscore_pmm_refcount_dec(uint64_t physical_address);
 uint16_t xscore_pmm_refcount_get(uint64_t physical_address);
 
 #endif
-

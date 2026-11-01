@@ -433,4 +433,3 @@ size_t xscore_gpu_format_proc_gpuinfo(char *buf, size_t max_size) {
 
     return off;
 }
-

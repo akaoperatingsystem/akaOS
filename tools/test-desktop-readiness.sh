@@ -80,7 +80,7 @@ def send_text(command, repeat_return=True, wait_for_prompt=True, key_delay=0.05)
 qemu_cmd = [
     # Large UEFI images can stall when QEMU reads them from Windows DrvFS.
     # Callers may point this test at an ext4-cached copy.
-    
+
     "qemu-system-x86_64", "-machine", "q35",
     "-m", "512M" if (qt_wayland_smoke_packaged or qt_quick_smoke_packaged) else "256M",
     "-drive", f"if=pflash,format=raw,readonly=on,file={ovmf_code}",

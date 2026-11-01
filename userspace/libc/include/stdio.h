@@ -115,4 +115,3 @@ int renameat(int old_directory, const char *oldpath, int new_directory,
 #endif
 
 #endif
-

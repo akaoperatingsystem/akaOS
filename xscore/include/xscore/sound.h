@@ -24,4 +24,3 @@ const struct xscore_sound_device *xscore_sound_get(uint32_t index);
 size_t xscore_sound_format_proc_asound(char *buf, size_t max_size);
 
 #endif
-

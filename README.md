@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Build & Test](https://img.shields.io/badge/QEMU%20Tests-Passing-brightgreen.svg)](docs/development/workflow.md)
 
-**akaOS** is an original, independent Unix-like operating system engineered from scratch around the **XSCore** kernel. 
+**akaOS** is an original, independent Unix-like operating system engineered from scratch around the **XSCore** kernel.
 
 akaOS runs entirely on its own kernel, freestanding C library (libc), dynamic loader (`ld-akaos`), native display server, and userspace applications. It is **not** Linux, does **not** embed the Linux kernel, and does **not** rely on Linux at runtime (Linux is used solely as a development cross-compilation host).
 
@@ -236,5 +236,5 @@ If you find a bug, crash, or hardware incompatibility:
 
 ## License
 
-akaOS is open-source software licensed under the **[MIT License](LICENSE)**.  
+akaOS is open-source software licensed under the **[MIT License](LICENSE)**.
 You are completely free to use, modify, distribute, and fork this project for personal, educational, or commercial purposes.

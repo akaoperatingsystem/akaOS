@@ -868,7 +868,7 @@ int xscore_user_process_self_test(void) {
     uint32_t cached_pages = 0;
     xscore_page_cache_stats(&cached_pages, 0, 0);
     uint64_t free_now = xscore_pmm_free_page_count();
-    
+
     if (free_now + (uint64_t)cached_pages != free_pages_before) {
         xscore_serial_write("[FAIL] free page mismatch\n");
         return 0;
