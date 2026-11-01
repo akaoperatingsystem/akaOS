@@ -1,6 +1,6 @@
 # akaOS Development Progress
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.33-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.34-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.20-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
@@ -656,3 +656,279 @@ This directory registers all certified, recognized, and targeted microprocessors
   * **Zhaoxin (x86-64):** KaiXian KX-7000 (8-core x86 @ 3.7GHz), KX-6000G, KX-6000; KaiSheng KH-40000 (32 cores).
   * **Phytium (ARMv8):** Tengyun S5000C (64-core), Tengrui D2000 (8-core desktop), FT-2000/4.
   * **Huawei HiSilicon:** Kunpeng 920 (up to 64 TaiShan v110 ARM cores); Kirin 9010, Kirin 9000s (Maleoon 910 GPU), Kirin 9000, Kirin 990 5G, Kirin 980.
+
+
+---
+
+# The Complete Global Laptop & Mobile CPU Directory
+
+This directory details all supported, detected, and targeted mobile, ultraportable, laptop, handheld, and high-performance gaming laptop microprocessors across **akaOS** and the **XSCore** architecture layer.
+
+### Laptop & Mobile CPU Architecture Summary
+
+| Vendor / Platform | Mobile Series & Segment | Target Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **Intel Mobile Core** | Lunar Lake, Arrow Lake-H/HX, Meteor Lake, Raptor Lake Mobile | 82% | `[████████░░]` 82% |
+| **Intel Classic Mobile** | Tiger Lake, Ice Lake, Coffee Lake, Sandy/Ivy Bridge, Core 2 Duo, Pentium M | 95% | `[█████████░]` 95% |
+| **AMD Ryzen Mobile** | Strix Halo (Ryzen AI Max+), Strix Point, Hawk Point, Phoenix, Dragon Range | 85% | `[████████░░]` 85% |
+| **AMD Classic Mobile** | Rembrandt (6000), Cezanne (5000), Renoir (4000), APUs (A10/A8), Turion 64 | 92% | `[█████████░]` 92% |
+| **Qualcomm Compute** | Snapdragon X Elite / X Plus (Oryon), 8cx Gen 3, 7c Series | 68% | `[███████░░░]` 68% |
+| **Apple Silicon Mac** | Apple M4 Max/Pro/M4, M3, M2, M1 Family (MacBook Pro & Air) | 60% | `[██████░░░░]` 60% |
+| **MediaTek Kompanio** | Kompanio 1300T/1200/900T/838/528/520/500 Chromebooks & Laptops | 65% | `[██████░░░░]` 65% |
+| **Rockchip & Open Laptops** | RK3588S/RK3588 (Nova Laptop), RK3399/OP1 (Pinebook Pro), Allwinner A64 | 82% | `[████████░░]` 82% |
+
+---
+
+## 1. Intel Laptop Processors (Mobile Core, Core Ultra, & Celeron/Pentium M)
+
+### Core Ultra Series 2 & Series 1 (Meteor Lake, Lunar Lake, & Arrow Lake Mobile)
+* **Lunar Lake (Core Ultra 200V Series - 17W to 30W On-Package Memory):** `[███████░░░]` 75%
+  * Core Ultra 9 288V (32GB LPDDR5X)
+  * Core Ultra 7 268V (32GB), Core Ultra 7 266V (16GB), Core Ultra 7 258V (32GB), Core Ultra 7 256V (16GB)
+  * Core Ultra 5 238V (32GB), Core Ultra 5 236V (16GB), Core Ultra 5 228V (32GB), Core Ultra 5 226V (16GB)
+* **Arrow Lake-H & Arrow Lake-HX (Core Ultra 200H / 200HX Series - High Performance):** `[███████░░░]` 75%
+  * Core Ultra 9 285HX, Core Ultra 9 275HX
+  * Core Ultra 7 265HX, Core Ultra 7 255HX
+  * Core Ultra 5 245HX, Core Ultra 5 235HX
+  * Core Ultra 9 285H, Core Ultra 7 265H, Core Ultra 7 255H, Core Ultra 5 235H, Core Ultra 5 225H
+* **Meteor Lake (Core Ultra Series 1 - 28W H-Series & 15W/9W U-Series):** `[████████░░]` 82%
+  * **H-Series (28W Base / 64W–115W Turbo):** Core Ultra 9 185H, Core Ultra 7 165H, Core Ultra 7 155H, Core Ultra 5 135H, Core Ultra 5 125H
+  * **U-Series (15W Base / 57W Turbo):** Core Ultra 7 165U, Core Ultra 7 155U, Core Ultra 5 135U, Core Ultra 5 125U
+  * **Ultra-Low Power (9W Base / 28W Turbo):** Core Ultra 7 164U, Core Ultra 5 134U
+
+### 14th & 13th Gen Raptor Lake Mobile (HX, H, P, U Series)
+* **14th Gen Raptor Lake-HX Refresh (55W Base / Enthusiast Mobile Workstation & Gaming):** `[█████████░]` 90%
+  * Core i9-14900HX
+  * Core i7-14700HX, Core i7-14650HX
+  * Core i5-14500HX, Core i5-14450HX
+* **13th Gen Raptor Lake-HX (55W Base / 157W Turbo Desktop Silicon in BGA):** `[█████████░]` 90%
+  * Core i9-13980HX, Core i9-13950HX, Core i9-13900HX
+  * Core i7-13850HX, Core i7-13700HX, Core i7-13650HX
+  * Core i5-13600HX, Core i5-13500HX, Core i5-13450HX
+* **13th Gen Raptor Lake-H (45W Performance Gaming & Creator):** `[█████████░]` 90%
+  * Core i9-13900HK (Unlocked), Core i9-13900H
+  * Core i7-13800H, Core i7-13700H, Core i7-13620H
+  * Core i5-13600H, Core i5-13500H, Core i5-13420H
+* **13th Gen Raptor Lake-P (28W Thin & Light Performance):** `[█████████░]` 92%
+  * Core i7-1370P, Core i7-1360P, Core i5-1350P, Core i5-1340P
+* **13th Gen Raptor Lake-U & Series 1 U-Refresh (15W Ultra-Portable):** `[█████████░]` 92%
+  * Core 7 150U, Core 5 120U, Core 3 100U
+  * Core i7-1365U, Core i7-1355U, Core i5-1345U, Core i5-1335U, Core i5-1334U, Core i3-1315U, Core i3-1305U, Intel Processor U300
+
+### 12th Gen Alder Lake Mobile (HX, H, P, U Series)
+* **Alder Lake-HX (55W Enthusiast BGA):** `[█████████░]` 90%
+  * Core i9-12950HX, Core i9-12900HX, Core i7-12850HX, Core i7-12800HX, Core i7-12650HX, Core i5-12600HX, Core i5-12450HX.
+* **Alder Lake-H (45W Gaming & Workstation):** `[█████████░]` 90%
+  * Core i9-12900HK, Core i9-12900H, Core i7-12800H, Core i7-12700H, Core i7-12650H, Core i5-12600H, Core i5-12500H, Core i5-12450H.
+* **Alder Lake-P (28W Premium Thin & Light):** `[█████████░]` 92%
+  * Core i7-1280P, Core i7-1270P, Core i7-1260P, Core i5-1250P, Core i5-1240P, Core i3-1220P.
+* **Alder Lake-U (15W & 9W Base):** `[█████████░]` 92%
+  * Core i7-1265U, Core i7-1255U, Core i7-1260U, Core i7-1250U, Core i5-1245U, Core i5-1235U, Core i5-1240U, Core i5-1230U, Core i3-1215U, Core i3-1210U, Pentium 8505, Celeron 7305.
+
+### 11th Gen Tiger Lake Mobile (H45, H35, UP3, UP4)
+* **Tiger Lake-H45 & H35:** `[█████████░]` 95%
+  * Core i9-11980HK, Core i9-11950H, Core i9-11900H, Core i7-11850H, Core i7-11800H, Core i5-11500H, Core i5-11400H, Core i5-11260H.
+  * Core i7-11390H, Core i7-11375H SE, Core i7-11370H, Core i5-11320H, Core i5-11300H.
+* **Tiger Lake-UP3 & UP4:** `[█████████░]` 95%
+  * Core i7-1195G7, Core i7-1185G7, Core i7-1165G7, Core i5-1155G7, Core i5-1145G7, Core i5-1135G7, Core i3-1125G4, Core i3-1115G4.
+  * Core i7-1180G7, Core i7-1160G7, Core i5-1140G7, Core i5-1130G7, Core i3-1120G4, Core i3-1110G4.
+
+### 10th Gen Mobile (Ice Lake 10nm & Comet Lake 14nm)
+* **Comet Lake-H & U:** `[██████████]` 96%
+  * Core i9-10980HK, Core i7-10875H, Core i7-10870H, Core i7-10850H, Core i7-10750H, Core i5-10500H, Core i5-10400H, Core i5-10300H, Core i5-10200H.
+  * Core i7-10810U, Core i7-10710U (6-core), Core i7-10610U, Core i7-10510U, Core i5-10310U, Core i5-10210U, Core i3-10110U.
+* **Ice Lake-U & Y:** `[█████████░]` 95%
+  * Core i7-1068NG7, Core i7-1065G7, Core i5-1038NG7, Core i5-1035G7, Core i5-1035G4, Core i5-1035G1, Core i3-1005G1.
+  * Core i7-1060G7, Core i5-1030G7, Core i5-1030G4, Core i3-1000G4, Core i3-1000G1.
+
+### 9th & 8th Gen Coffee Lake / Kaby Lake Mobile
+* **9th Gen Coffee Lake-H Refresh:** `[██████████]` 98%
+  * Core i9-9980HK, Core i9-9880H, Core i7-9850H, Core i7-9750H, Core i7-9750HF, Core i5-9400H, Core i5-9300H, Core i5-9300HF.
+* **8th Gen Coffee Lake-H & Kaby Lake-G:** `[██████████]` 98%
+  * Core i9-8950HK, Core i7-8850H, Core i7-8750H, Core i5-8400H, Core i5-8300H.
+  * Core i7-8809G, Core i7-8709G, Core i7-8706G, Core i7-8705G, Core i5-8305G (Vega M on package).
+* **8th Gen Whiskey Lake-U, Kaby Lake-R & Coffee Lake-U:** `[██████████]` 98%
+  * Core i7-8665U, Core i7-8565U, Core i5-8365U, Core i5-8265U, Core i3-8145U; Core i7-8650U, Core i7-8550U, Core i5-8350U, Core i5-8250U, Core i3-8130U.
+  * Core i7-8559U, Core i5-8269U, Core i5-8259U, Core i3-8109U.
+
+### 7th Gen down to 1st Gen Mobile Core i
+* **7th Gen Kaby Lake Mobile:** `[██████████]` 98%
+  * H-Series: Core i7-7920HQ, i7-7820HK, i7-7820HQ, i7-7700HQ, i5-7440HQ, i5-7300HQ.
+  * U/Y-Series: Core i7-7600U, i7-7500U, i5-7300U, i5-7200U, i3-7100U; Core i7-7Y75, i5-7Y54, m3-7Y30.
+* **6th Gen Skylake Mobile:** `[██████████]` 98%
+  * H-Series: Core i7-6920HQ, i7-6820HK, i7-6820HQ, i7-6700HQ, i5-6300HQ.
+  * U-Series: Core i7-6600U, i7-6500U, i5-6300U, i5-6200U, i3-6100U; Core m7-6Y75, m5-6Y54, m3-6Y30.
+* **5th Gen Broadwell Mobile:** `[██████████]` 98%
+  * H-Series: Core i7-5950HQ, i7-5850HQ, i7-5750HQ, i7-5700HQ, i5-5350H.
+  * U-Series: Core i7-5650U, i7-5600U, i7-5557U, i7-5500U, i5-5350U, i5-5300U, i5-5200U, i3-5010U; Core M-5Y71, M-5Y10.
+* **4th Gen Haswell Mobile:** `[██████████]` 98%
+  * Extreme & Quad: Core i7-4940MX Extreme, i7-4930MX, i7-4910MQ, i7-4900MQ, i7-4810MQ, i7-4800MQ, i7-4710MQ, i7-4700MQ, i7-4770HQ, i7-4720HQ, i7-4710HQ.
+  * Dual-Core M/H: Core i7-4610M, i7-4600M, i5-4340M, i5-4300M, i5-4210M, i5-4200M, i3-4100M.
+  * U/Y-Series: Core i7-4650U, i7-4500U, i5-4300U, i5-4200U, i3-4030U, i3-4010U; i7-4610Y, i5-4210Y.
+* **3rd Gen Ivy Bridge Mobile:** `[██████████]` 98%
+  * Core i7-3940XM Extreme, i7-3920XM, i7-3840QM, i7-3820QM, i7-3740QM, i7-3720QM, i7-3630QM, i7-3610QM.
+  * Core i7-3540M, i7-3520M, i5-3380M, i5-3360M, i5-3320M, i5-3230M, i5-3210M, i3-3120M, i3-3110M.
+  * ULV: Core i7-3687U, i7-3667U, i7-3537U, i7-3517U, i5-3437U, i5-3427U, i5-3337U, i5-3317U, i3-3227U, i3-3217U.
+* **2nd Gen Sandy Bridge Mobile:** `[██████████]` 98%
+  * Core i7-2960XM Extreme, i7-2920XM, i7-2860QM, i7-2820QM, i7-2760QM, i7-2720QM, i7-2670QM, i7-2630QM.
+  * Core i7-2640M, i7-2620M, i5-2540M, i5-2520M, i5-2450M, i5-2430M, i5-2410M, i3-2370M, i3-2350M, i3-2330M.
+  * ULV: Core i7-2677M, i7-2637M, i5-2557M, i5-2467M, i3-2367M.
+* **1st Gen Mobile (Clarksfield & Arrandale):** `[██████████]` 98%
+  * Core i7-940XM Extreme, i7-920XM, i7-840QM, i7-820QM, i7-740QM, i7-720QM.
+  * Core i7-640M, i7-620M, i5-580M, i5-560M, i5-540M, i5-520M, i5-480M, i5-460M, i5-430M, i3-390M, i3-380M, i3-370M, i3-350M, i3-330M.
+  * UM (Low Voltage): Core i7-680UM, i7-660UM, i7-640UM, i7-620UM, i5-560UM, i5-540UM, i5-520UM, i3-380UM.
+
+### Classic Mobile Microprocessors (Pre-Core i)
+* **Core 2 Extreme & Quad Mobile:** `[██████████]` 98%
+  * X9100, X9000, X7900, X7800, QX9300 (Quad), QX9200, Q9100, Q9000.
+* **Core 2 Duo Mobile (Penryn 45nm & Merom 65nm):** `[██████████]` 98%
+  * T-Series: T9900, T9800, T9600, T9550, T9500, T9400, T9300, T8300, T8100, T7800, T7700, T7500, T7300, T7250, T7200, T7100, T5870, T5800, T5600, T5500.
+  * P-Series (25W): P9700, P9600, P9500, P8800, P8700, P8600, P8400, P7450, P7350.
+  * SP / SL / SU: SP9600, SP9400, SL9600, SL9400, SU9600, SU9400, SU7300, U7700, U7600.
+* **Intel Core Duo & Core Solo (Yonah 65nm):** `[██████████]` 98%
+  * Core Duo T2700, T2600, T2500, T2450, T2400, T2350, T2300, T2250, T2050; L2500, L2400; U2500, U2400.
+  * Core Solo T1400, T1350, T1300, T1200; U1500, U1400, U1300.
+* **Intel Pentium M & Mobile Celeron (Banias & Dothan):** `[██████████]` 98%
+  * Pentium M 780 (2.26 GHz), 770, 765, 760, 755, 750, 745, 740, 735, 730, 725, 715, 705.
+  * Pentium M LV/ULV: 778, 758, 738, 733, 723; Banias 1.7 GHz, 1.6 GHz, 1.5 GHz, 1.4 GHz, 1.3 GHz.
+  * Mobile Pentium 4-M: 2.6 GHz down to 1.8 GHz; Mobile Pentium III-M: 1.33 GHz down to 866 MHz; Mobile Pentium II: 400 MHz down to 266 MHz.
+
+---
+
+## 2. AMD Laptop & Mobile Processors
+
+### Ryzen AI 300 & Ryzen AI 400 Series (Strix Point & Strix Halo)
+* **Ryzen AI Max & Max+ (Strix Halo - Zen 5/5c, RDNA 3.5 40 CU):** `[████████░░]` 80%
+  * Ryzen AI Max+ PRO 495 (16C/32T, Radeon 8065S)
+  * Ryzen AI Max PRO 490 (12C/24T, Radeon 8050S)
+  * Ryzen AI Max PRO 485 (8C/16T)
+  * Ryzen AI Max PRO 480 (6C/12T)
+* **Ryzen AI 300 Series (Strix Point - Zen 5/5c + XDNA 2 50 TOPS NPU):** `[████████░░]` 82%
+  * Ryzen AI 9 HX 375 (12 Cores, 55 NPU TOPS)
+  * Ryzen AI 9 HX 370 (12 Cores, 50 NPU TOPS, Radeon 890M)
+  * Ryzen AI 9 365 (10 Cores, 50 NPU TOPS, Radeon 880M)
+  * Ryzen AI 7 PRO 360 (8 Cores)
+
+### Ryzen 8040 & 7040 Series (Hawk Point & Phoenix: Zen 4 Mobile)
+* **Hawk Point (Ryzen 8040 Series - 4nm Zen 4 + RDNA3 + XDNA NPU):** `[█████████░]` 90%
+  * Ryzen 9 8945HS (8C/16T, 45W)
+  * Ryzen 7 8845HS, Ryzen 7 8840HS, Ryzen 7 8840U (15W–30W)
+  * Ryzen 5 8645HS, Ryzen 5 8640HS, Ryzen 5 8640U
+  * Ryzen 3 8440U
+* **Phoenix (Ryzen 7040 Series - 4nm Zen 4 + RDNA3):** `[█████████░]` 90%
+  * Ryzen 9 7940HS, Ryzen 9 7940H
+  * Ryzen 7 7840HS, Ryzen 7 7840H, Ryzen 7 7840U
+  * Ryzen 5 7640HS, Ryzen 5 7640H, Ryzen 5 7540U
+  * Ryzen 3 7440U
+
+### Ryzen 7045 Series (Dragon Range: Zen 4 Desktop Silicon in Mobile BGA)
+* **55W–75W+ Extreme Enthusiast & Desktop Replacements:** `[█████████░]` 90%
+  * Ryzen 9 7945HX3D (16C/32T, 128MB 3D V-Cache)
+  * Ryzen 9 7945HX (16 Cores / 32 Threads)
+  * Ryzen 9 7845HX (12 Cores / 24 Threads)
+  * Ryzen 7 7745HX (8 Cores / 16 Threads)
+  * Ryzen 5 7645HX (6 Cores / 12 Threads)
+
+### Ryzen 6000 & 7035 Series (Rembrandt & Rembrandt-R: Zen 3+ 6nm + RDNA2)
+* **Ryzen 7035 & 6000 Mobile Series:** `[█████████░]` 92%
+  * Ryzen 7 7735HS, Ryzen 7 7735U; Ryzen 5 7535HS, Ryzen 5 7535U; Ryzen 3 7335U.
+  * Ryzen 9 6980HX, Ryzen 9 6980HS, Ryzen 9 6900HX, Ryzen 9 6900HS, Ryzen 7 6800H, Ryzen 7 6800HS, Ryzen 5 6600H, Ryzen 5 6600HS; Ryzen 7 6800U, Ryzen 5 6600U.
+
+### Ryzen 5000 & 7030 Series (Cezanne, Barcelo, & Lucienne: Zen 3 & Zen 2)
+* **Ryzen 7030 & 5000 Mobile Series:** `[██████████]` 96%
+  * Ryzen 7 7730U, Ryzen 5 7530U, Ryzen 3 7330U.
+  * H / HX / HS: Ryzen 9 5980HX, Ryzen 9 5980HS, Ryzen 9 5900HX, Ryzen 9 5900HS, Ryzen 7 5800H, Ryzen 7 5800HS, Ryzen 5 5600H.
+  * U-Series: Ryzen 7 5800U, Ryzen 5 5600U, Ryzen 7 5700U, Ryzen 5 5500U, Ryzen 3 5300U.
+
+### Ryzen 4000 Mobile Series (Renoir - Zen 2 7nm)
+* **H & HS Gaming & U-Series:** `[██████████]` 98%
+  * Ryzen 9 4900H, Ryzen 9 4900HS; Ryzen 7 4800H, Ryzen 7 4800HS; Ryzen 5 4600H, Ryzen 5 4600HS.
+  * Ryzen 7 4800U, Ryzen 7 4700U, Ryzen 5 4600U, Ryzen 5 4500U, Ryzen 3 4300U.
+
+### Ryzen 7020 Series (Mendocino - Budget Zen 2 6nm + RDNA2)
+* **Mendocino U & C Series:** `[█████████░]` 92%
+  * Ryzen 5 7520U, Ryzen 5 7520C; Ryzen 3 7320U, Ryzen 3 7320C; Athlon Gold 7220U, Athlon Silver 7120U.
+
+### Ryzen 3000 & 2000 Mobile Series (Picasso & Raven Ridge APUs)
+* **Picasso & Raven Ridge:** `[██████████]` 98%
+  * Ryzen 7 3750H, Ryzen 5 3550H; Ryzen 7 3700U, Ryzen 5 3500U, Ryzen 3 3300U, Ryzen 3 3200U.
+  * Ryzen 7 2800H, Ryzen 5 2600H; Ryzen 7 2700U, Ryzen 5 2500U, Ryzen 3 2300U, Ryzen 3 2200U; Athlon 300U.
+
+### Classic AMD Mobile APUs & CPUs (Pre-Ryzen)
+* **Excavator, Steamroller, Piledriver, Llano, Bobcat, Turion:** `[██████████]` 98%
+  * Bristol Ridge & Stoney Ridge: FX-9830P, FX-9800P, A12-9720P, A10-9620P, A9-9420.
+  * Carrizo & Kaveri: FX-8800P, A10-8700P; FX-7600P, A10-7400P.
+  * Richland & Trinity: A10-5750M, A8-5550M, A6-5350M; A10-4600M, A8-4500M.
+  * Llano & Brazos: A8-3500M, A6-3400M; E2-2000, E-450, E-350; A6-5200 (Kabini).
+  * Turion 64 X2 & Turion 64: M660, ZM-86, TL-68, TL-64, TL-60, TL-58, TL-50; ML-44 down to ML-30, Mobile Athlon 64.
+
+---
+
+## 3. Qualcomm Snapdragon Laptop Platforms (Windows on ARM)
+
+### Snapdragon X Series (Oryon CPU Core Architecture)
+* **Snapdragon X Elite:** `[███████░░░]` 70%
+  * X1E-84-100 (12 Cores, 3.8 GHz All-Core, 4.2 GHz Boost, 4.6 TFLOPS Adreno, 45 TOPS NPU)
+  * X1E-80-100 (12 Cores, 3.4 GHz All-Core, 4.0 GHz Boost, 3.8 TFLOPS, 45 TOPS NPU)
+  * X1E-78-100 (12 Cores, 3.4 GHz All-Core, 3.8 TFLOPS, 45 TOPS NPU)
+* **Snapdragon X Plus:** `[███████░░░]` 70%
+  * X1P-66-100 (10 Cores, 3.4 GHz All-Core, 4.0 GHz Boost, 45 TOPS NPU)
+  * X1P-64-100 (10 Cores, 3.4 GHz All-Core, 45 TOPS NPU)
+  * X1P-46-100 (8 Cores, 3.4 GHz All-Core, 4.0 GHz Boost, 45 TOPS NPU)
+  * X1P-42-100 (8 Cores, 3.2 GHz All-Core, 3.4 GHz Boost, 45 TOPS NPU)
+
+### Snapdragon 8cx & Earlier Compute Platforms
+* **8cx Series & Early Compute:** `[███████░░░]` 75%
+  * Snapdragon 8cx Gen 3 (SC8280XP - 4x Cortex-X1 @ 3.0GHz + 4x A78 @ 2.4GHz).
+  * Snapdragon 8cx Gen 2 5G (SC8180XP - 4x Kryo 495 Gold + 4x Silver).
+  * Snapdragon 8cx (SC8180X - 8-core Kryo 495 @ 2.84 GHz).
+  * Snapdragon 850 (SDM850 - 8x Kryo 385 @ 2.96 GHz) & Snapdragon 835 PC (MSM8998).
+* **Snapdragon 7c Series (Chromebook & Education):** `[████████░░]` 80%
+  * Snapdragon 7c+ Gen 3 (SC7380 - 4x Cortex-A78 + 4x Cortex-A55).
+  * Snapdragon 7c Gen 2 (SC7180-2) & Snapdragon 7c (SC7180).
+
+---
+
+## 4. Apple Silicon MacBook Processors (M-Series)
+
+* **Apple M4 Family:** `[██████░░░░]` 60%
+  * Apple M4 Max (16-Core CPU: 12P + 4E, up to 40-Core GPU, 16-Core NPU, up to 128GB Unified Memory).
+  * Apple M4 Pro (14-Core CPU: 10P + 4E or 12-Core: 8P + 4E, up to 20-Core GPU).
+  * Apple M4 (10-Core CPU: 4P + 6E, 10-Core GPU).
+* **Apple M3 Family:** `[██████░░░░]` 60%
+  * Apple M3 Max (16-Core / 14-Core, 40/30-Core GPU, Dynamic Caching, Ray Tracing).
+  * Apple M3 Pro (12-Core / 11-Core, 18/14-Core GPU).
+  * Apple M3 (8-Core CPU: 4P + 4E, 10/8-Core GPU).
+* **Apple M2 Family:** `[██████░░░░]` 62%
+  * Apple M2 Max (12-Core CPU: 8P + 4E, up to 38-Core GPU).
+  * Apple M2 Pro (12-Core or 10-Core CPU, up to 19-Core GPU).
+  * Apple M2 (8-Core CPU: 4 Avalanche + 4 Blizzard, 10/8-Core GPU).
+* **Apple M1 Family:** `[███████░░░]` 68%
+  * Apple M1 Max (10-Core CPU: 8 Firestorm + 2 Icestorm, up to 32-Core GPU).
+  * Apple M1 Pro (10-Core or 8-Core CPU, 16/14-Core GPU).
+  * Apple M1 (8-Core CPU: 4 Firestorm + 4 Icestorm, 8/7-Core GPU).
+
+---
+
+## 5. MediaTek Kompanio (Laptop & Chromebook Platforms)
+
+* **Premium Tier (Chromebooks & Clamshells):** `[██████░░░░]` 65%
+  * Kompanio 1300T (MT8195T - 4x Cortex-A78 + 4x Cortex-A55, Mali-G77 MC9).
+  * Kompanio 1200 (MT8195 - 4x Cortex-A78 + 4x Cortex-A55, Mali-G57 MC5).
+  * Kompanio 900T (MT8791 - 2x Cortex-A78 + 6x Cortex-A55).
+* **Mainstream & Educational Tier:** `[███████░░░]` 70%
+  * Kompanio 838 (MT8188 - Octa-core + NPU 650 for AI education notebooks).
+  * Kompanio 528 (MT8186T - 2x Cortex-A76 + 6x Cortex-A55).
+  * Kompanio 520 (MT8186 - 2x Cortex-A76 + 6x Cortex-A55).
+  * Kompanio 500 (MT8183 - 4x Cortex-A73 + 4x Cortex-A53).
+
+---
+
+## 6. Rockchip & ARM Open-Hardware Laptop SoCs
+
+* **Rockchip RK3588S / RK3588:** `[████████░░]` 82%
+  * 4x Cortex-A76 @ 2.4 GHz + 4x Cortex-A55 @ 1.8 GHz, ARM Mali-G610 MP4, 6 TOPS NPU (Powering ARM laptops like the Indiedroid Nova Laptop, Cool Pi 4B laptops, and Orange Pi Neo handheld setups).
+* **Rockchip RK3399 / OP1:** `[█████████░]` 88%
+  * Dual Cortex-A72 + Quad Cortex-A53 (Pine64 Pinebook Pro, ASUS Chromebook Flip C101PA, Samsung Chromebook Plus).
+* **Allwinner A64:** `[█████████░]` 88%
+  * Quad-core Cortex-A53 @ 1.15 GHz (The open-source Linux laptop engine powering the 11.6" and 14" Pine64 Pinebook).

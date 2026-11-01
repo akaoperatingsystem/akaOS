@@ -72,12 +72,15 @@ int main(int argc, char **argv) {
         strcpy(cpu_model, "Generic x86-64 / Compatible Microprocessor");
     }
 
-    get_proc_field("/proc/gpuinfo", "Model", gpu_model, sizeof(gpu_model));
+    get_proc_field("/proc/gpuinfo", "Chipset", gpu_model, sizeof(gpu_model));
+    if (gpu_model[0] == '\0') {
+        get_proc_field("/proc/gpuinfo", "Model", gpu_model, sizeof(gpu_model));
+    }
     if (gpu_model[0] == '\0') {
         get_proc_field("/proc/gpuinfo", "Driver", gpu_model, sizeof(gpu_model));
     }
     if (gpu_model[0] == '\0') {
-        strcpy(gpu_model, "VirtIO-GPU / VESA Framebuffer (/dev/fb0)");
+        strcpy(gpu_model, "VirtIO-GPU / VESA Linear Framebuffer (/dev/fb0)");
     }
 
     get_proc_field("/proc/meminfo", "MemTotal", mem_total, sizeof(mem_total));
