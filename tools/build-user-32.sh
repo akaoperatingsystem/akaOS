@@ -417,6 +417,7 @@ build_user_program head "$ROOT_DIR/userspace/bin/head/main.c" HEAD.ELF
 build_user_program tail "$ROOT_DIR/userspace/bin/tail/main.c" TAIL.ELF
 build_user_program wc "$ROOT_DIR/userspace/bin/wc/main.c" WC.ELF
 build_user_program uname "$ROOT_DIR/userspace/bin/uname/main.c" UNAME.ELF
+build_user_program akafetch "$ROOT_DIR/userspace/bin/akafetch/main.c" AKAFETCH.ELF
 build_account_program whoami "$ROOT_DIR/userspace/bin/whoami/main.c" WHOAMI.ELF
 build_user_program touch "$ROOT_DIR/userspace/bin/touch/main.c" TOUCH.ELF
 build_user_program mkdir "$ROOT_DIR/userspace/bin/mkdir/main.c" MKDIR.ELF
@@ -563,6 +564,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
     --file "/bin/tail:$BUILD_DIR/TAIL.ELF:exec" \
     --file "/bin/wc:$BUILD_DIR/WC.ELF:exec" \
     --file "/bin/uname:$BUILD_DIR/UNAME.ELF:exec" \
+    --file "/bin/akafetch:$BUILD_DIR/AKAFETCH.ELF:exec" \
     --file "/bin/whoami:$BUILD_DIR/WHOAMI.ELF:exec" \
     --file "/bin/touch:$BUILD_DIR/TOUCH.ELF:exec" \
     --file "/bin/mkdir:$BUILD_DIR/MKDIR.ELF:exec" \

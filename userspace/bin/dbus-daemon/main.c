@@ -850,9 +850,69 @@ static unsigned load_activation_file(const char *path) {
     return seen;
 }
 
+static unsigned load_service_file(const char *path) {
+    int descriptor = open(path, O_RDONLY);
+    if (descriptor < 0) return 0;
+    char data[1024];
+    ssize_t count = read(descriptor, data, sizeof(data) - 1U);
+    close(descriptor);
+    if (count <= 0) return 0;
+    data[count] = '\0';
+
+    char name[96] = {0};
+    char exec[96] = {0};
+    char *line = data;
+    while (*line) {
+        char *next = strchr(line, '\n');
+        if (next) *next = '\0';
+        char *trimmed = activation_trim(line);
+        if (strncmp(trimmed, "Name=", 5) == 0) {
+            strncpy(name, activation_trim(trimmed + 5), sizeof(name) - 1);
+        } else if (strncmp(trimmed, "Exec=", 5) == 0) {
+            strncpy(exec, activation_trim(trimmed + 5), sizeof(exec) - 1);
+        }
+        if (!next) break;
+        line = next + 1;
+    }
+    if (name[0] && exec[0]) {
+        char *space = strchr(exec, ' ');
+        char *arg = NULL;
+        if (space) {
+            *space = '\0';
+            arg = space + 1;
+        }
+        return add_activation_entry(name, exec, arg, 0, AKAOS_DBUS_DEFAULT_ACTIVATION_TIMEOUT) ? 1 : 0;
+    }
+    return 0;
+}
+
+static unsigned scan_service_directory(const char *dir_path) {
+    int dfd = open(dir_path, O_RDONLY);
+    if (dfd < 0) return 0;
+    struct akaos_dirent entries[16];
+    unsigned loaded = 0;
+    for (;;) {
+        ssize_t count = getdents(dfd, entries, 16);
+        if (count <= 0) break;
+        for (ssize_t i = 0; i < count; ++i) {
+            const char *dname = entries[i].name;
+            size_t len = strlen(dname);
+            if (len > 8 && strcmp(dname + len - 8, ".service") == 0) {
+                char full_path[192];
+                snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, dname);
+                loaded += load_service_file(full_path);
+            }
+        }
+    }
+    close(dfd);
+    return loaded;
+}
+
 static void load_activation_registry(void) {
     unsigned seen = load_activation_file("/etc/dbus-services.conf");
     if (dbus_session_bus) seen += load_activation_file(AKAOS_DBUS_USER_REGISTRY);
+    seen += scan_service_directory("/usr/share/dbus-1/services");
+    seen += scan_service_directory("/usr/local/share/dbus-1/services");
     if (seen == 0)
         (void)add_activation_entry("com.akaos.AutoEcho", "/bin/hello",
                                    "--dbus-activation-service", 0U,
