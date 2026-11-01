@@ -200,6 +200,16 @@ void xscore_exception_handler(uint64_t vector, uint64_t error_code, const uint64
      * no use, and the two registers are what name the failing function. */
     serial_number("[FATAL] Exception RIP: ", frame[2], "\n");
     serial_number("[FATAL] Exception RSP: ", frame[5], "\n");
+    /* Dump stack words from user RSP to see return addresses / call stack */
+    if (frame[5] != 0) {
+        uint64_t stack_words[8];
+        if (xscore_copy_from_user(stack_words, frame[5], sizeof(stack_words))) {
+            for (int sw = 0; sw < 8; ++sw) {
+                serial_process_status("[FATAL] Stack[+", (uint64_t)(sw * 8), "]: ");
+                serial_number("", stack_words[sw], "\n");
+            }
+        }
+    }
     /* The name of the faulting process and the layout of its address space
      * tell a mistake inside a user program apart from a mistake in the
      * kernel. */
