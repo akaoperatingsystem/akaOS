@@ -304,7 +304,7 @@ clang --target=x86_64-unknown-none-elf \
     -std=c17 -O2 -Wall -Wextra -Werror \
     -ffreestanding -fno-builtin -fno-stack-protector -fpie \
     -mno-red-zone -mcmodel=small \
-    -DXSCORE_BUILD_TIMESTAMP=""$BUILD_TIMESTAMP"" \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
     -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
     -c "$ROOT_DIR/userspace/bin/dbus-daemon/main.c" -o "$BUILD_DIR/user-dbus-daemon-main.o"
 ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
