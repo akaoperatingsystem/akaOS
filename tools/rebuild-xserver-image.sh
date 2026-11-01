@@ -530,7 +530,8 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfwm4" ]]; then
         "--dir=/usr/local/share/xfwm4"
         "--dir=/usr/local/share/themes"
     )
-    for xfce_library in libxfce4util.so.7 libxfconf-0.so.3 libxfce4ui-2.so.0 libxfce4kbd-private-3.so.0; do
+    for xfce_library in libxfce4util.so.7 libxfconf-0.so.3 libxfce4ui-2.so.0 libxfce4kbd-private-3.so.0 \
+        libgarcon-1.so.0 libgarcon-gtk3-1.so.0 libexo-2.so.0 libxfce4panel-2.0.so.4; do
         library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib"             -maxdepth 1 -type f -name "${xfce_library}.*" -print | sort -V | tail -n 1)"
         [[ -n "$library_path" ]] || continue
         initramfs_files+=(
@@ -538,6 +539,37 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfwm4" ]]; then
             "--file=/usr/local/lib/$xfce_library:$library_path:0444"
         )
     done
+    if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfce4-panel" ]]; then
+        initramfs_files+=(
+            "--file=/usr/local/bin/xfce4-panel:$UPSTREAM_SYSROOT/usr/local/bin/xfce4-panel:exec"
+            "--file=/usr/local/lib/xfce4/panel/wrapper-2.0:$UPSTREAM_SYSROOT/usr/local/lib/xfce4/panel/wrapper-2.0:exec"
+            "--file=/usr/local/lib/xfce4/panel/migrate:$UPSTREAM_SYSROOT/usr/local/lib/xfce4/panel/migrate:exec"
+            "--dir=/usr/local/lib/xfce4/panel"
+            "--dir=/usr/local/lib/xfce4/panel/plugins"
+            "--dir=/usr/local/share/xfce4"
+            "--dir=/usr/local/share/xfce4/panel"
+            "--dir=/usr/local/share/xfce4/panel/plugins"
+            "--dir=/etc/xdg/xfce4"
+            "--dir=/etc/xdg/xfce4/panel"
+        )
+        if [[ -f "$UPSTREAM_SYSROOT/etc/xdg/xfce4/panel/default.xml" ]]; then
+            initramfs_files+=(
+                "--file=/etc/xdg/xfce4/panel/default.xml:$UPSTREAM_SYSROOT/etc/xdg/xfce4/panel/default.xml:0444"
+            )
+        fi
+        while IFS= read -r plugin_file; do
+            plugin_name="${plugin_file##*/}"
+            initramfs_files+=(
+                "--file=/usr/local/lib/xfce4/panel/plugins/$plugin_name:$plugin_file:0444"
+            )
+        done < <(find "$UPSTREAM_SYSROOT/usr/local/lib/xfce4/panel/plugins" -maxdepth 1 -type f -name '*.so' 2>/dev/null | sort)
+        while IFS= read -r desktop_file; do
+            desktop_name="${desktop_file##*/}"
+            initramfs_files+=(
+                "--file=/usr/local/share/xfce4/panel/plugins/$desktop_name:$desktop_file:0444"
+            )
+        done < <(find "$UPSTREAM_SYSROOT/usr/local/share/xfce4/panel/plugins" -maxdepth 1 -type f -name '*.desktop' 2>/dev/null | sort)
+    fi
     if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfconf-query" ]]; then
         initramfs_files+=(
             "--file=/usr/local/bin/xfconf-query:$UPSTREAM_SYSROOT/usr/local/bin/xfconf-query:exec"

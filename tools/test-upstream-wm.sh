@@ -159,7 +159,10 @@ try:
               "/usr/local/bin/pcmanfm --desktop --profile default & sleep 15; ps; "
               "echo PCMANFM-RUNNING=$?; "
               "env DISPLAY=:0 /usr/local/bin/xfwm4 --replace & sleep 15; ps; "
-              "echo XFWM4-RUNNING=$?")
+              "echo XFWM4-RUNNING=$?; "
+              "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
+              "/usr/local/bin/xfce4-panel & sleep 15; ps; "
+              "echo XFCE4-PANEL-RUNNING=$?")
     if not wait_for("x11 wm client: reparented into frame", 240):
         print("[FAIL] The upstream window manager did not take the window over.",
               flush=True)
@@ -238,6 +241,17 @@ try:
         print(output[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] xfwm4 window manager started and remained active alongside LXDE.",
+          flush=True)
+    if not wait_for("XFCE4-PANEL-RUNNING=0", 60):
+        print("[FAIL] xfce4-panel did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if "running xfce4-panel" not in output:
+        print("[FAIL] xfce4-panel was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] xfce4-panel desktop panel started and remained active alongside Xfwm4.",
           flush=True)
 finally:
     proc.kill()
