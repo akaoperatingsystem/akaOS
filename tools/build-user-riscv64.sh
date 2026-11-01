@@ -452,6 +452,7 @@ build_user_program ps "$ROOT_DIR/userspace/bin/ps/main.c" PS.ELF
 build_account_program akash "$ROOT_DIR/userspace/bin/akash/main.c" AKASH.ELF
 build_user_program nslookup "$ROOT_DIR/userspace/bin/nslookup/main.c" NSLOOKUP.ELF
 build_user_program curl "$ROOT_DIR/userspace/bin/curl/main.c" CURL.ELF
+build_user_program wget "$ROOT_DIR/userspace/bin/wget/main.c" WGET.ELF
 build_user_program httpd "$ROOT_DIR/userspace/bin/httpd/main.c" HTTPD.ELF
 build_user_program akaos-config "$ROOT_DIR/userspace/bin/akaos-config/main.c" AKAOS_CONFIG.ELF
 build_user_program sysmon "$ROOT_DIR/userspace/bin/sysmon/main.c" SYSMON.ELF
@@ -599,6 +600,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_riscv64.img"
     --file "/bin/akash:$BUILD_DIR/AKASH.ELF:exec" \
     --file "/bin/nslookup:$BUILD_DIR/NSLOOKUP.ELF:exec" \
     --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec" \
+    --file "/bin/wget:$BUILD_DIR/WGET.ELF:exec" \
     --file "/bin/httpd:$BUILD_DIR/HTTPD.ELF:exec" \
     --file "/bin/akaos-config:$BUILD_DIR/AKAOS_CONFIG.ELF:exec" \
     --file "/bin/sysmon:$BUILD_DIR/SYSMON.ELF:exec" \
