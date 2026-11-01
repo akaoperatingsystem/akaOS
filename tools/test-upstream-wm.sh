@@ -158,7 +158,7 @@ try:
               "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
               "/usr/local/bin/pcmanfm --desktop --profile default & sleep 15; cat /proc/processes; "
               "echo PCMANFM-RUNNING=$?; "
-              "env DISPLAY=:0 /usr/local/bin/xfwm4 --replace & sleep 15; cat /proc/processes; "
+              "env DISPLAY=:0 /usr/local/bin/xfwm4 --replace & sleep 15; /bin/cat /proc/processes; "
               "echo XFWM4-RUNNING=$?")
     if not wait_for("x11 wm client: reparented into frame", 240):
         print("[FAIL] The upstream window manager did not take the window over.",
