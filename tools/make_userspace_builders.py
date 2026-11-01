@@ -453,6 +453,7 @@ build_user_program ps "$ROOT_DIR/userspace/bin/ps/main.c" PS.ELF
 build_account_program akash "$ROOT_DIR/userspace/bin/akash/main.c" AKASH.ELF
 build_user_program nslookup "$ROOT_DIR/userspace/bin/nslookup/main.c" NSLOOKUP.ELF
 build_user_program curl "$ROOT_DIR/userspace/bin/curl/main.c" CURL.ELF
+build_user_program pkg "$ROOT_DIR/userspace/bin/pkg/main.c" PKG.ELF
 build_user_program httpd "$ROOT_DIR/userspace/bin/httpd/main.c" HTTPD.ELF
 build_user_program akaos-config "$ROOT_DIR/userspace/bin/akaos-config/main.c" AKAOS_CONFIG.ELF
 build_user_program sysmon "$ROOT_DIR/userspace/bin/sysmon/main.c" SYSMON.ELF
@@ -598,7 +599,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/ps:$BUILD_DIR/PS.ELF:exec" \\
     --file "/bin/akash:$BUILD_DIR/AKASH.ELF:exec" \\
     --file "/bin/nslookup:$BUILD_DIR/NSLOOKUP.ELF:exec" \\
-    --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec" \\
+    --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec" \
+    --file "/bin/pkg:$BUILD_DIR/PKG.ELF:exec" \\
     --file "/bin/httpd:$BUILD_DIR/HTTPD.ELF:exec" \\
     --file "/bin/akaos-config:$BUILD_DIR/AKAOS_CONFIG.ELF:exec" \\
     --file "/bin/sysmon:$BUILD_DIR/SYSMON.ELF:exec" \\
@@ -726,12 +728,17 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/etc/group:$ROOT_DIR/userspace/etc/group:0644" \\
     --file "/etc/sudoers:$ROOT_DIR/userspace/etc/sudoers:0440" \\
     --file "/etc/shadow:$ROOT_DIR/userspace/etc/shadow:0600" \\
-    --file "/etc/akaos.conf:$ROOT_DIR/userspace/etc/akaos.conf:0644" \\
+    --file "/etc/akaos.conf:$ROOT_DIR/userspace/etc/akaos.conf:0644" \
+    --file "/etc/pkg.conf:$ROOT_DIR/userspace/etc/pkg.conf:0644" \\
     --file "/etc/dbus-services.conf:$ROOT_DIR/userspace/etc/dbus-services.conf:0644" \\
     --file "/etc/resolv.conf:$ROOT_DIR/userspace/etc/resolv.conf:0644" \\
     --file "/etc/fstab:$ROOT_DIR/userspace/etc/fstab:0644" \\
     --file "/etc/aurora-apps:$ROOT_DIR/userspace/etc/aurora-apps:0644" \\
-    --dir "/var" \\
+    --dir "/var" \
+    --dir "/var/lib" \
+    --dir "/var/lib/pkg" \
+    --dir "/var/cache" \
+    --dir "/var/cache/pkg" \\
     --dir "/var/www" \\
     --dir "/var/www/cgi-bin" \\
     --file "/var/www/cgi-bin/status:$BUILD_DIR/STATUS_CGI.ELF:exec" \\

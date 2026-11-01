@@ -8,35 +8,50 @@ usage() {
     cat <<'EOF'
 Usage: ./run.sh [options] [-- QEMU_OPTIONS...]
 
-Run without options in a terminal to open the interactive configuration menu.
+Run without options in an interactive terminal to open the enhanced configuration menu.
 
-Boot selection:
-  --arch NAME                  x86_64, x86_32, aarch64, arm32, riscv64, riscv32
-  --firmware NAME              uefi or bios (default depends on arch)
-  --disk-type NAME             fat32 or iso; x86 media support UEFI/BIOS
-  --headless                   run without a QEMU window
-  --gui                        open a QEMU GTK window
-  --check-deps                 check selected host dependencies and exit
-  --menu                       open the interactive configuration menu
-  -h, --help                   show this help
+Target Architecture & Firmware:
+  --arch NAME                  Target CPU architecture:
+                                 x86_64  : 64-bit x86 PC (UEFI / SeaBIOS)
+                                 x86_32  : 32-bit x86 PC (UEFI FAT32 / BIOS Hybrid ISO)
+                                 aarch64 : 64-bit ARM (QEMU virt / direct kernel)
+                                 arm32   : 32-bit ARM (ARMv7-A QEMU virt)
+                                 riscv64 : 64-bit RISC-V (RV64GC QEMU virt)
+                                 riscv32 : 32-bit RISC-V (RV32GC QEMU virt)
+  --firmware NAME              Boot firmware: uefi or bios (default depends on arch)
+  --disk-type, --file-type NAME Boot media format: fat32 or iso (x86 media support UEFI/BIOS)
+
+Display & Interface Options:
+  --display-mode NAME          auto, gui, or headless
+  --gui                        Directly open a QEMU graphical display window
+  --headless, --console        Run purely over serial console in the terminal
+
+Hardware Device & Emulation Flags:
+  --device, --vga NAME         Video display device:
+                                 virtio  : VirtIO-GPU hardware accelerator device (default)
+                                 std     : Standard QEMU VESA/VGA display adapter
+                                 cirrus  : Legacy Cirrus Logic GD5446 display adapter
+                                 bochs   : Bochs VBE display adapter
+                                 ramfb   : Firmware linear RAM framebuffer
+  --net NAME                   Network device backend:
+                                 virtio  : VirtIO Network adapter (default)
+                                 e1000   : Intel 82540EM Gigabit Ethernet adapter
+                                 rtl8139 : Realtek RTL8139 Fast Ethernet adapter
+                                 none    : Disable network emulation
+  --smp CORES                  Number of virtual CPU cores (default: 1 or 2)
+  --mem, --memory SIZE         Guest memory limit (e.g. 256M, 512M, 1G, 2G)
+  --kvm, --accel               Enable host hardware virtualization acceleration (KVM/WHPX)
+  --check-deps                 Check selected host dependencies and exit
+  --menu                       Open the interactive configuration menu
+  -h, --help                   Display this comprehensive help manual
 
 Examples:
-  ./run.sh                                     # interactive configuration menu
-  ./run.sh --menu                              # explicitly open the menu
-  ./run.sh --arch x86_64 --firmware uefi --disk-type fat32 --gui
-  ./run.sh --arch x86_64 --firmware uefi --disk-type iso --gui
-  ./run.sh --arch x86_64 --firmware bios --disk-type iso --headless
-  ./run.sh --arch x86_32 --firmware uefi --disk-type iso --gui
-  ./run.sh --arch x86_32 --firmware uefi --disk-type fat32 --gui
-  ./run.sh --arch x86_32 --firmware bios --disk-type iso --gui
-  ./run.sh --arch x86_32 --firmware bios --disk-type fat32 --gui
-  ./run.sh --arch aarch64 --firmware uefi --disk-type fat32 --gui
-  ./run.sh --arch arm32 --firmware bios --disk-type iso --gui
-  ./run.sh --arch riscv64 --firmware uefi --disk-type fat32 --headless
-  ./run.sh --arch riscv32 --firmware bios --disk-type iso --headless
-
-The architecture, firmware, and disk-type selectors are accepted consistently
-for every supported architecture.
+  ./run.sh                                       # Interactive TUI configuration menu
+  ./run.sh --arch x86_64 --firmware uefi --gui
+  ./run.sh --arch x86_64 --device virtio --smp 4 --mem 1G --gui
+  ./run.sh --arch x86_64 --console               # Headless console terminal run
+  ./run.sh --arch aarch64 --gui
+  ./run.sh --arch riscv64 --console
 EOF
 }
 
@@ -48,20 +63,26 @@ configure_run_interactively() {
     local menu_firmware=uefi
     local menu_disk=fat32
     local menu_display=auto
+    local menu_vga=virtio
+    local menu_smp=2
+    local menu_mem=512M
     local action selection summary report
     local -a dependency_args
 
     while true; do
         if ! action="$(akaos_ui_menu \
             "akaOS Run Configuration" \
-            "Choose a setting, then select Start akaOS." \
+            "Configure virtual machine, display, and hardware devices." \
             "start" \
             "arch" "Architecture: $menu_arch" \
             "firmware" "Firmware: $menu_firmware" \
-            "disk" "Disk type: $menu_disk" \
+            "disk" "File/Disk type: $menu_disk" \
             "display" "Display mode: $menu_display" \
+            "vga" "Graphics device: $menu_vga" \
+            "smp" "CPU Cores: $menu_smp" \
+            "mem" "Memory size: $menu_mem" \
             "deps" "Check required host packages" \
-            "start" "Start akaOS with these settings" \
+            "start" "Start akaOS QEMU with these settings" \
             "quit" "Exit without starting QEMU")"; then
             exit 0
         fi
@@ -82,26 +103,57 @@ configure_run_interactively() {
             firmware)
                 if selection="$(akaos_ui_menu \
                     "Firmware" "Select the firmware used for this run." "$menu_firmware" \
-                    "uefi" "Run with UEFI firmware" \
+                    "uefi" "Run with UEFI firmware (GOP Display)" \
                     "bios" "Run with legacy BIOS firmware")"; then
                     menu_firmware="$selection"
                 fi
                 ;;
             disk)
                 if selection="$(akaos_ui_menu \
-                    "Disk Type" "Select the boot-media format." "$menu_disk" \
-                    "fat32" "FAT32 disk image" \
-                    "iso" "Bootable ISO image")"; then
+                    "Disk / File Format" "Select the boot-media format." "$menu_disk" \
+                    "fat32" "FAT32 disk image (.img)" \
+                    "iso" "Bootable hybrid ISO image (.iso)")"; then
                     menu_disk="$selection"
                 fi
                 ;;
             display)
                 if selection="$(akaos_ui_menu \
                     "Display Mode" "Select how QEMU displays akaOS." "$menu_display" \
-                    "auto" "Use GUI when available, otherwise headless" \
-                    "gui" "Open a QEMU graphical window" \
-                    "headless" "Use the serial terminal only")"; then
+                    "auto" "Use GUI window when available, otherwise headless" \
+                    "gui" "Open a QEMU GTK graphical window" \
+                    "headless" "Run in console serial terminal only")"; then
                     menu_display="$selection"
+                fi
+                ;;
+            vga)
+                if selection="$(akaos_ui_menu \
+                    "Graphics Hardware Device" "Select emulated GPU / display device." "$menu_vga" \
+                    "virtio" "VirtIO-GPU hardware accelerator device" \
+                    "std" "Standard QEMU VESA/VGA display adapter" \
+                    "cirrus" "Legacy Cirrus Logic GD5446 display adapter" \
+                    "bochs" "Bochs VBE display adapter" \
+                    "ramfb" "Linear RAM framebuffer device")"; then
+                    menu_vga="$selection"
+                fi
+                ;;
+            smp)
+                if selection="$(akaos_ui_menu \
+                    "CPU Cores (SMP)" "Select virtual CPU core count." "$menu_smp" \
+                    "1" "Single Core (1 vCPU)" \
+                    "2" "Dual Core (2 vCPUs - Recommended)" \
+                    "4" "Quad Core (4 vCPUs)" \
+                    "8" "Octa Core (8 vCPUs)")"; then
+                    menu_smp="$selection"
+                fi
+                ;;
+            mem)
+                if selection="$(akaos_ui_menu \
+                    "RAM Memory Limit" "Select allocated virtual RAM." "$menu_mem" \
+                    "256M" "256 MB (Minimal)" \
+                    "512M" "512 MB (Recommended for Desktop)" \
+                    "1G" "1024 MB (1 GB)" \
+                    "2G" "2048 MB (2 GB)")"; then
+                    menu_mem="$selection"
                 fi
                 ;;
             deps)
@@ -124,13 +176,19 @@ configure_run_interactively() {
                 fi
                 summary="Architecture: $menu_arch
 Firmware:     $menu_firmware
-Disk type:    $menu_disk
-Display:      $menu_display"
+Format:       $menu_disk
+Display:      $menu_display
+Graphics:     $menu_vga
+vCPUs:        $menu_smp
+Memory:       $menu_mem"
                 if akaos_ui_confirm "Confirm akaOS Run" "$summary" "Run" "Back"; then
                     INTERACTIVE_RUN_ARGS=(
                         --arch "$menu_arch"
                         --firmware "$menu_firmware"
                         --disk-type "$menu_disk"
+                        --device "$menu_vga"
+                        --smp "$menu_smp"
+                        --memory "$menu_mem"
                     )
                     case "$menu_display" in
                         gui) INTERACTIVE_RUN_ARGS+=(--gui) ;;
@@ -164,6 +222,11 @@ firmware_set=0
 disk_type=auto
 disk_type_set=0
 display_mode=auto
+gpu_device=virtio
+net_device=virtio
+smp_cores=2
+custom_memory=""
+enable_kvm=0
 qemu_extra_args=()
 check_deps_only=0
 
@@ -171,7 +234,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --arch)
             if [[ $# -lt 2 ]]; then
-                echo "--arch requires a target name" >&2
+                echo "--arch requires a target name (x86_64, x86_32, aarch64, arm32, riscv64, riscv32)" >&2
                 exit 2
             fi
             arch="$2"
@@ -186,21 +249,65 @@ while [[ $# -gt 0 ]]; do
             firmware_set=1
             shift 2
             ;;
-        --disk-type)
+        --disk-type|--file-type|--format)
             if [[ $# -lt 2 ]]; then
-                echo "--disk-type requires fat32 or iso" >&2
+                echo "$1 requires fat32 or iso" >&2
                 exit 2
             fi
             disk_type="$2"
             disk_type_set=1
             shift 2
             ;;
-        --headless)
+        --display-mode)
+            if [[ $# -lt 2 ]]; then
+                echo "--display-mode requires auto, gui, or headless" >&2
+                exit 2
+            fi
+            display_mode="$2"
+            shift 2
+            ;;
+        --headless|--console)
             display_mode=headless
             shift
             ;;
-        --gui)
+        --gui|--desktop)
             display_mode=gui
+            shift
+            ;;
+        --device|--vga|--gpu)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires virtio, std, cirrus, bochs, or ramfb" >&2
+                exit 2
+            fi
+            gpu_device="$2"
+            shift 2
+            ;;
+        --net|--network)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires virtio, e1000, rtl8139, or none" >&2
+                exit 2
+            fi
+            net_device="$2"
+            shift 2
+            ;;
+        --smp|--cores|--cpus)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires a core count (e.g. 1, 2, 4, 8)" >&2
+                exit 2
+            fi
+            smp_cores="$2"
+            shift 2
+            ;;
+        --mem|--memory|--ram)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires memory size (e.g. 256M, 512M, 1G)" >&2
+                exit 2
+            fi
+            custom_memory="$2"
+            shift 2
+            ;;
+        --kvm|--accel)
+            enable_kvm=1
             shift
             ;;
         --check-deps)
@@ -456,15 +563,29 @@ qemu_machine=q35
 if [[ "$boot_firmware" == "bios" ]]; then
     qemu_machine=pc
 fi
-qemu_memory=256M
-if [[ -f "$ROOT_DIR/build/upstream-sysroot/qtbase-6.12.0-x86_64/usr/local/lib/libQt6Core.so.6.12.0" ]]; then
-    qemu_memory=512M
+qemu_memory=512M
+if [[ -n "$custom_memory" ]]; then
+    qemu_memory="$custom_memory"
 fi
 QEMU_COMMON_ARGS=(
     -machine "$qemu_machine"
     -m "$qemu_memory"
+    -smp "$smp_cores"
     -monitor none
 )
+if [[ "$enable_kvm" -eq 1 ]]; then
+    if [[ -w /dev/kvm ]]; then
+        QEMU_COMMON_ARGS+=(-enable-kvm -cpu host)
+    fi
+fi
+case "$gpu_device" in
+    virtio) QEMU_COMMON_ARGS+=(-device virtio-vga) ;;
+    std) QEMU_COMMON_ARGS+=(-vga std) ;;
+    cirrus) QEMU_COMMON_ARGS+=(-vga cirrus) ;;
+    bochs) QEMU_COMMON_ARGS+=(-device bochs-display) ;;
+    ramfb) QEMU_COMMON_ARGS+=(-device ramfb) ;;
+    *) QEMU_COMMON_ARGS+=(-vga std) ;;
+esac
 
 if [[ "$boot_firmware" == "uefi" ]]; then
     OVMF_CODE="$(find_ovmf_code)"

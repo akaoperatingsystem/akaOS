@@ -74,39 +74,45 @@ usage() {
     cat <<'EOF'
 Usage: ./build.sh [options]
 
-Run without options in a terminal to open the interactive configuration menu.
+Run without options in an interactive terminal to open the enhanced configuration menu.
 
-Build targets:
-  --arch NAME                  x86_64, x86_32, aarch64, arm32, riscv64, riscv32
-  --firmware NAME              uefi, bios, or both (default depends on arch)
-  --disk-type NAME             fat32 or iso; inferred when omitted
-  --test                       enable automated test mode in generated boot media
-  --verbose                    enable verbose kernel boot logging
-  --check-deps                 check selected host dependencies and exit
-  --menu                       open the interactive configuration menu
-  -h, --help                   show this help
+Target Architecture & Firmware:
+  --arch NAME                  Target CPU architecture:
+                                 x86_64  : 64-bit x86 PC (UEFI / SeaBIOS)
+                                 x86_32  : 32-bit x86 PC (UEFI FAT32 / BIOS Hybrid ISO)
+                                 aarch64 : 64-bit ARM (QEMU virt / direct kernel)
+                                 arm32   : 32-bit ARM (ARMv7-A QEMU virt)
+                                 riscv64 : 64-bit RISC-V (RV64GC QEMU virt)
+                                 riscv32 : 32-bit RISC-V (RV32GC QEMU virt)
+  --firmware NAME              Boot firmware: uefi, bios, or both (default depends on arch)
+  --disk-type, --file-type NAME Boot media format: fat32 or iso (inferred when omitted)
+
+Desktop & Session Configuration:
+  --desktop, --desktop-env NAME
+                               Default desktop environment:
+                                 aurora  : akaOS native compositor & resident desktop
+                                 xfce    : XFCE 4.18 Desktop Session (xfwm4, xfconf, panel)
+                                 lxde    : LXDE Desktop Suite (Openbox, LXPanel, PCManFM)
+                                 openbox : Standalone Openbox 3.6.1 Window Manager
+                                 lxqt    : Lightweight Qt Desktop Environment
+  --session-mode NAME          Default boot session mode:
+                                 console : Direct tty1 shell login (default)
+                                 desktop : Autostart graphical desktop environment
+
+Kernel & Build Flags:
+  --test                       Enable automated self-test mode in generated boot media
+  --verbose                    Enable verbose kernel hardware and boot diagnostics
+  --check-deps                 Check selected host dependencies and exit
+  --menu                       Open the interactive terminal configuration menu
+  -h, --help                   Display this comprehensive help manual
 
 Examples:
-  ./build.sh                                   # interactive configuration menu
-  ./build.sh --menu                            # explicitly open the menu
+  ./build.sh                                     # Launch interactive configuration TUI
   ./build.sh --arch x86_64 --firmware uefi --disk-type fat32
-  ./build.sh --arch x86_64 --firmware uefi --disk-type iso
-  ./build.sh --arch x86_64 --firmware bios --disk-type iso
-  ./build.sh --arch x86_64 --firmware both --disk-type iso
-  ./build.sh --arch x86_32                     # x86_32 dual UEFI/BIOS ISO
-  ./build.sh --arch x86_32 --firmware uefi --disk-type fat32
-  ./build.sh --arch x86_32 --firmware both --disk-type fat32
-  ./build.sh --arch x86_32 --firmware both --disk-type iso
-  ./build.sh --arch x86_32 --firmware uefi --disk-type iso
-  ./build.sh --arch x86_32 --firmware bios --disk-type iso
-  ./build.sh --arch aarch64 --firmware uefi --disk-type fat32
-  ./build.sh --arch arm32 --firmware bios --disk-type iso
-  ./build.sh --arch riscv64 --firmware uefi --disk-type fat32
-  ./build.sh --arch riscv32 --firmware bios --disk-type iso
-
-x86_32 produces a UEFI/BIOS Multiboot ISO (`build/akaos32.iso`) and its native
-kernel (`build/XSCORE32.ELF`). Every architecture accepts the same selection
-options; each architecture builder emits its currently bootable target image.
+  ./build.sh --arch x86_64 --desktop xfce --session-mode desktop
+  ./build.sh --arch x86_64 --desktop lxde --session-mode desktop
+  ./build.sh --arch aarch64 --session-mode console
+  ./build.sh --arch riscv64 --test
 EOF
 }
 
@@ -117,6 +123,8 @@ configure_build_interactively() {
     local menu_arch=x86_64
     local menu_firmware=uefi
     local menu_disk=fat32
+    local menu_desktop=aurora
+    local menu_session=console
     local menu_test=off
     local menu_verbose=off
     local action selection summary report
@@ -125,11 +133,13 @@ configure_build_interactively() {
     while true; do
         if ! action="$(akaos_ui_menu \
             "akaOS Build Configuration" \
-            "Choose a setting, then select Start build." \
+            "Configure target, desktop environment, and boot parameters." \
             "start" \
             "arch" "Architecture: $menu_arch" \
             "firmware" "Firmware: $menu_firmware" \
-            "disk" "Disk type: $menu_disk" \
+            "disk" "File/Disk format: $menu_disk" \
+            "desktop" "Desktop: $menu_desktop" \
+            "session" "Session: $menu_session" \
             "test" "Automated test mode: $menu_test" \
             "verbose" "Verbose boot logging: $menu_verbose" \
             "deps" "Check required host packages" \
@@ -141,37 +151,56 @@ configure_build_interactively() {
         case "$action" in
             arch)
                 if selection="$(akaos_ui_menu \
-                    "Target Architecture" "Select the CPU architecture." "$menu_arch" \
-                    "x86_64" "64-bit x86 PC" \
-                    "x86_32" "32-bit x86 PC" \
-                    "aarch64" "64-bit ARM" \
-                    "arm32" "32-bit ARM" \
-                    "riscv64" "64-bit RISC-V" \
-                    "riscv32" "32-bit RISC-V")"; then
+                    "Target Architecture" "Select the target CPU architecture." "$menu_arch" \
+                    "x86_64" "64-bit x86 PC (UEFI / SeaBIOS)" \
+                    "x86_32" "32-bit x86 PC (UEFI / BIOS Hybrid)" \
+                    "aarch64" "64-bit ARM (QEMU virt / direct kernel)" \
+                    "arm32" "32-bit ARM (ARMv7-A QEMU virt)" \
+                    "riscv64" "64-bit RISC-V (RV64GC QEMU virt)" \
+                    "riscv32" "32-bit RISC-V (RV32GC QEMU virt)")"; then
                     menu_arch="$selection"
                 fi
                 ;;
             firmware)
                 if selection="$(akaos_ui_menu \
                     "Firmware" "Select the firmware target." "$menu_firmware" \
-                    "uefi" "Build for UEFI" \
-                    "bios" "Build for legacy BIOS" \
+                    "uefi" "Build for UEFI (GOP Framebuffer)" \
+                    "bios" "Build for legacy BIOS (Multiboot2)" \
                     "both" "Build UEFI and BIOS boot support")"; then
                     menu_firmware="$selection"
                 fi
                 ;;
             disk)
                 if selection="$(akaos_ui_menu \
-                    "Disk Type" "Select the boot-media format." "$menu_disk" \
-                    "fat32" "FAT32 disk image" \
-                    "iso" "Bootable ISO image")"; then
+                    "Disk / File Format" "Select the boot-media image format." "$menu_disk" \
+                    "fat32" "FAT32 ESP disk image (.img)" \
+                    "iso" "Bootable hybrid optical image (.iso)")"; then
                     menu_disk="$selection"
+                fi
+                ;;
+            desktop)
+                if selection="$(akaos_ui_menu \
+                    "Desktop Environment" "Select default desktop environment." "$menu_desktop" \
+                    "aurora" "akaOS Aurora (native resident desktop)" \
+                    "xfce" "XFCE 4.18 (xfwm4, xfconf, panel)" \
+                    "lxde" "LXDE (Openbox, LXPanel, PCManFM)" \
+                    "openbox" "Openbox 3.6.1 standalone window manager" \
+                    "lxqt" "LXQt (Qt6 based desktop session)")"; then
+                    menu_desktop="$selection"
+                fi
+                ;;
+            session)
+                if selection="$(akaos_ui_menu \
+                    "Session Mode" "Select default startup session." "$menu_session" \
+                    "console" "Console terminal login (tty1 shell)" \
+                    "desktop" "Autostart graphical desktop environment")"; then
+                    menu_session="$selection"
                 fi
                 ;;
             test)
                 if selection="$(akaos_ui_menu \
                     "Automated Test Mode" "Embed or run the automated test path." "$menu_test" \
-                    "off" "Normal build" \
+                    "off" "Normal production build" \
                     "on" "Enable automated test mode")"; then
                     menu_test="$selection"
                 fi
@@ -179,8 +208,8 @@ configure_build_interactively() {
             verbose)
                 if selection="$(akaos_ui_menu \
                     "Verbose Boot Logging" "Choose the kernel boot-log mode." "$menu_verbose" \
-                    "off" "Quiet graphical boot" \
-                    "on" "Show verbose initialization logs")"; then
+                    "off" "Quiet graphical boot splash" \
+                    "on" "Show verbose hardware initialization logs")"; then
                     menu_verbose="$selection"
                 fi
                 ;;
@@ -206,7 +235,9 @@ configure_build_interactively() {
                 fi
                 summary="Architecture: $menu_arch
 Firmware:     $menu_firmware
-Disk type:    $menu_disk
+Format:       $menu_disk
+Desktop:      $menu_desktop
+Session:      $menu_session
 Test mode:    $menu_test
 Verbose:      $menu_verbose"
                 if akaos_ui_confirm "Confirm akaOS Build" "$summary" "Build" "Back"; then
@@ -214,6 +245,8 @@ Verbose:      $menu_verbose"
                         --arch "$menu_arch"
                         --firmware "$menu_firmware"
                         --disk-type "$menu_disk"
+                        --desktop "$menu_desktop"
+                        --session-mode "$menu_session"
                     )
                     if [[ "$menu_test" == "on" ]]; then
                         INTERACTIVE_BUILD_ARGS+=(--test)
@@ -248,6 +281,8 @@ firmware=uefi
 firmware_set=0
 disk_type=auto
 disk_type_set=0
+target_desktop=aurora
+session_mode=console
 bios_test=0
 bios_verbose=0
 check_deps_only=0
@@ -256,7 +291,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --arch)
             if [[ $# -lt 2 ]]; then
-                echo "--arch requires a target name" >&2
+                echo "--arch requires a target name (x86_64, x86_32, aarch64, arm32, riscv64, riscv32)" >&2
                 usage >&2
                 exit 2
             fi
@@ -277,14 +312,38 @@ while [[ $# -gt 0 ]]; do
             firmware_set=1
             shift 2
             ;;
-        --disk-type)
+        --disk-type|--file-type|--format)
             if [[ $# -lt 2 ]]; then
-                echo "--disk-type requires fat32 or iso" >&2
+                echo "$1 requires fat32 or iso" >&2
                 exit 2
             fi
             disk_type="$2"
             disk_type_set=1
             shift 2
+            ;;
+        --desktop|--desktop-env)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires aurora, xfce, lxde, openbox, or lxqt" >&2
+                exit 2
+            fi
+            target_desktop="$2"
+            shift 2
+            ;;
+        --session-mode)
+            if [[ $# -lt 2 ]]; then
+                echo "--session-mode requires console or desktop" >&2
+                exit 2
+            fi
+            session_mode="$2"
+            shift 2
+            ;;
+        --console)
+            session_mode=console
+            shift
+            ;;
+        --desktop-autostart)
+            session_mode=desktop
+            shift
             ;;
         --test)
             bios_test=1
@@ -1459,6 +1518,7 @@ build_user_program ps "$ROOT_DIR/userspace/bin/ps/main.c" PS.ELF
 build_account_program akash "$ROOT_DIR/userspace/bin/akash/main.c" AKASH.ELF
 build_user_program nslookup "$ROOT_DIR/userspace/bin/nslookup/main.c" NSLOOKUP.ELF
 build_user_program curl "$ROOT_DIR/userspace/bin/curl/main.c" CURL.ELF
+build_user_program pkg "$ROOT_DIR/userspace/bin/pkg/main.c" PKG.ELF
 build_user_program wget "$ROOT_DIR/userspace/bin/wget/main.c" WGET.ELF
 build_user_program httpd "$ROOT_DIR/userspace/bin/httpd/main.c" HTTPD.ELF
 build_user_program akaos-config "$ROOT_DIR/userspace/bin/akaos-config/main.c" AKAOS_CONFIG.ELF
@@ -1830,7 +1890,7 @@ build_runtime_library libgtk-4.so 5
 build_runtime_library libQt6Core.so 6
 build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
-for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF WATCH.ELF SED.ELF DIFF.ELF CMP.ELF PATCH.ELF TAR.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
+for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF WATCH.ELF SED.ELF DIFF.ELF CMP.ELF PATCH.ELF TAR.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
     # ET_DYN hello-pie legitimately carries relative relocations; the kernel
     # applies those at its fixed native load base. Reject only relocation
     # kinds outside that bounded ABI instead of rejecting the section itself.
@@ -2954,6 +3014,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/akash:$BUILD_DIR/AKASH.ELF:exec" \
     --file "/bin/nslookup:$BUILD_DIR/NSLOOKUP.ELF:exec" \
     --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec" \
+    --file "/bin/pkg:$BUILD_DIR/PKG.ELF:exec" \
     --file "/bin/wget:$BUILD_DIR/WGET.ELF:exec" \
     --file "/bin/httpd:$BUILD_DIR/HTTPD.ELF:exec" \
     --file "/bin/akaos-config:$BUILD_DIR/AKAOS_CONFIG.ELF:exec" \
@@ -3104,7 +3165,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/etc/group:$ROOT_DIR/userspace/etc/group:0644" \
     --file "/etc/sudoers:$ROOT_DIR/userspace/etc/sudoers:0440" \
     --file "/etc/shadow:$ROOT_DIR/userspace/etc/shadow:0600" \
-    --file "/etc/akaos.conf:$ROOT_DIR/userspace/etc/akaos.conf:0644" \
+    --file "/etc/akaos.conf:$BUILD_DIR/akaos.conf:0644" \
+    --file "/etc/pkg.conf:$ROOT_DIR/userspace/etc/pkg.conf:0644" \
     --file "/etc/dbus-services.conf:$ROOT_DIR/userspace/etc/dbus-services.conf:0644" \
     --file "/etc/resolv.conf:$ROOT_DIR/userspace/etc/resolv.conf:0644" \
     --file "/etc/fstab:$ROOT_DIR/userspace/etc/fstab:0644" \
@@ -3115,6 +3177,10 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/etc/shells:$ROOT_DIR/userspace/etc/shells:0644" \
     --file "/etc/profile:$ROOT_DIR/userspace/etc/profile:0644" \
     --dir "/var" \
+    --dir "/var/lib" \
+    --dir "/var/lib/pkg" \
+    --dir "/var/cache" \
+    --dir "/var/cache/pkg" \
     --dir "/var/www" \
     --dir "/var/www/cgi-bin" \
     --file "/var/www/cgi-bin/status:$BUILD_DIR/STATUS_CGI.ELF:exec" \

@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     }
 
     int quiet = 0;
-    int verbose = 1;
+    int verbose = 1; (void)verbose;
     int spider = 0;
     int continue_dl = 0;
     const char *output_file = NULL;
