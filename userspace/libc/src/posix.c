@@ -1519,3 +1519,29 @@ int wordexp(const char *input, wordexp_t *word_result, int flags) {
     free(words.quoted);
     return 0;
 }
+
+#include <netinet/in.h>
+#include <sys/wait.h>
+const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
+const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
+
+unsigned int alarm(unsigned int seconds) {
+    (void)seconds;
+    return 0;
+}
+
+int system(const char *command) {
+    if (!command) return 1;
+    pid_t pid = fork();
+    if (pid < 0) return -1;
+    if (pid == 0) {
+        char *argv[] = {"/bin/akash", "-c", (char *)command, NULL};
+        execv(argv[0], argv);
+        _exit(127);
+    }
+    int status = 0;
+    while (waitpid(pid, &status, 0) < 0) {
+        if (errno != EINTR) return -1;
+    }
+    return status;
+}

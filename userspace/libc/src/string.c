@@ -407,6 +407,19 @@ size_t mbsnrtowcs(wchar_t *wide, const char **multibyte, size_t bytes,
     return converted;
 }
 
+void bzero(void *s, size_t n) {
+    if (s && n) memset(s, 0, n);
+}
+
+void bcopy(const void *src, void *dest, size_t n) {
+    if (src && dest && n) memmove(dest, src, n);
+}
+
+int bcmp(const void *s1, const void *s2, size_t n) {
+    if (!s1 || !s2 || !n) return 0;
+    return memcmp(s1, s2, n);
+}
+
 size_t wcsnrtombs(char *multibyte, const wchar_t **wide, size_t count,
                   size_t bytes, mbstate_t *state) {
     if (!wide || !*wide) return (size_t)-1;

@@ -74,6 +74,7 @@ int *__h_errno_location(void);
 #define h_errno (*__h_errno_location())
 
 struct hostent *gethostbyname(const char *name);
+struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type);
 struct servent *getservbyname(const char *name, const char *protocol);
 struct servent *getservbyport(int port, const char *protocol);
 void setservent(int stay_open);

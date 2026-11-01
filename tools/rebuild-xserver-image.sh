@@ -281,6 +281,7 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     -o "$BUILD_DIR/AKASH.ELF"
 initramfs_files+=(
     "--file=/bin/akash:$BUILD_DIR/AKASH.ELF:exec"
+    "--file=/bin/sh:$BUILD_DIR/AKASH.ELF:exec"
 )
 
 echo "[BUILD] user ps"
@@ -531,7 +532,8 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfwm4" ]]; then
         "--dir=/usr/local/share/themes"
     )
     for xfce_library in libxfce4util.so.7 libxfconf-0.so.3 libxfce4ui-2.so.0 libxfce4kbd-private-3.so.0 \
-        libgarcon-1.so.0 libgarcon-gtk3-1.so.0 libexo-2.so.0 libxfce4panel-2.0.so.4; do
+        libgarcon-1.so.0 libgarcon-gtk3-1.so.0 libexo-2.so.0 libxfce4panel-2.0.so.4 \
+        libICE.so.6 libSM.so.6; do
         library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib"             -maxdepth 1 -type f -name "${xfce_library}.*" -print | sort -V | tail -n 1)"
         [[ -n "$library_path" ]] || continue
         initramfs_files+=(
@@ -569,6 +571,24 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfwm4" ]]; then
                 "--file=/usr/local/share/xfce4/panel/plugins/$desktop_name:$desktop_file:0444"
             )
         done < <(find "$UPSTREAM_SYSROOT/usr/local/share/xfce4/panel/plugins" -maxdepth 1 -type f -name '*.desktop' 2>/dev/null | sort)
+    fi
+    if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfce4-session" ]]; then
+        initramfs_files+=(
+            "--file=/usr/local/bin/xfce4-session:$UPSTREAM_SYSROOT/usr/local/bin/xfce4-session:exec"
+            "--file=/usr/local/bin/xfce4-session-logout:$UPSTREAM_SYSROOT/usr/local/bin/xfce4-session-logout:exec"
+            "--file=/usr/local/bin/startxfce4:$UPSTREAM_SYSROOT/usr/local/bin/startxfce4:exec"
+            "--dir=/etc/xdg/xfce4"
+        )
+        if [[ -f "$UPSTREAM_SYSROOT/etc/xdg/xfce4/xinitrc" ]]; then
+            initramfs_files+=(
+                "--file=/etc/xdg/xfce4/xinitrc:$UPSTREAM_SYSROOT/etc/xdg/xfce4/xinitrc:0444"
+            )
+        fi
+        if [[ -f "$UPSTREAM_SYSROOT/etc/xdg/xfce4/Xft.xrdb" ]]; then
+            initramfs_files+=(
+                "--file=/etc/xdg/xfce4/Xft.xrdb:$UPSTREAM_SYSROOT/etc/xdg/xfce4/Xft.xrdb:0444"
+            )
+        fi
     fi
     if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfconf-query" ]]; then
         initramfs_files+=(

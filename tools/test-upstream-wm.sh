@@ -162,7 +162,10 @@ try:
               "echo XFWM4-RUNNING=$?; "
               "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
               "/usr/local/bin/xfce4-panel & sleep 15; ps; "
-              "echo XFCE4-PANEL-RUNNING=$?")
+              "echo XFCE4-PANEL-RUNNING=$?; "
+              "env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 "
+              "/usr/local/bin/xfce4-session & sleep 15; ps; "
+              "echo XFCE4-SESSION-RUNNING=$?")
     if not wait_for("x11 wm client: reparented into frame", 240):
         print("[FAIL] The upstream window manager did not take the window over.",
               flush=True)
@@ -252,6 +255,17 @@ try:
         print(output[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] xfce4-panel desktop panel started and remained active alongside Xfwm4.",
+          flush=True)
+    if not wait_for("XFCE4-SESSION-RUNNING=0", 60):
+        print("[FAIL] xfce4-session did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if "running xfce4-session" not in output:
+        print("[FAIL] xfce4-session was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] xfce4-session desktop session manager started and remained active.",
           flush=True)
 finally:
     proc.kill()

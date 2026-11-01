@@ -127,6 +127,11 @@ struct ipv6_mreq {
 #define INADDR_BROADCAST UINT32_C(0xffffffff)
 #define INADDR_NONE      UINT32_C(0xffffffff)
 
+extern const struct in6_addr in6addr_any;
+extern const struct in6_addr in6addr_loopback;
+#define IN6ADDR_ANY_INIT { { 0 } }
+#define IN6ADDR_LOOPBACK_INIT { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } }
+
 #ifdef __cplusplus
 extern "C" {
 #endif

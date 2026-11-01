@@ -2858,6 +2858,21 @@ struct hostent *gethostbyname(const char *name) {
     return NULL;
 }
 
+struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
+    if (!addr || len < sizeof(uint32_t) || type != AF_INET) return NULL;
+    uint32_t ip = *(const uint32_t *)addr;
+    s_host_addr = ip;
+    s_addr_list[0] = (char *)&s_host_addr;
+    s_addr_list[1] = NULL;
+    inet_ntop(AF_INET, addr, s_host_name, sizeof(s_host_name));
+    s_hostent.h_name = s_host_name;
+    s_hostent.h_aliases = NULL;
+    s_hostent.h_addrtype = AF_INET;
+    s_hostent.h_length = sizeof(uint32_t);
+    s_hostent.h_addr_list = s_addr_list;
+    return &s_hostent;
+}
+
 static char *duplicate_text(const char *value) {
     if (!value) return NULL;
     size_t length = strlen(value);

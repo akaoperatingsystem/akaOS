@@ -90,6 +90,7 @@ int mblen(const char *multibyte, size_t length);
 void abort(void) __attribute__((noreturn));
 void exit(int status) __attribute__((noreturn));
 int atexit(void (*function)(void));
+int system(const char *command);
 int mbtowc(wchar_t *wide_character, const char *multibyte, size_t length);
 int wctomb(char *multibyte, wchar_t wide_character);
 size_t mbstowcs(wchar_t *wide, const char *multibyte, size_t count);
