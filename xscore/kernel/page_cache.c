@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define PAGE_CACHE_CAPACITY 256U
+#define PAGE_CACHE_CAPACITY 2048U
 
 struct page_cache_entry {
     const uint8_t *image;

@@ -147,7 +147,7 @@ int xscore_pmm_initialize(const struct akaos_boot_info *boot_info,
     return free_page_count != 0;
 }
 
-#define REFCOUNT_TABLE_SLOTS 16384U
+#define REFCOUNT_TABLE_SLOTS 131072U
 
 /* Physical addresses are not guaranteed to start at zero (the native
  * ARM/RISC-V ports allocate RAM at 0x40000000). A direct page-number array
