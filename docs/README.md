@@ -1,31 +1,38 @@
-# akaOS Technical Documentation Index
+# akaOS Documentation
 
-Welcome to the technical documentation for **akaOS** and the **XSCore** kernel.
+Welcome to the **akaOS** technical documentation library. This directory contains detailed architectural specifications, subsystem designs, hardware porting guidelines, and contributor rules.
 
 ---
 
-## Documentation Categories
+## Quick Navigation
 
-### 1. Contributor & AI Guidelines
-- **[Contributor & AI Guidelines](rules.md)**: **Mandatory reading for all human developers and anyone using AI tools.** Details the universal MIT License requirement, upstream desktop purity rule, and code quality standards.
+| Topic | Document | Description |
+| :--- | :--- | :--- |
+| **Guidelines** | **[Contributor & AI Rules](rules.md)** | **Mandatory reading** for humans and AI coding assistants (MIT license, upstream purity). |
+| **Quick Start** | **[Building & Running](BUILDING.md)** | Prerequisites, toolchain setup, interactive TUI menus, and CLI options. |
+| **Architecture** | **[System Architecture](architecture.md)** | Core system design, loader-to-kernel handoffs, and subsystem layout. |
+| **Boot Flow** | **[Boot Sequence](boot.md)** | From UEFI/BIOS firmware entry to userspace PID 1 initialization. |
+| **Hardware Ports** | **[Portability Matrix](ports.md)** | Hardware support matrix across all 6 supported CPU architectures. |
+| **Memory** | **[Memory Subsystem](memory.md)** | Physical page allocation, 4-level paging, NX, and kernel heap. |
+| **Live Progress** | **[Progress Dashboard](../PROGRESS.md)** | Real-time progress bars for CPU ports, drivers, GPU matrix, and desktop environments. |
 
-### 2. Architecture & Kernel (XSCore)
-- **[System Architecture](architecture.md)**: Overall operating system layout and design philosophy.
-- **[Kernel Syscalls & ABI](kernel/syscalls.md)**: Syscall calling conventions across all 6 architectures.
+---
+
+## Subsystem Documentation
+
+### 1. Kernel Architecture (`docs/kernel/`)
+- **[Syscall ABI & Conventions](kernel/syscalls.md)**: Calling conventions across x86-64, x86-32, AArch64, ARM32, RISC-V64, and RISC-V32.
 - **[Kernel Memory Architecture](kernel/memory.md)**: Physical bitmap allocator, 4-level paging, COW, and demand paging.
-- **[Boot Sequence](boot.md)**: Boot sequence from OVMF UEFI / SeaBIOS to user session.
-- **[Architecture Ports](ports.md)**: Porting matrix for x86-64, x86-32, AArch64, ARM32, RISC-V64, and RISC-V32.
 
-### 3. Display, Desktop & Window Managers
-- **[X11 Server & Compositor Architecture](desktop/x11-and-compositor.md)**: Native X11 server (`xserver`), Lumen compositor, and Wayland bridge.
+### 2. Desktop & Graphics Stack (`docs/desktop/`)
+- **[X11 Server & Compositor Architecture](desktop/x11-and-compositor.md)**: Native X11 protocol server (`xserver`), Lumen compositor engine, and Wayland bridge.
 
-### 4. Userspace & C Runtime
-- **[Native libc Overview](userspace/libc.md)**: Freestanding C runtime, POSIX emulation layer, and dynamic linker (`ld-akaos`).
+### 3. Userspace & C Runtime (`docs/userspace/`)
+- **[Native libc Overview](userspace/libc.md)**: Freestanding C library, dynamic ELF loader (`ld-akaos`), and POSIX compatibility layer.
 
-### 5. Device Drivers & Hardware
-- **[GPU Hardware Architecture](drivers/gpu-architecture.md)**: Framebuffer drivers, UEFI GOP, VirtIO-GPU, and discrete GPU drivers.
-- **[GPU Hardware Driver Matrix](../PROGRESS.md#gpu-hardware-drivers--target-support-matrix)**: Live readiness tracking for NVIDIA, AMD, and Intel GPUs.
+### 4. Device Drivers (`docs/drivers/`)
+- **[GPU Hardware Architecture](drivers/gpu-architecture.md)**: Framebuffer abstraction, UEFI GOP, VirtIO-GPU, and discrete hardware driver models.
+- **[Comprehensive GPU Matrix](../PROGRESS.md#gpu-hardware-drivers--target-support-matrix)**: Driver readiness tracking for NVIDIA, AMD/ATI, and Intel hardware.
 
-### 6. Development & Verification
-- **[Building & Running](BUILDING.md)**: Host packages, toolchains, and interactive configuration menus.
-- **[Developer Workflow](development/workflow.md)**: Testing guidelines, automated QEMU verification, and porting checklists.
+### 5. Development & Testing (`docs/development/`)
+- **[Developer Workflow](development/workflow.md)**: Automated regression scripts, QEMU validation, and contribution checklists.
