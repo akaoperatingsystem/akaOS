@@ -12,6 +12,7 @@
 #include <xscore/serial.h>
 #include <xscore/user.h>
 #include <xscore/process.h>
+#include <xscore/usercopy.h>
 #include <xscore/file.h>
 #include <xscore/initramfs.h>
 #include <xscore/vfs.h>
@@ -205,7 +206,7 @@ void xscore_exception_handler(uint64_t vector, uint64_t error_code, const uint64
         uint64_t stack_words[8];
         if (xscore_copy_from_user(stack_words, frame[5], sizeof(stack_words))) {
             for (int sw = 0; sw < 8; ++sw) {
-                serial_process_status("[FATAL] Stack[+", (uint64_t)(sw * 8), "]: ");
+                serial_number("[FATAL] Stack[+", (uint64_t)(sw * 8), "]: ");
                 serial_number("", stack_words[sw], "\n");
             }
         }
