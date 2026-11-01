@@ -43,12 +43,12 @@ All desktop environments and window managers run as **completely unmodified upst
 | **Openbox WM** | Unmodified Upstream 3.6.1 | 100% | `[██████████]` 100% |
 | **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream | 100% | `[██████████]` 100% |
 | **LXQt Desktop & Session** | Unmodified Upstream | 65% | `[██████░░░░]` 65% |
-| **XFCE Desktop & Xfwm4** | Unmodified Upstream (libxfce4util, xfconf, libxfce4ui, xfwm4) | 80% | `[████████░░]` 80% |
+| **XFCE Desktop & Xfwm4** | Unmodified Upstream (libxfce4util 4.18.1, xfconf 4.18.0, libxfce4ui 4.18.2, xfwm4 4.18.0) | 85% | `[█████████░]` 85% |
 | **MATE Desktop & Marco** | Unmodified Upstream | 30% | `[███░░░░░░░]` 30% |
 | **KDE Plasma & KWin** | Unmodified Upstream | 25% | `[██░░░░░░░░]` 25% |
 | **GNOME Desktop & Mutter** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
 | **Cinnamon Desktop & Muffin** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
-| **Overall System Completion** | Full Native Operating System | 65% | `[██████░░░░]` 65% |
+| **Overall System Completion** | Full Native Operating System | 70% | `[███████░░░]` 70% |
 
 
 ---
