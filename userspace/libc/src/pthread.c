@@ -359,7 +359,7 @@ void __akaos_pthread_atfork_prepare(
         count = AKAOS_PTHREAD_ATFORK_MAX;
     while (count != 0U) {
         void (*handler)(void) = snapshot->handlers[--count].prepare;
-        if (handler) handler();
+        if (handler && (uintptr_t)handler >= 0x1000U && (uintptr_t)handler < UINT64_C(0x0000800000000000)) handler();
     }
 }
 
@@ -378,7 +378,7 @@ void __akaos_pthread_atfork_parent(
         count = AKAOS_PTHREAD_ATFORK_MAX;
     for (uint32_t index = 0; index < count; ++index) {
         void (*handler)(void) = snapshot->handlers[index].parent;
-        if (handler) handler();
+        if (handler && (uintptr_t)handler >= 0x1000U && (uintptr_t)handler < UINT64_C(0x0000800000000000)) handler();
     }
 }
 
@@ -474,7 +474,7 @@ void __akaos_pthread_atfork_child(
         count = AKAOS_PTHREAD_ATFORK_MAX;
     for (uint32_t index = 0; index < count; ++index) {
         void (*handler)(void) = snapshot->handlers[index].child;
-        if (handler) handler();
+        if (handler && (uintptr_t)handler >= 0x1000U && (uintptr_t)handler < UINT64_C(0x0000800000000000)) handler();
     }
 }
 

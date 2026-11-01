@@ -1829,6 +1829,7 @@ pid_t getppid(void) {
 
 pid_t fork(void) {
     struct akaos_pthread_atfork_snapshot snapshot;
+    memset(&snapshot, 0, sizeof(snapshot));
     __akaos_pthread_atfork_snapshot(&snapshot);
     pthread_t caller_thread = pthread_self();
     __akaos_pthread_atfork_prepare(&snapshot);

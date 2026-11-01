@@ -2,8 +2,8 @@
 #define AKAOS_VERSION_H
 
 #define AKAOS_NAME "akaOS"
-#define AKAOS_VERSION "0.1.29"
-#define AKAOS_VERSION_STRING "0.1.29"
+#define AKAOS_VERSION "0.1.30"
+#define AKAOS_VERSION_STRING "0.1.30"
 
 #define XSCORE_VERSION "0.1.15"
 #define XSCORE_VERSION_STRING "0.1.15"
