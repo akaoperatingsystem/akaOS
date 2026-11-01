@@ -196,14 +196,14 @@ akaOS maintains an extensive automated QEMU test suite:
 
 ---
 
-## AI Agent & Contributor Rules
+## Contributor & AI Guidelines
 
-Anyone utilizing AI coding assistants, automated agents, or AI developer tools on the akaOS codebase **must read and follow the mandatory guidelines** in **[docs/ai/rules.md](docs/ai/rules.md)**:
+All contributors — **both human developers and anyone utilizing AI coding assistants** (Cursor, Copilot, DeepSeek, Claude, ChatGPT, etc.) — **must read and follow the mandatory guidelines** in **[docs/rules.md](docs/rules.md)**:
 
-1. **Universal MIT License**: All code, scripts, tools, and headers written for akaOS and XSCore must be licensed under the [MIT License](LICENSE). Incompatible or copyleft code must never be introduced into core subsystems.
-2. **Zero-Patching Desktop Purity**: All desktop environments (GNOME, KDE, XFCE, MATE, Cinnamon, LXQt, LXDE) and window managers must run as **completely unmodified upstream software**. Compatibility must be provided inside akaOS (kernel, libc, X11 server, Wayland bridge), never by patching desktop code.
-3. **Independent Dual Versioning**: Maintain separate semantic versions for **akaOS** (OS) and **XSCore** (Kernel) in [`sdk/include/akaos/version.h`](sdk/include/akaos/version.h). Keep badges in `README.md` and `PROGRESS.md` synchronized.
-4. **Real-Time Git Commits & Pushes**: Immediately commit and push every file change to GitHub from the host environment without batching or delaying.
+1. **Universal MIT License**: Every single line of code, header, script, and documentation contributed to akaOS must be licensed under the [MIT License](LICENSE). Incompatible or copyleft code must never be introduced.
+2. **Upstream Desktop Purity**: All desktop environments (GNOME, KDE, XFCE, MATE, Cinnamon, LXQt, LXDE) and window managers must run as **completely unmodified upstream software**. Compatibility belongs inside akaOS subsystems (kernel, libc, display server), never by patching desktop code.
+3. **Code Quality & Testing**: All code (human-written or AI-generated) must be tested against automated QEMU regression scripts (`./test.sh`) and compiler targets (`./tools/build-arch-smoke.sh --all`).
+4. **Independent Dual Versioning**: Follow the semantic versioning contract for akaOS and the XSCore kernel defined in [`sdk/include/akaos/version.h`](sdk/include/akaos/version.h).
 
 ---
 
