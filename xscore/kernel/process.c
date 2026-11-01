@@ -1847,7 +1847,24 @@ static int process_load_image_page(struct xscore_process *process,
     /* Immutable PIE pages without fixups are identical across processes. */
     int is_readonly = !(flags & XSCORE_PAGE_WRITABLE) && !has_relocations;
 
-    (void)is_readonly;
+    if (is_readonly) {
+        uint64_t cached_phys = xscore_page_cache_lookup(image, page_offset);
+        if (cached_phys != 0) {
+            xscore_pmm_refcount_inc(cached_phys);
+            if (!xscore_vmm_map_page_in(process->address_space_root,
+                                        process->mapped_pages[page_index],
+                                        cached_phys, flags)) {
+                (void)xscore_pmm_refcount_dec(cached_phys);
+                return 0;
+            }
+            process->physical_pages[page_index] = cached_phys;
+            if (!(process_runtime_flags & PROCESS_RUNTIME_FILE_REPORTED)) {
+                xscore_serial_write("[INFO] File-backed ELF page loaded on demand\n");
+                process_runtime_flags |= PROCESS_RUNTIME_FILE_REPORTED;
+            }
+            return 1;
+        }
+    }
 
     uint64_t physical = xscore_pmm_allocate_page();
     if (!physical) return 0;
@@ -1891,7 +1908,10 @@ static int process_load_image_page(struct xscore_process *process,
         return 0;
     }
     process->physical_pages[page_index] = physical;
-    /* Pure direct demand loading avoids cross-process physical page aliasing */
+    if (is_readonly) {
+        xscore_pmm_refcount_inc(physical);
+        xscore_page_cache_insert(image, page_offset, physical);
+    }
     if (!(process_runtime_flags & PROCESS_RUNTIME_FILE_REPORTED)) {
         xscore_serial_write("[INFO] File-backed ELF page loaded on demand\n");
         process_runtime_flags |= PROCESS_RUNTIME_FILE_REPORTED;
