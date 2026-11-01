@@ -337,6 +337,7 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/lxpanel" ]]; then
     initramfs_files+=(
         "--dir=/etc"
         "--file=/etc/dbus-services.conf:$ROOT_DIR/userspace/etc/dbus-services.conf:0644"
+        "--file=/etc/test-desktop.sh:$ROOT_DIR/tools/test-desktop.sh:0755"
         "--dir=/etc/xdg"
         "--dir=/etc/xdg/menus"
         "--dir=/usr/share/desktop-directories"
