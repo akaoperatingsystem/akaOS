@@ -49,7 +49,7 @@
  * per process so HarfBuzz can use its file-read fallback when mmap is full. */
 #if defined(__x86_64__) || defined(__aarch64__) || \
     (defined(__riscv) && __riscv_xlen == 64)
-#define USER_MAX_HEAP_PAGES 4096U
+#define USER_MAX_HEAP_PAGES 8192U
 #else
 #define USER_MAX_HEAP_PAGES 256U
 #endif
@@ -78,8 +78,8 @@
 /* Real toolkit dependency graphs occupy tens of MiB of mapped ELF segments.
  * Keep them above the executable, heap, and signal trampoline while leaving
  * a 256 MiB virtual window for the 64 MiB per-process mmap page budget. */
-#define USER_MMAP_START (USER_CODE_ADDRESS + UINT64_C(0x02000000))
-#define USER_MMAP_END   (USER_CODE_ADDRESS + UINT64_C(0x12000000))
+#define USER_MMAP_START (USER_CODE_ADDRESS + UINT64_C(0x03000000))
+#define USER_MMAP_END   (USER_CODE_ADDRESS + UINT64_C(0x13000000))
 #else
 #define USER_MMAP_START (USER_CODE_ADDRESS + UINT64_C(0x02000000))
 #define USER_MMAP_END   (USER_CODE_ADDRESS + UINT64_C(0x03000000))
@@ -93,9 +93,9 @@
 #endif
 #if defined(__x86_64__) || defined(__aarch64__) || \
     (defined(__riscv) && __riscv_xlen == 64)
-/* The 64-bit ports reserve a 16 MiB brk heap beginning 4 MiB above the user
- * image. Keep the signal trampoline beyond that full 20 MiB heap window. */
-#define USER_SIGNAL_TRAMPOLINE_OFFSET UINT64_C(0x01800000)
+/* The 64-bit ports reserve a 32 MiB brk heap beginning 4 MiB above the user
+ * image. Keep the signal trampoline beyond that full 36 MiB heap window. */
+#define USER_SIGNAL_TRAMPOLINE_OFFSET UINT64_C(0x02800000)
 #else
 #define USER_SIGNAL_TRAMPOLINE_OFFSET UINT64_C(0x00f00000)
 #endif

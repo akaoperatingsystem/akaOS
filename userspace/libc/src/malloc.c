@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #define ALIGNMENT 16
@@ -159,8 +160,14 @@ static void *allocate_locked(size_t aligned_size) {
 
     void *mem = sbrk((intptr_t)request_size);
     if (mem == (void *)-1) {
-        errno = ENOMEM;
-        return NULL;
+        size_t mmap_size = (request_size + 4095) & ~(size_t)4095;
+        mem = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        if (mem == MAP_FAILED) {
+            errno = ENOMEM;
+            return NULL;
+        }
+        request_size = mmap_size;
     }
 
     struct block_header *new_block = (struct block_header *)mem;
