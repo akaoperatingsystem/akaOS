@@ -2027,6 +2027,21 @@ int xscore_process_handle_page_fault(uint64_t fault_address,
                 !(process->mapped_page_flags[index] & XSCORE_PAGE_WRITABLE)) {
                 return 0;
             }
+            if (fault_page >= USER_STACK_TOP - (uint64_t)USER_MAX_STACK_PAGES * PAGE_SIZE &&
+                fault_page < USER_STACK_TOP) {
+                /* Stack pages must be allocated anonymously, never loaded from the ELF image. */
+                uint64_t physical = xscore_pmm_allocate_page();
+                if (!physical) return 0;
+                zero_page(physical);
+                if (!xscore_vmm_map_page_in(
+                        process->address_space_root, fault_page, physical,
+                        process->mapped_page_flags[index])) {
+                    xscore_pmm_free_page(physical);
+                    return 0;
+                }
+                process->physical_pages[index] = physical;
+                return 1;
+            }
             return process_load_image_page(process, index);
         }
     }
