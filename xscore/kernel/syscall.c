@@ -1444,52 +1444,76 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
         return (uint64_t)child_pid;
     }
     if (number == AKAOS_SYSCALL_EXECVE) {
-        char kpath[128];
+        char kpath[256];
         if (!xscore_copy_string_from_user(kpath, sizeof(kpath), argument0, 0)) {
             return (uint64_t)-AKAOS_EFAULT;
         }
 
-        char kargv_storage[16][128];
-        const char *kargv[17];
+        char (*kargv_storage)[256] = xscore_heap_allocate(32 * 256);
+        char (*kenv_storage)[256] = xscore_heap_allocate(32 * 256);
+        if (!kargv_storage || !kenv_storage) {
+            if (kargv_storage) (void)xscore_heap_free(kargv_storage);
+            if (kenv_storage) (void)xscore_heap_free(kenv_storage);
+            return (uint64_t)-AKAOS_ENOMEM;
+        }
+
+        const char *kargv[33];
         int argc = 0;
         if (argument1 != 0) {
-            while (argc < 16) {
+            while (argc < 32) {
                 uintptr_t pointer = 0;
                 if (!xscore_copy_from_user(
                         &pointer,
                         argument1 + (uint64_t)argc * sizeof(uintptr_t),
-                        sizeof(pointer))) return (uint64_t)-AKAOS_EFAULT;
+                        sizeof(pointer))) {
+                    (void)xscore_heap_free(kargv_storage);
+                    (void)xscore_heap_free(kenv_storage);
+                    return (uint64_t)-AKAOS_EFAULT;
+                }
                 if (!pointer) break;
                 if (!xscore_copy_string_from_user(
-                        kargv_storage[argc], sizeof(kargv_storage[argc]),
-                        (uint64_t)pointer, 0)) return (uint64_t)-AKAOS_EFAULT;
+                        kargv_storage[argc], 256,
+                        (uint64_t)pointer, 0)) {
+                    (void)xscore_heap_free(kargv_storage);
+                    (void)xscore_heap_free(kenv_storage);
+                    return (uint64_t)-AKAOS_EFAULT;
+                }
                 kargv[argc] = kargv_storage[argc];
                 ++argc;
             }
         }
         kargv[argc] = 0;
 
-        char kenv_storage[16][128];
-        const char *kenvp[17];
+        const char *kenvp[33];
         int envc = 0;
         if (argument2 != 0) {
-            while (envc < 16) {
+            while (envc < 32) {
                 uintptr_t pointer = 0;
                 if (!xscore_copy_from_user(
                         &pointer,
                         argument2 + (uint64_t)envc * sizeof(uintptr_t),
-                        sizeof(pointer))) return (uint64_t)-AKAOS_EFAULT;
+                        sizeof(pointer))) {
+                    (void)xscore_heap_free(kargv_storage);
+                    (void)xscore_heap_free(kenv_storage);
+                    return (uint64_t)-AKAOS_EFAULT;
+                }
                 if (!pointer) break;
                 if (!xscore_copy_string_from_user(
-                        kenv_storage[envc], sizeof(kenv_storage[envc]),
-                        (uint64_t)pointer, 0)) return (uint64_t)-AKAOS_EFAULT;
+                        kenv_storage[envc], 256,
+                        (uint64_t)pointer, 0)) {
+                    (void)xscore_heap_free(kargv_storage);
+                    (void)xscore_heap_free(kenv_storage);
+                    return (uint64_t)-AKAOS_EFAULT;
+                }
                 kenvp[envc] = kenv_storage[envc];
                 ++envc;
             }
         }
         kenvp[envc] = 0;
-        return (uint64_t)xscore_process_execve(kpath, argc, kargv,
-                                               envc, kenvp);
+        int64_t ret = xscore_process_execve(kpath, argc, kargv, envc, kenvp);
+        (void)xscore_heap_free(kargv_storage);
+        (void)xscore_heap_free(kenv_storage);
+        return (uint64_t)ret;
     }
     if (number == AKAOS_SYSCALL_WAITPID) {
         if (argument1 != 0 &&
