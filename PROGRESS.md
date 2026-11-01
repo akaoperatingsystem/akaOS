@@ -1,7 +1,7 @@
 # akaOS Development Progress
 
 [![akaOS Version](https://img.shields.io/badge/akaOS-v0.1.33-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.17-green.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.1.18-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
 
@@ -24,7 +24,7 @@ This document tracks the live implementation progress, hardware readiness, subsy
 
 | Target Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **Memory Management** | 4-Level Paging, Dynamic Stack Page Fault Growth on Demand, 32MB Heap & mmap | 99% | `[██████████]` 99% |
+| **Memory Management** | 4-Level Paging, Dynamic Stack Growth, Unaliased Direct Demand Paging, 32MB Heap & mmap | 100% | `[██████████]` 100% |
 | **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Stack COW Fault Isolation | 94% | `[█████████░]` 94% |
 | **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen, X11 Server (64MB Backing, XYBitmap/PutImage, SHAPE, X-Res), Mode Query | 94% | `[█████████░]` 94% |
 | **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
