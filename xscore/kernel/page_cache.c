@@ -61,6 +61,7 @@ int xscore_page_cache_insert(const uint8_t *image, uint64_t offset, uint64_t phy
             cache_entries[i].offset == offset) {
             if (cache_entries[i].physical_address != physical_address) {
                 (void)xscore_pmm_refcount_dec(cache_entries[i].physical_address);
+                xscore_pmm_refcount_inc(physical_address);
                 cache_entries[i].physical_address = physical_address;
             }
             xscore_spin_unlock_irqrestore(&page_cache_lock, flags);
@@ -74,6 +75,7 @@ int xscore_page_cache_insert(const uint8_t *image, uint64_t offset, uint64_t phy
             cache_entries[i].image = image;
             cache_entries[i].offset = offset;
             cache_entries[i].physical_address = physical_address;
+            xscore_pmm_refcount_inc(physical_address);
             cache_entry_count++;
             xscore_spin_unlock_irqrestore(&page_cache_lock, flags);
             return 1;
@@ -90,6 +92,7 @@ int xscore_page_cache_insert(const uint8_t *image, uint64_t offset, uint64_t phy
     cache_entries[PAGE_CACHE_CAPACITY - 1].image = image;
     cache_entries[PAGE_CACHE_CAPACITY - 1].offset = offset;
     cache_entries[PAGE_CACHE_CAPACITY - 1].physical_address = physical_address;
+    xscore_pmm_refcount_inc(physical_address);
     xscore_spin_unlock_irqrestore(&page_cache_lock, flags);
     return 1;
 }
