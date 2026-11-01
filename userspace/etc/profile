@@ -1,0 +1,10 @@
+# /etc/profile: akaOS system-wide environment configuration
+
+export PATH="/bin:/usr/bin:/usr/local/bin"
+export HOME="${HOME:-/root}"
+export USER="${USER:-root}"
+export LOGNAME="${LOGNAME:-root}"
+export SHELL="/bin/akash"
+export TERM="${TERM:-vt100}"
+export LANG="C.UTF-8"
+export LC_ALL="C.UTF-8"

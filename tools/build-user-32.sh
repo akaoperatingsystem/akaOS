@@ -729,6 +729,11 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
     --file "/etc/resolv.conf:$ROOT_DIR/userspace/etc/resolv.conf:0644" \
     --file "/etc/fstab:$ROOT_DIR/userspace/etc/fstab:0644" \
     --file "/etc/aurora-apps:$ROOT_DIR/userspace/etc/aurora-apps:0644" \
+    --file "/etc/os-release:$ROOT_DIR/userspace/etc/os-release:0644" \
+    --file "/etc/hosts:$ROOT_DIR/userspace/etc/hosts:0644" \
+    --file "/etc/hostname:$ROOT_DIR/userspace/etc/hostname:0644" \
+    --file "/etc/shells:$ROOT_DIR/userspace/etc/shells:0644" \
+    --file "/etc/profile:$ROOT_DIR/userspace/etc/profile:0644" \
     --dir "/var" \
     --dir "/var/www" \
     --dir "/var/www/cgi-bin" \

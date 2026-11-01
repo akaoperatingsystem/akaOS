@@ -1,0 +1,8 @@
+NAME="akaOS"
+PRETTY_NAME="akaOS 0.1.25 (XSCore 0.1.15)"
+ID=akaos
+BUILD_ID="20261101"
+ANSI_COLOR="0;34"
+HOME_URL="https://github.com/akaoperatingsystem/akaOS"
+SUPPORT_URL="https://github.com/akaoperatingsystem/akaOS/issues"
+BUG_REPORT_URL="https://github.com/akaoperatingsystem/akaOS/issues"
