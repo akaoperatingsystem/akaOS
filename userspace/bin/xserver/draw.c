@@ -150,8 +150,8 @@ void x_drawable_image(struct x_server *server, xid_t drawable, int16_t x,
         }
         return;
     }
-    /* XYBitmap: one bit per pixel. */
-    size_t stride = ((size_t)width + 7U) / 8U;
+    /* XYBitmap: one bit per pixel, padded to 32 bits per scanline. */
+    size_t stride = ((size_t)width + 31U) / 32U * 4U;
     for (uint32_t row = 0U; row < height; ++row) {
         for (uint32_t column = 0U; column < width; ++column) {
             int32_t tx = x + (int32_t)column;
@@ -165,7 +165,7 @@ void x_drawable_image(struct x_server *server, xid_t drawable, int16_t x,
             if (offset < (stride * (size_t)height)) {
                 bit = (source[offset] >> (column % 8U)) & 1U;
             }
-            target[(size_t)ty * drawable_width + tx] = bit ? 0xffffffffU : 0U;
+            target[(size_t)ty * drawable_width + tx] = bit ? (depth == 1U ? 1U : 0xffffffffU) : 0U;
         }
     }
     (void)depth;

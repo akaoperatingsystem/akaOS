@@ -1224,7 +1224,23 @@ static void request_put_image(struct x_server *server, struct x_client *client,
         x_reply_error(client, BadDrawable, 0, drawable);
         return;
     }
-    size_t bytes = (size_t)width * (size_t)height * sizeof(uint32_t);
+    uint8_t format = client->request_minor;
+    size_t bytes = 0U;
+    if (format == 0U || depth == 1U) {
+        size_t stride = ((size_t)width + (size_t)left_pad + 31U) / 32U * 4U;
+        bytes = stride * (size_t)height;
+    } else if (format == 1U) {
+        size_t stride = ((size_t)width + (size_t)left_pad + 31U) / 32U * 4U;
+        bytes = stride * (size_t)height * (size_t)depth;
+    } else {
+        if (depth <= 8U) {
+            bytes = (((size_t)width + 3U) / 4U * 4U) * (size_t)height;
+        } else if (depth <= 16U) {
+            bytes = (((size_t)width * 2U + 3U) / 4U * 4U) * (size_t)height;
+        } else {
+            bytes = (size_t)width * (size_t)height * sizeof(uint32_t);
+        }
+    }
     const uint8_t *pixels = x_reader_bytes(reader, bytes);
     if (!pixels) {
         x_reply_error(client, BadLength, 0, 0U);
@@ -1232,7 +1248,7 @@ static void request_put_image(struct x_server *server, struct x_client *client,
     }
     (void)left_pad;
     x_drawable_image(server, drawable, destination_x, destination_y, width, height,
-                     depth, 2U, pixels);
+                     depth, (uint16_t)format, pixels);
     int index = resolve_window(server, drawable);
     x_server_damage(server, index, destination_x, destination_y, (int16_t)width,
                     (int16_t)height);
