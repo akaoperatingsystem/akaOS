@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <akaos/dbus.h>
 #include <spawn.h>
+#include <akaos/fs.h>
 
 #define AKAOS_DBUS_PORT 8765U
 #define AKAOS_DBUS_MAX_MESSAGE 512U
