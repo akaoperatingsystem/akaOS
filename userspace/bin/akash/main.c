@@ -31,7 +31,7 @@ struct shell_job {
     char cmd[48];
 };
 
-#define MAX_SHELL_JOBS 8
+#define MAX_SHELL_JOBS 32
 static struct shell_job shell_jobs[MAX_SHELL_JOBS];
 static int next_job_id = 1;
 
@@ -138,6 +138,7 @@ static struct shell_job *find_job_by_id(int id) {
 }
 
 static int write_str(int fd, const char *str) {
+    if (!str) return 0;
     size_t len = strlen(str);
     size_t written = 0;
     while (written < len) {

@@ -873,6 +873,14 @@ static int process_track_page(struct xscore_process *process,
                               uint64_t virtual_address,
                               uint64_t physical_address,
                               uint64_t flags) {
+    for (uint32_t index = 0; index < process->mapped_page_count; ++index) {
+        if (process->mapped_pages[index] == virtual_address) {
+            process->physical_pages[index] = physical_address;
+            process->mapped_page_flags[index] = XSCORE_PAGE_USER | flags;
+            process->mapped_page_cow[index] = 0;
+            return 1;
+        }
+    }
     if (process->mapped_page_count >= USER_TRACKED_PAGE_CAPACITY) return 0;
     process->mapped_pages[process->mapped_page_count] = virtual_address;
     process->physical_pages[process->mapped_page_count] = physical_address;
