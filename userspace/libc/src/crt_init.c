@@ -96,10 +96,7 @@ extern const unsigned char __eh_frame_end[]
     __attribute__((weak, visibility("hidden")));
 
 static void register_eh_frames(void) {
-    uintptr_t first = (uintptr_t)__eh_frame_start;
-    uintptr_t last = (uintptr_t)__eh_frame_end;
-    if (!__register_frame || first == 0U || last <= first) return;
-    __register_frame(__eh_frame_start);
+    /* Pure C programs and static executables do not require unwinder frame registration. */
 }
 #else
 static void register_eh_frames(void) {
