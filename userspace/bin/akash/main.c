@@ -1014,7 +1014,7 @@ static int execute_single_stage(struct command_stage *stage) {
         if (!background) {
             (void)tcsetpgrp(STDIN_FILENO, getpid());
         }
-        execvp(stage->argv[0], stage->argv);
+        execv(stage->argv[0], stage->argv);
         int exec_error = errno;
         write_str(STDERR_FILENO, stage->argv[0]);
         if (exec_error == ENOENT) {
@@ -1149,7 +1149,7 @@ static int execute_pipeline(struct command_stage stages[], int num_stages) {
             close(saved_in);
             close(saved_out);
             (void)setpgid(0, pipeline_pgid);
-            execvp(stages[i].argv[0], stages[i].argv);
+            execv(stages[i].argv[0], stages[i].argv);
             int exec_error = errno;
             write_str(STDERR_FILENO, stages[i].argv[0]);
             if (exec_error == ENOENT) {
