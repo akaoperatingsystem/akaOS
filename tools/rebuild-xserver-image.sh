@@ -690,7 +690,7 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/muffin" ]]; then
     for cinnamon_library in libmuffin.so.0 libmuffin-cogl-0.so.0 libmuffin-clutter-0.so.0 \
         libmuffin-cogl-pango-0.so.0 libmuffin-cogl-path-0.so.0 \
         libcinnamon-desktop.so.4 libcvc.so.0 libjson-glib-1.0.so.0 libxkbfile.so.1 \
-        libxkbcommon-x11.so.0; do
+        libxkbcommon-x11.so.0 libEGL.so.1 libGLdispatch.so.0 libGL.so.1 libGLESv2.so.2 libGLX.so.0; do
         library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" \
             -maxdepth 1 -type f -name "${cinnamon_library}.*" -print | sort -V | tail -n 1)"
         if [[ -z "$library_path" ]]; then
