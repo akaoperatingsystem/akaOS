@@ -468,6 +468,58 @@ int dirfd(DIR *directory) {
     return directory->descriptor;
 }
 
+int alphasort(const struct dirent **a, const struct dirent **b) {
+    if (!a || !*a) return (b && *b) ? -1 : 0;
+    if (!b || !*b) return 1;
+    return strcoll((*a)->d_name, (*b)->d_name);
+}
+
+int scandir(const char *dirp, struct dirent ***namelist,
+            int (*filter)(const struct dirent *),
+            int (*compar)(const struct dirent **, const struct dirent **)) {
+    if (!dirp || !namelist) {
+        errno = EINVAL;
+        return -1;
+    }
+    DIR *d = opendir(dirp);
+    if (!d) return -1;
+    struct dirent **list = NULL;
+    size_t count = 0;
+    size_t capacity = 0;
+    struct dirent *entry;
+    while ((entry = readdir(d)) != NULL) {
+        if (filter && !filter(entry)) continue;
+        if (count >= capacity) {
+            size_t new_cap = capacity ? capacity * 2 : 16;
+            struct dirent **new_list = (struct dirent **)realloc(list, new_cap * sizeof(*list));
+            if (!new_list) goto err;
+            list = new_list;
+            capacity = new_cap;
+        }
+        struct dirent *copy = (struct dirent *)malloc(sizeof(struct dirent));
+        if (!copy) goto err;
+        memcpy(copy, entry, sizeof(struct dirent));
+        list[count++] = copy;
+    }
+    closedir(d);
+    if (compar && count > 1) {
+        qsort(list, count, sizeof(struct dirent *), (int (*)(const void *, const void *))compar);
+    }
+    *namelist = list;
+    return (int)count;
+
+err: {
+        int saved_errno = errno;
+        closedir(d);
+        if (list) {
+            for (size_t i = 0; i < count; i++) free(list[i]);
+            free(list);
+        }
+        errno = saved_errno;
+        return -1;
+    }
+}
+
 int fchmod(int descriptor, mode_t mode) {
     (void)descriptor;
     (void)mode;
@@ -1544,4 +1596,34 @@ int system(const char *command) {
         if (errno != EINTR) return -1;
     }
     return status;
+}
+
+ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+    if (offset < 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    off_t old = lseek(fd, 0, SEEK_CUR);
+    if (old < 0) return -1;
+    if (lseek(fd, offset, SEEK_SET) < 0) return -1;
+    ssize_t n = read(fd, buf, count);
+    int saved_errno = errno;
+    (void)lseek(fd, old, SEEK_SET);
+    errno = saved_errno;
+    return n;
+}
+
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+    if (offset < 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    off_t old = lseek(fd, 0, SEEK_CUR);
+    if (old < 0) return -1;
+    if (lseek(fd, offset, SEEK_SET) < 0) return -1;
+    ssize_t n = write(fd, buf, count);
+    int saved_errno = errno;
+    (void)lseek(fd, old, SEEK_SET);
+    errno = saved_errno;
+    return n;
 }

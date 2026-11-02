@@ -1,10 +1,12 @@
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +15,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-#define PKG_VERSION "1.0.0"
+#define PKG_VERSION "1.1.0"
 #define DEFAULT_CONF_PATH "/etc/pkg.conf"
 #define DEFAULT_MIRROR "http://mirror.zyqu.pl/akaos"
 #define DEFAULT_CACHEDIR "/var/cache/pkg"
@@ -21,10 +23,12 @@
 
 #define TAR_BLOCK_SIZE 512
 #define MAX_PACKAGES 1024
-#define MAX_LINE 1024
-#define HTTP_TIMEOUT_MS 10000
+#define MAX_LINE 2048
+#define HTTP_TIMEOUT_MS 15000
+#define MAX_RECURSION_DEPTH 32
+#define MAX_INSTALL_QUEUE 256
 
-/* POSIX ustar header structure */
+/* POSIX ustar header */
 struct ustar_header {
     char name[100];
     char mode[8];
@@ -50,6 +54,7 @@ struct pkg_info {
     char version[32];
     char arch[32];
     char filename[256];
+    char sha256[65];
     char description[256];
     char dependencies[256];
     size_t size;
@@ -61,6 +66,172 @@ struct config {
     char cachedir[128];
     char dbdir[128];
 };
+
+/* --- SHA-256 Implementation --- */
+
+struct sha256_ctx {
+    uint32_t state[8];
+    uint64_t count;
+    uint8_t buffer[64];
+};
+
+static uint32_t ror(uint32_t x, uint32_t n) {
+    return (x >> n) | (x << (32 - n));
+}
+
+static void sha256_transform(struct sha256_ctx *ctx, const uint8_t data[64]) {
+    static const uint32_t K[64] = {
+        0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+        0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+        0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+        0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+        0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+        0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+        0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+        0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+    };
+
+    uint32_t W[64];
+    for (int i = 0; i < 16; i++) {
+        W[i] = ((uint32_t)data[i * 4] << 24) |
+               ((uint32_t)data[i * 4 + 1] << 16) |
+               ((uint32_t)data[i * 4 + 2] << 8) |
+               ((uint32_t)data[i * 4 + 3]);
+    }
+    for (int i = 16; i < 64; i++) {
+        uint32_t s0 = ror(W[i - 15], 7) ^ ror(W[i - 15], 18) ^ (W[i - 15] >> 3);
+        uint32_t s1 = ror(W[i - 2], 17) ^ ror(W[i - 2], 19) ^ (W[i - 2] >> 10);
+        W[i] = W[i - 16] + s0 + W[i - 7] + s1;
+    }
+
+    uint32_t a = ctx->state[0];
+    uint32_t b = ctx->state[1];
+    uint32_t c = ctx->state[2];
+    uint32_t d = ctx->state[3];
+    uint32_t e = ctx->state[4];
+    uint32_t f = ctx->state[5];
+    uint32_t g = ctx->state[6];
+    uint32_t h = ctx->state[7];
+
+    for (int i = 0; i < 64; i++) {
+        uint32_t S1 = ror(e, 6) ^ ror(e, 11) ^ ror(e, 25);
+        uint32_t ch = (e & f) ^ ((~e) & g);
+        uint32_t temp1 = h + S1 + ch + K[i] + W[i];
+        uint32_t S0 = ror(a, 2) ^ ror(a, 13) ^ ror(a, 22);
+        uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+        uint32_t temp2 = S0 + maj;
+
+        h = g;
+        g = f;
+        f = e;
+        e = d + temp1;
+        d = c;
+        c = b;
+        b = a;
+        a = temp1 + temp2;
+    }
+
+    ctx->state[0] += a;
+    ctx->state[1] += b;
+    ctx->state[2] += c;
+    ctx->state[3] += d;
+    ctx->state[4] += e;
+    ctx->state[5] += f;
+    ctx->state[6] += g;
+    ctx->state[7] += h;
+}
+
+static void sha256_init(struct sha256_ctx *ctx) {
+    ctx->state[0] = 0x6a09e667;
+    ctx->state[1] = 0xbb67ae85;
+    ctx->state[2] = 0x3c6ef372;
+    ctx->state[3] = 0xa54ff53a;
+    ctx->state[4] = 0x510e527f;
+    ctx->state[5] = 0x9b05688c;
+    ctx->state[6] = 0x1f83d9ab;
+    ctx->state[7] = 0x5be0cd19;
+    ctx->count = 0;
+}
+
+static void sha256_update(struct sha256_ctx *ctx, const void *data, size_t len) {
+    const uint8_t *p = (const uint8_t *)data;
+    size_t buf_used = (size_t)(ctx->count & 63);
+    ctx->count += len;
+
+    if (buf_used > 0) {
+        size_t to_fill = 64 - buf_used;
+        if (len < to_fill) {
+            memcpy(&ctx->buffer[buf_used], p, len);
+            return;
+        }
+        memcpy(&ctx->buffer[buf_used], p, to_fill);
+        sha256_transform(ctx, ctx->buffer);
+        p += to_fill;
+        len -= to_fill;
+    }
+
+    while (len >= 64) {
+        sha256_transform(ctx, p);
+        p += 64;
+        len -= 64;
+    }
+
+    if (len > 0) {
+        memcpy(ctx->buffer, p, len);
+    }
+}
+
+static void sha256_final(struct sha256_ctx *ctx, uint8_t digest[32]) {
+    size_t buf_used = (size_t)(ctx->count & 63);
+    ctx->buffer[buf_used++] = 0x80;
+
+    if (buf_used > 56) {
+        memset(&ctx->buffer[buf_used], 0, 64 - buf_used);
+        sha256_transform(ctx, ctx->buffer);
+        buf_used = 0;
+    }
+    memset(&ctx->buffer[buf_used], 0, 56 - buf_used);
+
+    uint64_t bit_len = ctx->count * 8;
+    for (int i = 0; i < 8; i++) {
+        ctx->buffer[56 + i] = (uint8_t)(bit_len >> (56 - i * 8));
+    }
+    sha256_transform(ctx, ctx->buffer);
+
+    for (int i = 0; i < 8; i++) {
+        digest[i * 4] = (uint8_t)(ctx->state[i] >> 24);
+        digest[i * 4 + 1] = (uint8_t)(ctx->state[i] >> 16);
+        digest[i * 4 + 2] = (uint8_t)(ctx->state[i] >> 8);
+        digest[i * 4 + 3] = (uint8_t)(ctx->state[i]);
+    }
+}
+
+static int file_sha256(const char *file_path, char out_hex[65]) {
+    int fd = open(file_path, O_RDONLY);
+    if (fd < 0) return -1;
+
+    struct sha256_ctx ctx;
+    sha256_init(&ctx);
+
+    uint8_t buf[2048];
+    ssize_t n;
+    while ((n = read(fd, buf, sizeof(buf))) > 0) {
+        sha256_update(&ctx, buf, (size_t)n);
+    }
+    close(fd);
+
+    if (n < 0) return -1;
+
+    uint8_t digest[32];
+    sha256_final(&ctx, digest);
+    for (int i = 0; i < 32; i++) {
+        snprintf(out_hex + (i * 2), 3, "%02x", digest[i]);
+    }
+    out_hex[64] = '\0';
+    return 0;
+}
+
+/* --- State --- */
 
 static struct config cfg;
 static struct pkg_info repo_pkgs[MAX_PACKAGES];
@@ -74,7 +245,7 @@ static int installed_pkg_count = 0;
 static void trim_whitespace(char *str) {
     if (!str) return;
     char *start = str;
-    while (*start == ' ' || *start == '\t' || *start == '\r' || *start == '\n') start++;
+    while (*start && (*start == ' ' || *start == '\t' || *start == '\r' || *start == '\n')) start++;
     if (start != str) memmove(str, start, strlen(start) + 1);
     size_t len = strlen(str);
     while (len > 0 && (str[len - 1] == ' ' || str[len - 1] == '\t' || str[len - 1] == '\r' || str[len - 1] == '\n')) {
@@ -84,7 +255,7 @@ static void trim_whitespace(char *str) {
 }
 
 static void ensure_dir_exists(const char *dir) {
-    char tmp[256];
+    char tmp[512];
     snprintf(tmp, sizeof(tmp), "%s", dir);
     for (char *p = tmp + 1; *p; p++) {
         if (*p == '/') {
@@ -106,14 +277,64 @@ static void ensure_parent_dirs(const char *file_path) {
     }
 }
 
+/* Sanitize path: ensures absolute path with no ".." traversal attacks */
+static int sanitize_destination_path(const char *raw_name, char *clean_out, size_t out_size) {
+    if (!raw_name || raw_name[0] == '\0') return -1;
+
+    char norm[512];
+    size_t npos = 0;
+    norm[npos++] = '/';
+
+    const char *p = raw_name;
+    while (*p == '/') p++;
+
+    while (*p) {
+        char seg[128];
+        size_t slen = 0;
+        while (*p && *p != '/' && slen < sizeof(seg) - 1) {
+            seg[slen++] = *p++;
+        }
+        seg[slen] = '\0';
+        while (*p == '/') p++;
+
+        if (strcmp(seg, ".") == 0 || slen == 0) {
+            continue;
+        } else if (strcmp(seg, "..") == 0) {
+            /* Backtrack one segment */
+            if (npos > 1) {
+                npos--; /* back over '/' */
+                while (npos > 1 && norm[npos - 1] != '/') npos--;
+            }
+        } else {
+            if (npos > 1 && norm[npos - 1] != '/') norm[npos++] = '/';
+            for (size_t i = 0; i < slen && npos < sizeof(norm) - 1; i++) {
+                norm[npos++] = seg[i];
+            }
+        }
+    }
+    norm[npos] = '\0';
+
+    if (snprintf(clean_out, out_size, "%s", norm) >= (int)out_size) {
+        return -1;
+    }
+    return 0;
+}
+
 /* Compare two version strings: returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal */
 static int compare_versions(const char *v1, const char *v2) {
+    if (!v1 && !v2) return 0;
+    if (!v1) return -1;
+    if (!v2) return 1;
+
     while (*v1 && *v2) {
-        if (*v1 >= '0' && *v1 <= '9' && *v2 >= '0' && *v2 <= '9') {
-            long n1 = strtol(v1, (char **)&v1, 10);
-            long n2 = strtol(v2, (char **)&v2, 10);
+        if (isdigit((unsigned char)*v1) && isdigit((unsigned char)*v2)) {
+            char *end1, *end2;
+            long n1 = strtol(v1, &end1, 10);
+            long n2 = strtol(v2, &end2, 10);
             if (n1 > n2) return 1;
             if (n1 < n2) return -1;
+            v1 = end1;
+            v2 = end2;
         } else {
             if (*v1 != *v2) return (*v1 > *v2) ? 1 : -1;
             v1++;
@@ -139,10 +360,12 @@ static void load_config(void) {
         strncpy(cfg.arch, "x86_64", sizeof(cfg.arch) - 1);
     }
 
-    FILE *f = fopen(DEFAULT_CONF_PATH, "r");
+    const char *custom_conf = getenv("PKG_CONF");
+    const char *conf_path = (custom_conf && custom_conf[0] != '\0') ? custom_conf : DEFAULT_CONF_PATH;
+    FILE *f = fopen(conf_path, "r");
     if (!f) return;
 
-    char line[256];
+    char line[MAX_LINE];
     while (fgets(line, sizeof(line), f)) {
         trim_whitespace(line);
         if (line[0] == '#' || line[0] == '\0') continue;
@@ -155,6 +378,9 @@ static void load_config(void) {
         trim_whitespace(val);
 
         if (strcmp(key, "mirror") == 0) {
+            /* Strip trailing slash from mirror */
+            size_t mlen = strlen(val);
+            while (mlen > 0 && val[mlen - 1] == '/') val[--mlen] = '\0';
             strncpy(cfg.mirror, val, sizeof(cfg.mirror) - 1);
         } else if (strcmp(key, "arch") == 0) {
             strncpy(cfg.arch, val, sizeof(cfg.arch) - 1);
@@ -171,7 +397,7 @@ static void load_config(void) {
 
 static int http_download(const char *url, const char *dest_file, int verbose) {
     if (strncmp(url, "https://", 8) == 0) {
-        fprintf(stderr, "pkg: error: HTTPS is not yet supported. Please use plain HTTP: %s\n", url);
+        fprintf(stderr, "pkg: error: HTTPS is not yet supported. Please configure plain HTTP: %s\n", url);
         return -1;
     }
 
@@ -255,10 +481,14 @@ static int http_download(const char *url, const char *dest_file, int verbose) {
         return -1;
     }
 
-    ensure_parent_dirs(dest_file);
-    int out_fd = open(dest_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    /* Download to temporary file first to guarantee atomic write */
+    char temp_dest[512];
+    snprintf(temp_dest, sizeof(temp_dest), "%s.part", dest_file);
+
+    ensure_parent_dirs(temp_dest);
+    int out_fd = open(temp_dest, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (out_fd < 0) {
-        fprintf(stderr, "pkg: error: cannot open destination file '%s' for writing\n", dest_file);
+        fprintf(stderr, "pkg: error: cannot open temporary file '%s' for writing\n", temp_dest);
         close(sock);
         return -1;
     }
@@ -300,7 +530,6 @@ static int http_download(const char *url, const char *dest_file, int verbose) {
                             header_buf[header_pos - 2] == '\r' &&
                             header_buf[header_pos - 1] == '\n') {
                             in_body = 1;
-                            /* Parse HTTP response status code */
                             char *space = strchr(header_buf, ' ');
                             if (space) {
                                 http_status = atoi(space + 1);
@@ -321,8 +550,19 @@ static int http_download(const char *url, const char *dest_file, int verbose) {
 
     if (http_status >= 400 || http_status == 0) {
         fprintf(stderr, "pkg: HTTP error %d while downloading %s\n", http_status, path);
-        unlink(dest_file);
+        unlink(temp_dest);
         return -1;
+    }
+
+    /* Atomic move into final location */
+    if (rename(temp_dest, dest_file) != 0) {
+        /* Fallback if rename cross-device */
+        unlink(dest_file);
+        if (rename(temp_dest, dest_file) != 0) {
+            fprintf(stderr, "pkg: error: cannot finalize %s\n", dest_file);
+            unlink(temp_dest);
+            return -1;
+        }
     }
 
     if (verbose) {
@@ -363,11 +603,13 @@ static void load_installed_database(void) {
 static void save_installed_database(void) {
     ensure_dir_exists(cfg.dbdir);
     char path[256];
+    char temp_path[256];
     snprintf(path, sizeof(path), "%s/installed.db", cfg.dbdir);
+    snprintf(temp_path, sizeof(temp_path), "%s/installed.db.tmp", cfg.dbdir);
 
-    FILE *f = fopen(path, "w");
+    FILE *f = fopen(temp_path, "w");
     if (!f) {
-        fprintf(stderr, "pkg: error: cannot write to %s\n", path);
+        fprintf(stderr, "pkg: error: cannot write to %s\n", temp_path);
         return;
     }
 
@@ -379,6 +621,8 @@ static void save_installed_database(void) {
                 installed_pkgs[i].arch[0] ? installed_pkgs[i].arch : cfg.arch);
     }
     fclose(f);
+
+    rename(temp_path, path);
 }
 
 static struct pkg_info *find_installed_pkg(const char *name) {
@@ -431,6 +675,8 @@ static void load_repo_database(void) {
             strncpy(current.arch, val, sizeof(current.arch) - 1);
         } else if (strcasecmp(key, "Filename") == 0) {
             strncpy(current.filename, val, sizeof(current.filename) - 1);
+        } else if (strcasecmp(key, "SHA256") == 0) {
+            strncpy(current.sha256, val, sizeof(current.sha256) - 1);
         } else if (strcasecmp(key, "Description") == 0) {
             strncpy(current.description, val, sizeof(current.description) - 1);
         } else if (strcasecmp(key, "Dependencies") == 0 || strcasecmp(key, "Depends") == 0) {
@@ -448,15 +694,18 @@ static void load_repo_database(void) {
 }
 
 static struct pkg_info *find_repo_pkg(const char *name) {
+    struct pkg_info *best = NULL;
     for (int i = 0; i < repo_pkg_count; i++) {
         if (strcmp(repo_pkgs[i].name, name) == 0) {
-            return &repo_pkgs[i];
+            if (!best || compare_versions(repo_pkgs[i].version, best->version) > 0) {
+                best = &repo_pkgs[i];
+            }
         }
     }
-    return NULL;
+    return best;
 }
 
-/* --- Package Extraction (.akp / ustar tar) --- */
+/* --- Package Extraction (.akp / ustar tar) with Hooks & Checksums --- */
 
 static uint64_t parse_octal(const char *src, size_t size) {
     uint64_t val = 0;
@@ -477,13 +726,22 @@ static int extract_package_archive(const char *archive_path, const char *pkg_nam
     }
 
     char filelist_path[256];
+    char temp_list_path[256];
     snprintf(filelist_path, sizeof(filelist_path), "%s/files", cfg.dbdir);
     ensure_dir_exists(filelist_path);
     snprintf(filelist_path, sizeof(filelist_path), "%s/files/%s.list", cfg.dbdir, pkg_name);
+    snprintf(temp_list_path, sizeof(temp_list_path), "%s/files/%s.list.tmp", cfg.dbdir, pkg_name);
 
-    FILE *list_file = fopen(filelist_path, "w");
+    char scripts_dir[256];
+    snprintf(scripts_dir, sizeof(scripts_dir), "%s/scripts", cfg.dbdir);
+    ensure_dir_exists(scripts_dir);
+
+    char postinst_path[512] = {0};
+    char prerm_path[512] = {0};
+
+    FILE *list_file = fopen(temp_list_path, "w");
     if (!list_file) {
-        fprintf(stderr, "pkg: warning: cannot create filelist %s\n", filelist_path);
+        fprintf(stderr, "pkg: warning: cannot create filelist %s\n", temp_list_path);
     }
 
     uint8_t block[TAR_BLOCK_SIZE];
@@ -494,7 +752,7 @@ static int extract_package_archive(const char *archive_path, const char *pkg_nam
         if (n <= 0) break;
         if (n < TAR_BLOCK_SIZE) break;
 
-        /* Check for end of tar archive (two consecutive zero blocks) */
+        /* Check for end of tar archive */
         int all_zero = 1;
         for (int i = 0; i < TAR_BLOCK_SIZE; i++) {
             if (block[i] != 0) {
@@ -516,8 +774,8 @@ static int extract_package_archive(const char *archive_path, const char *pkg_nam
         mode_t mode = (mode_t)parse_octal(hdr->mode, sizeof(hdr->mode));
         if (mode == 0) mode = 0755;
 
-        /* Skip metadata control files from being extracted to root directly */
-        if (strcmp(name, ".PKGINFO") == 0 || strncmp(name, "CONTROL/", 8) == 0) {
+        /* Skip .PKGINFO */
+        if (strcmp(name, ".PKGINFO") == 0) {
             size_t blocks_to_skip = (size + TAR_BLOCK_SIZE - 1) / TAR_BLOCK_SIZE;
             for (size_t b = 0; b < blocks_to_skip; b++) {
                 read(fd, block, TAR_BLOCK_SIZE);
@@ -525,12 +783,53 @@ static int extract_package_archive(const char *archive_path, const char *pkg_nam
             continue;
         }
 
-        /* Build destination target path starting with '/' */
+        /* Handle package control scripts */
+        if (strcmp(name, "CONTROL/postinst") == 0) {
+            snprintf(postinst_path, sizeof(postinst_path), "%s/%s.postinst", scripts_dir, pkg_name);
+            int pfd = open(postinst_path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
+            uint64_t rem = size;
+            while (rem > 0) {
+                uint8_t d[TAR_BLOCK_SIZE];
+                read(fd, d, TAR_BLOCK_SIZE);
+                size_t tw = rem > TAR_BLOCK_SIZE ? TAR_BLOCK_SIZE : (size_t)rem;
+                if (pfd >= 0) write(pfd, d, tw);
+                rem -= (rem > TAR_BLOCK_SIZE ? TAR_BLOCK_SIZE : rem);
+            }
+            if (pfd >= 0) close(pfd);
+            continue;
+        }
+
+        if (strcmp(name, "CONTROL/prerm") == 0) {
+            snprintf(prerm_path, sizeof(prerm_path), "%s/%s.prerm", scripts_dir, pkg_name);
+            int rfd = open(prerm_path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
+            uint64_t rem = size;
+            while (rem > 0) {
+                uint8_t d[TAR_BLOCK_SIZE];
+                read(fd, d, TAR_BLOCK_SIZE);
+                size_t tw = rem > TAR_BLOCK_SIZE ? TAR_BLOCK_SIZE : (size_t)rem;
+                if (rfd >= 0) write(rfd, d, tw);
+                rem -= (rem > TAR_BLOCK_SIZE ? TAR_BLOCK_SIZE : rem);
+            }
+            if (rfd >= 0) close(rfd);
+            continue;
+        }
+
+        /* Sanitize destination path */
         char dest_path[512];
-        if (name[0] == '/') {
-            snprintf(dest_path, sizeof(dest_path), "%s", name);
+        const char *pkg_root = getenv("PKG_ROOT");
+        char rel_clean[512];
+        if (sanitize_destination_path(name, rel_clean, sizeof(rel_clean)) != 0) {
+            fprintf(stderr, "pkg: warning: skipping invalid path %s\n", name);
+            size_t blocks_to_skip = (size + TAR_BLOCK_SIZE - 1) / TAR_BLOCK_SIZE;
+            for (size_t b = 0; b < blocks_to_skip; b++) {
+                read(fd, block, TAR_BLOCK_SIZE);
+            }
+            continue;
+        }
+        if (pkg_root && pkg_root[0] != '\0') {
+            snprintf(dest_path, sizeof(dest_path), "%s%s", pkg_root, rel_clean);
         } else {
-            snprintf(dest_path, sizeof(dest_path), "/%s", name);
+            snprintf(dest_path, sizeof(dest_path), "%s", rel_clean);
         }
 
         if (hdr->typeflag == '5' || (hdr->typeflag == '0' && dest_path[strlen(dest_path) - 1] == '/')) {
@@ -556,7 +855,7 @@ static int extract_package_archive(const char *archive_path, const char *pkg_nam
                     fprintf(list_file, "%s\n", dest_path);
                 }
             } else {
-                fprintf(stderr, "pkg: warning: failed to extract %s\n", dest_path);
+                fprintf(stderr, "pkg: warning: failed to write to %s\n", dest_path);
                 size_t blocks_to_skip = (size + TAR_BLOCK_SIZE - 1) / TAR_BLOCK_SIZE;
                 for (size_t b = 0; b < blocks_to_skip; b++) {
                     read(fd, block, TAR_BLOCK_SIZE);
@@ -567,7 +866,71 @@ static int extract_package_archive(const char *archive_path, const char *pkg_nam
 
     if (list_file) fclose(list_file);
     close(fd);
+
+    rename(temp_list_path, filelist_path);
+
+    /* Execute post-installation script if present */
+    if (postinst_path[0] && access(postinst_path, X_OK) == 0) {
+        printf("[pkg] Executing post-installation script for %s...\n", pkg_name);
+        system(postinst_path);
+    }
+
     return files_extracted;
+}
+
+/* --- Dependency Resolution --- */
+
+static int is_pkg_queued(const char *name, char queue[][64], int count) {
+    for (int i = 0; i < count; i++) {
+        if (strcmp(queue[i], name) == 0) return 1;
+    }
+    return 0;
+}
+
+static int resolve_dependencies(const char *pkg_name, char queue[][64], int *queue_count, int depth) {
+    if (depth > MAX_RECURSION_DEPTH) {
+        fprintf(stderr, "pkg: error: circular dependency detected involving '%s'\n", pkg_name);
+        return -1;
+    }
+
+    struct pkg_info *pkg = find_repo_pkg(pkg_name);
+    if (!pkg) {
+        /* If already installed, it's satisfied */
+        if (find_installed_pkg(pkg_name)) return 0;
+        fprintf(stderr, "pkg: error: missing dependency '%s' not found in repository\n", pkg_name);
+        return -1;
+    }
+
+    if (pkg->dependencies[0] != '\0') {
+        char deps_copy[256];
+        strncpy(deps_copy, pkg->dependencies, sizeof(deps_copy) - 1);
+        deps_copy[sizeof(deps_copy) - 1] = '\0';
+
+        char *token = strtok(deps_copy, ", ");
+        while (token) {
+            trim_whitespace(token);
+            if (token[0] != '\0') {
+                /* If dependency is not yet installed or queued, resolve it first */
+                if (!find_installed_pkg(token) && !is_pkg_queued(token, queue, *queue_count)) {
+                    if (resolve_dependencies(token, queue, queue_count, depth + 1) != 0) {
+                        return -1;
+                    }
+                }
+            }
+            token = strtok(NULL, ", ");
+        }
+    }
+
+    if (!is_pkg_queued(pkg_name, queue, *queue_count)) {
+        if (*queue_count >= MAX_INSTALL_QUEUE) {
+            fprintf(stderr, "pkg: error: install queue overflow\n");
+            return -1;
+        }
+        strncpy(queue[*queue_count], pkg_name, 63);
+        queue[*queue_count][63] = '\0';
+        (*queue_count)++;
+    }
+    return 0;
 }
 
 /* --- Commands --- */
@@ -575,7 +938,7 @@ static int extract_package_archive(const char *archive_path, const char *pkg_nam
 static int cmd_update(void) {
     printf("[pkg] Updating repository metadata from %s (%s)...\n", cfg.mirror, cfg.arch);
 
-    char url[512];
+    char url[1024];
     snprintf(url, sizeof(url), "%s/%s/packages.db.txt", cfg.mirror, cfg.arch);
 
     char dest[256];
@@ -592,14 +955,10 @@ static int cmd_update(void) {
     return 0;
 }
 
-static int cmd_install(const char *pkg_name) {
-    load_repo_database();
-    load_installed_database();
-
+static int install_single_package(const char *pkg_name) {
     struct pkg_info *pkg = find_repo_pkg(pkg_name);
     if (!pkg) {
         fprintf(stderr, "[pkg] error: package '%s' not found in repository.\n", pkg_name);
-        fprintf(stderr, "[pkg] Try running 'pkg update' first to refresh package database.\n");
         return 1;
     }
 
@@ -614,7 +973,7 @@ static int cmd_install(const char *pkg_name) {
         printf("[pkg] Installing %s (%s) for %s...\n", pkg_name, pkg->version, cfg.arch);
     }
 
-    char url[512];
+    char url[1024];
     if (pkg->filename[0] == '/') {
         snprintf(url, sizeof(url), "%s/%s%s", cfg.mirror, cfg.arch, pkg->filename);
     } else {
@@ -625,10 +984,38 @@ static int cmd_install(const char *pkg_name) {
     char cached_file[256];
     snprintf(cached_file, sizeof(cached_file), "%s/%s-%s.akp", cfg.cachedir, pkg->name, pkg->version);
 
-    printf("[pkg] Fetching %s...\n", url);
-    if (http_download(url, cached_file, 0) != 0) {
-        fprintf(stderr, "[pkg] error: failed to download package archive %s\n", url);
-        return 1;
+    /* Only download if file not in cache or checksum mismatch */
+    int need_download = 1;
+    if (access(cached_file, R_OK) == 0 && pkg->sha256[0] != '\0') {
+        char local_sha[65];
+        if (file_sha256(cached_file, local_sha) == 0 && strcasecmp(local_sha, pkg->sha256) == 0) {
+            need_download = 0;
+            printf("[pkg] Using cached archive %s\n", cached_file);
+        }
+    }
+
+    if (need_download) {
+        printf("[pkg] Fetching %s...\n", url);
+        if (http_download(url, cached_file, 0) != 0) {
+            fprintf(stderr, "[pkg] error: failed to download package archive %s\n", url);
+            return 1;
+        }
+    }
+
+    /* Verify SHA-256 checksum if provided by repository */
+    if (pkg->sha256[0] != '\0') {
+        char actual_sha[65];
+        if (file_sha256(cached_file, actual_sha) != 0) {
+            fprintf(stderr, "[pkg] error: failed to calculate checksum of %s\n", cached_file);
+            return 1;
+        }
+        if (strcasecmp(actual_sha, pkg->sha256) != 0) {
+            fprintf(stderr, "[pkg] error: SHA-256 mismatch for %s!\n", pkg->name);
+            fprintf(stderr, "      Expected: %s\n", pkg->sha256);
+            fprintf(stderr, "      Actual:   %s\n", actual_sha);
+            unlink(cached_file);
+            return 1;
+        }
     }
 
     printf("[pkg] Unpacking %s...\n", pkg->name);
@@ -639,6 +1026,7 @@ static int cmd_install(const char *pkg_name) {
     }
 
     /* Update installed database */
+    inst = find_installed_pkg(pkg_name);
     if (inst) {
         strncpy(inst->version, pkg->version, sizeof(inst->version) - 1);
     } else if (installed_pkg_count < MAX_PACKAGES) {
@@ -650,6 +1038,38 @@ static int cmd_install(const char *pkg_name) {
     save_installed_database();
 
     printf("[pkg] Successfully installed %s (%s) [%d files extracted]\n", pkg->name, pkg->version, extracted);
+    return 0;
+}
+
+static int cmd_install(const char *target_pkg) {
+    load_repo_database();
+    load_installed_database();
+
+    if (repo_pkg_count == 0) {
+        fprintf(stderr, "[pkg] Repository database is empty. Please run 'pkg update' first.\n");
+        return 1;
+    }
+
+    char queue[MAX_INSTALL_QUEUE][64];
+    int queue_count = 0;
+
+    if (resolve_dependencies(target_pkg, queue, &queue_count, 0) != 0) {
+        return 1;
+    }
+
+    if (queue_count > 1) {
+        printf("[pkg] Resolved dependencies for %s (%d packages to install):\n", target_pkg, queue_count);
+        for (int i = 0; i < queue_count; i++) {
+            printf("  - %s\n", queue[i]);
+        }
+    }
+
+    for (int i = 0; i < queue_count; i++) {
+        if (install_single_package(queue[i]) != 0) {
+            fprintf(stderr, "[pkg] Failed while installing %s\n", queue[i]);
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -701,6 +1121,18 @@ static int cmd_remove(const char *pkg_name) {
         fprintf(stderr, "[pkg] error: package '%s' is not installed.\n", pkg_name);
         return 1;
     }
+
+    /* Execute pre-removal hook if present */
+    char prerm_path[512];
+    snprintf(prerm_path, sizeof(prerm_path), "%s/scripts/%s.prerm", cfg.dbdir, pkg_name);
+    if (access(prerm_path, X_OK) == 0) {
+        printf("[pkg] Running pre-removal script for %s...\n", pkg_name);
+        system(prerm_path);
+        unlink(prerm_path);
+    }
+    char postinst_path[512];
+    snprintf(postinst_path, sizeof(postinst_path), "%s/scripts/%s.postinst", cfg.dbdir, pkg_name);
+    unlink(postinst_path);
 
     printf("[pkg] Removing package %s...\n", pkg_name);
 
@@ -801,6 +1233,7 @@ static int cmd_info(const char *pkg_name) {
         printf("Repo Version: %s\n", repo->version);
         printf("Architecture: %s\n", repo->arch);
         printf("Size:         %zu bytes\n", repo->size);
+        printf("SHA256:       %s\n", repo->sha256[0] ? repo->sha256 : "none");
         printf("Filename:     %s\n", repo->filename);
         printf("Dependencies: %s\n", repo->dependencies[0] ? repo->dependencies : "none");
         printf("Description:  %s\n", repo->description[0] ? repo->description : "none");
@@ -814,7 +1247,7 @@ static void print_help(void) {
            "Usage: pkg <command> [options...]\n\n"
            "Commands:\n"
            "  update                Refresh package lists from mirror (%s)\n"
-           "  install <pkg>         Download and install a package\n"
+           "  install <pkg>         Download and install a package (and dependencies)\n"
            "  upgrade               Upgrade all installed packages to newest versions\n"
            "  remove <pkg>          Uninstall a package and delete its files\n"
            "  list                  List all currently installed packages\n"

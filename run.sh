@@ -144,7 +144,9 @@ configure_run_interactively() {
     local menu_arch=x86_64
     local menu_firmware=uefi
     local menu_disk=fat32
-    local menu_display=auto
+    local menu_desktop=xfce
+    local menu_session=desktop
+    local menu_display=gui
     local menu_vga=virtio
     local menu_smp=2
     local menu_mem=512M
@@ -154,31 +156,47 @@ configure_run_interactively() {
     while true; do
         if ! action="$(akaos_ui_menu \
             "akaOS Run Configuration" \
-            "Configure virtual machine, display, and hardware devices." \
+            "Select any option to change it, then select Start akaOS." \
             "start" \
-            "arch" "Architecture: $menu_arch" \
-            "firmware" "Firmware: $menu_firmware" \
-            "disk" "File/Disk type: $menu_disk" \
-            "display" "Display mode: $menu_display" \
-            "vga" "Graphics device: $menu_vga" \
-            "smp" "CPU Cores: $menu_smp" \
-            "mem" "Memory size: $menu_mem" \
-            "software" "View complete software catalog" \
-            "desktops" "View desktop environments matrix" \
-            "deps" "Check required host packages" \
-            "start" "Start akaOS QEMU with these settings" \
-            "quit" "Exit without starting QEMU")"; then
+            "arch" "Architecture    : [$menu_arch]" \
+            "firmware" "Firmware        : [$menu_firmware]" \
+            "disk" "File / Disk Type: [$menu_disk]" \
+            "desktop" "Desktop Env     : [$menu_desktop]" \
+            "session" "Startup Mode    : [$menu_session]" \
+            "display" "Display Window  : [$menu_display]" \
+            "vga" "Graphics Device : [$menu_vga]" \
+            "smp" "CPU Cores       : [$menu_smp vCPUs]" \
+            "mem" "RAM Memory      : [$menu_mem]" \
+            "deps" "Check Host Dependencies" \
+            "start" "--> Start akaOS QEMU <--" \
+            "quit" "Cancel / Exit")"; then
             exit 0
         fi
 
         case "$action" in
-            software)
-                report="$(print_software_list)"
-                akaos_ui_message "akaOS Software Catalog" "$report"
+            desktop)
+                if selection="$(akaos_ui_menu \
+                    "Select Desktop Environment" "Choose desktop to launch in QEMU:" "$menu_desktop" \
+                    "xfce" "XFCE 4.18 (xfwm4, panel, desktop session)" \
+                    "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM)" \
+                    "openbox" "Openbox 3.6.1 (Standalone window manager)" \
+                    "aurora" "Aurora (akaOS native resident desktop)" \
+                    "lxqt" "LXQt (Qt6 based modern desktop session)")"; then
+                    menu_desktop="$selection"
+                fi
                 ;;
-            desktops)
-                report="$(print_desktop_list)"
-                akaos_ui_message "Desktop Environments Matrix" "$report"
+            session)
+                if selection="$(akaos_ui_menu \
+                    "Select Startup Mode" "How should akaOS boot?" "$menu_session" \
+                    "desktop" "Desktop GUI: Autostart graphical desktop" \
+                    "console" "Console TTY: Shell login terminal")"; then
+                    menu_session="$selection"
+                    if [[ "$menu_session" == "console" ]]; then
+                        menu_display=headless
+                    else
+                        menu_display=gui
+                    fi
+                fi
                 ;;
             arch)
                 if selection="$(akaos_ui_menu \
@@ -266,14 +284,16 @@ configure_run_interactively() {
                     akaos_ui_message "Missing Host Dependencies" "$report"
                     continue
                 fi
-                summary="Architecture: $menu_arch
-Firmware:     $menu_firmware
-Format:       $menu_disk
-Display:      $menu_display
-Graphics:     $menu_vga
-vCPUs:        $menu_smp
-Memory:       $menu_mem"
-                if akaos_ui_confirm "Confirm akaOS Run" "$summary" "Run" "Back"; then
+                summary="Target Architecture : $menu_arch
+Boot Firmware       : $menu_firmware
+File / Disk Type    : $menu_disk
+Desktop Environment : $menu_desktop
+Startup Mode        : $menu_session
+Display Window      : $menu_display
+Graphics Device     : $menu_vga
+Virtual CPU Cores   : $menu_smp vCPUs
+Virtual RAM Memory  : $menu_mem"
+                if akaos_ui_confirm "Confirm QEMU Run" "$summary" "Start akaOS" "Back"; then
                     INTERACTIVE_RUN_ARGS=(
                         --arch "$menu_arch"
                         --firmware "$menu_firmware"
@@ -282,10 +302,11 @@ Memory:       $menu_mem"
                         --smp "$menu_smp"
                         --memory "$menu_mem"
                     )
-                    case "$menu_display" in
-                        gui) INTERACTIVE_RUN_ARGS+=(--gui) ;;
-                        headless) INTERACTIVE_RUN_ARGS+=(--headless) ;;
-                    esac
+                    if [[ "$menu_display" == "gui" ]]; then
+                        INTERACTIVE_RUN_ARGS+=(--gui)
+                    else
+                        INTERACTIVE_RUN_ARGS+=(--headless)
+                    fi
                     return 0
                 fi
                 ;;

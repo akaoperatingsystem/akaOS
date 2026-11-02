@@ -65,6 +65,8 @@ extern "C" {
 
 ssize_t read(int descriptor, void *buffer, size_t length);
 ssize_t write(int descriptor, const void *buffer, size_t length);
+ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 off_t lseek(int descriptor, off_t offset, int whence);
 int close(int descriptor);
 int dup(int descriptor);

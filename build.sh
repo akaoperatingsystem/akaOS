@@ -204,8 +204,9 @@ configure_build_interactively() {
     local menu_arch=x86_64
     local menu_firmware=uefi
     local menu_disk=fat32
-    local menu_desktop=aurora
-    local menu_session=console
+    local menu_desktop=xfce
+    local menu_session=desktop
+    local menu_software=all
     local menu_test=off
     local menu_verbose=off
     local action selection summary report
@@ -214,31 +215,32 @@ configure_build_interactively() {
     while true; do
         if ! action="$(akaos_ui_menu \
             "akaOS Build Configuration" \
-            "Configure target, desktop environment, and boot parameters." \
+            "Select an option to customize, then select Start Build." \
             "start" \
             "arch" "Architecture: $menu_arch" \
             "firmware" "Firmware: $menu_firmware" \
-            "disk" "File/Disk format: $menu_disk" \
+            "disk" "Format: $menu_disk" \
             "desktop" "Desktop: $menu_desktop" \
-            "session" "Session: $menu_session" \
-            "software" "View complete software catalog" \
-            "desktops" "View desktop environments matrix" \
-            "test" "Automated test mode: $menu_test" \
-            "verbose" "Verbose boot logging: $menu_verbose" \
-            "deps" "Check required host packages" \
-            "start" "Start build with these settings" \
-            "quit" "Exit without building")"; then
+            "session" "Startup mode: $menu_session" \
+            "software" "Software package: $menu_software" \
+            "test" "Test mode: $menu_test" \
+            "verbose" "Verbose logging: $menu_verbose" \
+            "deps" "Check host dependencies" \
+            "start" "Start build" \
+            "quit" "Exit")"; then
             exit 0
         fi
 
         case "$action" in
             software)
-                report="$(print_software_list)"
-                akaos_ui_message "akaOS Software Catalog" "$report"
-                ;;
-            desktops)
-                report="$(print_desktop_list)"
-                akaos_ui_message "Desktop Environments Matrix" "$report"
+                if selection="$(akaos_ui_menu \
+                    "Software Packages" "Select software to bundle into akaOS." "$menu_software" \
+                    "all" "Full Suite (All 124+ Tools & Apps)" \
+                    "desktop" "Standard Desktop Suite (GUIs, WMs, Editors)" \
+                    "minimal" "Minimal Base (Core Unix & Shell only)" \
+                    "net" "Network & Server Suite (wget, curl, httpd, ssh)")"; then
+                    menu_software="$selection"
+                fi
                 ;;
             arch)
                 if selection="$(akaos_ui_menu \
