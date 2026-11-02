@@ -167,9 +167,9 @@ configure_run_interactively() {
     local menu_arch=x86_64
     local menu_firmware=uefi
     local menu_disk=fat32
-    local menu_desktop=xfce
-    local menu_session=desktop
-    local menu_display=gui
+    local menu_desktop=none
+    local menu_session=console
+    local menu_display=auto
     local menu_vga=virtio
     local menu_smp=2
     local menu_mem=512M
@@ -304,26 +304,39 @@ configure_run_interactively() {
                 ;;
             desktop)
                 if selection="$(akaos_ui_menu \
-                    "Select Desktop Environment" "Choose desktop to launch in QEMU:" "$menu_desktop" \
-                    "xfce" "XFCE 4.18 (xfwm4, panel, desktop session)" \
+                    "Select Desktop Environment" "Choose desktop environment to bundle:" "$menu_desktop" \
+                    "none" "None (Pure Console / No GUI desktop installed)" \
+                    "xfce" "XFCE 4.18 (Full desktop session, panel, xfwm4)" \
                     "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM)" \
-                    "openbox" "Openbox 3.6.1 (Standalone window manager)" \
+                    "openbox" "Openbox 3.6.1 (Clean lightweight window manager)" \
                     "aurora" "Aurora (akaOS native resident desktop)" \
-                    "lxqt" "LXQt (Qt6 based modern desktop session)" \
-                    "none" "None (Pure Console / No GUI desktop installed)")"; then
+                    "lxqt" "LXQt (Qt6 based modern desktop session)")"; then
                     menu_desktop="$selection"
+                    if [[ "$menu_desktop" == "none" && "$menu_session" == "desktop" ]]; then
+                        menu_session="console"
+                        menu_display="auto"
+                    fi
                 fi
                 ;;
             session)
                 if selection="$(akaos_ui_menu \
-                    "Select Startup Mode" "How should akaOS boot?" "$menu_session" \
-                    "desktop" "Desktop GUI: Autostart graphical desktop" \
-                    "console" "Console TTY: Shell login terminal")"; then
-                    menu_session="$selection"
-                    if [[ "$menu_session" == "console" ]]; then
-                        menu_display=headless
+                    "Select Startup Mode" "How should akaOS start on boot?" "$menu_session" \
+                    "console" "Console TTY: Shell login terminal" \
+                    "desktop" "Desktop GUI: Autostart graphical desktop")"; then
+                    if [[ "$selection" == "desktop" && "$menu_desktop" == "none" ]]; then
+                        akaos_ui_message "Configuration Error" "Desktop env is required, you have none.\n\nPlease select a desktop environment first before choosing desktop startup mode."
+                    elif [[ "$selection" == "console" && "$menu_desktop" != "none" ]]; then
+                        if akaos_ui_confirm "Warning: Session Conflict" "Warning: you use desktop env [$menu_desktop] but session is console.\n\nContinue anyway?" "Continue" "Back"; then
+                            menu_session="$selection"
+                            menu_display=headless
+                        fi
                     else
-                        menu_display=gui
+                        menu_session="$selection"
+                        if [[ "$menu_session" == "console" ]]; then
+                            menu_display=headless
+                        else
+                            menu_display=gui
+                        fi
                     fi
                 fi
                 ;;

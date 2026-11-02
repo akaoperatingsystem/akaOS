@@ -17,7 +17,7 @@ akaos_ui_menu() {
             --backtitle "akaOS Build & Run Configuration" \
             --title "$title" \
             --default-item "$default_item" \
-            --menu "$prompt" 22 78 12 \
+            --menu "$prompt" 22 96 14 \
             "$@" 3>&1 1>&2 2>&3
         return
     fi
@@ -69,7 +69,7 @@ akaos_ui_confirm() {
             --title "$title" \
             --yes-button "$yes_label" \
             --no-button "$no_label" \
-            --yesno "$message" 17 72
+            --yesno "$message" 17 84
         return
     fi
 
@@ -89,7 +89,7 @@ akaos_ui_message() {
             --backtitle "akaOS Build & Run Configuration" \
             --title "$title" \
             --scrolltext \
-            --msgbox "$message" 22 78
+            --msgbox "$message" 22 88
         return
     fi
 
@@ -115,7 +115,7 @@ akaos_ui_checklist() {
         whiptail \
             --backtitle "akaOS Build & Run Configuration" \
             --title "$title" \
-            --checklist "$prompt" 22 78 12 \
+            --checklist "$prompt" 22 96 14 \
             "$@" 3>&1 1>&2 2>&3
         return
     fi
