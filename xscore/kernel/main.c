@@ -189,6 +189,26 @@ void xscore_exception_handler(uint64_t vector, uint64_t error_code, const uint64
         if (error_code & UINT64_C(2)) fault_flags |= XSCORE_USER_FAULT_WRITE;
         if (error_code & UINT64_C(1)) fault_flags |= XSCORE_USER_FAULT_PRESENT;
         if (xscore_process_handle_page_fault(fault_address, fault_flags)) return;
+
+        struct xscore_process *process = xscore_process_current();
+        if (process) {
+            serial_process_status("[WARN] User process ", process->pid, " terminated by page fault\n");
+            xscore_process_record_termination_signal(AKAOS_SIGSEGV);
+            xscore_thread_record_user_exit(UINT64_C(128) + AKAOS_SIGSEGV);
+            xscore_thread_exit();
+            return;
+        }
+    }
+    if ((frame[3] & 3) == 3) {
+        struct xscore_process *process = xscore_process_current();
+        if (process) {
+            uint32_t sig = (vector == 0) ? AKAOS_SIGFPE : AKAOS_SIGILL;
+            serial_process_status("[WARN] User process ", process->pid, " terminated by CPU exception\n");
+            xscore_process_record_termination_signal(sig);
+            xscore_thread_record_user_exit(UINT64_C(128) + sig);
+            xscore_thread_exit();
+            return;
+        }
     }
     serial_number("[FATAL] CPU exception vector ", vector, "\n");
     serial_number("[FATAL] Exception error code ", error_code, "\n");

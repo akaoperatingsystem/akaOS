@@ -1,51 +1,50 @@
 # Building and Running akaOS
 
-akaOS uses its own XSCore kernel. Linux is only the development host used to
-compile the project and run QEMU.
+**akaOS** is powered by the original **XSCore** kernel. Linux is used exclusively as a development cross-compilation host; it is not used at runtime.
 
-## New-user quick start
+---
 
-From the akaOS repository directory:
+## 1. Quick Start Guide
+
+From the akaOS repository root directory:
 
 ```sh
+# 1. Verify that your host system has all required tools
 ./build.sh --check-deps
+
+# 2. Build the operating system (opens the interactive configuration menu)
 ./build.sh
+
+# 3. Boot akaOS inside QEMU
 ./run.sh
 ```
 
-The first command checks the default target and prints a distribution-specific
-package command if anything is missing. The next two commands open full-screen
-terminal menus. Select the architecture, firmware, and disk type, confirm the
-build, then select the same values in the run menu.
+- The first command inspects your host toolchain and prints the exact package installation command for your distribution if any dependencies are missing.
+- When run without arguments in an interactive terminal, both `build.sh` and `run.sh` open full-screen configuration menus where you can select target architectures, firmware, desktop environments, software bundles, and hardware parameters.
+- **TUI Navigation:** Use Arrow keys to highlight items, Tab to cycle between buttons, Enter to select, and Escape to cancel. If `whiptail` is not installed, a numbered text-mode menu is automatically presented instead.
 
-Use the arrow keys to move, Tab to switch buttons, Enter to select, and Escape
-to cancel. If `whiptail` is not installed, akaOS automatically presents a
-numbered text menu instead.
+### Default Login Accounts
 
-The development image login is `root` with initial password `root`, or `user`
-with initial password `akaos`.
+The generated image contains two pre-configured accounts:
+- **Root Administrator:** username `root`, password `root` (shell prompt: `#`)
+- **Standard User:** username `user`, password `akaos` (shell prompt: `$`)
 
-## Checking a specific target
+---
 
-The dependency checker understands every supported architecture:
+## 2. Dependency Checking & Package Installation
+
+You can check dependencies for any specific architecture target without installing anything:
 
 ```sh
-./build.sh --arch x86_32 --firmware both --disk-type fat32 --check-deps
-./run.sh --arch aarch64 --firmware uefi --disk-type fat32 --check-deps
+./build.sh --arch x86_64 --firmware uefi --check-deps
+./run.sh --arch aarch64 --check-deps
 ```
 
-It reports missing commands, Python Pillow, fonts, GRUB platform modules, QEMU,
-and OVMF firmware. It never runs `sudo` or changes the host automatically.
+The checker validates compilers, linkers, emulators, Python libraries, fonts, and firmware. It never runs `sudo` or makes unapproved host changes.
 
-## Complete package sets
+### Complete Host Package Sets
 
-The checker normally suggests only the package groups relevant to the selected
-target. These commands install the broad toolset for building and running all
-six QEMU ports. Package names can change between distribution releases; use
-the command printed by `--check-deps` as the current repository guidance.
-
-### Ubuntu and Debian
-
+#### Ubuntu and Debian
 ```sh
 sudo apt update
 sudo apt install -y clang lld llvm binutils python3 python3-pil \
@@ -54,22 +53,18 @@ sudo apt install -y clang lld llvm binutils python3 python3-pil \
   qemu-system-arm qemu-system-misc ovmf whiptail
 ```
 
-On this project's Windows development machine, use the Ubuntu WSL distribution
-explicitly:
-
+On Windows, use the Ubuntu WSL distribution explicitly:
 ```powershell
 wsl.exe -d Ubuntu
 ```
 
-### Arch Linux
-
+#### Arch Linux
 ```sh
 sudo pacman -S --needed clang lld llvm binutils python python-pillow \
   ttf-dejavu dosfstools mtools grub xorriso qemu-full edk2-ovmf libnewt
 ```
 
-### Fedora
-
+#### Fedora
 ```sh
 sudo dnf install -y clang lld llvm binutils python3 python3-pillow \
   dejavu-sans-fonts dosfstools mtools grub2-tools grub2-tools-extra \
@@ -78,8 +73,7 @@ sudo dnf install -y clang lld llvm binutils python3 python3-pillow \
   edk2-ovmf newt
 ```
 
-### openSUSE
-
+#### openSUSE
 ```sh
 sudo zypper install clang lld llvm binutils python3 python3-Pillow \
   dejavu-fonts dosfstools mtools grub2 grub2-i386-pc grub2-x86_64-efi \
@@ -87,8 +81,7 @@ sudo zypper install clang lld llvm binutils python3 python3-Pillow \
   qemu-ovmf-x86_64 newt
 ```
 
-### Alpine Linux
-
+#### Alpine Linux
 ```sh
 sudo apk add clang lld llvm binutils python3 py3-pillow font-dejavu \
   dosfstools mtools grub xorriso qemu-system-x86_64 qemu-system-i386 \
@@ -96,26 +89,35 @@ sudo apk add clang lld llvm binutils python3 py3-pillow font-dejavu \
   qemu-system-riscv32 ovmf newt
 ```
 
-Ubuntu WSL is the repository's verified host. The other package commands and
-resource paths are supported by the dependency assistant but should be treated
-as distribution guidance until their full QEMU matrices are continuously
-tested.
+---
 
-## Non-interactive commands
+## 3. Non-Interactive CLI Automation
 
-Menus are optional. Scripts and CI can continue using explicit flags:
+Both scripts accept direct command-line arguments for automated scripting and CI/CD pipelines:
 
 ```sh
-./build.sh --arch x86_64 --firmware uefi --disk-type fat32
-./run.sh --arch x86_64 --firmware uefi --disk-type fat32 --gui
+# Build x86-64 with XFCE desktop autostarting
+./build.sh --arch x86_64 --firmware uefi --disk-type fat32 --desktop xfce --session-mode desktop
+./run.sh --arch x86_64 --firmware uefi --gui
 
-./build.sh --arch x86_32 --firmware both --disk-type iso
-./run.sh --arch x86_32 --firmware bios --disk-type iso --headless
+# Build x86-64 pure console headless server (no GUI installed)
+./build.sh --arch x86_64 --firmware bios --disk-type iso --desktop none --session-mode console
+./run.sh --arch x86_64 --firmware bios --headless
 
-./build.sh --arch riscv64 --firmware uefi --disk-type fat32
-./run.sh --arch riscv64 --firmware uefi --disk-type fat32 --headless
+# Build and run ARM 64-bit (AArch64)
+./build.sh --arch aarch64
+./run.sh --arch aarch64 --gui
+
+# Build and run RISC-V 64-bit
+./build.sh --arch riscv64
+./run.sh --arch riscv64 --headless
 ```
 
-The persistent shell filesystem is stored separately in
-`build/akaos-data.img`. Do not delete that file if you want created files to
-survive later QEMU sessions.
+---
+
+## 4. Persistent Storage (akaFS)
+
+Persistent user files and configuration changes are preserved on a dedicated secondary disk image (`build/akaos-data.img`).
+- This disk is automatically created on first boot and attached across QEMU sessions.
+- To reset user data and start with a fresh environment, delete `build/akaos-data.img`.
+- To specify an alternative storage disk, set `AKAOS_STORAGE_IMAGE=/path/to/disk.img ./run.sh`.

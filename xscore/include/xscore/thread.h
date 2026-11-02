@@ -356,6 +356,7 @@ int xscore_thread_reap(uint64_t thread_id);
 /* Request and reap user threads that share a process after its leader exits. */
 int xscore_thread_reap_process_siblings(struct xscore_process *process,
                                        uint64_t leader_thread_id);
+void xscore_thread_request_process_exit(struct xscore_process *process);
 enum xscore_thread_state xscore_thread_state(uint64_t thread_id);
 
 /*

@@ -860,6 +860,23 @@ int xscore_thread_reap_process_siblings(struct xscore_process *process,
     }
 }
 
+void xscore_thread_request_process_exit(struct xscore_process *process) {
+    if (!threads_initialized || !process) return;
+    uintptr_t flags = xscore_spin_lock_irqsave(&thread_lock);
+    for (uint32_t index = 1; index < XSCORE_MAX_THREADS; ++index) {
+        struct xscore_thread *thread = &threads[index];
+        if (thread->id != 0U && thread->process == process && thread->user_mode_thread) {
+            thread->exit_requested = 1U;
+            if (thread->state == XSCORE_THREAD_BLOCKED) {
+                thread->state = XSCORE_THREAD_READY;
+                thread->wake_pending = 0U;
+                ready_mask_add_locked(index);
+            }
+        }
+    }
+    xscore_spin_unlock_irqrestore(&thread_lock, flags);
+}
+
 /* Detached user threads have no joiner to reclaim their TCB.  Sweep exited
  * detached entries at scheduler safe points so long-running services cannot
  * exhaust XSCORE_MAX_THREADS after a series of short-lived workers. */
