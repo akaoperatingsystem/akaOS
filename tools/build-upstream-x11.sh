@@ -97,6 +97,7 @@ PACKAGES=(
     "libXinerama|1.1.5|libXinerama-1.1.5.tar.xz|$LIB_URL/libXinerama-1.1.5.tar.xz|5094d1f0fcc1828cb1696d0d39d9e866ae32520c54d01f618f1a3c1e30c2085c||libXinerama.so.1"
     "libICE|1.1.1|libICE-1.1.1.tar.xz|$LIB_URL/libICE-1.1.1.tar.xz|03e77afaf72942c7ac02ccebb19034e6e20f456dcf8dddadfeb572aa5ad3e451||libICE.so.6"
     "libSM|1.2.4|libSM-1.2.4.tar.xz|$LIB_URL/libSM-1.2.4.tar.xz|fdcbe51e4d1276b1183da77a8a4e74a137ca203e0bcfb20972dd5f3347e97b84||libSM.so.6"
+    "libxkbfile|1.1.2|libxkbfile-1.1.2.tar.xz|$LIB_URL/libxkbfile-1.1.2.tar.xz|b8a3784fac420b201718047cfb6c2d5ee7e8b9481564c2667b4215f6616644b1||libxkbfile.so.1"
 )
 
 selected_packages() {

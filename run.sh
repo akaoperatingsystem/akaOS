@@ -324,9 +324,9 @@ configure_run_interactively() {
                     "console" "Console TTY: Shell login terminal" \
                     "desktop" "Desktop GUI: Autostart graphical desktop")"; then
                     if [[ "$selection" == "desktop" && "$menu_desktop" == "none" ]]; then
-                        akaos_ui_message "Configuration Error" "Desktop env is required, you have none.\n\nPlease select a desktop environment first before choosing desktop startup mode."
+                        akaos_ui_message "Configuration Error" "A desktop environment is required for graphical startup, but none is currently selected.\n\nPlease choose a desktop environment from the menu before selecting the Desktop GUI startup mode."
                     elif [[ "$selection" == "console" && "$menu_desktop" != "none" ]]; then
-                        if akaos_ui_confirm "Warning: Session Conflict" "Warning: you use desktop env [$menu_desktop] but session is console.\n\nContinue anyway?" "Continue" "Back"; then
+                        if akaos_ui_confirm "Warning: Session Conflict" "Notice: Desktop environment [$menu_desktop] is selected, but the startup mode is set to Console.\n\nQEMU will boot into the text terminal login rather than launching the graphical desktop.\n\nDo you wish to continue?" "Continue" "Back"; then
                             menu_session="$selection"
                             menu_display=headless
                         fi

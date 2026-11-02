@@ -9,8 +9,11 @@ extern "C" {
 
 int strcasecmp(const char *left, const char *right);
 int strncasecmp(const char *left, const char *right, size_t maximum_length);
+#undef bzero
 void bzero(void *s, size_t n);
+#undef bcopy
 void bcopy(const void *src, void *dest, size_t n);
+#undef bcmp
 int bcmp(const void *s1, const void *s2, size_t n);
 
 #ifdef __cplusplus

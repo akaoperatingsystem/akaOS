@@ -397,9 +397,9 @@ configure_build_interactively() {
                     "console" "Console TTY: Direct shell terminal login" \
                     "desktop" "Desktop GUI: Autostart graphical desktop")"; then
                     if [[ "$selection" == "desktop" && "$menu_desktop" == "none" ]]; then
-                        akaos_ui_message "Configuration Error" "Desktop env is required, you have none.\n\nPlease select a desktop environment first before choosing desktop startup mode."
+                        akaos_ui_message "Configuration Error" "A desktop environment is required for graphical startup, but none is currently selected.\n\nPlease choose a desktop environment from the menu before selecting the Desktop GUI startup mode."
                     elif [[ "$selection" == "console" && "$menu_desktop" != "none" ]]; then
-                        if akaos_ui_confirm "Warning: Session Conflict" "Warning: you use desktop env [$menu_desktop] but session is console.\n\nContinue anyway?" "Continue" "Back"; then
+                        if akaos_ui_confirm "Warning: Session Conflict" "Notice: Desktop environment [$menu_desktop] is selected, but the startup mode is set to Console.\n\nThe desktop packages will be bundled into the image, but the system will boot into the text terminal login.\n\nDo you wish to continue with these settings?" "Continue" "Back"; then
                             menu_session="$selection"
                         fi
                     else
@@ -445,7 +445,7 @@ configure_build_interactively() {
                 fi
                 local heavy_warning=""
                 if [[ "$menu_desktop" != "none" || "$menu_software" == "all" || "$menu_software" == "desktop" || "$menu_software" == "manual" ]]; then
-                    heavy_warning="\n\n[!] Build Notice: You have selected heavy desktop/software components ($menu_desktop / $menu_software). Compiling or bundling large packages may take extra time depending on your CPU specs, RAM, and disk speed."
+                    heavy_warning="\n\n[!] Build Notice: You have selected extensive desktop/software components ($menu_desktop / $menu_software).\nCompiling and packaging these components may require additional time depending on your CPU performance, available RAM, and storage speed."
                 fi
 
                 summary="Architecture  : $menu_arch

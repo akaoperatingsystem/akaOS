@@ -34,7 +34,7 @@ akaos_ui_menu() {
             description="${entries[index * 2 + 1]}"
             printf '  %2d) %-12s %s\n' "$((index + 1))" "$tag" "$description" >/dev/tty
         done
-        printf '\nSelect 1-%d, or q to cancel [%s]: ' "$count" "$default_item" >/dev/tty
+        printf '\nSelect an option (1-%d), or press [q] to cancel [%s]: ' "$count" "$default_item" >/dev/tty
         IFS= read -r answer </dev/tty || return 130
         if [[ -z "$answer" ]]; then
             printf '%s\n' "$default_item"
@@ -143,7 +143,7 @@ akaos_ui_checklist() {
             [[ -n "${selected[$tag]:-}" ]] && mark="*"
             printf '  %2d) [%s] %-14s %s\n' "$((index + 1))" "$mark" "$tag" "$description" >/dev/tty
         done
-        printf '\nToggle 1-%d, a (select all), n (none), or c to confirm: ' "$count" >/dev/tty
+        printf '\nEnter option number to toggle (1-%d), [a]ll, [n]one, or [c]onfirm selection: ' "$count" >/dev/tty
         IFS= read -r answer </dev/tty || return 130
         if [[ "$answer" == "c" || "$answer" == "C" || -z "$answer" ]]; then
             local result=""
