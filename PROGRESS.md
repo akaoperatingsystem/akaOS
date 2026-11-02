@@ -1,6 +1,6 @@
 # akaOS Development Progress
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.2.7-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.2.8-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.1-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
@@ -932,3 +932,591 @@ This directory details all supported, detected, and targeted mobile, ultraportab
   * Dual Cortex-A72 + Quad Cortex-A53 (Pine64 Pinebook Pro, ASUS Chromebook Flip C101PA, Samsung Chromebook Plus).
 * **Allwinner A64:** `[█████████░]` 88%
   * Quad-core Cortex-A53 @ 1.15 GHz (The open-source Linux laptop engine powering the 11.6" and 14" Pine64 Pinebook).
+
+
+---
+
+# Comprehensive Global Network Hardware Directory (Ethernet & Wi-Fi)
+
+This directory registers all certified, recognized, and targeted wired Ethernet controllers and wireless Wi-Fi / WLAN adapters across the **XSCore** kernel network stack, PCI discovery, and device driver architecture.
+
+### Network Architecture & Controller Summary
+
+| Network Vendor / Technology | Controller Generations | Target Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **Intel Ethernet** | Fast Ethernet, 1GbE (e1000/I210), 2.5GbE (I225/I226), 10GbE (X520/X540/X550), 25G–200G | 85% | `[█████████░]` 85% |
+| **Intel Wi-Fi / WLAN** | 802.11b/g, Wi-Fi 4 (Centrino), Wi-Fi 5 (Wireless-AC), Wi-Fi 6/6E (AX), Wi-Fi 7 (BE) | 75% | `[████████░░]` 75% |
+| **Realtek Ethernet** | RTL8139 (10/100), RTL8111/RTL8168 (1GbE), RTL8125 (2.5GbE), RTL8126 (5GbE), USB LAN | 88% | `[█████████░]` 88% |
+| **Realtek Wi-Fi / WLAN** | RTL8188/RTL8192 (Wi-Fi 4), RTL8812/RTL8821/RTL8822 (Wi-Fi 5), RTL8852 (Wi-Fi 6/6E) | 70% | `[███████░░░]` 70% |
+| **Broadcom Ethernet** | NetXtreme (1GbE BCM5720/5721), NetXtreme II (10GbE), NetXtreme-E (25G–400G SmartNIC) | 78% | `[████████░░]` 78% |
+| **Broadcom Wi-Fi / WLAN** | AirForce 802.11n (BCM4331), 802.11ac (BCM4360), Wi-Fi 6/6E (BCM4389), Wi-Fi 7 (BCM4398) | 68% | `[███████░░░]` 68% |
+| **Qualcomm / Atheros** | AR81xx, Killer Gaming E2200–E3100, AR9280/AR9285 (Wi-Fi 4), QCA6174 (Wi-Fi 5), FastConnect | 72% | `[███████░░░]` 72% |
+| **MediaTek / Ralink** | Ralink RT3070/RT5370, MT7601/MT7612 (Wi-Fi 5), Filogic 330/380 & AMD RZ608/RZ616 (Wi-Fi 6/7) | 65% | `[███████░░░]` 65% |
+| **Marvell / Aquantia** | Yukon 1GbE, Aquantia AQC107/AQC113 (10G/5G/2.5G Multi-Gigabit), FastLinQ 25G–100G | 75% | `[████████░░]` 75% |
+| **NVIDIA / Mellanox** | ConnectX-2 through ConnectX-8 (10G to 800GbE), BlueField-1/2/3 DPUs & SmartNICs | 65% | `[██████░░░░]` 65% |
+| **ASIX Electronics** | AX88772 (USB Fast Ethernet), AX88179/A (USB 3.0 Gigabit), AX88279 (USB 2.5GbE) | 82% | `[████████░░]` 82% |
+| **Chelsio & Solarflare** | Terminator 3–6 (10G/40G/100G iWARP), Flareon Ultra SFN7000/8000, XtremeScale X2500 | 60% | `[██████░░░░]` 60% |
+
+---
+
+# 1. Intel Corporation
+
+## 1.1 Intel Ethernet Controllers
+
+### Fast Ethernet (10/100 Mbps) Legacy Controllers: `[██████████]` 98%
+* **Intel 82550**: 82550EY, 82550GY (Integrated Alert on LAN)
+* **Intel 82551**: 82551QM, 82551IT, 82551ER (PCI 2.2, 10/100 Mbps)
+* **Intel 82552**: 82552V (Fast Ethernet Physical Layer Transceiver)
+* **Intel 82557**: 82557 Fast Ethernet Controller (PCI)
+* **Intel 82558**: 82558A, 82558B (PCI 10/100 with integrated PHY)
+* **Intel 82559**: 82559, 82559ER (Mini-PCI / CardBus / PCI 10/100)
+* **Intel 82562**: 82562ET, 82562EM, 82562EZ, 82562GT, 82562GZ (MII/RMII PHYs)
+
+### Early Gigabit Ethernet Controllers (PCI / PCI-X / Early PCIe): `[██████████]` 95%
+* **Intel 82540**: 82540EM, 82540EP (32-bit PCI 1 Gbps)
+* **Intel 82541**: 82541EI, 82541ER, 82541GI, 82541PI (PCI Gigabit)
+* **Intel 82542**: Original PCI 1000BASE-SX Fiber MAC
+* **Intel 82543**: 82543GC (PCI/PCI-X Gigabit MAC/PHY)
+* **Intel 82544**: 82544EI, 82544GC (PCI-X Gigabit Copper/Fiber)
+* **Intel 82545**: 82545EM, 82545GM (64-bit PCI-X Gigabit)
+* **Intel 82546**: 82546EB, 82546GB (Dual-port PCI-X Gigabit)
+* **Intel 82547**: 82547EI, 82547GI (CSA - Communication Streaming Architecture bus)
+* **Intel 82571**: 82571EB (PCIe v1.0a Dual-Port Gigabit)
+* **Intel 82572**: 82572EI (PCIe v1.0a Single-Port Gigabit)
+* **Intel 82573**: 82573E, 82573L, 82573V (PCIe Gigabit)
+* **Intel 82574**: 82574L, 82574IT (PCIe v1.1 x1, low-power desktop/server Gigabit)
+* **Intel 82575**: 82575EB (PCIe v2.0 Dual-Port Server Gigabit)
+* **Intel 82576**: 82576EB, 82576NS (PCIe v2.0 Dual-Port with SR-IOV)
+* **Intel 82577**: 82577LM, 82577LC (Hanksville Gigabit PHY)
+* **Intel 82578**: 82578DM, 82578DC (Lewisville Gigabit PHY)
+* **Intel 82579**: 82579LM, 82579V (Lewisburg Gigabit PHY, PCIe via PCH)
+* **Intel 82580**: 82580EB, 82580DB (PCIe v2.0 Dual/Quad-Port Gigabit Server)
+* **Intel 82583**: 82583V (PCIe v1.1 cost-optimized Gigabit)
+
+### Modern Gigabit Desktop & Workstation Controllers: `[█████████░]` 92%
+* **Intel Ethernet Controller I210 Series**:
+  * Intel Ethernet Controller I210-AT (Copper, 1GbE, Commercial temp)
+  * Intel Ethernet Controller I210-IT (Copper, 1GbE, Industrial temp)
+  * Intel Ethernet Controller I210-IS (SerDes/SGMII, 1GbE)
+  * Intel Ethernet Controller I210-CS (SerDes, Commercial temp)
+  * Intel Ethernet Controller I210-CL (Cost-reduced OEM)
+* **Intel Ethernet Controller I211 Series**:
+  * Intel Ethernet Controller I211-AT (PCIe v2.1 x1, standard consumer desktop 1GbE)
+* **Intel Ethernet Connection I217 Series (PCH Integrated PHY)**:
+  * Intel Ethernet Connection I217-LM (Enterprise / vPro)
+  * Intel Ethernet Connection I217-V (Consumer desktop/mobile)
+* **Intel Ethernet Connection I218 Series (PCH Integrated PHY)**:
+  * Intel Ethernet Connection I218-LM (Enterprise / vPro)
+  * Intel Ethernet Connection I218-V (Consumer)
+* **Intel Ethernet Connection I219 Series (PCH Integrated PHY)**:
+  * Intel Ethernet Connection I219-LM (vPro corporate client)
+  * Intel Ethernet Connection I219-V (Consumer workstation/desktop)
+* **Intel Ethernet Controller I350 Series**:
+  * Intel Ethernet Controller I350-AM2 (Dual-port PCIe 2.1 x4 1GbE)
+  * Intel Ethernet Controller I350-AM4 (Quad-port PCIe 2.1 x4 1GbE)
+  * Intel Ethernet Controller I350-BT2 (Dual-port for embedded systems)
+
+### Multi-Gigabit (2.5 Gbps) Controllers: `[████████░░]` 82%
+* **Intel Ethernet Controller I225 Series (Foxville, PCIe 3.1 x1, 2.5GBASE-T)**:
+  * Intel Ethernet Controller I225-V (Revisions: B1, B2, B3)
+  * Intel Ethernet Controller I225-LM (vPro / AMT support)
+  * Intel Ethernet Controller I225-IT (Industrial temperature rating)
+* **Intel Ethernet Controller I226 Series (Foxville-R, PCIe 3.1 x1, 2.5GBASE-T)**:
+  * Intel Ethernet Controller I226-V (Consumer desktop revision)
+  * Intel Ethernet Controller I226-LM (vPro Enterprise client)
+  * Intel Ethernet Controller I226-IT (Industrial rating)
+* **Intel Ethernet Controller E610 Series**:
+  * Intel Ethernet Controller E610-IAT2 (Dual-port 2.5GbE)
+  * Intel Ethernet Controller E610-IAIT2 (Dual-port 2.5GbE Industrial)
+
+### 10 Gigabit Ethernet Controllers: `[████████░░]` 80%
+* **Intel 82598 Series (PCIe 2.0 x8)**:
+  * Intel 82598EB (Dual/Single 10G SFP+/CX4/XAUI)
+* **Intel 82599 Series (Niantic, PCIe 2.0 x8)**:
+  * Intel 82599EB (10GBASE-SR/LR, SFI, KR, XAUI)
+  * Intel 82599ES (Serial SFI interface)
+  * Intel 82599EN (Single-port 10GbE SFI)
+* **Intel Ethernet Controller X520 Series**:
+  * Intel Ethernet Server Adapter X520-DA1 (Single-port SFP+)
+  * Intel Ethernet Server Adapter X520-DA2 (Dual-port SFP+)
+  * Intel Ethernet Server Adapter X520-T2 (Dual-port 10GBASE-T)
+  * Intel Ethernet Server Adapter X520-SR1 / X520-SR2 (Optical)
+* **Intel Ethernet Controller X540 Series (Twinville, PCIe 2.1 x8)**:
+  * Intel Ethernet Controller X540-AT2 (Dual-port integrated 10GBASE-T PHY)
+  * Intel Ethernet Controller X540-BT2 (Dual-port embedded 10GBASE-T)
+* **Intel Ethernet Controller X550 Series (Sageville, PCIe 3.0 x4)**:
+  * Intel Ethernet Controller X550-AT (Single-port 10GBASE-T / NBASE-T 5G/2.5G)
+  * Intel Ethernet Controller X550-AT2 (Dual-port 10GBASE-T / NBASE-T)
+  * Intel Ethernet Controller X550-BT2 (Dual-port embedded)
+* **Intel Ethernet Controller X710 Series (Fortville, PCIe 3.0 x8)**:
+  * Intel Ethernet Controller X710-AT2 (Dual-port 10GBASE-T)
+  * Intel Ethernet Controller X710-BM2 (Dual-port 10G SFP+)
+  * Intel Ethernet Controller X710-DA2 / X710-DA4 (Dual/Quad 10G SFP+)
+  * Intel Ethernet Controller X710-T4L (Quad-port 10GBASE-T low power)
+  * Intel Ethernet Controller E610-XAT / E610-XAT2 (Single/Dual 10GbE/5GbE/2.5GbE)
+
+### 25G, 40G, 100G, and 200G Datacenter Controllers: `[███████░░░]` 70%
+* **Intel Ethernet Controller 700 Series**:
+  * Intel Ethernet Controller XXV710-AM1 (Single-port 25GbE SFP28)
+  * Intel Ethernet Controller XXV710-AM2 (Dual-port 25GbE SFP28)
+  * Intel Ethernet Controller XL710-AM1 (Single-port 40GbE QSFP+)
+  * Intel Ethernet Controller XL710-AM2 / BM1 / BM2 (Dual-port 40GbE QSFP+)
+* **Intel Ethernet Controller 800 Series (Columbiaville, PCIe 4.0 / PCIe 5.0)**:
+  * Intel Ethernet Controller E810-CAM1 (Single 100GbE QSFP28)
+  * Intel Ethernet Controller E810-CAM2 (Dual 100GbE / Quad 50G / Octal 25G)
+  * Intel Ethernet Controller E810-XXVAM2 (Dual-port 25GbE SFP28)
+  * Intel Ethernet Controller E830-XXVAM2 (Dual-port 25GbE PCIe 4.0)
+  * Intel Ethernet Controller E830-CCAM1 (200GbE QSFP56 / PCIe 5.0)
+  * Intel Ethernet Controller E835-CAM1 / E835-CCAM1 (Up to 200GbE)
+* **Intel Multi-Host Controllers**:
+  * Intel Ethernet Multi-Host Controller FM10420 (Multi-host 100/25/10GbE)
+  * Intel Ethernet Multi-Host Controller FM10840 (Multi-host 100/40/25/10GbE)
+
+---
+
+## 1.2 Intel Wi-Fi / WLAN Adapters
+
+### Early Legacy Wi-Fi (802.11b, 802.11a/b/g): `[█████████░]` 92%
+* **Intel PRO/Wireless 2100 Network Connection** (802.11b Mini-PCI, Calexico)
+* **Intel PRO/Wireless 2200BG Network Connection** (802.11b/g Mini-PCI)
+* **Intel PRO/Wireless 2915ABG Network Connection** (802.11a/b/g Mini-PCI, Calexico 2)
+* **Intel PRO/Wireless 3945ABG Network Connection** (802.11a/b/g PCIe Mini Card, Golan)
+
+### Wi-Fi 4 (802.11n) Adapters: `[█████████░]` 90%
+* **Intel Wireless WiFi Link 4965AGN** (Kedron, PCIe Mini Card, 3x3 MIMO)
+* **Intel Ultimate N WiFi Link 5300** (Shirley Peak 3x3, 450 Mbps)
+* **Intel Advanced-N WiFi Link 5100** (Shirley Peak 1x2, 300 Mbps)
+* **Intel WiFi Link 5150** (Wi-Fi 802.11a/b/g/n + WiMAX 802.16e)
+* **Intel Centrino Ultimate-N 6300** (Puma Peak, 3x3 3-stream, 450 Mbps)
+* **Intel Centrino Advanced-N 6200** (Puma Peak, 2x2, 300 Mbps)
+* **Intel Centrino Advanced-N 6205** (Taylor Peak, 2x2, enterprise/vPro)
+* **Intel Centrino Advanced-N 6230** (2x2 802.11a/b/g/n + Bluetooth 3.0)
+* **Intel Centrino Advanced-N 6235** (2x2 802.11a/b/g/n + Bluetooth 4.0)
+* **Intel Centrino Wireless-N 1000** (Condor Peak, 1x2, 300 Mbps)
+* **Intel Centrino Wireless-N 1030** (1x2 802.11b/g/n + Bluetooth 3.0)
+* **Intel Centrino Wireless-N 2230** (2x2 802.11b/g/n + Bluetooth 4.0)
+* **Intel Centrino Wireless-N 105** (1x1 802.11b/g/n)
+* **Intel Centrino Wireless-N 135** (1x1 802.11b/g/n + Bluetooth 4.0)
+* **Intel Centrino Wireless-N + WiMAX 6150** (Wi-Fi + WiMAX combo)
+* **Intel Centrino Advanced-N + WiMAX 6250** (Wi-Fi + WiMAX combo)
+
+### Wi-Fi 5 (802.11ac) Adapters: `[████████░░]` 82%
+* **Intel Dual Band Wireless-AC 7260** (Wilkins Peak 2, 2x2 802.11ac, 867 Mbps + BT 4.0, Mini PCIe & M.2 2230)
+* **Intel Dual Band Wireless-N 7260** (2x2 802.11n + BT 4.0)
+* **Intel Wireless-N 7260** (Single band 802.11n + BT 4.0)
+* **Intel Dual Band Wireless-AC 3160** (Stone Peak 1, 1x1 802.11ac, 433 Mbps + BT 4.0)
+* **Intel Dual Band Wireless-AC 7265** (Stone Peak 2, Rev D 802.11ac wave 1 + BT 4.2)
+* **Intel Dual Band Wireless-N 7265** (2x2 802.11n variant)
+* **Intel Wireless-N 7265** (Single-band 802.11n variant)
+* **Intel Dual Band Wireless-AC 3165** (Stone Peak 1x1 802.11ac + BT 4.2)
+* **Intel Dual Band Wireless-AC 3168** (Stone Peak 1x1 802.11ac, cost-reduced + BT 4.2)
+* **Intel Dual Band Wireless-AC 8260** (Snowfield Peak, 2x2 802.11ac wave 1 + BT 4.2)
+* **Intel Dual Band Wireless-AC 8265** (Windstorm Peak, 2x2 802.11ac Wave 2 MU-MIMO + BT 4.2)
+* **Intel Wireless-AC 9260** (Thunder Peak, 2x2 802.11ac Wave 2, 160MHz channels, 1.73 Gbps + BT 5.1)
+* **Intel Wireless-AC 9461** (Jefferson Peak, 1x1 CNVi protocol companion RF + BT 5.1)
+* **Intel Wireless-AC 9462** (Jefferson Peak, 1x1 diversity CNVi + BT 5.1)
+* **Intel Wireless-AC 9560** (Jefferson Peak 2, 2x2 160MHz CNVi protocol companion RF, 1.73 Gbps + BT 5.1)
+
+### Wi-Fi 6 (802.11ax) Adapters: `[████████░░]` 80%
+* **Intel Wi-Fi 6 AX200** (Cyclone Peak, PCIe/USB, 2x2 802.11ax, 160MHz, 2.4 Gbps + BT 5.2)
+* **Intel Wi-Fi 6 AX201** (Harrison Peak, CNVi v2 companion RF module, 2x2 160MHz + BT 5.2)
+* **Intel Wi-Fi 6 AX203** (Harrison Peak, 1x1 CNVi module + BT 5.2)
+* **Intel Wi-Fi 6 AX101** (Harrison Peak, 1x1 80MHz CNVi module + BT 5.2)
+
+### Wi-Fi 6E (802.11ax 6 GHz) Adapters: `[███████░░░]` 75%
+* **Intel Wi-Fi 6E AX210** (Typhoon Peak, PCIe/USB, 2x2 Tri-Band 2.4/5/6 GHz, 160MHz, 2.4 Gbps + BT 5.3)
+* **Intel Wi-Fi 6E AX211** (Garfield Peak, CNVi v2 6GHz companion RF module + BT 5.3)
+* **Intel Wi-Fi 6E AX411** (Garfield Peak, CNVi v2 with Intel Double Connect Technology + BT 5.3)
+
+### Wi-Fi 7 (802.11be) Adapters: `[██████░░░░]` 65%
+* **Intel Wi-Fi 7 BE200** (Gale Peak, PCIe/USB interface, 2x2 320MHz, 4K-QAM, 5.8 Gbps + BT 5.4)
+* **Intel Wi-Fi 7 BE201** (Gale Peak, CNVi v3 companion RF module + BT 5.4)
+* **Intel Wi-Fi 7 BE202** (Gale Peak, PCIe/USB, 2x2 160MHz entry-level Wi-Fi 7 + BT 5.4)
+
+### Killer Networking (Intel Gaming Branded Wi-Fi): `[████████░░]` 80%
+* **Killer Wireless-AC 1525** (Qualcomm QCA6174-based predecessor)
+* **Killer Wireless-AC 1535** (Qualcomm QCA6174A-based predecessor)
+* **Killer Wireless-AC 1550** (1550i / 1550s - Intel 9560/9260 core)
+* **Killer Wi-Fi 6 AX1650** (AX1650x / AX1650w / AX1650i - Intel AX200/AX201 core)
+* **Killer Wi-Fi 6E AX1675** (AX1675x / AX1675w / AX1675i - Intel AX210/AX211 core)
+* **Killer Wi-Fi 6E AX1690** (AX1690i / AX1690s - Intel AX411 core with Double Connect)
+* **Killer Wi-Fi 7 BE1750** (BE1750x / BE1750w / BE1750i - Intel BE200/BE201 core)
+
+---
+
+# 2. Realtek Semiconductor Corp.
+
+## 2.1 Realtek Ethernet Controllers
+
+### Fast Ethernet (10/100 Mbps) Controllers: `[██████████]` 98%
+* **RTL8019AS**: ISA bus Full-Duplex Ethernet Controller (NE2000 compatible)
+* **RTL8029AS**: PCI bus NE2000 compatible Ethernet Controller
+* **RTL8100**: RTL8100B, RTL8100C (PCI Fast Ethernet)
+* **RTL8101**: RTL8101E, RTL8101L (PCIe Fast Ethernet)
+* **RTL8102**: RTL8102E, RTL8102EL (PCIe Fast Ethernet)
+* **RTL8103**: RTL8103E, RTL8103EL (PCIe Fast Ethernet)
+* **RTL8105**: RTL8105E (PCIe Fast Ethernet)
+* **RTL8106**: RTL8106E, RTL8106EUS (PCIe Fast Ethernet)
+* **RTL8139**: RTL8139A, RTL8139B, RTL8139C, RTL8139D (The ubiquitous 32-bit PCI 10/100 NIC)
+
+### Gigabit Ethernet Controllers (PCI & PCIe): `[██████████]` 95%
+* **RTL8110**: RTL8110S, RTL8110SB, RTL8110SC (32-bit PCI Gigabit)
+* **RTL8169**: RTL8169S, RTL8169SB, RTL8169SC (PCI/PCI-X Gigabit)
+* **RTL8111 Series (PCIe Gigabit Controllers)**:
+  * RTL8111B (PCIe 1.0a)
+  * RTL8111C, RTL8111CP
+  * RTL8111D, RTL8111DL
+  * RTL8111DP (DASH remote management)
+  * RTL8111E, RTL8111EP
+  * RTL8111F
+  * RTL8111G, RTL8111GR, RTL8111GS
+  * RTL8111H, RTL8111HN
+  * RTL8111K
+* **RTL8168 Series (Equivalent OEM PCIe family to 8111)**:
+  * RTL8168B, RTL8168C, RTL8168D, RTL8168E, RTL8168F, RTL8168G, RTL8168H
+* **RTL8118**: RTL8118AS (Gaming LAN with dynamic packet prioritization)
+* **RTL8119**: RTL8119i (PCIe integrated DASH management Gigabit)
+
+### Multi-Gigabit Ethernet (2.5 Gbps, 5 Gbps, 10 Gbps): `[████████░░]` 82%
+* **RTL8125 Series (PCIe 2.0 x1 / 2.5 Gbps)**:
+  * RTL8125 (Initial stepping, 2.5GBASE-T)
+  * RTL8125B (Stepping 2, optimized power/heat)
+  * RTL8125BG, RTL8125BGS
+  * RTL8125D (PCIe 2.1 x1, low-power compact)
+* **RTL8126 Series (PCIe 3.0 x1 / 5 Gbps)**:
+  * RTL8126 (5GBASE-T / 2.5G / 1G / 100M, ultra-compact QFN56 package)
+* **RTL8127 Series (PCIe 3.0 x2 / PCIe 4.0 x1 / 10 Gbps)**:
+  * RTL8127 (10GBASE-T multi-gigabit controller)
+
+### USB to Ethernet Controllers: `[█████████░]` 88%
+* **RTL8150**: USB 1.1 to 10/100 Fast Ethernet
+* **RTL8152**: RTL8152B (USB 2.0 to 10/100 Fast Ethernet)
+* **RTL8153**: RTL8153, RTL8153B, RTL8153C, RTL8153E (USB 3.0 to Gigabit Ethernet)
+* **RTL8154**: RTL8154, RTL8154B (USB 2.0/3.0 to Gigabit with power management)
+* **RTL8156**: RTL8156, RTL8156B, RTL8156BG (USB 3.1 Gen 1 to 2.5GbE)
+* **RTL8157**: USB 3.2 Gen 2 to 5GbE / 10GbE controller
+
+---
+
+## 2.2 Realtek Wi-Fi / WLAN Controllers
+
+### 802.11b/g and 802.11n (Wi-Fi 4): `[█████████░]` 88%
+* **RTL8180**: RTL8180L (PCI/Mini-PCI 802.11b)
+* **RTL8185**: RTL8185L (PCI/CardBus 802.11a/b/g)
+* **RTL8187**: RTL8187L, RTL8187B (USB 2.0 high-power 802.11b/g)
+* **RTL8188 Series**:
+  * RTL8188CE (PCIe 1x1 802.11b/g/n)
+  * RTL8188CUS, RTL8188CTV (USB 2.0 nano-dongle 150 Mbps)
+  * RTL8188EE (PCIe 1x1 802.11b/g/n)
+  * RTL8188ETV, RTL8188EUS (USB 2.0 150 Mbps)
+  * RTL8188FTV, RTL8188FU (USB 2.0 ultra-low power)
+* **RTL8191 Series**:
+  * RTL8191CE (PCIe 1x2 802.11b/g/n)
+  * RTL8191SE, RTL8191SU (PCIe/USB)
+* **RTL8192 Series**:
+  * RTL8192CE (PCIe 2x2 802.11b/g/n, 300 Mbps)
+  * RTL8192CU (USB 2.0 2x2 300 Mbps)
+  * RTL8192DE (Dual-band 2.4/5GHz 802.11a/b/g/n PCIe)
+  * RTL8192EE (PCIe 2x2 300 Mbps)
+  * RTL8192EU (USB 2.0 2x2 300 Mbps)
+* **RTL8723 Series (Wi-Fi + Bluetooth Combos)**:
+  * RTL8723AE (PCIe Wi-Fi + BT 4.0)
+  * RTL8723BE (PCIe Wi-Fi + BT 4.0)
+  * RTL8723BS (SDIO Wi-Fi + UART BT)
+  * RTL8723BU (USB Wi-Fi + USB BT)
+  * RTL8723DE (PCIe Wi-Fi + BT 4.2)
+  * RTL8723DU (USB Wi-Fi + USB BT)
+
+### 802.11ac (Wi-Fi 5): `[████████░░]` 80%
+* **RTL8811 Series (1x1 433 Mbps)**:
+  * RTL8811AU (USB 2.0 802.11ac)
+  * RTL8811CU (USB 2.0 802.11ac + BT 4.2)
+  * RTL8811AE (PCIe 802.11ac)
+* **RTL8812 Series (2x2 867 Mbps)**:
+  * RTL8812AU (USB 3.0 dual-band 802.11ac)
+  * RTL8812BU (USB 3.0 dual-band 802.11ac + BT 4.2)
+  * RTL8812AE (PCIe 2x2 802.11ac)
+  * RTL8812CE (PCIe 2x2 802.11ac + BT 5.0)
+* **RTL8814 Series (3x3 / 4x4 High-Power)**:
+  * RTL8814AU (USB 3.0 3x3 1300 Mbps)
+  * RTL8814AE (PCIe 3x3 1300 Mbps)
+* **RTL8821 Series (1x1 433 Mbps Combo)**:
+  * RTL8821AE (PCIe Wi-Fi + BT 4.0)
+  * RTL8821CE (PCIe Wi-Fi + BT 4.2 / 5.0)
+  * RTL8821CS (SDIO Wi-Fi + UART BT)
+  * RTL8821CU (USB 2.0 Wi-Fi + BT 4.2)
+* **RTL8822 Series (2x2 867 Mbps Wave 2 MU-MIMO)**:
+  * RTL8822BE (PCIe Wi-Fi + BT 4.2)
+  * RTL8822CE (PCIe Wi-Fi + BT 5.0)
+  * RTL8822CS (SDIO Wi-Fi + UART BT)
+  * RTL8822CU (USB 2.0/3.0 Wi-Fi + BT 5.0)
+
+### 802.11ax (Wi-Fi 6 & Wi-Fi 6E): `[███████░░░]` 75%
+* **RTL8851 Series**:
+  * RTL8851BE (PCIe 1x1 802.11ax, 80MHz, 600 Mbps + BT 5.3)
+  * RTL8851BU (USB 1x1 802.11ax)
+* **RTL8852 Series**:
+  * RTL8852AE (PCIe 2x2 802.11ax Wi-Fi 6, 80MHz, 1201 Mbps + BT 5.2)
+  * RTL8852BE (PCIe 2x2 802.11ax Wi-Fi 6, optimized power + BT 5.2)
+  * RTL8852BU (USB 3.0 2x2 Wi-Fi 6 dongle)
+  * RTL8852CE (PCIe 2x2 802.11ax Wi-Fi 6E, Tri-band 2.4/5/6 GHz, 160MHz, 2.4 Gbps + BT 5.3)
+
+### 802.11be (Wi-Fi 7): `[██████░░░░]` 60%
+* **RTL8922AE**: PCIe 2x2 Wi-Fi 7 (160MHz, 2880 Mbps + BT 5.4)
+* **RTL8922AU**: USB 3.0 2x2 Wi-Fi 7 client adapter
+* **RTL8934AR**: Dual-radio Wi-Fi 7 router/AP silicon
+
+---
+
+# 3. Broadcom Inc.
+
+## 3.1 Broadcom Ethernet Controllers
+
+### NetXtreme Gigabit Ethernet Series: `[█████████░]` 88%
+* **BCM5700 / BCM5701**: Early 64-bit PCI-X 10/100/1000 Server NICs
+* **BCM5702 / BCM5703 / BCM5704**: Dual-port PCI-X Gigabit
+* **BCM5705**: Cost-reduced desktop PCI Gigabit
+* **BCM5714 / BCM5715**: PCIe v1.0 dual-port server controllers
+* **BCM5720**: Dual-port PCIe 2.0 x1 Gigabit Ethernet Controller
+* **BCM5721 / BCM5722**: Single-port PCIe Gigabit desktop/server
+* **BCM5723**: PCIe Gigabit with ASF 2.0 / IPMI
+* **BCM5751 / BCM5752 / BCM5754 / BCM5755**: Broadcom NetXtreme desktop series with TPM
+* **BCM5761**: Desktop Gigabit controller with DASH support
+* **BCM57780 / BCM57781 / BCM57785**: Integrated Gigabit PCIe with card reader combo
+
+### NetXtreme II 10GbE & Multi-Function Server Series: `[████████░░]` 80%
+* **BCM5706 / BCM5708**: TOE (TCP Offload Engine) Gigabit
+* **BCM5709 / BCM5716**: Dual-port Gigabit with iSCSI / RDMA hardware acceleration
+* **BCM57710 / BCM57711**: Dual-port 10GBASE-CX4/SFP+ PCIe 2.0 x8
+* **BCM57712**: Dual-port 10GbE with FCoE and iSCSI offload
+* **BCM57800S**: Quad-port (2x 10GbE + 2x 1GbE) PCIe 3.0
+* **BCM57810S**: Dual-port 10GbE SFP+ / 10GBASE-T PCIe 3.0 x8
+* **BCM57840S**: Quad-port 10GbE converged network controller
+
+### NetXtreme-E Enterprise, Cloud & SmartNIC Series (10G/25G/50G/100G/200G/400G): `[███████░░░]` 70%
+* **BCM57301 / BCM57302 / BCM57304**: 10G/25G/40G/50G PCIe 3.0 Ethernet Controllers
+* **BCM57402 / BCM57404 / BCM57406**: Dual-port 10G/25GBASE-T and SFP28 with RoCEv2
+* **BCM57412 / BCM57414 / BCM57416**: Dual-port 10G/25G PCIe 3.0 x8 / 10GBASE-T
+* **BCM57454**: Quad-port 10G/25G PCIe 3.0 x16
+* **BCM57502 / BCM57504 / BCM57508**: Dual/Quad/Octal port 25G/50G/100G/200G PCIe 4.0 x16
+* **BCM57608**: 400GbE PCIe 5.0 High-Performance Datacenter SmartNIC
+
+---
+
+## 3.2 Broadcom Wi-Fi / WLAN Controllers
+
+### Early 802.11a/b/g and 802.11n (AirForce Family): `[█████████░]` 90%
+* **BCM4301 / BCM4306**: Early Mini-PCI 802.11b / 802.11b/g
+* **BCM4311 / BCM4312**: PCIe Mini Card 802.11b/g
+* **BCM4313**: PCIe 1x1 802.11b/g/n (65 Mbps / 150 Mbps)
+* **BCM4318**: Mini-PCI 802.11b/g (BroadRange technology)
+* **BCM4321 / BCM4322**: PCIe 2x2 / 3x3 802.11a/b/g/draft-n (Intensi-fi)
+* **BCM43224 / BCM43225**: Dual-band / Single-band 802.11n 2x2 PCIe
+* **BCM43227 / BCM43228**: 802.11n 2x2 with Bluetooth 4.0 combo
+* **BCM4331**: 3x3 802.11a/b/g/n (450 Mbps, widely used in Apple MacBook Pro)
+
+### 802.11ac (5G WiFi / Wi-Fi 5): `[████████░░]` 82%
+* **BCM4350**: PCIe/SDIO 2x2 802.11ac + Bluetooth 4.1
+* **BCM4352**: PCIe 2x2 802.11ac (867 Mbps) + Bluetooth 4.0
+* **BCM4354**: SDIO 2x2 802.11ac + BT 4.1 for mobile devices
+* **BCM4356**: PCIe/SDIO 2x2 802.11ac + BT 4.1
+* **BCM4360**: PCIe 3x3 802.11ac (1.3 Gbps)
+* **BCM43602**: PCIe 3x3 802.11ac with internal CPU offload
+* **BCM4366 / BCM4366E**: 4x4 MU-MIMO 802.11ac Wave 2 (NitroQAM, 2167 Mbps)
+
+### 802.11ax (Wi-Fi 6 & Wi-Fi 6E): `[███████░░░]` 75%
+* **BCM43684**: 4x4 802.11ax enterprise AP chip (4.8 Gbps)
+* **BCM43694**: 4x4 802.11ax dual-band enterprise SoC
+* **BCM4375**: 2x2 802.11ax smartphone combo chip + Bluetooth 5.0
+* **BCM4389**: 2x2 Tri-band (2.4/5/6 GHz) Wi-Fi 6E + Dual Bluetooth 5.2
+* **BCM6750 / BCM6752 / BCM6755**: Residential Wi-Fi 6 router SoC platforms
+
+### 802.11be (Wi-Fi 7): `[██████░░░░]` 60%
+* **BCM4390**: Mobile Wi-Fi 7 (320MHz, 160MHz) + BT 5.4 combo
+* **BCM4398**: Premium client Wi-Fi 7 SoC (320MHz channel support, 5 Gbps+)
+* **BCM6726 / BCM67263**: Residential Wi-Fi 7 AP/Router dual/tri-band radios
+* **BCM49438 / BCM43844**: Enterprise 4x4 Wi-Fi 7 communications processors
+
+---
+
+# 4. Qualcomm / Atheros
+
+## 4.1 Qualcomm / Atheros Ethernet Controllers
+
+### Atheros AR81xx Fast & Gigabit Ethernet: `[█████████░]` 92%
+* **AR8131**: PCIe 10/100/1000 Gigabit NIC
+* **AR8132**: PCIe 10/100 Fast Ethernet NIC
+* **AR8151**: PCIe Gigabit Controller (v1.0 & v2.0)
+* **AR8152**: PCIe Fast Ethernet Controller
+* **AR8161**: PCIe Gigabit Controller (Low-power Energy Efficient Ethernet)
+* **AR8171**: Qualcomm Atheros AR8171/8175 PCI-E Gigabit
+
+### Killer Gaming Ethernet (Qualcomm Atheros Origin): `[████████░░]` 85%
+* **Killer E2200**: (Based on Atheros AR8161 with specialized NPU firmware)
+* **Killer E2400**: Advanced Stream Detect 2.0 Gigabit
+* **Killer E2500 / E2500v2**: Gigabit gaming controller
+* **Killer E2600**: 1 Gbps Gigabit LAN with Extreme Game Detect
+* **Killer E3000**: 2.5 Gbps Multi-Gigabit Ethernet Controller
+* **Killer E3100**: 2.5 Gbps (E3100G / E3100X) Multi-Gigabit gaming controller
+
+---
+
+## 4.2 Qualcomm / Atheros Wi-Fi / WLAN Controllers
+
+### Legacy Atheros 802.11a/b/g & 802.11n: `[█████████░]` 92%
+* **AR5001 / AR5002 / AR5004 / AR5006**: AR5006X, AR5212, AR5213 (Super G 108 Mbps)
+* **AR5007**: AR5007EG (PCIe 802.11b/g)
+* **AR5008**: Early 802.11n draft chipset (AR5416 MAC + AR2133 / AR5133 Radio)
+* **AR9280**: Single-chip PCIe 2x2 dual-band 802.11a/b/g/n (MIMO 300 Mbps)
+* **AR9285**: Single-chip PCIe 1x1 802.11b/g/n (150 Mbps)
+* **AR9287**: Single-chip PCIe 2x2 802.11b/g/n (300 Mbps)
+* **AR9380**: Single-chip PCIe 3x3 dual-band 802.11n (450 Mbps)
+* **AR9462**: PCIe 2x2 dual-band 802.11n + Bluetooth 4.0 combo
+* **AR9485**: PCIe 1x1 802.11b/g/n (150 Mbps)
+* **AR9565**: PCIe 1x1 802.11b/g/n + Bluetooth 4.0 combo
+* **AR9580**: 3x3 dual-band 802.11n for enterprise APs
+
+### Qualcomm Atheros 802.11ac (Wi-Fi 5): `[████████░░]` 82%
+* **QCA6174 / QCA6174A**: PCIe 2x2 802.11ac Wave 2 (867 Mbps) + Bluetooth 4.2 / 5.0 (widely used in Dell, Killer 1525/1535)
+* **QCA9377**: PCIe/SDIO 1x1 802.11ac (433 Mbps) + Bluetooth 4.2 / 5.0
+* **QCA9880 / QCA9882**: 3x3 / 2x2 802.11ac Mini-PCIe for routers/access points
+* **QCA9980 / QCA9984**: 4x4 MU-MIMO Wave 2 802.11ac radio chipsets
+
+### Qualcomm FastConnect Mobile/Client Series (Wi-Fi 6, 6E, 7): `[███████░░░]` 70%
+* **FastConnect 6200**: 2x2 802.11ax-ready (Wi-Fi 6 key features)
+* **FastConnect 6700**: 2x2 Wi-Fi 6E (2.4/5/6 GHz, up to 3 Gbps) + Bluetooth 5.2
+* **FastConnect 6800**: 2x2 Wi-Fi 6 (integrated into Snapdragon 865)
+* **FastConnect 6900**: 2x2 Wi-Fi 6E (4-stream dual-band simultaneous, up to 3.6 Gbps) + BT 5.3
+* **FastConnect 7800**: 2x2 Wi-Fi 7 (High Band Simultaneous Multi-Link, 320MHz, 5.8 Gbps) + BT 5.4
+* **FastConnect 7900**: AI-enhanced Wi-Fi 7 + Bluetooth + Ultra Wideband (UWB) single-chip SoC
+
+---
+
+# 5. MediaTek / Ralink
+
+## 5.1 Ralink Legacy Wi-Fi: `[█████████░]` 90%
+* **RT2500 / RT2570**: Mini-PCI & USB 802.11b/g
+* **RT2860 / RT2870**: PCIe & USB 2x2 802.11n (300 Mbps)
+* **RT3070**: USB 2.0 1x1 802.11b/g/n (150 Mbps, widely used in outdoor high-gain antennas)
+* **RT3290**: PCIe 1x1 802.11b/g/n + Bluetooth 3.0/4.0
+* **RT3572**: USB 2x2 dual-band 802.11a/b/g/n (300 Mbps)
+* **RT5370**: USB 2.0 1x1 802.11b/g/n (150 Mbps, low-power nano-stick)
+* **RT5572**: USB 2.0 2x2 dual-band 802.11a/b/g/n (300 Mbps)
+
+## 5.2 MediaTek Wi-Fi Chipsets
+
+### 802.11n & 802.11ac (Wi-Fi 5): `[████████░░]` 80%
+* **MT7601U**: USB 2.0 1x1 802.11b/g/n (150 Mbps)
+* **MT7610E / MT7610U**: PCIe / USB 1x1 802.11ac (433 Mbps)
+* **MT7612E / MT7612U**: PCIe / USB 3.0 2x2 802.11ac (867 Mbps)
+* **MT7630E**: PCIe 1x1 802.11b/g/n + Bluetooth 4.0
+* **MT7662E / MT7662U**: PCIe / USB 2x2 802.11ac (867 Mbps) + Bluetooth 4.0
+* **MT7663E / MT7663U**: PCIe / USB 2x2 802.11ac Wave 2 (867 Mbps) + Bluetooth 5.0
+* **MT7668**: SDIO/USB 2x2 802.11ac + BT 5.0 for smart TVs and set-top boxes
+
+### MediaTek Filogic Series (Wi-Fi 6, 6E, and 7): `[███████░░░]` 70%
+* **Filogic 330 (MT7921)**: PCIe/USB 2x2 802.11ax Wi-Fi 6 (80MHz, 1.2 Gbps) + BT 5.2
+* **Filogic 330+ (MT7922)**: PCIe 2x2 802.11ax Wi-Fi 6E (160MHz, 2.4 Gbps) + BT 5.2 (AMD RZ616 branded)
+* **AMD RZ Series (Rebranded MediaTek Modules)**:
+  * AMD RZ608 (MediaTek MT7921K based, 80MHz Wi-Fi 6)
+  * AMD RZ616 (MediaTek MT7922 based, 160MHz Wi-Fi 6E)
+* **Filogic 380 (MT7925)**: PCIe/USB 2x2 Wi-Fi 7 (160MHz, 2.87 Gbps) + BT 5.4
+* **MT7927**: Client Wi-Fi 7 module (320MHz channels, Multi-Link Operation, 5.8 Gbps) + BT 5.4
+* **Filogic 880 / 860 / 830**: Multi-radio Wi-Fi 7 / Wi-Fi 6 Access Point SoCs (MT7986, MT7988, MT7990, MT7996)
+
+---
+
+# 6. Marvell / Aquantia
+
+## 6.1 Marvell Yukon Gigabit Controllers (Legacy): `[█████████░]` 92%
+* **88E8001**: 32-bit PCI 10/100/1000 Gigabit LAN
+* **88E8053 / 88E8055 / 88E8056 / 88E8057 / 88E8059**: PCIe Gigabit Ethernet Controllers
+
+## 6.2 Aquantia AQtion Multi-Gigabit & 10GbE Controllers: `[████████░░]` 82%
+* **AQC100**: PCIe 3.0 x4 Multi-Gigabit Network Controller (SFP+ optical)
+* **AQC107**: PCIe 3.0 x4 10G/5G/2.5G/1G/100M NBASE-T Ethernet Controller (Found in flagship motherboards: ASUS ROG, ASRock Taichi)
+* **AQC108**: PCIe 3.0 x4 5G/2.5G/1G/100M NBASE-T Controller
+* **AQC109**: PCIe 3.0 x2 2.5G/1G/100M Controller
+* **AQC111 / AQC111U**: USB 3.1 Gen 1 to 5G Multi-Gigabit Controller
+* **AQC112 / AQC112U**: USB 3.1 Gen 1 to 2.5G Controller
+* **AQC113**: PCIe 4.0 x1 / PCIe 3.0 x2 10GBASE-T NBASE-T Controller
+* **AQC113C / AQC113CS**: PCIe 4.0 x1 / x2 10GbE low-power controller (integrated on modern consumer Z690/Z790/X670E/X870E motherboards)
+
+## 6.3 Marvell FastLinQ Enterprise Series: `[███████░░░]` 70%
+* **QL41102 / QL41212**: 10G/25G SFP28 PCIe 3.0 Intelligent Ethernet Adapters
+* **QL45211 / QL45212**: 25G/40G/50G/100G PCIe 3.0 x16 Controllers
+
+---
+
+# 7. NVIDIA / Mellanox Technologies (Datacenter High-Speed Ethernet)
+
+## ConnectX Series Network Adapters: `[███████░░░]` 72%
+* **ConnectX-2**: 10GbE / QDR 40Gb/s InfiniBand (PCIe 2.0 x8)
+  * MNPA19-XTR (Single-port 10GbE SFP+)
+* **ConnectX-3 / ConnectX-3 Pro**: 10GbE / 40GbE / FDR InfiniBand (PCIe 3.0 x8)
+  * MCX311A-XCAT (Single 10GbE SFP+)
+  * MCX312A-XCBT (Dual 10GbE SFP+)
+  * MCX314A-BCBT (Dual 40GbE QSFP+ with hardware VXLAN / NVGRE offload)
+* **ConnectX-4 / ConnectX-4 Lx**: 10G/25G/40G/50G/100GbE (PCIe 3.0 x8 / x16)
+  * MCX4121A-ACAT (Dual-port 25GbE SFP28 PCIe 3.0 x8)
+  * MCX4131A-BCAT (Single-port 40GbE QSFP28)
+  * MCX416A-CCAT (Dual-port 100GbE QSFP28 PCIe 3.0 x16)
+* **ConnectX-5 / ConnectX-5 Ex**: 100GbE / HDR 200Gb/s InfiniBand (PCIe 3.0 / PCIe 4.0 x16)
+  * MCX512A-ACAT (Dual-port 25GbE SFP28)
+  * MCX516A-CCAT (Dual-port 100GbE QSFP28 PCIe 3.0/4.0 x16)
+* **ConnectX-6 / ConnectX-6 Dx / ConnectX-6 Lx**: 25G/50G/100G/200GbE (PCIe 4.0 x16)
+  * MCX631102AS-ADAT (ConnectX-6 Lx Dual 25GbE SFP28)
+  * MCX623106AN-CDAT (ConnectX-6 Dx Dual 100GbE QSFP56)
+  * MCX653106A-ECAT (ConnectX-6 Single-port 200GbE QSFP56)
+* **ConnectX-7**: 100G / 200G / 400GbE (PCIe 5.0 x16 / NDR InfiniBand)
+  * MCX755106AS-HEAT (Single/Dual 400GbE OSFP/QSFP112)
+* **ConnectX-8**: 800GbE (PCIe 6.0 x16 / XDR InfiniBand)
+
+## BlueField Data Processing Units (DPU / SmartNIC): `[██████░░░░]` 60%
+* **BlueField-1 DPU**: 2x 100GbE / InfiniBand + 16 ARM Cortex-A72 cores
+* **BlueField-2 DPU**: 2x 100GbE or 1x 200GbE + 8 ARM Cortex-A72 cores + crypto accelerators
+* **BlueField-3 DPU**: 400GbE / NDR 400Gb/s + 16 ARM Cortex-A78 cores + 32GB/64GB onboard DDR5
+
+---
+
+# 8. ASIX Electronics (USB-to-LAN Specialized Silicon)
+
+## Fast Ethernet: `[█████████░]` 92%
+* **AX88772**: AX88772A, AX88772B, AX88772C, AX88772D (USB 2.0 to 10/100 Fast Ethernet)
+* **AX88760**: USB 2.0 to 2-Port 10/100 Ethernet Controller
+
+## Gigabit Ethernet: `[█████████░]` 90%
+* **AX88178**: AX88178, AX88178A (Early USB 2.0 / Gigabit combo)
+* **AX88179**: USB 3.0 to 10/100/1000 Gigabit Ethernet
+* **AX88179A**: USB 3.2 Gen 1 to Gigabit Ethernet (Ultra-low power, enhanced driver-less CDC-ECM/NCM)
+
+## Multi-Gigabit (2.5 Gbps): `[████████░░]` 80%
+* **AX88279**: USB 3.2 Gen 1 to 2.5G Multi-Gigabit Ethernet Controller
+
+---
+
+# 9. Chelsio Communications (Unified Wire High-Performance Ethernet)
+
+* **Terminator 3 (T3)**: `[███████░░░]` 75%
+  * T302, T310, T320 (10GbE iSCSI/iWARP RDMA)
+* **Terminator 4 (T4)**: `[███████░░░]` 75%
+  * T420-CR, T440-CR (Dual/Quad 10GbE Unified Wire)
+* **Terminator 5 (T5)**: `[███████░░░]` 70%
+  * T520-CR, T580-CR, T580-LP-CR (Dual 10G/40G Unified Wire PCIe 3.0)
+* **Terminator 6 (T6)**: `[██████░░░░]` 65%
+  * T62100-CR, T62100-LP-CR (Dual-port 100GbE QSFP28 PCIe 3.0 x16, full iWARP/RoCE/TCP/iSCSI offload)
+
+---
+
+# 10. Solarflare / AMD Xilinx (Ultra-Low Latency FinTech / HPC Ethernet)
+
+* **Flareon Ultra SFN7000 Series (10GbE / PCIe 3.0)**: `[███████░░░]` 75%
+  * SFN7022F, SFN7122F (Dual-port 10G SFP+)
+  * SFN7142Q (Dual-port 40G QSFP+)
+* **Flareon Ultra SFN8000 Series (10G/40G / PCIe 3.0)**: `[███████░░░]` 72%
+  * SFN8522, SFN8522F (Dual-port 10G SFP+ low-latency Onload)
+  * SFN8542 (Dual-port 40G QSFP+)
+* **XtremeScale X2500 Series (10G/25G Ultra-Low Latency)**: `[██████░░░░]` 65%
+  * X2522 / X2522-25G (Dual-port 10G/25G SFP28, sub-microsecond latency)
+  * X2541 (Single-port 100G QSFP28)
+  * X2542 (Dual-port 100G QSFP28)

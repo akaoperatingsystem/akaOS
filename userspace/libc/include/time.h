@@ -6,7 +6,10 @@
 #include <stddef.h>
 
 typedef int clockid_t;
+#ifndef _CLOCK_T_DEFINED
+#define _CLOCK_T_DEFINED
 typedef long clock_t;
+#endif
 #define CLOCKS_PER_SEC ((clock_t)1000000)
 
 struct tm {

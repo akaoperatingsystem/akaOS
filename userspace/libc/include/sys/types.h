@@ -22,7 +22,10 @@ typedef uint32_t useconds_t;
 #define SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
 #endif
 typedef long time_t;
+#ifndef _CLOCK_T_DEFINED
+#define _CLOCK_T_DEFINED
 typedef long clock_t;
+#endif
 typedef long suseconds_t;
 typedef char *caddr_t;
 typedef unsigned short ushort;
