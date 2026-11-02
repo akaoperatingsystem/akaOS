@@ -115,6 +115,8 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-session" ]]; then
         echo "[mate-session] build mate-session failed" >&2
         tail -30 "$LOG_DIR/mate-session-build.log" >&2
         exit 1
+    }
+
     echo "[mate-session] building tools"
     make -C "$BUILD_DIR_PATH/tools" mate-session-save mate-session-inhibit -j1 \
         LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6 -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o" \
