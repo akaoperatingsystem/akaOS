@@ -497,8 +497,10 @@ firmware=uefi
 firmware_set=0
 disk_type=auto
 disk_type_set=0
-target_desktop=aurora
+target_desktop=none
 session_mode=console
+menu_software=all
+menu_custom_packages=""
 bios_test=0
 bios_verbose=0
 check_deps_only=0
@@ -1831,6 +1833,17 @@ build_cxx_shared_object libakaos-cxx.so
 build_static_shared_object libakaos-static.so
 build_versioned_shared_object libakaos-versioned.so
 build_dynamic_program dynamic-hello "$ROOT_DIR/userspace/bin/dynamic-hello/main.c" DYNAMIC_HELLO.ELF
+# Determine if upstream graphical desktop libraries (Wayland, GTK, Qt, Cairo, X11) are needed.
+# If desktop is 'none' and software bundle is 'dev', 'net', or 'minimal', skip heavy upstream GUI compilation!
+need_upstream_gui=1
+if [[ "$target_desktop" == "none" ]]; then
+    if [[ "$menu_software" == "dev" || "$menu_software" == "net" || "$menu_software" == "minimal" || "$menu_software" == "none" ]]; then
+        need_upstream_gui=0
+        echo "[INFO] Headless/console profile selected ($menu_software bundle with no desktop). Skipping heavy upstream GUI toolkits (Wayland, GTK, Qt, Cairo)."
+    fi
+fi
+
+if [[ "$need_upstream_gui" -eq 1 ]]; then
 UPSTREAM_GLIB_ENABLED=0
 if [[ -f "$UPSTREAM_GLIB_BUILD/gio/libgio-2.0.so.0.9000.0" &&
       -f "$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0" &&
@@ -2125,6 +2138,8 @@ fi
 if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
     echo "[BUILD] Upstream Openbox window manager"
     bash "$ROOT_DIR/tools/build-upstream-openbox.sh"
+fi
+
 fi
 build_runtime_library libglib.so 2
 build_runtime_library libgio.so 3
@@ -2880,6 +2895,7 @@ if [[ "$UPSTREAM_CAIRO_ENABLED" -eq 1 ]]; then
     fi
 fi
 UPSTREAM_OPENBOX_INITRAMFS_ARGS=()
+if [[ "$need_upstream_gui" -eq 1 ]]; then
 if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
     echo "[BUILD] Staging the upstream Openbox window manager"
     # The window manager and the libraries it needs travel in the local
@@ -3195,6 +3211,8 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
     fi
 fi
 
+
+fi
 echo "[BUILD] akaOS initramfs archive (Desktop: $target_desktop, Session: $session_mode, Software: $menu_software)"
 
 # Synthesize /etc/akaos.conf based on user selection

@@ -50,6 +50,7 @@ void *memcpy(void *destination, const void *source, size_t length);
 void *memmove(void *destination, const void *source, size_t length);
 void *memset(void *destination, int value, size_t length);
 void *memchr(const void *s, int c, size_t n);
+void *memmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen);
 char *strerror(int errnum);
 int strerror_r(int errnum, char *buffer, size_t capacity);
 const char *strsignal(int sig);

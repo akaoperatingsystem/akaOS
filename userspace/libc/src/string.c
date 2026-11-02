@@ -556,6 +556,22 @@ wchar_t *wcsrchr(const wchar_t *wide, wchar_t character) {
     return (wchar_t *)match;
 }
 
+void *memmem(const void *haystack, size_t haystacklen,
+             const void *needle, size_t needlelen) {
+    if (!haystack || !needle || needlelen == 0 || haystacklen < needlelen) {
+        return (needlelen == 0 && haystack) ? (void *)haystack : NULL;
+    }
+    const unsigned char *h = (const unsigned char *)haystack;
+    const unsigned char *n = (const unsigned char *)needle;
+    size_t limit = haystacklen - needlelen;
+    for (size_t i = 0; i <= limit; ++i) {
+        if (h[i] == n[0] && memcmp(h + i, n, needlelen) == 0) {
+            return (void *)(h + i);
+        }
+    }
+    return NULL;
+}
+
 wchar_t *wcsstr(const wchar_t *wide, const wchar_t *needle) {
     if (!wide || !needle) return NULL;
     if (*needle == L'\0') return (wchar_t *)wide;

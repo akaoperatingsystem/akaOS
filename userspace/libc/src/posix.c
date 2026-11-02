@@ -1627,3 +1627,42 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
     errno = saved_errno;
     return n;
 }
+
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
+key_t ftok(const char *pathname, int proj_id) {
+    (void)pathname;
+    (void)proj_id;
+    return 1;
+}
+
+int shmget(key_t key, size_t size, int shmflg) {
+    (void)key;
+    (void)size;
+    (void)shmflg;
+    errno = ENOSYS;
+    return -1;
+}
+
+void *shmat(int shmid, const void *shmaddr, int shmflg) {
+    (void)shmid;
+    (void)shmaddr;
+    (void)shmflg;
+    errno = ENOSYS;
+    return (void *)-1;
+}
+
+int shmdt(const void *shmaddr) {
+    (void)shmaddr;
+    errno = ENOSYS;
+    return -1;
+}
+
+int shmctl(int shmid, int cmd, struct shmid_ds *buf) {
+    (void)shmid;
+    (void)cmd;
+    (void)buf;
+    errno = ENOSYS;
+    return -1;
+}

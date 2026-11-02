@@ -92,7 +92,7 @@ meson_args=(
     --cross-file "$ROOT_DIR/tools/meson-akaos-pango-x86_64.ini"
     --prefix=/usr/local --libdir=lib --includedir=include
     -Ddefault_library=shared -Dbuildtype=release -Doptimization=2
-    -Denable-tools=false -Denable-x11=false
+    -Denable-tools=false -Denable-x11=true
     -Denable-wayland=false -Denable-xkbregistry=false
     -Denable-docs=false -Denable-bash-completion=false
     -Dxkb-config-root=/usr/share/X11/xkb
@@ -106,7 +106,7 @@ fi
 # Upstream registers its test programs unconditionally and has no Meson
 # `tests` option. Build and install the production library target only; its
 # own full test suite is a separate porting task.
-ninja -C "$BUILD_TREE" -j "$JOBS" libxkbcommon.so.0.13.2
+ninja -C "$BUILD_TREE" -j "$JOBS" libxkbcommon.so.0.13.2 libxkbcommon-x11.so.0.13.2
 DESTDIR="$GRAPHICS_SYSROOT" meson install -C "$BUILD_TREE" --no-rebuild
 
 if [[ ! -f "$BUILD_TREE/libxkbcommon.so.0.13.2" ||
