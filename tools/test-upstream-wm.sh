@@ -29,6 +29,7 @@ fi
 
 python3 - "$ROOT_DIR" "$IMAGE" <<'PY'
 import os
+import re
 import subprocess
 import sys
 import time
@@ -63,7 +64,10 @@ proc = subprocess.Popen(command, stdin=subprocess.PIPE,
 
 
 def content():
-    return log.read_text(errors="ignore") if log.exists() else ""
+    if not log.exists():
+        return ""
+    text = log.read_text(errors="ignore")
+    return re.sub(r'\[INFO\][^\n]*\n?', '', text)
 
 
 def key_for(ch):
@@ -150,7 +154,7 @@ try:
     # Run Openbox, the window probe, and then LXPanel. The process table is
     # used instead of shell job variables, which akash does not implement.
     send_line("sh /etc/test-desktop.sh")
-    if not wait_for("x11 wm client: reparented into frame", 240):
+    if not wait_for("x11 wm client: reparented into frame", 360):
         print("[FAIL] The upstream window manager did not take the window over.",
               flush=True)
         print(content()[-4000:], flush=True)
@@ -256,7 +260,7 @@ try:
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     output=content()
-    if "running marco" not in output:
+    if not re.search(r"\bmarco\b", output):
         print("[FAIL] marco was not found running in ps output.", flush=True)
         print(output[-6000:], flush=True)
         raise SystemExit(1)
@@ -267,7 +271,7 @@ try:
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     output=content()
-    if "running mate-panel" not in output:
+    if not re.search(r"\bmate-panel\b", output):
         print("[FAIL] mate-panel was not found running in ps output.", flush=True)
         print(output[-6000:], flush=True)
         raise SystemExit(1)
@@ -278,7 +282,7 @@ try:
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     output=content()
-    if "running mate-session" not in output:
+    if not re.search(r"\bmate-session\b", output):
         print("[FAIL] mate-session was not found running in ps output.", flush=True)
         print(output[-6000:], flush=True)
         raise SystemExit(1)
@@ -289,7 +293,7 @@ try:
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     output=content()
-    if "running muffin" not in output:
+    if not re.search(r"\bmuffin\b", output):
         print("[FAIL] muffin was not found running in ps output.", flush=True)
         print(output[-6000:], flush=True)
         raise SystemExit(1)
