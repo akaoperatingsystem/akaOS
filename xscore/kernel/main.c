@@ -28,6 +28,7 @@
 #include <xscore/acpi.h>
 #include <xscore/smp.h>
 #include <font_data.h>
+#include <akaos/signal.h>
 #include <font8x16_data.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -192,7 +193,7 @@ void xscore_exception_handler(uint64_t vector, uint64_t error_code, const uint64
 
         struct xscore_process *process = xscore_process_current();
         if (process) {
-            serial_process_status("[WARN] User process ", process->pid, " terminated by page fault\n");
+            serial_number("[WARN] User process ", xscore_process_pid(process), " terminated by page fault\n");
             xscore_process_record_termination_signal(AKAOS_SIGSEGV);
             xscore_thread_record_user_exit(UINT64_C(128) + AKAOS_SIGSEGV);
             xscore_thread_exit();
@@ -203,7 +204,7 @@ void xscore_exception_handler(uint64_t vector, uint64_t error_code, const uint64
         struct xscore_process *process = xscore_process_current();
         if (process) {
             uint32_t sig = (vector == 0) ? AKAOS_SIGFPE : AKAOS_SIGILL;
-            serial_process_status("[WARN] User process ", process->pid, " terminated by CPU exception\n");
+            serial_number("[WARN] User process ", xscore_process_pid(process), " terminated by CPU exception\n");
             xscore_process_record_termination_signal(sig);
             xscore_thread_record_user_exit(UINT64_C(128) + sig);
             xscore_thread_exit();
