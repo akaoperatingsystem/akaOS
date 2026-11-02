@@ -331,43 +331,45 @@ static void read_line(char *buf, size_t size) {
 #define ANSI_CLEAR_SCREEN "\033[2J\033[H"
 
 static void draw_box_header(const char *title, const char *subtitle) {
-    /* Full screen blue backdrop with centered light-grey dialog */
+    /* Full-screen royal blue background with elegant top banner */
     printf("%s%s%s", ANSI_RESET, ANSI_BLUE_BG, ANSI_CLEAR_SCREEN);
-    printf("%s%s\n", ANSI_BLUE_BG, ANSI_WHITE_FG);
-    printf("  akaOS Software Configuration Tool (akaos-config)\n");
-    printf("%s%s", ANSI_RESET, ANSI_BLUE_BG);
-    printf("\n");
+    printf("%s%s  akaOS System & Hardware Configuration Utility (akaos-config) %s%s\n",
+           ANSI_BLUE_BG, ANSI_WHITE_FG, ANSI_RESET, ANSI_BLUE_BG);
+    printf("%s%s  ========================================================================%s%s\n\n",
+           ANSI_BLUE_BG, ANSI_WHITE_FG, ANSI_RESET, ANSI_BLUE_BG);
 
-    /* Centered dialog header */
+    /* Centered light-grey window with red title badge */
     printf("   %s%s+------------------------------------------------------------------+%s%s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
-    printf("   %s%s|  %s%-60s%s%s%s  |%s%s\n",
+    printf("   %s%s|  %s %-58s %s%s%s  |%s  %s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RED_BG, title, ANSI_RESET, ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
-    printf("   %s%s|                                                                  |%s%s\n",
+    printf("   %s%s|                                                                  |%s  %s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
     if (subtitle && *subtitle) {
-        printf("   %s%s|  %-64s|%s%s\n",
+        printf("   %s%s|  %-64s|%s  %s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, subtitle, ANSI_RESET, ANSI_BLUE_BG);
-        printf("   %s%s|                                                                  |%s%s\n",
+        printf("   %s%s|                                                                  |%s  %s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
     }
 }
 
 static void draw_box_footer(const char *button1, const char *button2) {
-    printf("   %s%s|                                                                  |%s%s\n",
+    printf("   %s%s|                                                                  |%s  %s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
     char btn_line[80];
     if (button2 && *button2) {
-        snprintf(btn_line, sizeof(btn_line), "            <%s>                     <%s>            ",
+        snprintf(btn_line, sizeof(btn_line), "            < %s >                   < %s >            ",
                  button1, button2);
     } else {
-        snprintf(btn_line, sizeof(btn_line), "                           <%s>                           ",
+        snprintf(btn_line, sizeof(btn_line), "                          < %s >                          ",
                  button1);
     }
-    printf("   %s%s|%-66s|%s%s\n",
+    printf("   %s%s|%-66s|%s  %s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, btn_line, ANSI_RESET, ANSI_BLUE_BG);
-    printf("   %s%s+------------------------------------------------------------------+%s%s\n",
+    printf("   %s%s+------------------------------------------------------------------+%s  %s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
+    printf("     %s                                                                    %s\n",
+           ANSI_BLUE_BG, ANSI_RESET);
     printf("%s", ANSI_RESET);
 }
 
