@@ -1,4 +1,4 @@
-# UEFI boot flow
+# UEFI & BIOS Boot Sequence
 
 ```text
 OVMF UEFI

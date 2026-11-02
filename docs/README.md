@@ -31,8 +31,9 @@ Welcome to the **akaOS** technical documentation library. This directory contain
 - **[Native libc Overview](userspace/libc.md)**: Freestanding C library, dynamic ELF loader (`ld-akaos`), and POSIX compatibility layer.
 
 ### 4. Device Drivers (`docs/drivers/`)
+- **[CPU Architecture & Hardware Identification](drivers/cpu-architecture.md)**: CPUID leaves, ARM MIDR_EL1, and RISC-V device-tree CSR detection.
 - **[GPU Hardware Architecture](drivers/gpu-architecture.md)**: Framebuffer abstraction, UEFI GOP, VirtIO-GPU, and discrete hardware driver models.
-- **[Comprehensive GPU Matrix](../PROGRESS.md#gpu-hardware-drivers--target-support-matrix)**: Driver readiness tracking for NVIDIA, AMD/ATI, and Intel hardware.
+- **[Comprehensive Hardware Matrices](../PROGRESS.md#supported-cpu-architectures)**: Live readiness tracking for CPUs, GPUs, and Network hardware.
 
 ### 5. Development & Testing (`docs/development/`)
 - **[Software Bundles & Library Architecture](development/software-bundles.md)**: Detailed breakdown of each bundle profile (`all`, `desktop`, `dev`, `net`, `manual`, `minimal`, `none`) and which libraries are included.

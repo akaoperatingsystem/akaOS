@@ -1,4 +1,4 @@
-# XSCore memory foundation
+# XSCore Memory Architecture & Protection
 
 ## Physical pages
 

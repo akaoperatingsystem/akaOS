@@ -1,4 +1,4 @@
-# akaOS architecture
+# akaOS System Architecture
 
 ## Portability boundary
 
