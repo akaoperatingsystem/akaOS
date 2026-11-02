@@ -100,13 +100,15 @@ Desktop & Session Configuration:
                                  console : Direct tty1 shell login (default)
                                  desktop : Autostart graphical desktop environment
   --software, --software-bundle NAME
-                               Software package bundle:
-                                 all     : Full suite (All 124+ tools, GUIs, Net, Dev, Audio, WMs)
+                               Software package bundle selection:
+                                 all     : Full Suite (All 124+ tools, GUIs, Net, Dev, Audio, WMs)
                                  desktop : Desktop Essentials (GUIs, Editors, Tools, Panels)
                                  net     : Network & Servers (wget, curl, httpd, sshd, telnetd, tftpd)
                                  dev     : Developer & Diagnostics (akafetch, pkg, lscpu, lspci, gpuinfo)
+                                 manual  : Custom Interactive Package Picker (Select individual packages)
                                  minimal : Minimal Base (Core Unix utilities & akash shell only)
                                  none    : None (Barebones kernel bootstrap only)
+  --packages LIST              Comma-separated list of individual packages to bundle (manual mode)
 
 Kernel & Build Flags:
   --list-software              Display comprehensive directory of all native and ported software
@@ -435,10 +437,19 @@ while [[ $# -gt 0 ]]; do
             ;;
         --software|--software-bundle)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires all, desktop, minimal, or net" >&2
+                echo "$1 requires all, desktop, net, dev, manual, minimal, or none" >&2
                 exit 2
             fi
             menu_software="$2"
+            shift 2
+            ;;
+        --packages|--package-list)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires a list of package names" >&2
+                exit 2
+            fi
+            menu_custom_packages="$2"
+            menu_software="manual"
             shift 2
             ;;
         --session-mode)

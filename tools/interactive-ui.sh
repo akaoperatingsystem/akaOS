@@ -105,3 +105,79 @@ akaos_ui_require_terminal() {
         return 1
     fi
 }
+
+akaos_ui_checklist() {
+    local title="$1"
+    local prompt="$2"
+    shift 2
+
+    if akaos_ui_has_whiptail; then
+        whiptail \
+            --backtitle "akaOS Build & Run Configuration" \
+            --title "$title" \
+            --checklist "$prompt" 22 78 12 \
+            "$@" 3>&1 1>&2 2>&3
+        return
+    fi
+
+    local -a entries=("$@")
+    local count=$(( ${#entries[@]} / 3 ))
+    local index answer tag description status
+    local -A selected
+    for ((index = 0; index < count; ++index)); do
+        tag="${entries[index * 3]}"
+        status="${entries[index * 3 + 2]}"
+        if [[ "$status" == "ON" || "$status" == "on" ]]; then
+            selected["$tag"]=1
+        fi
+    done
+
+    while true; do
+        printf '\033[2J\033[H' >/dev/tty
+        printf 'akaOS Build & Run Configuration\n\n%s\n%s\n\n' \
+            "$title" "$prompt" >/dev/tty
+        for ((index = 0; index < count; ++index)); do
+            tag="${entries[index * 3]}"
+            description="${entries[index * 3 + 1]}"
+            local mark=" "
+            [[ -n "${selected[$tag]:-}" ]] && mark="*"
+            printf '  %2d) [%s] %-14s %s\n' "$((index + 1))" "$mark" "$tag" "$description" >/dev/tty
+        done
+        printf '\nToggle 1-%d, a (select all), n (none), or c to confirm: ' "$count" >/dev/tty
+        IFS= read -r answer </dev/tty || return 130
+        if [[ "$answer" == "c" || "$answer" == "C" || -z "$answer" ]]; then
+            local result=""
+            for ((index = 0; index < count; ++index)); do
+                tag="${entries[index * 3]}"
+                if [[ -n "${selected[$tag]:-}" ]]; then
+                    result+="${result:+ }\"$tag\""
+                fi
+            done
+            printf '%s\n' "$result"
+            return 0
+        fi
+        if [[ "$answer" == "q" || "$answer" == "Q" ]]; then
+            return 130
+        fi
+        if [[ "$answer" == "a" || "$answer" == "A" ]]; then
+            for ((index = 0; index < count; ++index)); do
+                tag="${entries[index * 3]}"
+                selected["$tag"]=1
+            done
+            continue
+        fi
+        if [[ "$answer" == "n" || "$answer" == "N" ]]; then
+            selected=()
+            continue
+        fi
+        if [[ "$answer" =~ ^[0-9]+$ ]] &&
+           (( answer >= 1 && answer <= count )); then
+            tag="${entries[(answer - 1) * 3]}"
+            if [[ -n "${selected[$tag]:-}" ]]; then
+                unset selected["$tag"]
+            else
+                selected["$tag"]=1
+            fi
+        fi
+    done
+}

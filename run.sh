@@ -205,9 +205,42 @@ configure_run_interactively() {
                     "desktop" "Desktop Essentials (GUIs, Editors, Panels, Tools)" \
                     "net" "Network & Servers (wget, curl, httpd, sshd, telnetd)" \
                     "dev" "Developer & Diagnostics (akafetch, pkg, lscpu, lspci)" \
+                    "manual" "Manual Package Selector (Choose any packages individually)" \
                     "minimal" "Minimal Base (Core Unix utilities & shell only)" \
                     "none" "None (Barebones kernel bootstrap only)")"; then
                     menu_software="$selection"
+                    if [[ "$menu_software" == "manual" ]]; then
+                        local selected_pkgs
+                        if selected_pkgs="$(akaos_ui_checklist \
+                            "Manual Package Selection" \
+                            "Select individual packages to bundle (Space to toggle, Enter to confirm):" \
+                            "akafetch" "Hardware & CPU/GPU spec visualizer" ON \
+                            "wget" "GNU-compatible HTTP file download tool" ON \
+                            "curl" "HTTP/network transfer client" ON \
+                            "pkg" "akaOS native package manager" ON \
+                            "httpd" "Micro web server daemon" ON \
+                            "sshd" "Secure shell server daemon" ON \
+                            "ssh" "Secure shell client" ON \
+                            "terminal" "Graphical terminal emulator" ON \
+                            "notepad" "Graphical text editor" ON \
+                            "taskmgr" "Graphical process & task manager" ON \
+                            "webviewer" "Graphical web & HTML viewer" ON \
+                            "lscpu" "CPU architecture & topology information" ON \
+                            "lspci" "PCI discovery & device identifier" ON \
+                            "gpuinfo" "GPU hardware & driver status" ON \
+                            "sysmon" "System telemetry and resource monitor" ON \
+                            "tar" "POSIX tar archive utility" ON \
+                            "gzip" "GNU gzip compression utility" ON \
+                            "sed" "Stream editor for text transformation" ON \
+                            "grep" "Pattern matching utility" ON \
+                            "openbox" "Openbox window manager" ON \
+                            "xfwm4" "XFCE window manager" ON \
+                            "lxpanel" "LXDE desktop panel" ON \
+                            "pcmanfm" "PCManFM desktop & file manager" ON \
+                            "dbus-daemon" "D-Bus IPC message broker" ON)"; then
+                            menu_custom_packages="$selected_pkgs"
+                        fi
+                    fi
                 fi
                 ;;
             desktop)
@@ -418,10 +451,19 @@ while [[ $# -gt 0 ]]; do
             ;;
         --software|--software-bundle)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires all, desktop, minimal, or net" >&2
+                echo "$1 requires all, desktop, net, dev, manual, minimal, or none" >&2
                 exit 2
             fi
             menu_software="$2"
+            shift 2
+            ;;
+        --packages|--package-list)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires a list of package names" >&2
+                exit 2
+            fi
+            menu_custom_packages="$2"
+            menu_software="manual"
             shift 2
             ;;
         --display-mode)

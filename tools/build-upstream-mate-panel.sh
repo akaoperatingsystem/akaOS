@@ -103,6 +103,7 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-panel" ]]; then
         exit 1
     }
 
+    make -C "$BUILD_DIR_PATH/mate-panel" panel-marshal.h panel-marshal.c
     make -C "$BUILD_DIR_PATH/mate-panel/libmate-panel-applet-private" -j1         LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"         >>"$LOG_DIR/mate-panel-build.log" 2>&1 || {
         echo "[mate-panel] build libmate-panel-applet-private failed" >&2
         tail -30 "$LOG_DIR/mate-panel-build.log" >&2
