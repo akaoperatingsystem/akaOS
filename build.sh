@@ -478,6 +478,7 @@ Verbose       : $menu_verbose$heavy_warning"
                         --disk-type "$menu_disk"
                         --desktop "$menu_desktop"
                         --session-mode "$menu_session"
+                        --software "$menu_software"
                     )
                     if [[ "$menu_test" == "on" ]]; then
                         INTERACTIVE_BUILD_ARGS+=(--test)
