@@ -81,6 +81,9 @@ BUILD_DIR_PATH="$BUILD_ROOT/mate-panel-$VERSION"
 if [[ ! -x "$STAGE_PREFIX/bin/mate-panel" ]]; then
     echo "[mate-panel] configuring mate-panel $VERSION"
     rm -rf "$BUILD_DIR_PATH" "$STAGE"
+    mkdir -p "$BUILD_DIR_PATH" "$STAGE"
+    (
+        cd "$BUILD_DIR_PATH"
         env \
             CC="$CC_WRAPPER" \
             CFLAGS="-O2 -g0 -fno-strict-aliasing" \
@@ -100,9 +103,6 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-panel" ]]; then
                 --disable-nls \
                 --enable-introspection=no \
                 --disable-schemas-compile
-    (
-        cd "$BUILD_DIR_PATH"
-        env             CC="$CC_WRAPPER"             CFLAGS="-O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2"             LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             CLOCK_CFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             CLOCK_LIBS="-L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -lgtk-3 -lmate-desktop-2"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --enable-x11                 --disable-wayland                 --disable-nls                 --enable-introspection=no                 --disable-schemas-compile
     ) >"$LOG_DIR/mate-panel-configure.log" 2>&1 || {
         echo "[mate-panel] configure failed" >&2
         tail -30 "$LOG_DIR/mate-panel-configure.log" >&2
