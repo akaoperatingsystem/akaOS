@@ -3073,7 +3073,30 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
     fi
 fi
 
-echo "[BUILD] akaOS initramfs archive"
+echo "[BUILD] akaOS initramfs archive (Desktop: $target_desktop, Session: $session_mode, Software: $menu_software)"
+
+# Synthesize /etc/akaos.conf based on user selection
+autostart_val=0
+if [[ "$target_desktop" != "none" && "$session_mode" == "desktop" ]]; then
+    autostart_val=1
+fi
+cat > "$BUILD_DIR/akaos.conf" <<EOF
+# akaOS System Configuration
+HOSTNAME=akaOS
+HTTPD_ENABLED=0
+HTTPD_PORT=80
+TELNETD_ENABLED=0
+TELNETD_PORT=23
+TFTPD_ENABLED=0
+TFTPD_PORT=69
+SSHD_ENABLED=0
+SSHD_PORT=22
+AUDIO_BELL=1
+AUTOSTART_DESKTOP=$autostart_val
+DESKTOP_ENV=$target_desktop
+DESKTOP_THEME=dark
+EOF
+
 python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --exclude-long-vfs-names \
     --dir "/bin" \

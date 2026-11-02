@@ -117,10 +117,12 @@ Desktop & Session Options:
 Software Package Bundle:
   --software, --software-bundle NAME
                                Software bundle selection:
-                                 all     : Full suite (All 124+ tools, GUIs, Net, Dev)
+                                 all     : Full suite (All 124+ tools, GUIs, Net, Dev, Audio, WMs)
                                  desktop : Desktop Essentials (GUIs, Editors, Tools, Panels)
-                                 minimal : Minimal Base (Unix core utilities & shell only)
-                                 net     : Network & Servers (wget, curl, httpd, ssh, tftp)
+                                 net     : Network & Servers (wget, curl, httpd, sshd, telnetd, tftpd)
+                                 dev     : Developer & Diagnostics (akafetch, pkg, lscpu, lspci, gpuinfo)
+                                 minimal : Minimal Base (Core Unix utilities & akash shell only)
+                                 none    : None (Barebones kernel bootstrap only)
 
 Display & Interface Options:
   --display-mode NAME          auto, gui, or headless
