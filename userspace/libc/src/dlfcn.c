@@ -59,10 +59,10 @@
 #define AKAOS_TLS_IMAGE_MAX (64U * 1024U)
 #define AKAOS_VERSION_MAX 4096U
 #define AKAOS_STATIC_TLS_THREAD_SLOTS 64U
-#define AKAOS_STATIC_TLS_OBJECT_SLOTS 64U
+#define AKAOS_STATIC_TLS_OBJECT_SLOTS 256U
 #define AKAOS_DSO_IMAGE_MAX (32U * 1024U * 1024U)
 #define AKAOS_DSO_PATH_MAX 256U
-#define AKAOS_DL_DEPENDENCY_MAX 32U
+#define AKAOS_DL_DEPENDENCY_MAX 128U
 #if defined(__i386__)
 /* The i386 kernel bounds per-process mmap metadata at 128 pages. Keep each
  * thread's static-TLS reservation small enough that dynamically loaded
@@ -309,7 +309,7 @@ struct dl_object {
     struct dl_object *dependencies[AKAOS_DL_DEPENDENCY_MAX];
 };
 
-#define DL_OBJECT_MAX 64
+#define DL_OBJECT_MAX 256
 #define DL_ERROR_MAX 128
 /* The DSO namespace can be large, but most static akaOS utilities never call
  * dlopen. Keep the namespace off their ELF .bss so the loader's capacity does
