@@ -115,7 +115,22 @@ Both scripts accept direct command-line arguments for automated scripting and CI
 
 ---
 
-## 4. Persistent Storage (akaFS)
+## 4. Software Bundles & Library Selection
+
+When building akaOS with `./build.sh` or launching with `./run.sh`, you can choose a software bundle profile via `--software <bundle>`:
+- **`all`**: Full system with all 124+ applications, GUI tools, server daemons, and all desktop libraries (GTK 3/4, Qt 6, Cairo, X11).
+- **`desktop`**: Daily desktop workstation with XFCE/LXDE/Openbox and GUI libraries, excluding background server daemons.
+- **`dev`**: Developer & hardware diagnostics environment with `pkg`, `akafetch`, and `lspci`. Excludes heavy GUI libraries.
+- **`net`**: Network and server appliance with web/SSH servers and networking tools. Excludes all GUI libraries.
+- **`manual`**: Custom interactive 82-package checklist to hand-pick individual packages.
+- **`minimal`**: Minimal base system with `akash` shell and core POSIX file utilities.
+- **`none`**: Raw XSCore kernel and minimal PID 1 bootstrap only.
+
+For a comprehensive matrix of exactly which shared libraries and toolkits are packaged with each bundle, see **[Software Bundles & Library Architecture](development/software-bundles.md)**.
+
+---
+
+## 5. Persistent Storage (akaFS)
 
 Persistent user files and configuration changes are preserved on a dedicated secondary disk image (`build/akaos-data.img`).
 - This disk is automatically created on first boot and attached across QEMU sessions.

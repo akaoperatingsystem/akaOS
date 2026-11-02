@@ -35,4 +35,5 @@ Welcome to the **akaOS** technical documentation library. This directory contain
 - **[Comprehensive GPU Matrix](../PROGRESS.md#gpu-hardware-drivers--target-support-matrix)**: Driver readiness tracking for NVIDIA, AMD/ATI, and Intel hardware.
 
 ### 5. Development & Testing (`docs/development/`)
+- **[Software Bundles & Library Architecture](development/software-bundles.md)**: Detailed breakdown of each bundle profile (`all`, `desktop`, `dev`, `net`, `manual`, `minimal`, `none`) and which libraries are included.
 - **[Developer Workflow](development/workflow.md)**: Automated regression scripts, QEMU validation, and contribution checklists.
