@@ -44,11 +44,11 @@ All desktop environments and window managers run as **completely unmodified upst
 | **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream | 100% | `[██████████]` 100% |
 | **LXQt Desktop & Session** | Unmodified Upstream | 65% | `[██████░░░░]` 65% |
 | **XFCE Desktop (Xfwm4 + xfce4-panel + xfce4-session)** | Unmodified Upstream 4.18 | 100% | `[██████████]` 100% |
-| **MATE Desktop & Marco** | Unmodified Upstream (Marco 1.26.2, libcanberra 0.30, libogg 1.3, libvorbis 1.3) | 70% | `[███████░░░]` 70% |
+| **MATE Desktop (Marco + mate-panel + mate-session)** | Unmodified Upstream 1.26 | 100% | `[██████████]` 100% |
 | **KDE Plasma & KWin** | Unmodified Upstream | 25% | `[██░░░░░░░░]` 25% |
 | **GNOME Desktop & Mutter** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
 | **Cinnamon Desktop & Muffin** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
-| **Overall System Completion** | Full Native Operating System | 75% | `[████████░░]` 75% |
+| **Overall System Completion** | Full Native Operating System | 80% | `[████████░░]` 80% |
 
 
 ---

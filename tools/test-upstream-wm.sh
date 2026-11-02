@@ -262,6 +262,28 @@ try:
         raise SystemExit(1)
     print("[PASS] marco window manager started and remained active alongside MATE/XFCE/LXDE.",
           flush=True)
+    if not wait_for("MATE-PANEL-RUNNING=0", 60):
+        print("[FAIL] mate-panel did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if "running mate-panel" not in output:
+        print("[FAIL] mate-panel was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] mate-panel desktop panel started and remained active.",
+          flush=True)
+    if not wait_for("MATE-SESSION-RUNNING=0", 60):
+        print("[FAIL] mate-session did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if "running mate-session" not in output:
+        print("[FAIL] mate-session was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] mate-session desktop session manager started and remained active.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)

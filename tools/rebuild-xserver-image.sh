@@ -623,7 +623,22 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/marco" ]]; then
         "--dir=/usr/local/share/glib-2.0"
         "--dir=/usr/local/share/glib-2.0/schemas"
     )
-    for mate_library in libmarco-private.so.2 libcanberra-gtk3.so.0 libcanberra.so.0 libvorbisfile.so.3 libvorbis.so.0 libogg.so.0 libltdl.so.7; do
+    for mate_bin in mate-panel mate-session mate-session-save mate-session-inhibit mate-wm dconf; do
+        if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/$mate_bin" ]]; then
+            initramfs_files+=(
+                "--file=/usr/local/bin/$mate_bin:$UPSTREAM_SYSROOT/usr/local/bin/$mate_bin:exec"
+            )
+        fi
+    done
+    for mate_libexec in clock-applet wnck-applet notification-area-applet fish-applet dconf-service; do
+        if [[ -f "$UPSTREAM_SYSROOT/usr/local/libexec/$mate_libexec" ]]; then
+            initramfs_files+=(
+                "--file=/usr/local/libexec/$mate_libexec:$UPSTREAM_SYSROOT/usr/local/libexec/$mate_libexec:exec"
+            )
+        fi
+    done
+    for mate_library in libmarco-private.so.2 libcanberra-gtk3.so.0 libcanberra.so.0 libvorbisfile.so.3 libvorbis.so.0 libogg.so.0 libltdl.so.7 \
+        libmate-desktop-2.so.17 libmate-menu.so.2 libmate-panel-applet-4.so.1 libmateweather.so.1 libdconf.so.1 libdbus-glib-1.so.2; do
         library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib"             -maxdepth 1 -type f -name "${mate_library}.*" -print | sort -V | tail -n 1)"
         [[ -n "$library_path" ]] || continue
         initramfs_files+=(
@@ -631,16 +646,12 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/marco" ]]; then
             "--file=/usr/local/lib/$mate_library:$library_path:0444"
         )
     done
-    if [[ -f "$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/org.mate.marco.gschema.xml" ]]; then
+    while IFS= read -r schema_file; do
+        schema_name="${schema_file##*/}"
         initramfs_files+=(
-            "--file=/usr/local/share/glib-2.0/schemas/org.mate.marco.gschema.xml:$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/org.mate.marco.gschema.xml:0444"
+            "--file=/usr/local/share/glib-2.0/schemas/$schema_name:$schema_file:0444"
         )
-    fi
-    if [[ -f "$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/gschemas.compiled" ]]; then
-        initramfs_files+=(
-            "--file=/usr/local/share/glib-2.0/schemas/gschemas.compiled:$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/gschemas.compiled:0444"
-        )
-    fi
+    done < <(find "$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas" -maxdepth 1 -type f 2>/dev/null | sort)
 fi
 
 # -------------------------------------------------------------------- initramfs
