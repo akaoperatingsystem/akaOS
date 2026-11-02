@@ -1666,3 +1666,17 @@ int shmctl(int shmid, int cmd, struct shmid_ds *buf) {
     errno = ENOSYS;
     return -1;
 }
+
+void __assert_fail(const char *assertion, const char *file,
+                   unsigned int line, const char *function) {
+    if (function) {
+        fprintf(stderr, "%s:%u: %s: Assertion '%s' failed.\n",
+                file ? file : "<unknown>", line, function,
+                assertion ? assertion : "<assertion>");
+    } else {
+        fprintf(stderr, "%s:%u: Assertion '%s' failed.\n",
+                file ? file : "<unknown>", line,
+                assertion ? assertion : "<assertion>");
+    }
+    abort();
+}

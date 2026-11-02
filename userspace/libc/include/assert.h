@@ -7,6 +7,17 @@
 #define static_assert _Static_assert
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void __assert_fail(const char *assertion, const char *file,
+                   unsigned int line, const char *function) __attribute__((__noreturn__));
+
+#ifdef __cplusplus
+}
+#endif
+
 #ifndef NDEBUG
 #define assert(expression) ((expression) ? (void)0 : abort())
 #else
