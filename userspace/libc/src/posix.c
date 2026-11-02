@@ -1680,3 +1680,95 @@ void __assert_fail(const char *assertion, const char *file,
     }
     abort();
 }
+void __chk_fail(void) {
+    write(STDERR_FILENO, "*** buffer overflow detected ***: terminated\n", 45);
+    abort();
+}
+
+void *__memcpy_chk(void *dest, const void *src, size_t len, size_t destlen) {
+    if (len > destlen) __chk_fail();
+    return memcpy(dest, src, len);
+}
+
+void *__memmove_chk(void *dest, const void *src, size_t len, size_t destlen) {
+    if (len > destlen) __chk_fail();
+    return memmove(dest, src, len);
+}
+
+void *__memset_chk(void *dest, int c, size_t len, size_t destlen) {
+    if (len > destlen) __chk_fail();
+    return memset(dest, c, len);
+}
+
+char *__strcpy_chk(char *dest, const char *src, size_t destlen) {
+    size_t len = strlen(src);
+    if (len >= destlen) __chk_fail();
+    return (char *)memcpy(dest, src, len + 1);
+}
+
+char *__strncpy_chk(char *dest, const char *src, size_t len, size_t destlen) {
+    if (len > destlen) __chk_fail();
+    return strncpy(dest, src, len);
+}
+
+char *__strcat_chk(char *dest, const char *src, size_t destlen) {
+    size_t dlen = strlen(dest);
+    size_t slen = strlen(src);
+    if (dlen + slen >= destlen) __chk_fail();
+    memcpy(dest + dlen, src, slen + 1);
+    return dest;
+}
+
+char *__strncat_chk(char *dest, const char *src, size_t len, size_t destlen) {
+    size_t dlen = strlen(dest);
+    size_t slen = strnlen(src, len);
+    if (dlen + slen >= destlen) __chk_fail();
+    memcpy(dest + dlen, src, slen);
+    dest[dlen + slen] = '\0';
+    return dest;
+}
+
+int __snprintf_chk(char *s, size_t maxlen, int flag, size_t slen, const char *format, ...) {
+    (void)flag;
+    if (maxlen > slen) __chk_fail();
+    va_list ap;
+    va_start(ap, format);
+    int ret = vsnprintf(s, maxlen, format, ap);
+    va_end(ap);
+    return ret;
+}
+
+int __vsnprintf_chk(char *s, size_t maxlen, int flag, size_t slen, const char *format, va_list ap) {
+    (void)flag;
+    if (maxlen > slen) __chk_fail();
+    return vsnprintf(s, maxlen, format, ap);
+}
+
+int __fprintf_chk(FILE *stream, int flag, const char *format, ...) {
+    (void)flag;
+    va_list ap;
+    va_start(ap, format);
+    int ret = vfprintf(stream, format, ap);
+    va_end(ap);
+    return ret;
+}
+
+int __printf_chk(int flag, const char *format, ...) {
+    (void)flag;
+    va_list ap;
+    va_start(ap, format);
+    int ret = vprintf(format, ap);
+    va_end(ap);
+    return ret;
+}
+
+int __vfprintf_chk(FILE *stream, int flag, const char *format, va_list ap) {
+    (void)flag;
+    return vfprintf(stream, format, ap);
+}
+
+int __vprintf_chk(int flag, const char *format, va_list ap) {
+    (void)flag;
+    return vprintf(format, ap);
+}
+
