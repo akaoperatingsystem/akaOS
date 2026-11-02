@@ -43,8 +43,10 @@ if [[ ! -f "$BUILD_DIR/user-dynamic-crt0.o" ]]; then
     exit 2
 fi
 
-for required_package in gtk+-3.0 glib-2.0 mate-desktop-2.0 libmate-menu libwnck-3.0 dconf x11 xrandr; do
-    if ! PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"         PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"         pkg-config --exists "$required_package"; then
+for required_package in gtk+-3.0 glib-2.0 mate-desktop-2.0 libmate-menu libwnck-3.0 dconf x11 xrandr mateweather; do
+    if ! PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig" \
+        PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT" \
+        pkg-config --exists "$required_package"; then
         echo "The upstream mate-panel needs the $required_package package" >&2
         exit 2
     fi
@@ -79,7 +81,25 @@ BUILD_DIR_PATH="$BUILD_ROOT/mate-panel-$VERSION"
 if [[ ! -x "$STAGE_PREFIX/bin/mate-panel" ]]; then
     echo "[mate-panel] configuring mate-panel $VERSION"
     rm -rf "$BUILD_DIR_PATH" "$STAGE"
-    mkdir -p "$BUILD_DIR_PATH" "$STAGE"
+        env \
+            CC="$CC_WRAPPER" \
+            CFLAGS="-O2 -g0 -fno-strict-aliasing" \
+            CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2" \
+            LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
+            LIBS="" \
+            PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig" \
+            PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT" \
+            "$SOURCE_DIR/configure" \
+                --host=x86_64-pc-linux-gnu \
+                --prefix=/usr/local \
+                --sysconfdir=/etc \
+                --disable-static \
+                --enable-shared \
+                --enable-x11 \
+                --disable-wayland \
+                --disable-nls \
+                --enable-introspection=no \
+                --disable-schemas-compile
     (
         cd "$BUILD_DIR_PATH"
         env             CC="$CC_WRAPPER"             CFLAGS="-O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2"             LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             CLOCK_CFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             CLOCK_LIBS="-L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -lgtk-3 -lmate-desktop-2"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --enable-x11                 --disable-wayland                 --disable-nls                 --enable-introspection=no                 --disable-schemas-compile
@@ -138,6 +158,12 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-panel" ]]; then
 
     make -C "$BUILD_DIR_PATH/applets/fish" -j1         LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6 -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o"         >>"$LOG_DIR/mate-panel-build.log" 2>&1 || {
         echo "[mate-panel] build fish failed" >&2
+        tail -30 "$LOG_DIR/mate-panel-build.log" >&2
+        exit 1
+    }
+
+    make -C "$BUILD_DIR_PATH/applets/clock" -j1         LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6 -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o"         >>"$LOG_DIR/mate-panel-build.log" 2>&1 || {
+        echo "[mate-panel] build clock failed" >&2
         tail -30 "$LOG_DIR/mate-panel-build.log" >&2
         exit 1
     }

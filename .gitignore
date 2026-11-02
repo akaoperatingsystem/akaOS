@@ -11,3 +11,20 @@ __pycache__/
 *.pem
 /Microsoft/
 =*
+
+# Upstream out-of-tree build remnants
+/applets/
+/data/
+/doc/
+/help/
+/icons/
+/libmate-panel-applet/
+/mate-panel/
+/po/
+/libtool
+/stamp-h1
+/confdefs.h
+/config.status
+/config.h
+/Makefile
+/man/

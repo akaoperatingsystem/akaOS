@@ -73,7 +73,25 @@ if [[ ! -f "$STAGE_PREFIX/lib/libmateweather.so" ]]; then
     mkdir -p "$BUILD_DIR_PATH" "$STAGE"
     (
         cd "$BUILD_DIR_PATH"
-        env             CC="$CC_WRAPPER"             CFLAGS="-O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             LIBSOUP_CFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             LIBSOUP_LIBS="-L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -lgio-2.0"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --disable-nls                 --enable-introspection=no                 --disable-all-translations-test
+        env \
+            CC="$CC_WRAPPER" \
+            CFLAGS="-O2 -g0 -fno-strict-aliasing" \
+            CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include -I/usr/include/libsoup-2.4" \
+            LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
+            LIBS="" \
+            PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig" \
+            PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT" \
+            LIBSOUP_CFLAGS="-I/usr/include/libsoup-2.4" \
+            LIBSOUP_LIBS="-L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -lgio-2.0" \
+            "$SOURCE_DIR/configure" \
+                --host=x86_64-pc-linux-gnu \
+                --prefix=/usr/local \
+                --sysconfdir=/etc \
+                --disable-static \
+                --enable-shared \
+                --disable-nls \
+                --enable-introspection=no \
+                --disable-all-translations-test
     ) >"$LOG_DIR/libmateweather-configure.log" 2>&1 || {
         echo "[libmateweather] configure failed" >&2
         tail -30 "$LOG_DIR/libmateweather-configure.log" >&2
@@ -81,13 +99,15 @@ if [[ ! -f "$STAGE_PREFIX/lib/libmateweather.so" ]]; then
     }
 
     echo "[libmateweather] building libmateweather $VERSION"
-    make -C "$BUILD_DIR_PATH" -j1         LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"         >"$LOG_DIR/libmateweather-build.log" 2>&1 || {
+    make -C "$BUILD_DIR_PATH/libmateweather" -j1 \
+        LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
+        >"$LOG_DIR/libmateweather-build.log" 2>&1 || {
         echo "[libmateweather] build failed" >&2
         tail -30 "$LOG_DIR/libmateweather-build.log" >&2
         exit 1
     }
 
-    make -C "$BUILD_DIR_PATH" install DESTDIR="$STAGE" >"$LOG_DIR/libmateweather-install.log" 2>&1 || {
+    make -C "$BUILD_DIR_PATH/libmateweather" install DESTDIR="$STAGE" >"$LOG_DIR/libmateweather-install.log" 2>&1 || {
         echo "[libmateweather] install failed" >&2
         tail -30 "$LOG_DIR/libmateweather-install.log" >&2
         exit 1

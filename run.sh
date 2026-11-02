@@ -213,30 +213,89 @@ configure_run_interactively() {
                         local selected_pkgs
                         if selected_pkgs="$(akaos_ui_checklist \
                             "Manual Package Selection" \
-                            "Select individual packages to bundle (Space to toggle, Enter to confirm):" \
-                            "akafetch" "Hardware & CPU/GPU spec visualizer" ON \
+                            "Choose packages to include (Space to toggle, Enter to confirm):" \
+                            "akafetch" "Real CPU/GPU hardware spec visualizer" ON \
                             "wget" "GNU-compatible HTTP file download tool" ON \
-                            "curl" "HTTP/network transfer client" ON \
+                            "curl" "Network transfer client" ON \
                             "pkg" "akaOS native package manager" ON \
                             "httpd" "Micro web server daemon" ON \
                             "sshd" "Secure shell server daemon" ON \
                             "ssh" "Secure shell client" ON \
+                            "telnetd" "Telnet remote terminal server daemon" ON \
+                            "tftpd" "TFTP network file server daemon" ON \
+                            "tftp" "TFTP client utility" ON \
+                            "ip" "Network interface & address management" ON \
+                            "route" "IP routing table management" ON \
+                            "ping" "ICMP network echo probe" ON \
+                            "traceroute" "Network packet path tracer" ON \
+                            "netstat" "Network socket & connection status" ON \
+                            "arp" "Address resolution protocol cache tool" ON \
+                            "dig" "DNS lookup utility" ON \
+                            "nslookup" "Name service lookup query" ON \
                             "terminal" "Graphical terminal emulator" ON \
                             "notepad" "Graphical text editor" ON \
                             "taskmgr" "Graphical process & task manager" ON \
                             "webviewer" "Graphical web & HTML viewer" ON \
+                            "palette" "GUI color theme & palette inspector" ON \
+                            "ted" "Simple text editor" ON \
+                            "less" "Terminal pager" ON \
+                            "more" "Basic terminal pager" ON \
+                            "sysmon" "System telemetry & hardware monitor" ON \
                             "lscpu" "CPU architecture & topology information" ON \
                             "lspci" "PCI discovery & device identifier" ON \
                             "gpuinfo" "GPU hardware & driver status" ON \
-                            "sysmon" "System telemetry and resource monitor" ON \
-                            "tar" "POSIX tar archive utility" ON \
+                            "sndinfo" "Sound device & AC97/HDA status" ON \
+                            "acpi" "ACPI power & thermal diagnostics" ON \
+                            "uptime" "System uptime & load average" ON \
+                            "free" "Memory utilization statistics" ON \
+                            "df" "Disk filesystem space usage" ON \
+                            "du" "Disk directory space estimation" ON \
+                            "tar" "POSIX ustar archive utility" ON \
                             "gzip" "GNU gzip compression utility" ON \
+                            "gunzip" "Gzip decompression utility" ON \
                             "sed" "Stream editor for text transformation" ON \
-                            "grep" "Pattern matching utility" ON \
-                            "openbox" "Openbox window manager" ON \
-                            "xfwm4" "XFCE window manager" ON \
-                            "lxpanel" "LXDE desktop panel" ON \
+                            "grep" "Regular expression pattern matching" ON \
+                            "diff" "File difference comparison utility" ON \
+                            "patch" "Source code patch application tool" ON \
+                            "cmp" "Byte-by-byte file comparison" ON \
+                            "find" "Recursive filesystem search tool" ON \
+                            "xargs" "Command argument constructor from stdin" ON \
+                            "watch" "Periodic command output monitor" ON \
+                            "cut" "Columnar text extraction" ON \
+                            "tr" "Character translation & deletion" ON \
+                            "sort" "Text line sorting utility" ON \
+                            "uniq" "Repeated line filtering utility" ON \
+                            "head" "Display first lines of a file" ON \
+                            "tail" "Display last lines of a file" ON \
+                            "wc" "Word, line, and byte counter" ON \
+                            "which" "Locate executable path" ON \
+                            "touch" "Update timestamp or create empty file" ON \
+                            "mkdir" "Directory creation tool" ON \
+                            "rm" "File and directory removal tool" ON \
+                            "cp" "File and directory copy tool" ON \
+                            "mv" "File and directory move/rename tool" ON \
+                            "chmod" "File mode & permission changer" ON \
+                            "chown" "File owner & group changer" ON \
+                            "clear" "Terminal screen clearing tool" ON \
+                            "sync" "Buffer cache to disk synchronizer" ON \
+                            "reboot" "System reboot utility" ON \
+                            "poweroff" "System poweroff utility" ON \
+                            "ps" "Process status snapshot" ON \
+                            "kill" "Signal delivery to process" ON \
+                            "pkill" "Signal delivery by process name" ON \
+                            "sleep" "Execution delay utility" ON \
+                            "tty" "Terminal device name reporter" ON \
+                            "stty" "Terminal line discipline config" ON \
+                            "beep" "Console acoustic bell generator" ON \
+                            "openbox" "Openbox 3.6.1 window manager" ON \
+                            "xfwm4" "XFCE 4.18 window manager" ON \
+                            "xfce4-session" "XFCE 4.18 desktop session manager" ON \
+                            "xfconfd" "XFCE configuration storage daemon" ON \
+                            "lxpanel" "LXDE desktop panel (0.11.1)" ON \
                             "pcmanfm" "PCManFM desktop & file manager" ON \
+                            "lumen" "Native hardware compositor engine" ON \
+                            "aurora" "akaOS resident desktop shell" ON \
+                            "xserver" "Native X11 display server" ON \
                             "dbus-daemon" "D-Bus IPC message broker" ON)"; then
                             menu_custom_packages="$selected_pkgs"
                         fi
