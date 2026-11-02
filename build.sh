@@ -378,12 +378,13 @@ configure_build_interactively() {
                 ;;
             desktop)
                 if selection="$(akaos_ui_menu \
-                    "Desktop Environment" "Select default desktop environment." "$menu_desktop" \
-                    "aurora" "akaOS Aurora (native resident desktop)" \
-                    "xfce" "XFCE 4.18 (xfwm4, xfconf, panel)" \
-                    "lxde" "LXDE (Openbox, LXPanel, PCManFM)" \
-                    "openbox" "Openbox 3.6.1 standalone window manager" \
-                    "lxqt" "LXQt (Qt6 based desktop session)")"; then
+                    "Select Desktop Environment" "Choose desktop environment to bundle:" "$menu_desktop" \
+                    "xfce" "XFCE 4.18 (Full desktop session, panel, xfwm4)" \
+                    "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM)" \
+                    "openbox" "Openbox 3.6.1 (Clean lightweight window manager)" \
+                    "aurora" "Aurora (akaOS native resident desktop)" \
+                    "lxqt" "LXQt (Qt6 based modern desktop session)" \
+                    "none" "None (Pure Console / No GUI desktop installed)")"; then
                     menu_desktop="$selection"
                 fi
                 ;;
