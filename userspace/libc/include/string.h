@@ -24,6 +24,9 @@ void bzero(void *s, size_t n);
 void bcopy(const void *src, void *dest, size_t n);
 #undef bcmp
 int bcmp(const void *s1, const void *s2, size_t n);
+int ffs(int i);
+int ffsl(long i);
+int ffsll(long long i);
 int strcoll(const char *left, const char *right);
 size_t strxfrm(char *destination, const char *source, size_t count);
 int strcoll_l(const char *left, const char *right, locale_t locale);

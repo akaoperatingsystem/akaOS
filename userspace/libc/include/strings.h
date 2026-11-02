@@ -15,6 +15,9 @@ void bzero(void *s, size_t n);
 void bcopy(const void *src, void *dest, size_t n);
 #undef bcmp
 int bcmp(const void *s1, const void *s2, size_t n);
+int ffs(int i);
+int ffsl(long i);
+int ffsll(long long i);
 
 #ifdef __cplusplus
 }

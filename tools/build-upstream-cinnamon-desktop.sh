@@ -95,6 +95,8 @@ if [[ ! -f "$STAGE_PREFIX/lib/libcinnamon-desktop.so" ]]; then
     cp -a "$BUILD_DIR_PATH/libcvc/libcvc.so"* "$STAGE_PREFIX/lib/"
     cp -a "$SOURCE_DIR/libcinnamon-desktop/"*.h "$STAGE_PREFIX/include/cinnamon-desktop/"
     cp -a "$SOURCE_DIR/libcvc/"*.h "$STAGE_PREFIX/include/cvc/"
+    ln -sf cinnamon-desktop "$STAGE_PREFIX/include/libcinnamon-desktop"
+    ln -sf . "$STAGE_PREFIX/include/cinnamon-desktop/libcinnamon-desktop"
     cp -a "$BUILD_DIR_PATH/meson-private/cinnamon-desktop.pc" "$STAGE_PREFIX/lib/pkgconfig/"
     cp -a "$BUILD_DIR_PATH/meson-private/cvc.pc" "$STAGE_PREFIX/lib/pkgconfig/"
     cp -a "$BUILD_DIR_PATH/schemas/"*.xml "$STAGE_PREFIX/share/glib-2.0/schemas/"

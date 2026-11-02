@@ -572,6 +572,18 @@ void *memmem(const void *haystack, size_t haystacklen,
     return NULL;
 }
 
+int ffs(int i) {
+    return __builtin_ffs(i);
+}
+
+int ffsl(long i) {
+    return __builtin_ffsl(i);
+}
+
+int ffsll(long long i) {
+    return __builtin_ffsll(i);
+}
+
 wchar_t *wcsstr(const wchar_t *wide, const wchar_t *needle) {
     if (!wide || !needle) return NULL;
     if (*needle == L'\0') return (wchar_t *)wide;
