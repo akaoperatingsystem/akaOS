@@ -639,3 +639,12 @@ size_t strftime(char *destination, size_t capacity, const char *format,
                 const struct tm *value) {
     return strftime_l(destination, capacity, format, value, LC_GLOBAL_LOCALE);
 }
+
+clock_t clock(void) {
+    struct timespec ts;
+    if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) == 0 ||
+        clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+        return (clock_t)ts.tv_sec * 1000000 + (clock_t)(ts.tv_nsec / 1000);
+    }
+    return (clock_t)-1;
+}

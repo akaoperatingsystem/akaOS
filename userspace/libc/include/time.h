@@ -6,6 +6,8 @@
 #include <stddef.h>
 
 typedef int clockid_t;
+typedef long clock_t;
+#define CLOCKS_PER_SEC ((clock_t)1000000)
 
 struct tm {
     int tm_sec;
@@ -51,6 +53,7 @@ extern "C" {
 #endif
 
 int clock_gettime(int clock_id, struct timespec *time);
+clock_t clock(void);
 extern long timezone;
 extern int daylight;
 extern char *tzname[2];

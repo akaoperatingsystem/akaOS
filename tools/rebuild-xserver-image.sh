@@ -614,6 +614,35 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/xfwm4" ]]; then
     done < <(find "$UPSTREAM_SYSROOT/usr/local/share/xfwm4" "$UPSTREAM_SYSROOT/usr/local/share/themes" -type f 2>/dev/null | sort)
 fi
 
+# ------------------------------------------------------------- upstream MATE & marco
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/marco" ]]; then
+    echo "[BUILD] upstream MATE components & marco"
+    initramfs_files+=(
+        "--file=/usr/local/bin/marco:$UPSTREAM_SYSROOT/usr/local/bin/marco:exec"
+        "--dir=/usr/local/share/themes"
+        "--dir=/usr/local/share/glib-2.0"
+        "--dir=/usr/local/share/glib-2.0/schemas"
+    )
+    for mate_library in libmarco-private.so.2 libcanberra-gtk3.so.0 libcanberra.so.0 libvorbisfile.so.3 libvorbis.so.0 libogg.so.0 libltdl.so.7; do
+        library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib"             -maxdepth 1 -type f -name "${mate_library}.*" -print | sort -V | tail -n 1)"
+        [[ -n "$library_path" ]] || continue
+        initramfs_files+=(
+            "--file=/lib/$mate_library:$library_path:0444"
+            "--file=/usr/local/lib/$mate_library:$library_path:0444"
+        )
+    done
+    if [[ -f "$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/org.mate.marco.gschema.xml" ]]; then
+        initramfs_files+=(
+            "--file=/usr/local/share/glib-2.0/schemas/org.mate.marco.gschema.xml:$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/org.mate.marco.gschema.xml:0444"
+        )
+    fi
+    if [[ -f "$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/gschemas.compiled" ]]; then
+        initramfs_files+=(
+            "--file=/usr/local/share/glib-2.0/schemas/gschemas.compiled:$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/gschemas.compiled:0444"
+        )
+    fi
+fi
+
 # -------------------------------------------------------------------- initramfs
 echo "[BUILD] initramfs"
 python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.new" \
