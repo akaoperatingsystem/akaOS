@@ -31,11 +31,14 @@ struct desktop_env_entry {
 
 static const struct desktop_env_entry KNOWN_DESKTOPS[] = {
     {"aurora", "Aurora", "akaOS Native Desktop Environment", "/bin/aurora"},
-    {"lxde", "LXDE", "GTK/Openbox desktop environment", "/bin/startlxde"},
-    {"lxqt", "LXQt", "Qt/Openbox desktop environment", "/bin/startlxqt"},
+    {"xfce", "XFCE", "XFCE 4.18 Desktop Environment", "/bin/xfce4-session"},
+    {"lxde", "LXDE", "GTK/Openbox Desktop Suite", "/bin/startlxde"},
+    {"openbox", "Openbox", "Standalone Openbox Window Manager", "/bin/openbox"},
+    {"mate", "MATE", "MATE Desktop Environment", "/bin/mate-session"},
+    {"lxqt", "LXQt", "Qt/Openbox Desktop Environment", "/bin/startlxqt"},
     {"kde", "KDE Plasma", "KDE Plasma Desktop Shell", "/bin/plasma"},
     {"gnome", "GNOME Shell", "GNOME Shell Desktop", "/bin/gnome-shell"},
-    {"xfce", "XFCE", "XFCE Desktop Environment", "/bin/xfce4-session"},
+    {"none", "None", "Pure Console TTY (No GUI Desktop)", "/bin/akash"},
 };
 
 static int is_desktop_installed(const char *bin_path) {
@@ -51,11 +54,14 @@ static int is_desktop_installed(const char *bin_path) {
 static const char *resolve_desktop_path(const char *id) {
     if (!id) return NULL;
     if (strcmp(id, "aurora") == 0) return "/bin/aurora";
+    if (strcmp(id, "xfce") == 0) return "/bin/xfce4-session";
     if (strcmp(id, "lxde") == 0) return "/bin/startlxde";
+    if (strcmp(id, "openbox") == 0) return "/bin/openbox";
+    if (strcmp(id, "mate") == 0) return "/bin/mate-session";
     if (strcmp(id, "lxqt") == 0) return "/bin/startlxqt";
     if (strcmp(id, "kde") == 0) return "/bin/plasma";
     if (strcmp(id, "gnome") == 0) return "/bin/gnome-shell";
-    if (strcmp(id, "xfce") == 0) return "/bin/xfce4-session";
+    if (strcmp(id, "none") == 0) return "/bin/akash";
     return NULL;
 }
 
@@ -570,6 +576,118 @@ static void show_network_info(void) {
     read_line(d, sizeof(d));
 }
 
+/* --- Submenu: Hardware & CPU/GPU Information --- */
+
+static void show_hardware_info(void) {
+    draw_box_header("Hardware & System Specifications", "Hardware detected by XSCore kernel:");
+    char cpu_model[64] = "Generic x86-64 Processor";
+    char gpu_model[64] = "VirtIO-GPU / VESA Framebuffer";
+    char mem_info[64] = "256 MB";
+
+    int fd = open("/proc/cpuinfo", O_RDONLY);
+    if (fd >= 0) {
+        char buf[1024];
+        ssize_t n = read(fd, buf, sizeof(buf) - 1);
+        close(fd);
+        if (n > 0) {
+            buf[n] = '\0';
+            char *m = strstr(buf, "model name\t: ");
+            if (m) {
+                m += 13;
+                char *nl = strchr(m, '\n');
+                if (nl) *nl = '\0';
+                strncpy(cpu_model, m, sizeof(cpu_model) - 1);
+                cpu_model[sizeof(cpu_model) - 1] = '\0';
+            }
+        }
+    }
+
+    fd = open("/proc/gpuinfo", O_RDONLY);
+    if (fd >= 0) {
+        char buf[1024];
+        ssize_t n = read(fd, buf, sizeof(buf) - 1);
+        close(fd);
+        if (n > 0) {
+            buf[n] = '\0';
+            char *m = strstr(buf, "Chipset      : ");
+            if (!m) m = strstr(buf, "Driver       : ");
+            if (m) {
+                char *colon = strchr(m, ':');
+                if (colon) {
+                    colon++;
+                    while (*colon == ' ') colon++;
+                    char *nl = strchr(colon, '\n');
+                    if (nl) *nl = '\0';
+                    strncpy(gpu_model, colon, sizeof(gpu_model) - 1);
+                    gpu_model[sizeof(gpu_model) - 1] = '\0';
+                }
+            }
+        }
+    }
+
+    fd = open("/proc/meminfo", O_RDONLY);
+    if (fd >= 0) {
+        char buf[512];
+        ssize_t n = read(fd, buf, sizeof(buf) - 1);
+        close(fd);
+        if (n > 0) {
+            buf[n] = '\0';
+            char *m = strstr(buf, "MemTotal: ");
+            if (m) {
+                m += 10;
+                char *nl = strchr(m, '\n');
+                if (nl) *nl = '\0';
+                strncpy(mem_info, m, sizeof(mem_info) - 1);
+                mem_info[sizeof(mem_info) - 1] = '\0';
+            }
+        }
+    }
+
+    printf("   %s%s|   CPU Model:    %-48s |%s%s\n", ANSI_GRAY_BG, ANSI_BLACK_FG, cpu_model, ANSI_RESET, ANSI_BLUE_BG);
+    printf("   %s%s|   GPU Chipset:  %-48s |%s%s\n", ANSI_GRAY_BG, ANSI_BLACK_FG, gpu_model, ANSI_RESET, ANSI_BLUE_BG);
+    printf("   %s%s|   Memory RAM:   %-48s |%s%s\n", ANSI_GRAY_BG, ANSI_BLACK_FG, mem_info, ANSI_RESET, ANSI_BLUE_BG);
+    printf("   %s%s|   Display HAL:  Framebuffer (/dev/fb0) & X11 Server (:0)         |%s%s\n", ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
+    draw_box_footer("Ok", NULL);
+
+    printf("\nPress Enter or 'q' to return: ");
+    char d[8];
+    read_line(d, sizeof(d));
+}
+
+/* --- Submenu: Package Manager Status --- */
+
+static void show_package_info(void) {
+    draw_box_header("Package Manager (pkg) Status", "Local package manager status and configuration:");
+    char mirror_url[96] = "http://mirror.zyqu.pl/akaos";
+    int fd = open("/etc/pkg.conf", O_RDONLY);
+    if (fd >= 0) {
+        char buf[512];
+        ssize_t n = read(fd, buf, sizeof(buf) - 1);
+        close(fd);
+        if (n > 0) {
+            buf[n] = '\0';
+            char *m = strstr(buf, "mirror=");
+            if (m) {
+                m += 7;
+                char *nl = strchr(m, '\n');
+                if (nl) *nl = '\0';
+                strncpy(mirror_url, m, sizeof(mirror_url) - 1);
+                mirror_url[sizeof(mirror_url) - 1] = '\0';
+            }
+        }
+    }
+
+    printf("   %s%s|   Package Tool: pkg (akaOS native package manager)               |%s%s\n", ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
+    printf("   %s%s|   Archive Type: .akp (POSIX ustar with .PKGINFO metadata)        |%s%s\n", ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
+    printf("   %s%s|   Mirror Server:%-48s |%s%s\n", ANSI_GRAY_BG, ANSI_BLACK_FG, mirror_url, ANSI_RESET, ANSI_BLUE_BG);
+    printf("   %s%s|   Cache Path:   /var/cache/pkg                                   |%s%s\n", ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
+    draw_box_footer("Ok", NULL);
+
+    printf("\nPress Enter or 'q' to return: ");
+    char d[8];
+    read_line(d, sizeof(d));
+}
+
 /* --- Info Box: About akaOS --- */
 
 static void show_about_info(void) {
@@ -599,13 +717,17 @@ static void interactive_menu(struct akaos_config *cfg) {
                         "Select an option below and press Enter:");
         printf("   %s%s|   1 System Options      Configure hostname and audio bell        |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
-        printf("   %s%s|   2 Interface Options   Configure Web, Telnet, and TFTP servers  |%s%s\n",
+        printf("   %s%s|   2 Interface Options   Configure Web, Telnet, SSH, and TFTP     |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
-        printf("   %s%s|   3 Desktop Options     Configure Desktop Environment & Autostart|%s%s\n",
+        printf("   %s%s|   3 Desktop Options     Select Desktop (XFCE/LXDE/Aurora/None)   |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
         printf("   %s%s|   4 Network Information View IP address, Gateway, DNS, MAC       |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
-        printf("   %s%s|   5 About akaOS         System version and hardware details      |%s%s\n",
+        printf("   %s%s|   5 Hardware Specs      Inspect CPU brand, GPU model, and RAM    |%s%s\n",
+               ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
+        printf("   %s%s|   6 Package Manager     Inspect pkg status and mirror URL        |%s%s\n",
+               ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
+        printf("   %s%s|   7 About akaOS         Kernel release & license specifications  |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
         printf("   %s%s|   8 Finish              Save configuration and exit              |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
@@ -624,8 +746,12 @@ static void interactive_menu(struct akaos_config *cfg) {
         } else if (choice[0] == '4') {
             show_network_info();
         } else if (choice[0] == '5') {
+            show_hardware_info();
+        } else if (choice[0] == '6') {
+            show_package_info();
+        } else if (choice[0] == '7') {
             show_about_info();
-        } else if (choice[0] == '8' || choice[0] == '7' || choice[0] == 'q' || choice[0] == 'Q' || choice[0] == '\0') {
+        } else if (choice[0] == '8' || choice[0] == 'q' || choice[0] == 'Q' || choice[0] == '\0') {
             printf("%s%s", ANSI_RESET, ANSI_CLEAR_SCREEN);
             puts("akaOS System Configuration saved. Exiting.");
             break;
@@ -648,6 +774,12 @@ int main(int argc, char **argv) {
                 return 0;
             } else if (strcmp(argv[i], "--status") == 0) {
                 status_requested = 1;
+            } else if (strcmp(argv[i], "--hardware") == 0) {
+                show_hardware_info();
+                return 0;
+            } else if (strcmp(argv[i], "--pkg-status") == 0) {
+                show_package_info();
+                return 0;
             } else if (strcmp(argv[i], "--enable-httpd") == 0) {
                 cfg.httpd_enabled = 1;
                 if (!commit_config(&cfg)) return 1;
