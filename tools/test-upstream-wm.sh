@@ -284,6 +284,17 @@ try:
         raise SystemExit(1)
     print("[PASS] mate-session desktop session manager started and remained active.",
           flush=True)
+    if not wait_for("MUFFIN-RUNNING=0", 60):
+        print("[FAIL] muffin did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if "running muffin" not in output:
+        print("[FAIL] muffin was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] muffin window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)

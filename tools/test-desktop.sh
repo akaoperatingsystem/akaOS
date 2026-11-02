@@ -47,3 +47,8 @@ env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/r
 sleep 15
 ps
 echo MATE-SESSION-RUNNING=$?
+
+env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/muffin --replace &
+sleep 15
+ps
+echo MUFFIN-RUNNING=$?

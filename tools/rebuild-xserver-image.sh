@@ -674,6 +674,37 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/marco" ]]; then
     done < <(find "$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas" -maxdepth 1 -type f 2>/dev/null | sort)
 fi
 
+# ------------------------------------------------------------- upstream Cinnamon & muffin
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/muffin" ]]; then
+    echo "[BUILD] upstream Cinnamon components & muffin"
+    initramfs_files+=(
+        "--file=/usr/local/bin/muffin:$UPSTREAM_SYSROOT/usr/local/bin/muffin:exec"
+    )
+    for cinnamon_bin in cinnamon-session cinnamon-session-quit; do
+        if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/$cinnamon_bin" ]]; then
+            initramfs_files+=(
+                "--file=/usr/local/bin/$cinnamon_bin:$UPSTREAM_SYSROOT/usr/local/bin/$cinnamon_bin:exec"
+            )
+        fi
+    done
+    for cinnamon_library in libmuffin.so.0 libmuffin-cogl-0.so.0 libmuffin-clutter-0.so.0 \
+        libmuffin-cogl-pango-0.so.0 libmuffin-cogl-path-0.so.0 \
+        libcinnamon-desktop.so.4 libcvc.so.0 libjson-glib-1.0.so.0 libxkbfile.so.1 \
+        libxkbcommon-x11.so.0; do
+        library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" \
+            -maxdepth 1 -type f -name "${cinnamon_library}.*" -print | sort -V | tail -n 1)"
+        if [[ -z "$library_path" ]]; then
+            library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" \
+                -maxdepth 1 -type f -name "${cinnamon_library}" -print | head -n 1)"
+        fi
+        [[ -n "$library_path" ]] || continue
+        initramfs_files+=(
+            "--file=/lib/$cinnamon_library:$library_path:0444"
+            "--file=/usr/local/lib/$cinnamon_library:$library_path:0444"
+        )
+    done
+fi
+
 # -------------------------------------------------------------------- initramfs
 echo "[BUILD] initramfs"
 python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.new" \
