@@ -26,3 +26,7 @@ env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 /usr/local/bin/xfce4-session &
 sleep 15
 ps
 echo XFCE4-SESSION-RUNNING=$?
+env DISPLAY=:0 /usr/local/bin/marco --replace &
+sleep 15
+ps
+echo MARCO-RUNNING=$?
