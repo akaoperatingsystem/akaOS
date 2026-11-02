@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <wchar.h>
+#include <sys/wait.h>
 
 struct __akaos_FILE {
     int descriptor;
@@ -1812,4 +1813,96 @@ void perror(const char *s) {
     } else {
         fdprintf(STDERR_FILENO, "%s\n", strerror(errno));
     }
+}
+
+struct popen_entry {
+    FILE *stream;
+    pid_t pid;
+    struct popen_entry *next;
+};
+static struct popen_entry *s_popen_list = NULL;
+
+FILE *popen(const char *command, const char *mode) {
+    if (!command || !mode) {
+        errno = EINVAL;
+        return NULL;
+    }
+    int read_mode = (mode[0] == 'r');
+    int write_mode = (mode[0] == 'w');
+    if (!read_mode && !write_mode) {
+        errno = EINVAL;
+        return NULL;
+    }
+    int pfd[2];
+    if (pipe(pfd) < 0) return NULL;
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pfd[0]);
+        close(pfd[1]);
+        return NULL;
+    }
+
+    if (pid == 0) {
+        if (read_mode) {
+            close(pfd[0]);
+            if (pfd[1] != STDOUT_FILENO) {
+                dup2(pfd[1], STDOUT_FILENO);
+                close(pfd[1]);
+            }
+        } else {
+            close(pfd[1]);
+            if (pfd[0] != STDIN_FILENO) {
+                dup2(pfd[0], STDIN_FILENO);
+                close(pfd[0]);
+            }
+        }
+        char *argv[] = {"/bin/akash", "-c", (char *)command, NULL};
+        execv(argv[0], argv);
+        _exit(127);
+    }
+
+    FILE *fp = NULL;
+    if (read_mode) {
+        close(pfd[1]);
+        fp = fdopen(pfd[0], "r");
+    } else {
+        close(pfd[0]);
+        fp = fdopen(pfd[1], "w");
+    }
+    if (!fp) return NULL;
+
+    struct popen_entry *entry = (struct popen_entry *)malloc(sizeof(struct popen_entry));
+    if (entry) {
+        entry->stream = fp;
+        entry->pid = pid;
+        entry->next = s_popen_list;
+        s_popen_list = entry;
+    }
+    return fp;
+}
+
+int pclose(FILE *stream) {
+    if (!stream) return -1;
+    struct popen_entry **prev = &s_popen_list;
+    struct popen_entry *curr = s_popen_list;
+    pid_t pid = -1;
+    while (curr) {
+        if (curr->stream == stream) {
+            pid = curr->pid;
+            *prev = curr->next;
+            free(curr);
+            break;
+        }
+        prev = &curr->next;
+        curr = curr->next;
+    }
+    (void)fclose(stream);
+    if (pid < 0) return -1;
+
+    int status = 0;
+    while (waitpid(pid, &status, 0) < 0) {
+        if (errno != EINTR) return -1;
+    }
+    return status;
 }

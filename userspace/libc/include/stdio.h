@@ -96,6 +96,8 @@ int remove(const char *path);
 int rename(const char *oldpath, const char *newpath);
 int renameat(int old_directory, const char *oldpath, int new_directory,
              const char *newpath);
+FILE *popen(const char *command, const char *mode);
+int pclose(FILE *stream);
 
 #ifdef __cplusplus
 }

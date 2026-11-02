@@ -759,6 +759,7 @@ USER_LIBC_SOURCES=(
     "$ROOT_DIR/userspace/libc/src/crt_init.c"
     "$ROOT_DIR/userspace/libc/src/getopt.c"
     "$ROOT_DIR/userspace/libc/src/regex.c"
+    "$ROOT_DIR/userspace/libc/src/syslog.c"
 )
 USER_LIBC_OBJECTS=()
 for source in "${USER_LIBC_SOURCES[@]}"; do

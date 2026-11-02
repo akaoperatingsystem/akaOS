@@ -517,6 +517,18 @@ int wcscmp(const wchar_t *left, const wchar_t *right) {
     return *left < *right ? -1 : (*left > *right ? 1 : 0);
 }
 
+char *strcasestr(const char *haystack, const char *needle) {
+    if (!haystack || !needle) return NULL;
+    if (!*needle) return (char *)haystack;
+    size_t needle_len = strlen(needle);
+    for (; *haystack; ++haystack) {
+        if (strncasecmp(haystack, needle, needle_len) == 0) {
+            return (char *)haystack;
+        }
+    }
+    return NULL;
+}
+
 int wcsncmp(const wchar_t *left, const wchar_t *right, size_t count) {
     if (!left || !right) return left == right ? 0 : (left ? 1 : -1);
     while (count && *left && *left == *right) {

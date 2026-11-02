@@ -39,6 +39,7 @@ char *strtok_r(char *text, const char *delimiters, char **save_pointer);
 char *strchr(const char *text, int character);
 char *strrchr(const char *text, int character);
 char *strstr(const char *haystack, const char *needle);
+char *strcasestr(const char *haystack, const char *needle);
 char *strpbrk(const char *text, const char *accept);
 int memcmp(const void *left, const void *right, size_t length);
 
