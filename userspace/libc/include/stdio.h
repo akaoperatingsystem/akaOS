@@ -24,9 +24,12 @@ typedef off_t fpos_t;
 extern FILE __akaos_stdin;
 extern FILE __akaos_stdout;
 extern FILE __akaos_stderr;
-#define stdin  (&__akaos_stdin)
-#define stdout (&__akaos_stdout)
-#define stderr (&__akaos_stderr)
+extern FILE *stdin;
+extern FILE *stdout;
+extern FILE *stderr;
+#define stdin  stdin
+#define stdout stdout
+#define stderr stderr
 
 int printf(const char *format, ...);
 int vprintf(const char *format, va_list ap);

@@ -50,6 +50,12 @@ FILE __akaos_stderr = {
     .descriptor = STDERR_FILENO,
     .pushback_bytes = {0, 0, 0, 0},
 };
+#undef stdin
+#undef stdout
+#undef stderr
+FILE *stdin = &__akaos_stdin;
+FILE *stdout = &__akaos_stdout;
+FILE *stderr = &__akaos_stderr;
 
 static int stream_is_valid(FILE *stream) {
     if (!stream || stream->descriptor < 0) {
