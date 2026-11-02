@@ -2249,6 +2249,7 @@ static void process_mark_exited(struct xscore_process *process,
         child_uid = process->effective_uid;
     }
     xscore_spin_unlock_irqrestore(&process->lock, process_flags);
+    if (newly_exited) xscore_thread_request_process_exit(process);
 
     uint64_t parent_thread_id = 0;
     if (newly_exited && parent_pid != 0) {
