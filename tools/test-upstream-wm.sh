@@ -251,6 +251,17 @@ try:
         raise SystemExit(1)
     print("[PASS] xfce4-session desktop session manager started and remained active.",
           flush=True)
+    if not wait_for("MARCO-RUNNING=0", 60):
+        print("[FAIL] marco did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if "running marco" not in output:
+        print("[FAIL] marco was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] marco window manager started and remained active alongside MATE/XFCE/LXDE.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)
