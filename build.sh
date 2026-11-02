@@ -443,14 +443,20 @@ configure_build_interactively() {
                     akaos_ui_message "Missing Host Dependencies" "$report"
                     continue
                 fi
-                summary="Architecture: $menu_arch
-Firmware:     $menu_firmware
-Format:       $menu_disk
-Desktop:      $menu_desktop
-Session:      $menu_session
-Test mode:    $menu_test
-Verbose:      $menu_verbose"
-                if akaos_ui_confirm "Confirm akaOS Build" "$summary" "Build" "Back"; then
+                local heavy_warning=""
+                if [[ "$menu_desktop" != "none" || "$menu_software" == "all" || "$menu_software" == "desktop" || "$menu_software" == "manual" ]]; then
+                    heavy_warning="\n\n[!] Build Notice: You have selected heavy desktop/software components ($menu_desktop / $menu_software). Compiling or bundling large packages may take extra time depending on your CPU specs, RAM, and disk speed."
+                fi
+
+                summary="Architecture  : $menu_arch
+Firmware      : $menu_firmware
+Format        : $menu_disk
+Desktop       : $menu_desktop
+Startup Mode  : $menu_session
+Software      : $menu_software
+Test Mode     : $menu_test
+Verbose       : $menu_verbose$heavy_warning"
+                if akaos_ui_confirm "Confirm akaOS Build" "$summary" "Start Build" "Back"; then
                     INTERACTIVE_BUILD_ARGS=(
                         --arch "$menu_arch"
                         --firmware "$menu_firmware"
