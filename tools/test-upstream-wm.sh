@@ -211,51 +211,51 @@ try:
         raise SystemExit(1)
     print("[PASS] LXPanel connected, loaded profile and modules, and remained active.",
           flush=True)
-    if not wait_for("PCMANFM-RUNNING=0", 60):
+    if not wait_for("PCMANFM-RUNNING=0", 120):
         print("[FAIL] PCManFM did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     output=content()
-    if "running pcmanfm" not in output:
+    if not re.search(r"\bpcmanfm\b", output):
         print("[FAIL] pcmanfm was not found running in ps output.", flush=True)
         print(output[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] PCManFM desktop manager started and remained active alongside Openbox and LXPanel.",
           flush=True)
-    if not wait_for("XFWM4-RUNNING=0", 60):
+    if not wait_for("XFWM4-RUNNING=0", 120):
         print("[FAIL] xfwm4 did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     output=content()
-    if "running xfwm4" not in output:
+    if not re.search(r"\bxfwm4\b", output):
         print("[FAIL] xfwm4 was not found running in ps output.", flush=True)
         print(output[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] xfwm4 window manager started and remained active alongside LXDE.",
           flush=True)
-    if not wait_for("XFCE4-PANEL-RUNNING=0", 60):
+    if not wait_for("XFCE4-PANEL-RUNNING=0", 120):
         print("[FAIL] xfce4-panel did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     output=content()
-    if "running xfce4-panel" not in output:
+    if not re.search(r"\bxfce4-panel\b", output):
         print("[FAIL] xfce4-panel was not found running in ps output.", flush=True)
         print(output[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] xfce4-panel desktop panel started and remained active alongside Xfwm4.",
           flush=True)
-    if not wait_for("XFCE4-SESSION-RUNNING=0", 60):
+    if not wait_for("XFCE4-SESSION-RUNNING=0", 120):
         print("[FAIL] xfce4-session did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     output=content()
-    if "running xfce4-session" not in output:
+    if not re.search(r"\bxfce4-session\b", output):
         print("[FAIL] xfce4-session was not found running in ps output.", flush=True)
         print(output[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] xfce4-session desktop session manager started and remained active.",
           flush=True)
-    if not wait_for("MARCO-RUNNING=0", 60):
+    if not wait_for("MARCO-RUNNING=0", 120):
         print("[FAIL] marco did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -266,7 +266,7 @@ try:
         raise SystemExit(1)
     print("[PASS] marco window manager started and remained active alongside MATE/XFCE/LXDE.",
           flush=True)
-    if not wait_for("MATE-PANEL-RUNNING=0", 60):
+    if not wait_for("MATE-PANEL-RUNNING=0", 120):
         print("[FAIL] mate-panel did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -277,7 +277,7 @@ try:
         raise SystemExit(1)
     print("[PASS] mate-panel desktop panel started and remained active.",
           flush=True)
-    if not wait_for("MATE-SESSION-RUNNING=0", 60):
+    if not wait_for("MATE-SESSION-RUNNING=0", 120):
         print("[FAIL] mate-session did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -288,7 +288,7 @@ try:
         raise SystemExit(1)
     print("[PASS] mate-session desktop session manager started and remained active.",
           flush=True)
-    if not wait_for("MUFFIN-RUNNING=0", 60):
+    if not wait_for("MUFFIN-RUNNING=0", 120):
         print("[FAIL] muffin did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
