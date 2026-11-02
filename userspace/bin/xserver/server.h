@@ -5,16 +5,16 @@
 #include "proto.h"
 #include <sys/time.h>
 
-#define X_MAX_CLIENTS 8
-#define X_MAX_WINDOWS 512
-#define X_MAX_PIXMAPS 512
-#define X_MAX_GCS 128
-#define X_MAX_ATOMS 512
-#define X_MAX_PROPERTIES 512
-#define X_MAX_FONTS 16
-#define X_MAX_COLORMAPS 16
-#define X_MAX_CURSORS 64
-#define X_MAX_SELECTIONS 32
+#define X_MAX_CLIENTS 64
+#define X_MAX_WINDOWS 1024
+#define X_MAX_PIXMAPS 1024
+#define X_MAX_GCS 256
+#define X_MAX_ATOMS 2048
+#define X_MAX_PROPERTIES 2048
+#define X_MAX_FONTS 64
+#define X_MAX_COLORMAPS 32
+#define X_MAX_CURSORS 128
+#define X_MAX_SELECTIONS 64
 #define X_MAX_EVENT_QUEUE 256
 #define X_MAX_KEY_GRABS 64
 /* Every client may select events on a window, so a window holds one entry

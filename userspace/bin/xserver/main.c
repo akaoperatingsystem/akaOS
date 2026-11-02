@@ -292,7 +292,7 @@ int main(int argc, char **argv) {
             descriptors[count].revents = 0;
             ++count;
         }
-        int client_slots[X_MAX_CLIENTS + 1];
+        int client_slots[X_MAX_CLIENTS + 3];
         for (int index = 0; index < X_MAX_CLIENTS; ++index) {
             if (!server.clients[index].in_use) continue;
             descriptors[count].fd = server.clients[index].fd;
