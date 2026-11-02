@@ -33,6 +33,12 @@ int main(int argc, char **argv) {
         write_str(STDERR_FILENO, "init: unable to start system D-Bus bus\n");
     }
 
+    char session_bus_mode[10] = "--session";
+    char *session_bus_argv[3] = {system_bus_path, session_bus_mode, NULL};
+    if (spawn(system_bus_path, session_bus_argv) < 0) {
+        write_str(STDERR_FILENO, "init: unable to start session D-Bus bus\n");
+    }
+
     char login_path[16] = "/bin/login";
     char *login_argv[2];
     login_argv[0] = login_path;

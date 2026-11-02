@@ -316,6 +316,22 @@ initramfs_files+=(
     "--file=/bin/dbus-daemon:$BUILD_DIR/DBUS_DAEMON.ELF:exec"
 )
 
+echo "[BUILD] user init"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP=""$BUILD_TIMESTAMP"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/init/main.c" -o "$BUILD_DIR/user-init-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-init-main.o" \
+    -o "$BUILD_DIR/INIT.ELF"
+initramfs_files+=(
+    "--file=/bin/init:$BUILD_DIR/INIT.ELF:exec"
+)
+
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
     echo "[BUILD] upstream window manager"
     initramfs_files+=(
@@ -338,6 +354,10 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/lxpanel" ]]; then
         "--dir=/etc"
         "--file=/etc/dbus-services.conf:$ROOT_DIR/userspace/etc/dbus-services.conf:0644"
         "--file=/etc/test-desktop.sh:$ROOT_DIR/tools/test-desktop.sh:0755"
+        "--dir=/run"
+        "--dir=/run/dbus"
+        "--dir=/run/user"
+        "--dir=/run/user/0"
         "--dir=/etc/xdg"
         "--dir=/etc/xdg/menus"
         "--dir=/usr/share/desktop-directories"
