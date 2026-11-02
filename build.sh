@@ -101,8 +101,9 @@ Desktop & Session Configuration:
                                  desktop : Autostart graphical desktop environment
   --software, --software-bundle NAME
                                Software package bundle selection:
-                                 all     : Full Suite (All 124+ tools, GUIs, Net, Dev, Audio, WMs)
-                                 desktop : Desktop Essentials (GUIs, Editors, Tools, Panels)
+                                 all     : Full Suite (124+ tools, GUI apps, WMs, GTK3/4, Qt6, X11 libs)
+                                 libs    : Runtime Libraries (libc, libm, libc++, GLib, GTK, Qt6, X11 libs)
+                                 desktop : Desktop Essentials (GUIs, Editors, Tools, Panels, Compositor)
                                  net     : Network & Servers (wget, curl, httpd, sshd, telnetd, tftpd)
                                  dev     : Developer & Diagnostics (akafetch, pkg, lscpu, lspci, gpuinfo)
                                  manual  : Custom Interactive Package Picker (Select individual packages)
@@ -165,6 +166,19 @@ Total Applications: 124+ Native & Ported Tools
    - System Monitors  : taskmgr (graphical task manager), sysmon (hardware monitor)
    - Utilities        : terminal (GUI terminal emulator), palette (color selector)
    - Web & Media      : webviewer (graphical HTML viewer), beep (sound generator)
+
+5. Shared Libraries & GUI Toolkits (/lib & /usr/local/lib):
+   - C & C++ Runtime  : libc.so.6 (akaOS libc), libm.so.6 (math), ld-akaos.so (dynamic linker)
+                        libc++.so.1 (LLVM C++), libc++abi.so.1, libunwind.so.1, libpthread.so.0
+   - Core Application : libglib-2.0.so, libgobject-2.0.so, libgio-2.0.so, libgmodule-2.0.so
+   - GUI Toolkits     : libgtk-3.so.0 (GTK+ 3.24), libgtk-4.so.1 (GTK 4.22)
+                        libQt6Core.so.6, libQt6Gui.so.6, libQt6Widgets.so.6 (Qt 6.12)
+   - 2D & Font Engine : libcairo.so.2 (vector graphics), libpixman-1.so, libpango-1.0.so (text layout)
+                        libharfbuzz.so (text shaping), libfreetype.so.6, libfontconfig.so.1
+   - X11 Protocol Libs: libX11.so.6, libXext.so.6, libXrender.so.1, libXinerama.so.1, libXrandr.so.2
+                        libXfixes.so.3, libXcomposite.so.1, libXdamage.so.1, libICE.so.6, libSM.so.6
+   - Desktop & Media  : libdbus-1.so.3 (IPC), libcanberra.so (audio), libfm-gtk3.so (file management)
+                        libwnck-3.so (window tracking), libxkbcommon.so (keyboard layouts)
 
 ================================================================================
 All software executes natively on the XSCore kernel under MIT licensing.
@@ -246,9 +260,10 @@ configure_build_interactively() {
             software)
                 if selection="$(akaos_ui_menu \
                     "Software Packages" "Select software bundle to include in akaOS:" "$menu_software" \
-                    "all" "Full Suite (All 124+ Tools, GUIs, Net, Dev, Audio, WMs)" \
-                    "manual" "Manual Package Selector (Checklist of individual packages)" \
+                    "all" "Full Suite (All 124+ Tools, GUI apps, WMs, GTK3/4, Qt6, X11 libs)" \
+                    "libs" "Runtime Libraries (Shared libc, GLib, GTK3/4, Qt6, Cairo, X11 libs)" \
                     "desktop" "Desktop Essentials (GUIs, Editors, Panels, Tools, Compositors)" \
+                    "manual" "Manual Package Selector (Checklist of individual packages)" \
                     "net" "Network & Server Suite (wget, curl, httpd, sshd, telnetd, tftpd, ip)" \
                     "dev" "Developer & Build Tools (akafetch, pkg, lscpu, lspci, gpuinfo, sysmon)" \
                     "minimal" "Minimal Base (Core Unix utilities & akash shell only)" \

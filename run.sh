@@ -41,6 +41,19 @@ Total Applications: 124+ Native & Ported Tools
    - Utilities        : terminal (GUI terminal emulator), palette (color selector)
    - Web & Media      : webviewer (graphical HTML viewer), beep (sound generator)
 
+5. Shared Libraries & GUI Toolkits (/lib & /usr/local/lib):
+   - C & C++ Runtime  : libc.so.6 (akaOS libc), libm.so.6 (math), ld-akaos.so (dynamic linker)
+                        libc++.so.1 (LLVM C++), libc++abi.so.1, libunwind.so.1, libpthread.so.0
+   - Core Application : libglib-2.0.so, libgobject-2.0.so, libgio-2.0.so, libgmodule-2.0.so
+   - GUI Toolkits     : libgtk-3.so.0 (GTK+ 3.24), libgtk-4.so.1 (GTK 4.22)
+                        libQt6Core.so.6, libQt6Gui.so.6, libQt6Widgets.so.6 (Qt 6.12)
+   - 2D & Font Engine : libcairo.so.2 (vector graphics), libpixman-1.so, libpango-1.0.so (text layout)
+                        libharfbuzz.so (text shaping), libfreetype.so.6, libfontconfig.so.1
+   - X11 Protocol Libs: libX11.so.6, libXext.so.6, libXrender.so.1, libXinerama.so.1, libXrandr.so.2
+                        libXfixes.so.3, libXcomposite.so.1, libXdamage.so.1, libICE.so.6, libSM.so.6
+   - Desktop & Media  : libdbus-1.so.3 (IPC), libcanberra.so (audio), libfm-gtk3.so (file management)
+                        libwnck-3.so (window tracking), libxkbcommon.so (keyboard layouts)
+
 ================================================================================
 All software executes natively on the XSCore kernel under MIT licensing.
 EOF
