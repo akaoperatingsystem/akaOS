@@ -101,6 +101,27 @@ Target Architecture & Firmware:
   --firmware NAME              Boot firmware: uefi or bios (default depends on arch)
   --disk-type, --file-type NAME Boot media format: fat32 or iso (x86 media support UEFI/BIOS)
 
+Desktop & Session Options:
+  --desktop, --desktop-env NAME
+                               Desktop environment to launch in QEMU:
+                                 xfce    : XFCE 4.18 (Full desktop session, panel, xfwm4)
+                                 lxde    : LXDE Suite (Openbox, LXPanel, PCManFM)
+                                 openbox : Standalone Openbox 3.6.1 Window Manager
+                                 aurora  : akaOS native compositor & resident desktop
+                                 lxqt    : Lightweight Qt6 Desktop Environment
+                                 none    : None (No desktop environment / Headless console)
+  --session-mode NAME          Default boot session mode:
+                                 console : Direct tty1 shell login
+                                 desktop : Autostart graphical desktop environment
+
+Software Package Bundle:
+  --software, --software-bundle NAME
+                               Software bundle selection:
+                                 all     : Full suite (All 124+ tools, GUIs, Net, Dev)
+                                 desktop : Desktop Essentials (GUIs, Editors, Tools, Panels)
+                                 minimal : Minimal Base (Unix core utilities & shell only)
+                                 net     : Network & Servers (wget, curl, httpd, ssh, tftp)
+
 Display & Interface Options:
   --display-mode NAME          auto, gui, or headless
   --gui                        Directly open a QEMU graphical display window
@@ -163,6 +184,7 @@ configure_run_interactively() {
             "disk" "File / Disk Type: [$menu_disk]" \
             "desktop" "Desktop Env     : [$menu_desktop]" \
             "session" "Startup Mode    : [$menu_session]" \
+            "software" "Software Suite  : [$menu_software]" \
             "display" "Display Window  : [$menu_display]" \
             "vga" "Graphics Device : [$menu_vga]" \
             "smp" "CPU Cores       : [$menu_smp vCPUs]" \
@@ -174,6 +196,18 @@ configure_run_interactively() {
         fi
 
         case "$action" in
+            software)
+                if selection="$(akaos_ui_menu \
+                    "Software Packages" "Select software bundle for QEMU:" "$menu_software" \
+                    "all" "Full Suite (All 124+ Tools, GUIs, Net, Dev, Audio, WMs)" \
+                    "desktop" "Desktop Essentials (GUIs, Editors, Panels, Tools)" \
+                    "net" "Network & Servers (wget, curl, httpd, sshd, telnetd)" \
+                    "dev" "Developer & Diagnostics (akafetch, pkg, lscpu, lspci)" \
+                    "minimal" "Minimal Base (Core Unix utilities & shell only)" \
+                    "none" "None (Barebones kernel bootstrap only)")"; then
+                    menu_software="$selection"
+                fi
+                ;;
             desktop)
                 if selection="$(akaos_ui_menu \
                     "Select Desktop Environment" "Choose desktop to launch in QEMU:" "$menu_desktop" \
@@ -181,7 +215,8 @@ configure_run_interactively() {
                     "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM)" \
                     "openbox" "Openbox 3.6.1 (Standalone window manager)" \
                     "aurora" "Aurora (akaOS native resident desktop)" \
-                    "lxqt" "LXQt (Qt6 based modern desktop session)")"; then
+                    "lxqt" "LXQt (Qt6 based modern desktop session)" \
+                    "none" "None (Pure Console / No GUI desktop installed)")"; then
                     menu_desktop="$selection"
                 fi
                 ;;
@@ -369,6 +404,22 @@ while [[ $# -gt 0 ]]; do
             fi
             disk_type="$2"
             disk_type_set=1
+            shift 2
+            ;;
+        --desktop|--desktop-env)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires xfce, lxde, openbox, aurora, lxqt, or none" >&2
+                exit 2
+            fi
+            menu_desktop="$2"
+            shift 2
+            ;;
+        --software|--software-bundle)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires all, desktop, minimal, or net" >&2
+                exit 2
+            fi
+            menu_software="$2"
             shift 2
             ;;
         --display-mode)

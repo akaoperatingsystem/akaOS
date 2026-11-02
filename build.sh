@@ -90,14 +90,23 @@ Target Architecture & Firmware:
 Desktop & Session Configuration:
   --desktop, --desktop-env NAME
                                Default desktop environment:
-                                 aurora  : akaOS native compositor & resident desktop
                                  xfce    : XFCE 4.18 Desktop Session (xfwm4, xfconf, panel)
                                  lxde    : LXDE Desktop Suite (Openbox, LXPanel, PCManFM)
                                  openbox : Standalone Openbox 3.6.1 Window Manager
+                                 aurora  : akaOS native compositor & resident desktop
                                  lxqt    : Lightweight Qt Desktop Environment
+                                 none    : None (No desktop environment / Headless server)
   --session-mode NAME          Default boot session mode:
                                  console : Direct tty1 shell login (default)
                                  desktop : Autostart graphical desktop environment
+  --software, --software-bundle NAME
+                               Software package bundle:
+                                 all     : Full suite (All 124+ tools, GUIs, Net, Dev, Audio, WMs)
+                                 desktop : Desktop Essentials (GUIs, Editors, Tools, Panels)
+                                 net     : Network & Servers (wget, curl, httpd, sshd, telnetd, tftpd)
+                                 dev     : Developer & Diagnostics (akafetch, pkg, lscpu, lspci, gpuinfo)
+                                 minimal : Minimal Base (Core Unix utilities & akash shell only)
+                                 none    : None (Barebones kernel bootstrap only)
 
 Kernel & Build Flags:
   --list-software              Display comprehensive directory of all native and ported software
@@ -234,11 +243,13 @@ configure_build_interactively() {
         case "$action" in
             software)
                 if selection="$(akaos_ui_menu \
-                    "Software Packages" "Select software to bundle into akaOS." "$menu_software" \
-                    "all" "Full Suite (All 124+ Tools & Apps)" \
-                    "desktop" "Standard Desktop Suite (GUIs, WMs, Editors)" \
-                    "minimal" "Minimal Base (Core Unix & Shell only)" \
-                    "net" "Network & Server Suite (wget, curl, httpd, ssh)")"; then
+                    "Software Packages" "Select software bundle to include in akaOS:" "$menu_software" \
+                    "all" "Full Suite (All 124+ Tools, GUIs, Net, Dev, Audio, WMs)" \
+                    "desktop" "Desktop Essentials (GUIs, Editors, Panels, Tools, Compositors)" \
+                    "net" "Network & Server Suite (wget, curl, httpd, sshd, telnetd, tftpd, ip)" \
+                    "dev" "Developer & Build Tools (akafetch, pkg, lscpu, lspci, gpuinfo, sysmon)" \
+                    "minimal" "Minimal Base (Core Unix utilities & akash shell only)" \
+                    "none" "None (Barebones kernel bootstrap only)")"; then
                     menu_software="$selection"
                 fi
                 ;;
@@ -416,10 +427,18 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires aurora, xfce, lxde, openbox, or lxqt" >&2
+                echo "$1 requires xfce, lxde, openbox, aurora, lxqt, or none" >&2
                 exit 2
             fi
             target_desktop="$2"
+            shift 2
+            ;;
+        --software|--software-bundle)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires all, desktop, minimal, or net" >&2
+                exit 2
+            fi
+            menu_software="$2"
             shift 2
             ;;
         --session-mode)
@@ -636,6 +655,7 @@ USER_LIBC_SOURCES=(
     "$ROOT_DIR/userspace/libc/src/cxxabi.c"
     "$ROOT_DIR/userspace/libc/src/crt_init.c"
     "$ROOT_DIR/userspace/libc/src/getopt.c"
+    "$ROOT_DIR/userspace/libc/src/regex.c"
 )
 USER_LIBC_OBJECTS=()
 for source in "${USER_LIBC_SOURCES[@]}"; do
