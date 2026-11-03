@@ -1848,6 +1848,9 @@ build_dynamic_cpp_program "$ROOT_DIR/userspace/bin/cxx-dynamic-test/main.cpp" CX
 build_cxx_shared_object libakaos-cxx.so
 build_static_shared_object libakaos-static.so
 build_versioned_shared_object libakaos-versioned.so
+build_dependent_shared_object libakaos-dependent.so
+build_loader_fanout_objects
+build_runtime_library libpthread.so 1 "$ROOT_DIR/userspace/libc/tests/desktop_runtime_thread.c"
 build_dynamic_program dynamic-hello "$ROOT_DIR/userspace/bin/dynamic-hello/main.c" DYNAMIC_HELLO.ELF
 
 UPSTREAM_GLIB_ENABLED=0
@@ -2177,10 +2180,6 @@ if [[ "$UPSTREAM_GTK_ENABLED" -eq 1 ]]; then
     build_upstream_gtk3_x11_program
     UPSTREAM_GTK3_ENABLED=1
 fi
-
-build_dependent_shared_object libakaos-dependent.so
-build_loader_fanout_objects
-build_runtime_library libpthread.so 1 "$ROOT_DIR/userspace/libc/tests/desktop_runtime_thread.c"
 
 UPSTREAM_X11_ENABLED=0
 if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then

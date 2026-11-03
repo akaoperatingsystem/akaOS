@@ -973,7 +973,7 @@ static int execute_builtin(int argc, char *argv[]) {
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, test, [, echo, export\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs\n");
         write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
@@ -1360,6 +1360,86 @@ static int execute_builtin(int argc, char *argv[]) {
             }
         }
         last_exit_status = 0;
+        return 1;
+    }
+
+    if (strcmp(argv[0], "alias") == 0) {
+        if (argc == 1 || (argc == 2 && strcmp(argv[1], "-p") == 0)) {
+            for (int i = 0; i < num_shell_aliases; ++i) {
+                write_str(STDOUT_FILENO, "alias ");
+                write_str(STDOUT_FILENO, shell_aliases[i].name);
+                write_str(STDOUT_FILENO, "='");
+                write_str(STDOUT_FILENO, shell_aliases[i].val);
+                write_str(STDOUT_FILENO, "'\n");
+            }
+            last_exit_status = 0;
+            return 1;
+        }
+
+        int had_err = 0;
+        int start_i = 1;
+        if (strcmp(argv[1], "-p") == 0) start_i = 2;
+
+        for (int i = start_i; i < argc; ++i) {
+            char *arg = argv[i];
+            char *eq = strchr(arg, '=');
+            if (!eq) {
+                const char *val = get_shell_alias(arg);
+                if (val) {
+                    write_str(STDOUT_FILENO, "alias ");
+                    write_str(STDOUT_FILENO, arg);
+                    write_str(STDOUT_FILENO, "='");
+                    write_str(STDOUT_FILENO, val);
+                    write_str(STDOUT_FILENO, "'\n");
+                } else {
+                    write_str(STDERR_FILENO, "alias: ");
+                    write_str(STDERR_FILENO, arg);
+                    write_str(STDERR_FILENO, ": not found\n");
+                    had_err = 1;
+                }
+            } else {
+                *eq = '\0';
+                char *name = arg;
+                char *val = eq + 1;
+                size_t vlen = strlen(val);
+                if ((val[0] == '\'' && vlen >= 2 && val[vlen - 1] == '\'') ||
+                    (val[0] == '"' && vlen >= 2 && val[vlen - 1] == '"')) {
+                    val[vlen - 1] = '\0';
+                    val++;
+                }
+                if (!set_shell_alias(name, val)) {
+                    write_str(STDERR_FILENO, "alias: invalid alias name '");
+                    write_str(STDERR_FILENO, name);
+                    write_str(STDERR_FILENO, "'\n");
+                    had_err = 1;
+                }
+            }
+        }
+        last_exit_status = had_err ? 1 : 0;
+        return 1;
+    }
+
+    if (strcmp(argv[0], "unalias") == 0) {
+        if (argc < 2) {
+            write_str(STDERR_FILENO, "unalias: usage: unalias [-a] name [name ...]\n");
+            last_exit_status = 1;
+            return 1;
+        }
+        if (strcmp(argv[1], "-a") == 0) {
+            unalias_all();
+            last_exit_status = 0;
+            return 1;
+        }
+        int had_err = 0;
+        for (int i = 1; i < argc; ++i) {
+            if (!unalias_single(argv[i])) {
+                write_str(STDERR_FILENO, "unalias: ");
+                write_str(STDERR_FILENO, argv[i]);
+                write_str(STDERR_FILENO, ": not found\n");
+                had_err = 1;
+            }
+        }
+        last_exit_status = had_err ? 1 : 0;
         return 1;
     }
 
@@ -2210,6 +2290,22 @@ int main(int argc, char **argv) {
     /* Become interactive job-control group for login session */
     (void)setpgid(0, 0);
     (void)tcsetpgrp(STDIN_FILENO, getpgrp());
+
+    /* Execute ~/.bash_aliases if present */
+    if (shell_account.home[0]) {
+        char alias_file[256];
+        snprintf(alias_file, sizeof(alias_file), "%s/.bash_aliases", shell_account.home);
+        int afd = open(alias_file, O_RDONLY);
+        if (afd >= 0) {
+            char abuf[2048];
+            ssize_t an = read(afd, abuf, sizeof(abuf) - 1);
+            close(afd);
+            if (an > 0) {
+                abuf[an] = '\0';
+                execute_buffer(abuf);
+            }
+        }
+    }
 
     strncpy(script_arg0, (argc > 0) ? argv[0] : "akash", sizeof(script_arg0) - 1);
     script_arg0[sizeof(script_arg0) - 1] = '\0';

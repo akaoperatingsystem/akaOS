@@ -355,7 +355,7 @@ for core_lib in \
 done
 initramfs_files+=(
     "--data=/lib/.upstream-glib:enabled:0444"
-    "--data=/lib/.upstream-gtk3:enabled:0444"
+    "--dir=/lib/.upstream-gtk3"
 )
 
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then

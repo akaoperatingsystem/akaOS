@@ -74,22 +74,13 @@ int xscore_user_process_self_test(void) {
         xscore_process_thread_id(first));
     uint64_t second_privilege_stack = xscore_thread_privilege_stack_top(
         xscore_process_thread_id(second));
-    if (!first_privilege_stack || !second_privilege_stack ||
-        first_privilege_stack == second_privilege_stack ||
-        !xscore_vmm_is_mapped_in(first_root, first_privilege_stack - PAGE_SIZE,
-                                 0, 0) ||
-        !xscore_vmm_is_mapped_in(second_root, second_privilege_stack - PAGE_SIZE,
-                                 0, 0) ||
-        xscore_vmm_is_mapped_in(
-            first_root,
-            first_privilege_stack -
-                (XSCORE_THREAD_PRIVILEGE_STACK_PAGES + 1) * PAGE_SIZE,
-            0, 0) ||
-        xscore_vmm_is_mapped_in(
-            second_root,
-            second_privilege_stack -
-                (XSCORE_THREAD_PRIVILEGE_STACK_PAGES + 1) * PAGE_SIZE,
-            0, 0)) return 0;
+    if (!first_privilege_stack) { xscore_serial_write("[DBG1]\n"); return 0; }
+    if (!second_privilege_stack) { xscore_serial_write("[DBG2]\n"); return 0; }
+    if (first_privilege_stack == second_privilege_stack) { xscore_serial_write("[DBG3]\n"); return 0; }
+    if (!xscore_vmm_is_mapped_in(first_root, first_privilege_stack - PAGE_SIZE, 0, 0)) { xscore_serial_write("[DBG4]\n"); return 0; }
+    if (!xscore_vmm_is_mapped_in(second_root, second_privilege_stack - PAGE_SIZE, 0, 0)) { xscore_serial_write("[DBG5]\n"); return 0; }
+    if (xscore_vmm_is_mapped_in(first_root, first_privilege_stack - (XSCORE_THREAD_PRIVILEGE_STACK_PAGES + 1) * PAGE_SIZE, 0, 0)) { xscore_serial_write("[DBG6]\n"); return 0; }
+    if (xscore_vmm_is_mapped_in(second_root, second_privilege_stack - (XSCORE_THREAD_PRIVILEGE_STACK_PAGES + 1) * PAGE_SIZE, 0, 0)) { xscore_serial_write("[DBG7]\n"); return 0; }
     xscore_serial_write("[INFO] Guarded per-task privilege-entry stacks verified\n");
 
     uint64_t first_physical = UINT64_MAX;
@@ -800,6 +791,11 @@ int xscore_user_process_self_test(void) {
     struct xscore_process *p_akash_jc = xscore_process_create_path_args("/bin/akash", 3, akash_job_ctrl_args);
     uint64_t akash_jc_status = UINT64_MAX;
     if (!p_akash_jc || !xscore_process_wait(p_akash_jc, &akash_jc_status) || akash_jc_status != 0 || !xscore_process_reap(p_akash_jc)) return 0;
+
+    const char *akash_alias_args[] = {"/bin/akash", "-c", "alias c='clear'; alias c; alias -p; unalias c; alias c 2>&1 || true", 0};
+    struct xscore_process *p_akash_alias = xscore_process_create_path_args("/bin/akash", 3, akash_alias_args);
+    uint64_t akash_alias_status = UINT64_MAX;
+    if (!p_akash_alias || !xscore_process_wait(p_akash_alias, &akash_alias_status) || akash_alias_status != 0 || !xscore_process_reap(p_akash_alias)) return 0;
 
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
