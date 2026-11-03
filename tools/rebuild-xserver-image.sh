@@ -341,7 +341,8 @@ for core_lib in \
     libpixman-1.so.0 libpng16.so.16 libjpeg.so.8.3.2 libjpeg.so.8 libgraphene-1.0.so.0 libepoxy.so.0 \
     libglib-2.0.so.0 libgobject-2.0.so.0 libgio-2.0.so.0 libgmodule-2.0.so.0 \
     libgthread-2.0.so.0 libffi.so.8 libintl.so.8 libpcre2-8.so.0 libz.so.1 \
-    libxkbcommon.so.0 libxkbcommon-x11.so.0; do
+    libxkbcommon.so.0 libxkbcommon-x11.so.0 \
+    libwayland-client.so.0 libwayland-server.so.0 libwayland-cursor.so.0 libwayland-egl.so.1; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
