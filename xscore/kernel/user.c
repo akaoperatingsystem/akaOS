@@ -835,6 +835,7 @@ int xscore_user_process_self_test(void) {
     struct xscore_process *p_atrm = xscore_process_create_path_args("/bin/atrm", 2, atrm_args);
     uint64_t atrm_status = UINT64_MAX;
     if (!p_atrm || !xscore_process_wait(p_atrm, &atrm_status) || atrm_status != 0 || !xscore_process_reap(p_atrm)) return 0;
+    xscore_vfs_unlink_at(0, "/var/spool/at/.seq");
 
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};

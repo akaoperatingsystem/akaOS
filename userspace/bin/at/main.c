@@ -427,8 +427,10 @@ int main(int argc, char **argv) {
             continue;
         }
         if (arg[0] != '-') {
-            time_start_idx = i;
-            break;
+            if (time_start_idx < 0) {
+                time_start_idx = i;
+            }
+            continue;
         }
     }
     uid_t uid = geteuid();
