@@ -299,10 +299,10 @@ int main(int argc, char **argv) {
     else if (strcmp(opt_sug_mode, "fast") == 0) max_distance = 1;
     else if (strcmp(opt_sug_mode, "bad-spellers") == 0) max_distance = 3;
 
-    int is_interactive = isatty(STDIN_FILENO);
+    int is_interactive = isatty(STDIN_FILENO) && isatty(STDOUT_FILENO) && !getenv("NONINTERACTIVE");
     int total_words = 0;
     int misspelled_count = 0;
-    int replacements_made = 0;
+
 
     char line[MAX_LINE_LEN];
     int line_number = 0;
@@ -316,7 +316,7 @@ int main(int argc, char **argv) {
 
             char word[MAX_WORD_LEN];
             size_t wlen = 0;
-            char *start = ptr;
+
             while (*ptr && (isalpha((unsigned char)*ptr) || *ptr == '\'')) {
                 if (wlen < sizeof(word) - 1) word[wlen++] = *ptr;
                 ptr++;
