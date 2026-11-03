@@ -1,0 +1,116 @@
+# akaOS whatis manual page index database
+akash (1) - native userspace interactive shell
+alias (1) - define or display shell aliases
+unalias (1) - remove shell alias definitions
+bg (1) - send or resume jobs in the background
+fg (1) - bring jobs to the foreground
+jobs (1) - display status of active jobs in current session
+cd (1) - change the current working directory
+pwd (1) - print name of current working directory
+echo (1) - display a line of text or arguments
+exit (1) - exit the current shell session
+export (1) - set export attribute for shell variables
+help (1) - display information about built-in commands
+about (1) - display akaOS system and kernel information
+version (1) - print operating system and shell version
+id (1) - print real and effective user and group IDs
+hostname (1) - show or set system host name
+shutdown (8) - power off the machine or halt operating system
+test (1) - check file types and compare values
+[ (1) - evaluate conditional expression
+true (1) - do nothing, successfully
+false (1) - do nothing, unsuccessfully
+cat (1) - concatenate files and print on standard output
+ls (1) - list directory contents and file attributes
+cp (1) - copy files and directories
+mv (1) - move or rename files and directories
+rm (1) - remove files or directories
+mkdir (1) - make directories
+touch (1) - change file timestamps or create empty file
+chmod (1) - change file mode bits and permissions
+chown (1) - change file owner and group
+sync (1) - synchronize cached filesystem writes to storage
+clear (1) - clear the terminal screen
+uname (1) - print system information and kernel architecture
+whoami (1) - print effective user name
+head (1) - output the first part of files
+tail (1) - output the last part of files
+wc (1) - print newline, word, and byte counts for each file
+grep (1) - print lines that match patterns
+sed (1) - stream editor for filtering and transforming text
+cut (1) - remove sections from each line of files
+tr (1) - translate or delete characters
+sort (1) - sort lines of text files
+uniq (1) - report or omit repeated lines
+diff (1) - compare files line by line
+cmp (1) - compare two files byte by byte
+patch (1) - apply a diff file to an original
+find (1) - search for files in a directory hierarchy
+xargs (1) - build and execute command lines from standard input
+less (1) - opposite of more, file perusal filter
+more (1) - file perusal filter for crt viewing
+which (1) - locate a command in user PATH
+env (1) - run a program in a modified environment or print environment
+sleep (1) - delay for a specified amount of time
+tar (1) - an archiving utility for tape or disk archives
+gzip (1) - compress or expand files, zip archive tool
+gunzip (1) - decompress files, expand zip archive data
+ps (1) - report a snapshot of the current processes
+kill (1) - send a signal to a process or jobspec
+pkill (1) - signal processes based on name and attributes
+uptime (1) - tell how long the system has been running
+free (1) - display amount of free and used memory in the system
+watch (1) - execute a program periodically, showing output fullscreen
+df (1) - report filesystem disk space usage
+du (1) - estimate file space usage
+init (8) - akaOS system initializer and process supervisor
+login (1) - begin session on the system
+su (1) - change user ID or become superuser
+sudo (8) - execute a command as another user
+passwd (1) - change user password
+reboot (8) - reboot the system
+poweroff (8) - power off the machine
+mount (8) - mount a filesystem
+umount (8) - unmount file systems
+tty (1) - print the file name of the terminal connected to standard input
+stty (1) - change and print terminal line settings
+akafetch (1) - display system information and ASCII logo
+lscpu (1) - display information about the CPU architecture
+lspci (8) - list all PCI devices
+gpuinfo (1) - display GPU hardware and display controller status
+sndinfo (1) - display audio hardware controller information
+acpi (1) - display ACPI device power state and table data
+sysmon (1) - system performance and hardware resource monitor
+ip (8) - show and manipulate network routing, devices, and interfaces
+route (8) - show or manipulate the IP routing table
+netstat (8) - print network connections, routing tables, and interface stats
+arp (8) - manipulate the system ARP cache
+ping (8) - send ICMP ECHO_REQUEST to network hosts
+traceroute (8) - print the route packets trace to network host
+dig (1) - DNS lookup utility
+nslookup (1) - query Internet name servers interactively
+wget (1) - the non-interactive network downloader
+curl (1) - transfer a URL using network protocols
+ssh (1) - OpenSSH remote login client
+sshd (8) - OpenSSH daemon
+httpd (8) - akaOS HTTP web server daemon
+telnetd (8) - DARPA TELNET protocol server
+tftp (1) - trivial file transfer program
+tftpd (8) - Trivial File Transfer Protocol server
+pkg (8) - akaOS native package management utility
+akaos-config (8) - text-mode system configuration and settings utility
+lumen (1) - akaOS hardware compositor and display server
+aurora (1) - akaOS native desktop shell and taskbar panel
+terminal (1) - graphical terminal emulator client
+notepad (1) - graphical desktop text editor
+taskmgr (1) - graphical process and task manager
+webviewer (1) - graphical HTML and web documentation viewer
+palette (1) - desktop color picker and palette selector
+notify (1) - desktop notification daemon client
+beep (1) - advanced PC speaker sound generator utility
+ted (1) - simple text editor
+dbus-daemon (1) - message bus daemon
+xserver (1) - native X11 display protocol server
+apropos (1) - search the manual page names and descriptions, whatis database
+whatis (1) - display one-line manual page descriptions
+mandb (8) - create or update the manual page index databases

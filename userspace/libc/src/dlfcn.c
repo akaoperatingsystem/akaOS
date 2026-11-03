@@ -986,12 +986,19 @@ static const char *canonical_library_path(const char *path) {
          * set, so it is loaded from beside the other upstream libraries. */
         int saved_errno = errno;
         struct stat marker;
+        int has_real = stat(path, &marker) == 0;
         int has_upstream = stat("/lib/.upstream-gtk3", &marker) == 0;
         errno = saved_errno;
+        if (has_real) return path;
         if (has_upstream) {
-            if (strcmp(path, "/lib/libatspi.so.0") == 0)
-                return "/lib/.upstream-gtk3/libatspi.so.0";
-            return "/lib/.upstream-gtk3/libatk-bridge-2.0.so.0";
+            if (strcmp(path, "/lib/libatspi.so.0") == 0) {
+                if (stat("/lib/.upstream-gtk3/libatspi.so.0", &marker) == 0)
+                    return "/lib/.upstream-gtk3/libatspi.so.0";
+                return path;
+            }
+            if (stat("/lib/.upstream-gtk3/libatk-bridge-2.0.so.0", &marker) == 0)
+                return "/lib/.upstream-gtk3/libatk-bridge-2.0.so.0";
+            return path;
         }
     }
     if (strcmp(path, "/lib/libdbus-1.so.3") == 0) {

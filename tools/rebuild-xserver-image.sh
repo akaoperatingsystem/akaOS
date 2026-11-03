@@ -342,7 +342,8 @@ for core_lib in \
     libglib-2.0.so.0 libgobject-2.0.so.0 libgio-2.0.so.0 libgmodule-2.0.so.0 \
     libgthread-2.0.so.0 libffi.so.8 libintl.so.8 libpcre2-8.so.0 libz.so.1 \
     libxkbcommon.so.0 libxkbcommon-x11.so.0 \
-    libwayland-client.so.0 libwayland-server.so.0 libwayland-cursor.so.0 libwayland-egl.so.1; do
+    libwayland-client.so.0 libwayland-server.so.0 libwayland-cursor.so.0 libwayland-egl.so.1 \
+    libatk-bridge-2.0.so.0 libatspi.so.0; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
@@ -358,6 +359,8 @@ done
 initramfs_files+=(
     "--data=/lib/.upstream-glib:enabled:0444"
     "--dir=/lib/.upstream-gtk3"
+    "--file=/lib/.upstream-gtk3/libatk-bridge-2.0.so.0:$UPSTREAM_SYSROOT/usr/local/lib/libatk-bridge-2.0.so.0.0.0:0444"
+    "--file=/lib/.upstream-gtk3/libatspi.so.0:$UPSTREAM_SYSROOT/usr/local/lib/libatspi.so.0.0.1:0444"
     "--dir=/etc"
     "--data=/etc/motd:akaOS XSCore initramfs\n"
     "--file=/etc/passwd:$ROOT_DIR/userspace/etc/passwd:0644"
