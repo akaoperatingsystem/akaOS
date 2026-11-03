@@ -1956,11 +1956,11 @@ int __isoc99_vfscanf(FILE *stream, const char *format, va_list ap) {
 int __isoc99_scanf(const char *format, ...) {
     va_list ap;
     va_start(ap, format);
-    int ret = vscanf(format, ap);
+    int ret = vfscanf(stdin, format, ap);
     va_end(ap);
     return ret;
 }
 
 int __isoc99_vscanf(const char *format, va_list ap) {
-    return vscanf(format, ap);
+    return vfscanf(stdin, format, ap);
 }
