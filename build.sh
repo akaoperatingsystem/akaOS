@@ -1814,6 +1814,7 @@ build_user_program tr "$ROOT_DIR/userspace/bin/tr/main.c" TR.ELF
 build_user_program df "$ROOT_DIR/userspace/bin/df/main.c" DF.ELF
 build_user_program du "$ROOT_DIR/userspace/bin/du/main.c" DU.ELF
 build_user_program kill "$ROOT_DIR/userspace/bin/kill/main.c" KILL.ELF
+build_user_program apropos "$ROOT_DIR/userspace/bin/apropos/main.c" APROPOS.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -3403,6 +3404,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/df:$BUILD_DIR/DF.ELF:exec" \
     --file "/bin/du:$BUILD_DIR/DU.ELF:exec" \
     --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec" \
+    --file "/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec" \
     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \
     --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \
@@ -3529,7 +3531,9 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/var/www/cgi-bin/status:$BUILD_DIR/STATUS_CGI.ELF:exec" \
     --file "/var/www/index.html:$ROOT_DIR/userspace/var/www/index.html:0644" \
     --data "/etc/motd:akaOS XSCore initramfs\n" \
-    --data "/etc/akaos-desktop-compat:shim:0444"
+    --data "/etc/akaos-desktop-compat:shim:0444" \
+    --dir "/usr/share/man" \
+    --file "/usr/share/man/whatis:$ROOT_DIR/userspace/share/man/whatis:0644"
 (cd "$BUILD_DIR" && objcopy -I binary -O elf64-x86-64 -B i386:x86-64 \
     initramfs.img initramfs_archive.o)
 

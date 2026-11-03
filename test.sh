@@ -194,6 +194,7 @@ grep -Fq "[INFO] System & process control suite kill/pkill/uptime/free/watch ver
 grep -Fq "[INFO] Unix text transformation & diff suite sed/diff/cmp/patch verified" "$TEST_LOG"
 grep -Fq "[INFO] Archiving & compression suite tar/gzip/gunzip verified" "$TEST_LOG"
 grep -Fq "[INFO] Advanced shell job control & pipelines in akash verified" "$TEST_LOG"
+grep -Fq "[INFO] Manual page keyword lookup utility apropos verified" "$TEST_LOG"
 grep -Fq "[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified" "$TEST_LOG"
 grep -Fq "[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified" "$TEST_LOG"
 grep -Fq "[INFO] ACPI diagnostics utility acpi verified" "$TEST_LOG"

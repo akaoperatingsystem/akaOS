@@ -486,6 +486,7 @@ build_user_program tr "$ROOT_DIR/userspace/bin/tr/main.c" TR.ELF
 build_user_program df "$ROOT_DIR/userspace/bin/df/main.c" DF.ELF
 build_user_program du "$ROOT_DIR/userspace/bin/du/main.c" DU.ELF
 build_user_program kill "$ROOT_DIR/userspace/bin/kill/main.c" KILL.ELF
+build_user_program apropos "$ROOT_DIR/userspace/bin/apropos/main.c" APROPOS.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -644,7 +645,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/tr:$BUILD_DIR/TR.ELF:exec" \\
     --file "/bin/df:$BUILD_DIR/DF.ELF:exec" \\
     --file "/bin/du:$BUILD_DIR/DU.ELF:exec" \\
-    --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec" \\
+    --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec" \
+    --file "/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec" \\
     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \\
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \\
     --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \\

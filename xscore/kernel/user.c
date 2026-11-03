@@ -806,6 +806,16 @@ int xscore_user_process_self_test(void) {
     uint64_t akash_alias_status = UINT64_MAX;
     if (!p_akash_alias || !xscore_process_wait(p_akash_alias, &akash_alias_status) || akash_alias_status != 0 || !xscore_process_reap(p_akash_alias)) return 0;
 
+    const char *apropos_args[] = {"/bin/apropos", "zip", 0};
+    struct xscore_process *p_apropos = xscore_process_create_path_args("/bin/apropos", 2, apropos_args);
+    uint64_t apropos_status = UINT64_MAX;
+    if (!p_apropos || !xscore_process_wait(p_apropos, &apropos_status) || apropos_status != 0 || !xscore_process_reap(p_apropos)) return 0;
+
+    const char *apropos_phrase_args[] = {"/bin/apropos", "zip archive", 0};
+    struct xscore_process *p_apropos_phrase = xscore_process_create_path_args("/bin/apropos", 2, apropos_phrase_args);
+    uint64_t apropos_phrase_status = UINT64_MAX;
+    if (!p_apropos_phrase || !xscore_process_wait(p_apropos_phrase, &apropos_phrase_status) || apropos_phrase_status != 0 || !xscore_process_reap(p_apropos_phrase)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -864,6 +874,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Unix text transformation & diff suite sed/diff/cmp/patch verified\n");
     xscore_serial_write("[INFO] Archiving & compression suite tar/gzip/gunzip verified\n");
     xscore_serial_write("[INFO] Advanced shell job control & pipelines in akash verified\n");
+    xscore_serial_write("[INFO] Manual page keyword lookup utility apropos verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");
