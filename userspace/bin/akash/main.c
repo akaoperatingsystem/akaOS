@@ -71,6 +71,136 @@ struct shell_var {
 static struct shell_var shell_vars[MAX_SHELL_VARS];
 static int num_shell_vars = 0;
 
+/* Shell aliases table */
+#define MAX_SHELL_ALIASES 64
+struct shell_alias {
+    char name[32];
+    char val[256];
+};
+static struct shell_alias shell_aliases[MAX_SHELL_ALIASES];
+static int num_shell_aliases = 0;
+
+static const char *get_shell_alias(const char *name) {
+    if (!name || !*name) return NULL;
+    for (int i = 0; i < num_shell_aliases; ++i) {
+        if (strcmp(shell_aliases[i].name, name) == 0) {
+            return shell_aliases[i].val;
+        }
+    }
+    return NULL;
+}
+
+__attribute__((unused)) static int set_shell_alias(const char *name, const char *val) {
+    if (!name || !*name || !val) return 0;
+    if (strcmp(name, "alias") == 0 || strcmp(name, "unalias") == 0 || strchr(name, '=')) {
+        return 0;
+    }
+    for (int i = 0; i < num_shell_aliases; ++i) {
+        if (strcmp(shell_aliases[i].name, name) == 0) {
+            strncpy(shell_aliases[i].val, val, sizeof(shell_aliases[i].val) - 1);
+            shell_aliases[i].val[sizeof(shell_aliases[i].val) - 1] = '\0';
+            return 1;
+        }
+    }
+    if (num_shell_aliases < MAX_SHELL_ALIASES) {
+        strncpy(shell_aliases[num_shell_aliases].name, name, sizeof(shell_aliases[num_shell_aliases].name) - 1);
+        shell_aliases[num_shell_aliases].name[sizeof(shell_aliases[num_shell_aliases].name) - 1] = '\0';
+        strncpy(shell_aliases[num_shell_aliases].val, val, sizeof(shell_aliases[num_shell_aliases].val) - 1);
+        shell_aliases[num_shell_aliases].val[sizeof(shell_aliases[num_shell_aliases].val) - 1] = '\0';
+        num_shell_aliases++;
+        return 1;
+    }
+    return 0;
+}
+
+__attribute__((unused)) static int unalias_single(const char *name) {
+    if (!name || !*name) return 0;
+    for (int i = 0; i < num_shell_aliases; ++i) {
+        if (strcmp(shell_aliases[i].name, name) == 0) {
+            for (int j = i; j < num_shell_aliases - 1; ++j) {
+                shell_aliases[j] = shell_aliases[j + 1];
+            }
+            num_shell_aliases--;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+__attribute__((unused)) static void unalias_all(void) {
+    num_shell_aliases = 0;
+}
+
+__attribute__((unused)) static void expand_aliases(const char *src, char *dst, size_t max_len) {
+    char current[2048];
+    strncpy(current, src, sizeof(current) - 1);
+    current[sizeof(current) - 1] = '\0';
+
+    int depth = 0;
+    int check_next_word = 1;
+    char last_expanded_name[32] = "";
+    size_t scan_pos = 0;
+
+    while (check_next_word && depth < 16) {
+        check_next_word = 0;
+        depth++;
+
+        char *p = current + scan_pos;
+        while (*p == ' ' || *p == '\t') p++;
+        if (!*p) break;
+
+        char first_word[64];
+        size_t wlen = 0;
+        char *wstart = p;
+        while (*p && *p != ' ' && *p != '\t' && *p != '|' && *p != ';' && *p != '&' && *p != '<' && *p != '>') {
+            if (wlen < sizeof(first_word) - 1) first_word[wlen++] = *p;
+            p++;
+        }
+        first_word[wlen] = '\0';
+
+        if (last_expanded_name[0] && strcmp(first_word, last_expanded_name) == 0) {
+            break;
+        }
+
+        const char *alias_val = get_shell_alias(first_word);
+        if (!alias_val) break;
+
+        strncpy(last_expanded_name, first_word, sizeof(last_expanded_name) - 1);
+        last_expanded_name[sizeof(last_expanded_name) - 1] = '\0';
+        size_t aval_len = strlen(alias_val);
+        int trailing_space = (aval_len > 0 && (alias_val[aval_len - 1] == ' ' || alias_val[aval_len - 1] == '\t'));
+
+        char new_line[2048];
+        size_t n = 0;
+        size_t prefix_len = (size_t)(wstart - current);
+        if (prefix_len > 0) {
+            memcpy(new_line, current, prefix_len);
+            n += prefix_len;
+        }
+        if (n + aval_len < sizeof(new_line) - 1) {
+            memcpy(new_line + n, alias_val, aval_len);
+            n += aval_len;
+        }
+        size_t rem_len = strlen(p);
+        if (n + rem_len < sizeof(new_line) - 1) {
+            memcpy(new_line + n, p, rem_len);
+            n += rem_len;
+        }
+        new_line[n] = '\0';
+        strncpy(current, new_line, sizeof(current) - 1);
+        current[sizeof(current) - 1] = '\0';
+
+        if (trailing_space) {
+            scan_pos = prefix_len + aval_len;
+            last_expanded_name[0] = '\0';
+            check_next_word = 1;
+        }
+    }
+
+    strncpy(dst, current, max_len - 1);
+    dst[max_len - 1] = '\0';
+}
+
 static const char *get_shell_var(const char *name) {
     for (int i = 0; i < num_shell_vars; ++i) {
         if (strcmp(shell_vars[i].name, name) == 0) {

@@ -948,7 +948,8 @@ static const char *canonical_library_path(const char *path) {
          * through libglib.so/libgio.so on all architectures. */
         int saved_errno = errno;
         struct stat marker;
-        int has_upstream = stat("/lib/.upstream-glib", &marker) == 0;
+        int has_real = stat(path, &marker) == 0;
+        int has_upstream = has_real || stat("/lib/.upstream-glib", &marker) == 0;
         errno = saved_errno;
         if (has_upstream) return path;
         if (strcmp(path, "/lib/libgio-2.0.so.0") == 0)
@@ -959,8 +960,10 @@ static const char *canonical_library_path(const char *path) {
         strcmp(path, "/lib/libgdk-3.so.0") == 0) {
         int saved_errno = errno;
         struct stat marker;
+        int has_real = stat(path, &marker) == 0;
         int has_upstream = stat("/lib/.upstream-gtk3", &marker) == 0;
         errno = saved_errno;
+        if (has_real) return path;
         if (has_upstream) {
             if (strcmp(path, "/lib/libgdk-3.so.0") == 0)
                 return "/lib/.upstream-gtk3/libgdk-3.so.0";
@@ -971,8 +974,10 @@ static const char *canonical_library_path(const char *path) {
     if (strcmp(path, "/lib/libatk-1.0.so.0") == 0) {
         int saved_errno = errno;
         struct stat marker;
+        int has_real = stat(path, &marker) == 0;
         int has_upstream = stat("/lib/.upstream-gtk3", &marker) == 0;
         errno = saved_errno;
+        if (has_real) return path;
         if (has_upstream) return "/lib/.upstream-gtk3/libatk-1.0.so.0";
     }
     if (strcmp(path, "/lib/libatk-bridge-2.0.so.0") == 0 ||
@@ -1920,6 +1925,7 @@ static int resolve_symbol(const struct dl_object *requestor, uint32_t index,
         return 1;
     }
 #endif
+
     for (uint32_t dep = 0; dep < requestor->dependency_count; ++dep) {
         if (symbol_value_by_name(requestor->dependencies[dep], name,
                                  requested_version, value)) return 1;

@@ -352,6 +352,10 @@ for core_lib in \
         "--file=/usr/local/lib/$core_lib:$library_path:0444"
     )
 done
+initramfs_files+=(
+    "--data=/lib/.upstream-glib:enabled:0444"
+    "--data=/lib/.upstream-gtk3:enabled:0444"
+)
 
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
     echo "[BUILD] upstream window manager"
