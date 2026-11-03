@@ -328,8 +328,23 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     -T "$ROOT_DIR/userspace/linker/user.ld" \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-init-main.o" \
     -o "$BUILD_DIR/INIT.ELF"
+echo "[BUILD] user apropos"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/apropos/main.c" -o "$BUILD_DIR/user-apropos-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-apropos-main.o" \
+    -o "$BUILD_DIR/APROPOS.ELF"
 initramfs_files+=(
     "--file=/bin/init:$BUILD_DIR/INIT.ELF:exec"
+    "--file=/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec"
+    "--dir=/usr/share/man"
+    "--file=/usr/share/man/whatis:$ROOT_DIR/userspace/share/man/whatis:0644"
 )
 
 echo "[BUILD] staging core graphics & GUI runtime libraries"
@@ -343,7 +358,7 @@ for core_lib in \
     libgthread-2.0.so.0 libffi.so.8 libintl.so.8 libpcre2-8.so.0 libz.so.1 \
     libxkbcommon.so.0 libxkbcommon-x11.so.0 \
     libwayland-client.so.0 libwayland-server.so.0 libwayland-cursor.so.0 libwayland-egl.so.1 \
-    libatk-bridge-2.0.so.0 libatspi.so.0; do
+    libatk-bridge-2.0.so.0 libatspi.so.0 libdbus-1.so.3; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then

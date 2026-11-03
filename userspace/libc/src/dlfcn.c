@@ -1002,11 +1002,12 @@ static const char *canonical_library_path(const char *path) {
         }
     }
     if (strcmp(path, "/lib/libdbus-1.so.3") == 0) {
-        /* The upstream message bus lives in the local prefix. */
         int saved_errno = errno;
         struct stat status;
+        int has_real = stat(path, &status) == 0;
         int found = stat("/usr/local/lib/libdbus-1.so.3", &status) == 0;
         errno = saved_errno;
+        if (has_real) return path;
         if (found) return "/usr/local/lib/libdbus-1.so.3";
     }
     if (strcmp(path, "/lib/libgtk-4.so.1") == 0 ||
