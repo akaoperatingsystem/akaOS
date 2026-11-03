@@ -338,7 +338,7 @@ for core_lib in \
     libpango-1.0.so.0 libpangocairo-1.0.so.0 libpangoft2-1.0.so.0 libpangoxft-1.0.so.0 \
     libcairo.so.2 libcairo-gobject.so.2 libXft.so.2 \
     libharfbuzz.so.0 libfreetype.so.6 libfontconfig.so.1 libexpat.so.1 libfribidi.so.0 \
-    libpixman-1.so.0 libpng16.so.16 libgraphene-1.0.so.0 libepoxy.so.0 \
+    libpixman-1.so.0 libpng16.so.16 libjpeg.so.8.3.2 libjpeg.so.8 libgraphene-1.0.so.0 libepoxy.so.0 \
     libglib-2.0.so.0 libgobject-2.0.so.0 libgio-2.0.so.0 libgmodule-2.0.so.0 \
     libgthread-2.0.so.0 libffi.so.8 libintl.so.8 libpcre2-8.so.0 libz.so.1; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
