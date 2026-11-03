@@ -119,3 +119,7 @@ apropos (1) - search the manual page names and descriptions, whatis database
 whatis (1) - display one-line manual page descriptions
 mandb (8) - create or update the manual page index databases
 aspell (1) - interactive spell checker and word suggestion utility
+at (1) - queue, examine or delete jobs for later execution
+atq (1) - list user pending jobs
+atrm (1) - delete queued jobs
+batch (1) - execute commands when system load levels permit

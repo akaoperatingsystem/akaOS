@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT_DIR/tools/qemu-common.sh"
 
-"$ROOT_DIR/build.sh" --arch x86_64 --firmware both --disk-type iso --test
+if [[ "${AKAOS_TEST_SKIP_BUILD:-0}" != 1 ]]; then
+    "$ROOT_DIR/build.sh" --arch x86_64 --firmware both --disk-type iso --test
+fi
 
 ISO_IMAGE="$ROOT_DIR/build/akaos.iso"
 STORAGE_IMAGE="$ROOT_DIR/build/akaos-iso-virtio-test.img"

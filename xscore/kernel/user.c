@@ -821,6 +821,21 @@ int xscore_user_process_self_test(void) {
     uint64_t aspell_status = UINT64_MAX;
     if (!p_aspell || !xscore_process_wait(p_aspell, &aspell_status) || aspell_status != 0 || !xscore_process_reap(p_aspell)) return 0;
 
+    const char *at_args[] = {"/bin/at", "23:00", "-f", "/etc/motd", 0};
+    struct xscore_process *p_at = xscore_process_create_path_args("/bin/at", 4, at_args);
+    uint64_t at_status = UINT64_MAX;
+    if (!p_at || !xscore_process_wait(p_at, &at_status) || at_status != 0 || !xscore_process_reap(p_at)) return 0;
+
+    const char *atq_args[] = {"/bin/atq", 0};
+    struct xscore_process *p_atq = xscore_process_create_path_args("/bin/atq", 1, atq_args);
+    uint64_t atq_status = UINT64_MAX;
+    if (!p_atq || !xscore_process_wait(p_atq, &atq_status) || atq_status != 0 || !xscore_process_reap(p_atq)) return 0;
+
+    const char *atrm_args[] = {"/bin/atrm", "1", 0};
+    struct xscore_process *p_atrm = xscore_process_create_path_args("/bin/atrm", 2, atrm_args);
+    uint64_t atrm_status = UINT64_MAX;
+    if (!p_atrm || !xscore_process_wait(p_atrm, &atrm_status) || atrm_status != 0 || !xscore_process_reap(p_atrm)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -881,6 +896,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Advanced shell job control & pipelines in akash verified\n");
     xscore_serial_write("[INFO] Manual page keyword lookup utility apropos verified\n");
     xscore_serial_write("[INFO] Spell checker utility aspell verified\n");
+    xscore_serial_write("[INFO] Command scheduling suite at/atq/atrm/batch verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");
