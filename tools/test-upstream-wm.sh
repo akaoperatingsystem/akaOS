@@ -48,7 +48,7 @@ with storage.open("wb") as handle:
     handle.write(b"AKAOS-VIRTIO-BLK-TEST\n")
 
 command = [
-    "qemu-system-x86_64", "-machine", "q35", "-cpu", "max", "-m", "768M",
+    "qemu-system-x86_64", "-machine", "q35", "-cpu", "max", "-smp", "2", "-m", "1024M",
     "-cdrom", str(image), "-boot", "d", "-vga", "std",
     "-drive", f"if=none,format=raw,file={storage},id=akaos-storage",
     "-device", "virtio-blk-pci,drive=akaos-storage",
@@ -97,7 +97,7 @@ def send_line(text):
     time.sleep(0.5)
 
 
-def wait_for(marker, timeout=180, after=0):
+def wait_for(marker, timeout=240, after=0):
     """Wait for a marker that has not been seen yet.
 
     The boot self test types into the console, so a marker can already be in

@@ -147,10 +147,16 @@ int main(int argc, char **argv) {
 
     int exit_code = 0;
     for (int i = arg_index; i < argc; ++i) {
+        const char *arg = argv[i];
+        if (arg[0] == '%') {
+            fprintf(stderr, "kill: %s: job control specifiers are handled by the shell builtin kill\n", arg);
+            exit_code = 1;
+            continue;
+        }
         char *endptr = NULL;
-        long pid_val = strtol(argv[i], &endptr, 10);
-        if (!argv[i][0] || (endptr && *endptr != '\0') || pid_val <= 0) {
-            fprintf(stderr, "kill: %s: arguments must be process IDs\n", argv[i]);
+        long pid_val = strtol(arg, &endptr, 10);
+        if (!arg[0] || (endptr && *endptr != '\0') || pid_val <= 0) {
+            fprintf(stderr, "kill: %s: arguments must be process IDs\n", arg);
             exit_code = 1;
             continue;
         }
