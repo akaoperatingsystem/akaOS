@@ -1628,6 +1628,26 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
     return n;
 }
 
+ssize_t pread64(int fd, void *buf, size_t count, off_t offset) {
+    return pread(fd, buf, count, offset);
+}
+
+ssize_t pwrite64(int fd, const void *buf, size_t count, off_t offset) {
+    return pwrite(fd, buf, count, offset);
+}
+
+off_t lseek64(int descriptor, off_t offset, int whence) {
+    return lseek(descriptor, offset, whence);
+}
+
+int truncate64(const char *path, off_t length) {
+    return truncate(path, length);
+}
+
+int ftruncate64(int descriptor, off_t length) {
+    return ftruncate(descriptor, length);
+}
+
 #include <sys/ipc.h>
 #include <sys/shm.h>
 

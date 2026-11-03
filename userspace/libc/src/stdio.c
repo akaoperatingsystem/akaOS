@@ -1199,6 +1199,14 @@ FILE *fopen(const char *path, const char *mode) {
     return stream;
 }
 
+FILE *fopen64(const char *path, const char *mode) {
+    return fopen(path, mode);
+}
+
+FILE *freopen64(const char *path, const char *mode, FILE *stream) {
+    return freopen(path, mode, stream);
+}
+
 FILE *tmpfile(void) {
     static uint32_t next_temporary_id;
     char path[64];
@@ -1340,6 +1348,14 @@ off_t ftello(FILE *stream) {
     }
     if (stream->flags & AKAOS_FILE_PUSHBACK) --position;
     return position;
+}
+
+int fseeko64(FILE *stream, off_t offset, int whence) {
+    return fseeko(stream, offset, whence);
+}
+
+off_t ftello64(FILE *stream) {
+    return ftello(stream);
 }
 
 long ftell(FILE *stream) {
