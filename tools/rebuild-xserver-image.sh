@@ -343,6 +343,7 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
             -maxdepth 1 -type f -name "${openbox_library}.*" -print | sort -V | tail -n 1)"
         [[ -n "$library_path" ]] || continue
         initramfs_files+=(
+            "--file=/lib/$openbox_library:$library_path:0444"
             "--file=/usr/local/lib/$openbox_library:$library_path:0444"
         )
     done
