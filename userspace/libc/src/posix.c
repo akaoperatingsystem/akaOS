@@ -520,6 +520,16 @@ err: {
     }
 }
 
+int scandir64(const char *dirp, struct dirent ***namelist,
+              int (*filter)(const struct dirent *),
+              int (*compar)(const struct dirent **, const struct dirent **)) {
+    return scandir(dirp, namelist, filter, compar);
+}
+
+int alphasort64(const struct dirent **a, const struct dirent **b) {
+    return alphasort(a, b);
+}
+
 int fchmod(int descriptor, mode_t mode) {
     (void)descriptor;
     (void)mode;

@@ -42,9 +42,13 @@ long telldir(DIR *directory);
 void seekdir(DIR *directory, long location);
 int dirfd(DIR *directory);
 int alphasort(const struct dirent **a, const struct dirent **b);
+int alphasort64(const struct dirent **a, const struct dirent **b);
 int scandir(const char *dirp, struct dirent ***namelist,
             int (*filter)(const struct dirent *),
             int (*compar)(const struct dirent **, const struct dirent **));
+int scandir64(const char *dirp, struct dirent ***namelist,
+              int (*filter)(const struct dirent *),
+              int (*compar)(const struct dirent **, const struct dirent **));
 
 #ifdef __cplusplus
 }
