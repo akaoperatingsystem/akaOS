@@ -97,6 +97,12 @@ int vasprintf(char **strp, const char *format, va_list ap);
 int asprintf(char **strp, const char *format, ...);
 int vsscanf(const char *input, const char *format, va_list ap);
 int sscanf(const char *input, const char *format, ...);
+int __isoc99_sscanf(const char *input, const char *format, ...);
+int __isoc99_vsscanf(const char *input, const char *format, va_list ap);
+int __isoc99_fscanf(FILE *stream, const char *format, ...);
+int __isoc99_vfscanf(FILE *stream, const char *format, va_list ap);
+int __isoc99_scanf(const char *format, ...);
+int __isoc99_vscanf(const char *format, va_list ap);
 
 void perror(const char *s);
 int remove(const char *path);

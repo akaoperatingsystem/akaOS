@@ -1928,3 +1928,39 @@ int pclose(FILE *stream) {
     }
     return status;
 }
+
+int __isoc99_sscanf(const char *input, const char *format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    int ret = vsscanf(input, format, ap);
+    va_end(ap);
+    return ret;
+}
+
+int __isoc99_vsscanf(const char *input, const char *format, va_list ap) {
+    return vsscanf(input, format, ap);
+}
+
+int __isoc99_fscanf(FILE *stream, const char *format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    int ret = vfscanf(stream, format, ap);
+    va_end(ap);
+    return ret;
+}
+
+int __isoc99_vfscanf(FILE *stream, const char *format, va_list ap) {
+    return vfscanf(stream, format, ap);
+}
+
+int __isoc99_scanf(const char *format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    int ret = vscanf(format, ap);
+    va_end(ap);
+    return ret;
+}
+
+int __isoc99_vscanf(const char *format, va_list ap) {
+    return vscanf(format, ap);
+}
