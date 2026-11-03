@@ -48,7 +48,7 @@ with storage.open("wb") as handle:
     handle.write(b"AKAOS-VIRTIO-BLK-TEST\n")
 
 command = [
-    "qemu-system-x86_64", "-machine", "q35", "-cpu", "max", "-smp", "2", "-m", "1024M",
+    "qemu-system-x86_64", "-machine", "q35", "-cpu", "max", "-m", "1024M",
     "-cdrom", str(image), "-boot", "d", "-vga", "std",
     "-drive", f"if=none,format=raw,file={storage},id=akaos-storage",
     "-device", "virtio-blk-pci,drive=akaos-storage",
