@@ -816,6 +816,11 @@ int xscore_user_process_self_test(void) {
     uint64_t apropos_phrase_status = UINT64_MAX;
     if (!p_apropos_phrase || !xscore_process_wait(p_apropos_phrase, &apropos_phrase_status) || apropos_phrase_status != 0 || !xscore_process_reap(p_apropos_phrase)) return 0;
 
+    const char *aspell_args[] = {"/bin/aspell", "check", "--sug-mode=bad-spellers", "-d", "en_US", "/etc/motd", 0};
+    struct xscore_process *p_aspell = xscore_process_create_path_args("/bin/aspell", 6, aspell_args);
+    uint64_t aspell_status = UINT64_MAX;
+    if (!p_aspell || !xscore_process_wait(p_aspell, &aspell_status) || aspell_status != 0 || !xscore_process_reap(p_aspell)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -875,6 +880,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Archiving & compression suite tar/gzip/gunzip verified\n");
     xscore_serial_write("[INFO] Advanced shell job control & pipelines in akash verified\n");
     xscore_serial_write("[INFO] Manual page keyword lookup utility apropos verified\n");
+    xscore_serial_write("[INFO] Spell checker utility aspell verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

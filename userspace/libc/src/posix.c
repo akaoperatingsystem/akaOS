@@ -1842,3 +1842,83 @@ int mincore(void *addr, size_t length, unsigned char *vec) {
     return 0;
 }
 
+size_t __fread_chk(void *ptr, size_t ptrlen, size_t size, size_t n, FILE *stream) {
+    if (size > 0 && n > ptrlen / size) __chk_fail();
+    return fread(ptr, size, n, stream);
+}
+
+int getpagesize(void) {
+    return 4096;
+}
+
+int fstat64(int fd, struct stat *statbuf) {
+    return fstat(fd, statbuf);
+}
+
+int stat64(const char *path, struct stat *statbuf) {
+    return stat(path, statbuf);
+}
+
+int lstat64(const char *path, struct stat *statbuf) {
+    return lstat(path, statbuf);
+}
+
+int fstatat64(int directory, const char *path, struct stat *statbuf, int flags) {
+    return fstatat(directory, path, statbuf, flags);
+}
+
+static int32_t tolower_table[384];
+static const int32_t *const tolower_table_ptr = &tolower_table[128];
+
+const int32_t **__ctype_tolower_loc(void) {
+    static int initialized = 0;
+    if (!initialized) {
+        for (int i = -128; i < 256; ++i) {
+            tolower_table[128 + i] = (i >= 'A' && i <= 'Z') ? (i + ('a' - 'A')) : i;
+        }
+        initialized = 1;
+    }
+    return (const int32_t **)&tolower_table_ptr;
+}
+
+static int32_t toupper_table[384];
+static const int32_t *const toupper_table_ptr = &toupper_table[128];
+
+const int32_t **__ctype_toupper_loc(void) {
+    static int initialized = 0;
+    if (!initialized) {
+        for (int i = -128; i < 256; ++i) {
+            toupper_table[128 + i] = (i >= 'a' && i <= 'z') ? (i - ('a' - 'A')) : i;
+        }
+        initialized = 1;
+    }
+    return (const int32_t **)&toupper_table_ptr;
+}
+
+static uint16_t ctype_b_table[384];
+static const uint16_t *const ctype_b_table_ptr = &ctype_b_table[128];
+
+const uint16_t **__ctype_b_loc(void) {
+    static int initialized = 0;
+    if (!initialized) {
+        for (int i = 0; i < 256; ++i) {
+            uint16_t mask = 0;
+            if (i >= '0' && i <= '9') mask |= 0x0800;
+            if (i >= 'a' && i <= 'z') mask |= 0x0200;
+            if (i >= 'A' && i <= 'Z') mask |= 0x0100;
+            if (mask & 0x0300) mask |= 0x0400;
+            if (mask & 0x0c00) mask |= 0x0008;
+            if (i == ' ' || (i >= 9 && i <= 13)) mask |= 0x2000;
+            if (i >= 0x20 && i <= 0x7e) mask |= 0x4000;
+            if ((i >= 0x21 && i <= 0x2f) || (i >= 0x3a && i <= 0x40) ||
+                (i >= 0x5b && i <= 0x60) || (i >= 0x7b && i <= 0x7e)) mask |= 0x0004;
+            if ((i >= 0 && i <= 0x1f) || i == 0x7f) mask |= 0x0002;
+            if ((mask & 0x0800) || (i >= 'a' && i <= 'f') || (i >= 'A' && i <= 'F')) mask |= 0x1000;
+            if (i == ' ' || i == '\t') mask |= 0x0001;
+            ctype_b_table[128 + i] = mask;
+        }
+        initialized = 1;
+    }
+    return (const uint16_t **)&ctype_b_table_ptr;
+}
+

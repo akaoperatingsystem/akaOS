@@ -114,3 +114,4 @@ xserver (1) - native X11 display protocol server
 apropos (1) - search the manual page names and descriptions, whatis database
 whatis (1) - display one-line manual page descriptions
 mandb (8) - create or update the manual page index databases
+aspell (1) - interactive spell checker and word suggestion utility

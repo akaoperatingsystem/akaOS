@@ -40,6 +40,10 @@ int isxdigit_l(int character, locale_t locale);
 int tolower_l(int character, locale_t locale);
 int toupper_l(int character, locale_t locale);
 
+const uint16_t **__ctype_b_loc(void);
+const int32_t **__ctype_tolower_loc(void);
+const int32_t **__ctype_toupper_loc(void);
+
 #ifdef __cplusplus
 }
 #endif

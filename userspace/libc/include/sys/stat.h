@@ -74,9 +74,13 @@ struct stat {
 extern "C" {
 #endif
 int stat(const char *path, struct stat *status);
+int stat64(const char *path, struct stat *status);
 int lstat(const char *path, struct stat *status);
+int lstat64(const char *path, struct stat *status);
 int fstat(int descriptor, struct stat *status);
+int fstat64(int descriptor, struct stat *status);
 int fstatat(int directory, const char *path, struct stat *status, int flags);
+int fstatat64(int directory, const char *path, struct stat *status, int flags);
 int akaos_stat(const char *path, struct akaos_stat *status);
 int mkdir(const char *path, mode_t mode);
 int mkdirat(int directory, const char *path, mode_t mode);

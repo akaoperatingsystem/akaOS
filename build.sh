@@ -1815,6 +1815,7 @@ build_user_program df "$ROOT_DIR/userspace/bin/df/main.c" DF.ELF
 build_user_program du "$ROOT_DIR/userspace/bin/du/main.c" DU.ELF
 build_user_program kill "$ROOT_DIR/userspace/bin/kill/main.c" KILL.ELF
 build_user_program apropos "$ROOT_DIR/userspace/bin/apropos/main.c" APROPOS.ELF
+build_user_program aspell "$ROOT_DIR/userspace/bin/aspell/main.c" ASPELL.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -3405,6 +3406,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/du:$BUILD_DIR/DU.ELF:exec" \
     --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec" \
     --file "/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec" \
+    --file "/bin/aspell:$BUILD_DIR/ASPELL.ELF:exec" \
     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \
     --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \
@@ -3533,7 +3535,10 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --data "/etc/motd:akaOS XSCore initramfs\n" \
     --data "/etc/akaos-desktop-compat:shim:0444" \
     --dir "/usr/share/man" \
-    --file "/usr/share/man/whatis:$ROOT_DIR/userspace/share/man/whatis:0644"
+    --file "/usr/share/man/whatis:$ROOT_DIR/userspace/share/man/whatis:0644" \
+    --dir "/usr/share/aspell" \
+    --file "/usr/share/aspell/en.dict:$ROOT_DIR/userspace/share/aspell/en.dict:0644" \
+    --file "/usr/share/aspell/en_US.dict:$ROOT_DIR/userspace/share/aspell/en_US.dict:0644"
 (cd "$BUILD_DIR" && objcopy -I binary -O elf64-x86-64 -B i386:x86-64 \
     initramfs.img initramfs_archive.o)
 
@@ -3653,6 +3658,17 @@ if [[ "$need_fat32_image" -eq 1 ]]; then
     fi
 
     echo "[DONE] $BUILD_DIR/akaos.img"
+    if command -v VBoxManage.exe >/dev/null 2>&1 || [[ -x "/mnt/c/Program Files/Oracle/VirtualBox/VBoxManage.exe" ]]; then
+        local vbox_bin="VBoxManage.exe"
+        if [[ ! -x "$(command -v VBoxManage.exe 2>/dev/null)" ]]; then
+            vbox_bin="/mnt/c/Program Files/Oracle/VirtualBox/VBoxManage.exe"
+        fi
+        rm -f "$BUILD_DIR/akaos.vdi"
+        "$vbox_bin" convertfromraw "$BUILD_DIR/akaos.img" "$BUILD_DIR/akaos.vdi" --format VDI >/dev/null 2>&1 || true
+        if [[ -f "$BUILD_DIR/akaos.vdi" ]]; then
+            echo "[DONE] $BUILD_DIR/akaos.vdi (VirtualBox native disk)"
+        fi
+    fi
 fi
 
 if [[ "$need_iso_image" -eq 1 ]]; then
