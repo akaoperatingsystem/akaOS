@@ -74,13 +74,22 @@ int xscore_user_process_self_test(void) {
         xscore_process_thread_id(first));
     uint64_t second_privilege_stack = xscore_thread_privilege_stack_top(
         xscore_process_thread_id(second));
-    if (!first_privilege_stack) { xscore_serial_write("[DBG1]\n"); return 0; }
-    if (!second_privilege_stack) { xscore_serial_write("[DBG2]\n"); return 0; }
-    if (first_privilege_stack == second_privilege_stack) { xscore_serial_write("[DBG3]\n"); return 0; }
-    if (!xscore_vmm_is_mapped_in(first_root, first_privilege_stack - PAGE_SIZE, 0, 0)) { xscore_serial_write("[DBG4]\n"); return 0; }
-    if (!xscore_vmm_is_mapped_in(second_root, second_privilege_stack - PAGE_SIZE, 0, 0)) { xscore_serial_write("[DBG5]\n"); return 0; }
-    if (xscore_vmm_is_mapped_in(first_root, first_privilege_stack - (XSCORE_THREAD_PRIVILEGE_STACK_PAGES + 1) * PAGE_SIZE, 0, 0)) { xscore_serial_write("[DBG6]\n"); return 0; }
-    if (xscore_vmm_is_mapped_in(second_root, second_privilege_stack - (XSCORE_THREAD_PRIVILEGE_STACK_PAGES + 1) * PAGE_SIZE, 0, 0)) { xscore_serial_write("[DBG7]\n"); return 0; }
+    if (!first_privilege_stack || !second_privilege_stack ||
+        first_privilege_stack == second_privilege_stack ||
+        !xscore_vmm_is_mapped_in(first_root, first_privilege_stack - PAGE_SIZE,
+                                 0, 0) ||
+        !xscore_vmm_is_mapped_in(second_root, second_privilege_stack - PAGE_SIZE,
+                                 0, 0) ||
+        xscore_vmm_is_mapped_in(
+            first_root,
+            first_privilege_stack -
+                (XSCORE_THREAD_PRIVILEGE_STACK_PAGES + 1) * PAGE_SIZE,
+            0, 0) ||
+        xscore_vmm_is_mapped_in(
+            second_root,
+            second_privilege_stack -
+                (XSCORE_THREAD_PRIVILEGE_STACK_PAGES + 1) * PAGE_SIZE,
+            0, 0)) return 0;
     xscore_serial_write("[INFO] Guarded per-task privilege-entry stacks verified\n");
 
     uint64_t first_physical = UINT64_MAX;
