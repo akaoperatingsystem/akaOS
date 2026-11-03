@@ -29,15 +29,21 @@ struct shell_job {
     int process_count;
     int processes[MAX_STAGES];
     char cmd[48];
+    uint32_t seq;
 };
 
 #define MAX_SHELL_JOBS 32
 static struct shell_job shell_jobs[MAX_SHELL_JOBS];
 static int next_job_id = 1;
+static uint32_t job_seq_counter = 1;
 
 static int last_exit_status = 0;
 static struct akaos_account shell_account;
 static struct shell_job *find_job_by_id(int id);
+static struct shell_job *find_current_job(void);
+static struct shell_job *find_previous_job(void);
+static struct shell_job *find_job_by_spec(const char *spec);
+static void get_current_and_previous_jobs(int *cur_id, int *prev_id);
 
 static int wait_status_exit_code(int status) {
     if (WIFEXITED(status)) return WEXITSTATUS(status);
@@ -100,6 +106,7 @@ static int add_shell_job(int pid, int state, const char *cmd) {
             shell_jobs[i].pgid = pid;
             shell_jobs[i].process_count = 1;
             shell_jobs[i].processes[0] = pid;
+            shell_jobs[i].seq = ++job_seq_counter;
             size_t c = 0;
             while (cmd && cmd[c] && c < sizeof(shell_jobs[i].cmd) - 1) {
                 shell_jobs[i].cmd[c] = cmd[c];
@@ -134,6 +141,123 @@ static struct shell_job *find_job_by_id(int id) {
             return &shell_jobs[i];
         }
     }
+    return NULL;
+}
+
+static void get_current_and_previous_jobs(int *cur_id, int *prev_id) {
+    if (cur_id) *cur_id = -1;
+    if (prev_id) *prev_id = -1;
+
+    int cur = -1, prev = -1;
+    uint32_t max_seq = 0, prev_max_seq = 0;
+
+    int has_stopped = 0;
+    for (int i = 0; i < MAX_SHELL_JOBS; ++i) {
+        if (shell_jobs[i].state == 2) {
+            has_stopped = 1;
+            if (shell_jobs[i].seq > max_seq) {
+                prev_max_seq = max_seq;
+                prev = cur;
+                max_seq = shell_jobs[i].seq;
+                cur = shell_jobs[i].id;
+            } else if (shell_jobs[i].seq > prev_max_seq) {
+                prev_max_seq = shell_jobs[i].seq;
+                prev = shell_jobs[i].id;
+            }
+        }
+    }
+
+    if (has_stopped) {
+        if (prev < 0) {
+            uint32_t run_max = 0;
+            for (int i = 0; i < MAX_SHELL_JOBS; ++i) {
+                if (shell_jobs[i].state == 1 && shell_jobs[i].seq > run_max) {
+                    run_max = shell_jobs[i].seq;
+                    prev = shell_jobs[i].id;
+                }
+            }
+        }
+        if (cur_id) *cur_id = cur;
+        if (prev_id) *prev_id = prev;
+        return;
+    }
+
+    for (int i = 0; i < MAX_SHELL_JOBS; ++i) {
+        if (shell_jobs[i].state == 1) {
+            if (shell_jobs[i].seq > max_seq) {
+                prev_max_seq = max_seq;
+                prev = cur;
+                max_seq = shell_jobs[i].seq;
+                cur = shell_jobs[i].id;
+            } else if (shell_jobs[i].seq > prev_max_seq) {
+                prev_max_seq = shell_jobs[i].seq;
+                prev = shell_jobs[i].id;
+            }
+        }
+    }
+
+    if (cur_id) *cur_id = cur;
+    if (prev_id) *prev_id = prev;
+}
+
+static struct shell_job *find_current_job(void) {
+    int cur_id = -1;
+    get_current_and_previous_jobs(&cur_id, NULL);
+    if (cur_id >= 0) {
+        return find_job_by_id(cur_id);
+    }
+    return NULL;
+}
+
+static struct shell_job *find_previous_job(void) {
+    int prev_id = -1;
+    get_current_and_previous_jobs(NULL, &prev_id);
+    if (prev_id >= 0) {
+        return find_job_by_id(prev_id);
+    }
+    return NULL;
+}
+
+__attribute__((unused)) static struct shell_job *find_job_by_spec(const char *spec) {
+    if (!spec || !*spec || strcmp(spec, "%") == 0 || strcmp(spec, "%%") == 0 || strcmp(spec, "%+") == 0) {
+        return find_current_job();
+    }
+    if (strcmp(spec, "%-") == 0) {
+        return find_previous_job();
+    }
+
+    const char *p = spec;
+    if (*p == '%') ++p;
+
+    int is_digits = 1;
+    for (size_t i = 0; p[i]; ++i) {
+        if (p[i] < '0' || p[i] > '9') {
+            is_digits = 0;
+            break;
+        }
+    }
+    if (is_digits && *p) {
+        int id = atoi(p);
+        return find_job_by_id(id);
+    }
+
+    if (*p == '?') {
+        const char *sub = p + 1;
+        for (int i = 0; i < MAX_SHELL_JOBS; ++i) {
+            if (shell_jobs[i].state != 0 && strstr(shell_jobs[i].cmd, sub)) {
+                return &shell_jobs[i];
+            }
+        }
+        return NULL;
+    }
+
+    size_t plen = strlen(p);
+    for (int i = 0; i < MAX_SHELL_JOBS; ++i) {
+        if (shell_jobs[i].state != 0 && strncmp(shell_jobs[i].cmd, p, plen) == 0) {
+            return &shell_jobs[i];
+        }
+    }
+
     return NULL;
 }
 

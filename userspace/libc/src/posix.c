@@ -1820,3 +1820,15 @@ long double __isoc23_strtold(const char *nptr, char **endptr) {
     return strtold(nptr, endptr);
 }
 
+int mincore(void *addr, size_t length, unsigned char *vec) {
+    if (!addr || !vec) {
+        errno = EFAULT;
+        return -1;
+    }
+    size_t page_count = (length + 4095) / 4096;
+    for (size_t i = 0; i < page_count; ++i) {
+        vec[i] = 1;
+    }
+    return 0;
+}
+

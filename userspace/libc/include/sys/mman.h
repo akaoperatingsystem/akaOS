@@ -35,6 +35,7 @@ int msync(void *address, size_t length, int flags);
 int memfd_create(const char *name, unsigned int flags);
 int shm_open(const char *name, int flags, mode_t mode);
 int shm_unlink(const char *name);
+int mincore(void *addr, size_t length, unsigned char *vec);
 #ifdef __cplusplus
 }
 #endif
