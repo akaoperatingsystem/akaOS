@@ -52,11 +52,7 @@ fi
 # path that does not exist is never newer than an object, and the object would
 # be left untouched while the source changed.
 read_build_array() {
-    local name="$1"
-    sed -n "/^${name}=(/,/^)/p" "$ROOT_DIR/build.sh" |
-        sed -e '1d' -e '$d' -e 's/^[[:space:]]*"//' -e 's/"[[:space:]]*$//' |
-        grep -v '^$' |
-        sed -e "s|\\\$ROOT_DIR|$ROOT_DIR|g"
+    python3 "$ROOT_DIR/tools/extract-build-array.py" "$ROOT_DIR" "$1"
 }
 
 # ---------------------------------------------------------------- display server
@@ -340,11 +336,29 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     -T "$ROOT_DIR/userspace/linker/user.ld" \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-apropos-main.o" \
     -o "$BUILD_DIR/APROPOS.ELF"
+
+echo "[BUILD] user aspell"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/aspell/main.c" -o "$BUILD_DIR/user-aspell-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-aspell-main.o" \
+    -o "$BUILD_DIR/ASPELL.ELF"
+
 initramfs_files+=(
     "--file=/bin/init:$BUILD_DIR/INIT.ELF:exec"
     "--file=/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec"
+    "--file=/bin/aspell:$BUILD_DIR/ASPELL.ELF:exec"
     "--dir=/usr/share/man"
     "--file=/usr/share/man/whatis:$ROOT_DIR/userspace/share/man/whatis:0644"
+    "--dir=/usr/share/aspell"
+    "--file=/usr/share/aspell/en.dict:$ROOT_DIR/userspace/share/aspell/en.dict:0644"
+    "--file=/usr/share/aspell/en_US.dict:$ROOT_DIR/userspace/share/aspell/en_US.dict:0644"
 )
 
 echo "[BUILD] staging core graphics & GUI runtime libraries"
