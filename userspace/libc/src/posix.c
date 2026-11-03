@@ -1772,3 +1772,31 @@ int __vprintf_chk(int flag, const char *format, va_list ap) {
     return vprintf(format, ap);
 }
 
+long __isoc23_strtol(const char *nptr, char **endptr, int base) {
+    return strtol(nptr, endptr, base);
+}
+
+unsigned long __isoc23_strtoul(const char *nptr, char **endptr, int base) {
+    return strtoul(nptr, endptr, base);
+}
+
+long long __isoc23_strtoll(const char *nptr, char **endptr, int base) {
+    return strtoll(nptr, endptr, base);
+}
+
+unsigned long long __isoc23_strtoull(const char *nptr, char **endptr, int base) {
+    return strtoull(nptr, endptr, base);
+}
+
+float __isoc23_strtof(const char *nptr, char **endptr) {
+    return strtof(nptr, endptr);
+}
+
+double __isoc23_strtod(const char *nptr, char **endptr) {
+    return strtod(nptr, endptr);
+}
+
+long double __isoc23_strtold(const char *nptr, char **endptr) {
+    return strtold(nptr, endptr);
+}
+

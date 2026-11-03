@@ -92,6 +92,15 @@ void exit(int status) __attribute__((noreturn));
 int atexit(void (*function)(void));
 int system(const char *command);
 int mbtowc(wchar_t *wide_character, const char *multibyte, size_t length);
+
+/* C23 / glibc compatibility aliases */
+long __isoc23_strtol(const char *nptr, char **endptr, int base);
+unsigned long __isoc23_strtoul(const char *nptr, char **endptr, int base);
+long long __isoc23_strtoll(const char *nptr, char **endptr, int base);
+unsigned long long __isoc23_strtoull(const char *nptr, char **endptr, int base);
+float __isoc23_strtof(const char *nptr, char **endptr);
+double __isoc23_strtod(const char *nptr, char **endptr);
+long double __isoc23_strtold(const char *nptr, char **endptr);
 int wctomb(char *multibyte, wchar_t wide_character);
 size_t mbstowcs(wchar_t *wide, const char *multibyte, size_t count);
 size_t wcstombs(char *multibyte, const wchar_t *wide, size_t count);
