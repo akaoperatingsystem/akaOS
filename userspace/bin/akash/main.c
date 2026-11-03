@@ -488,9 +488,21 @@ static int is_ident_char(char c) {
 static void expand_variables(const char *src, char *dst, size_t max_len) {
     size_t d = 0;
     size_t s = 0;
+    int in_single_quote = 0;
+    int in_double_quote = 0;
 
     while (src[s] && d < max_len - 1) {
-        if (src[s] == '$') {
+        if (src[s] == '\'' && !in_double_quote) {
+            in_single_quote = !in_single_quote;
+            dst[d++] = src[s++];
+            continue;
+        }
+        if (src[s] == '"' && !in_single_quote) {
+            in_double_quote = !in_double_quote;
+            dst[d++] = src[s++];
+            continue;
+        }
+        if (src[s] == '$' && !in_single_quote) {
             ++s;
             if (src[s] == '?') {
                 ++s;
@@ -644,12 +656,12 @@ static void parse_stage(char *str, struct command_stage *stage) {
         }
 
         /* Argument */
-        if (*p == '"') {
-            ++p;
+        if (*p == '"' || *p == '\'') {
+            char quote_char = *p++;
             stage->argv[stage->argc] = p;
             stage->quoted[stage->argc++] = 1;
-            while (*p && *p != '"') ++p;
-            if (*p == '"') {
+            while (*p && *p != quote_char) ++p;
+            if (*p == quote_char) {
                 *p = '\0';
                 ++p;
             }
@@ -1667,8 +1679,11 @@ static char *trim_str(char *str) {
 static int execute_command_line(const char *cmd_line) {
     if (!cmd_line || !*cmd_line) return 0;
 
+    char dealiased[2048];
+    expand_aliases(cmd_line, dealiased, sizeof(dealiased));
+
     char expanded[2048];
-    expand_variables(cmd_line, expanded, sizeof(expanded));
+    expand_variables(dealiased, expanded, sizeof(expanded));
 
     int should_run = 1;
     char sub_cmd[512];

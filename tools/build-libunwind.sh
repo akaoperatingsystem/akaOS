@@ -157,6 +157,11 @@ for arch in "${architectures[@]}"; do
     cxx_flags="$c_flags -D_LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE"
     build_dir="$BUILD_ROOT/$arch"
 
+    artifact_dir="$ROOT_DIR/build/cxx-runtime/llvm-${LLVM_VERSION}/$arch"
+    if [[ -s "$artifact_dir/libunwind.a" && -s "$artifact_dir/libc++abi.a" && -s "$artifact_dir/libc++.a" && -f "$artifact_dir/include/c++/v1/__config" ]]; then
+        echo "[SKIP] ${arch} upstream libc++, libc++abi, libunwind, and headers (already staged in $artifact_dir)"
+        continue
+    fi
     echo "[BUILD] LLVM libunwind ${LLVM_VERSION} for ${arch} (${target})"
     cmake -Wno-dev \
         -S "$LLVM_SOURCE_DIR/runtimes" \
