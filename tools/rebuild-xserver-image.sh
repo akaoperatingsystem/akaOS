@@ -337,7 +337,9 @@ for core_lib in \
     libgdk_pixbuf-2.0.so.0 libgtk-3.so.0 libgdk-3.so.0 libatk-1.0.so.0 \
     libpango-1.0.so.0 libpangocairo-1.0.so.0 libcairo.so.2 libcairo-gobject.so.2 \
     libharfbuzz.so.0 libfreetype.so.6 libfontconfig.so.1 libfribidi.so.0 \
-    libpixman-1.so.0 libpng16.so.16 libgraphene-1.0.so.0 libepoxy.so.0; do
+    libpixman-1.so.0 libpng16.so.16 libgraphene-1.0.so.0 libepoxy.so.0 \
+    libglib-2.0.so.0 libgobject-2.0.so.0 libgio-2.0.so.0 libgmodule-2.0.so.0 \
+    libgthread-2.0.so.0 libffi.so.8 libintl.so.8 libpcre2-8.so.0 libz.so.1; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
@@ -358,7 +360,7 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
     )
     for openbox_library in libobt.so.2 libobrender.so.32 libxml2.so.2 \
         libpangoxft-1.0.so.0 libpango-1.0.so.0 libXft.so.2 libglib-2.0.so.0; do
-        library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" \
+        library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
             -maxdepth 1 -type f -name "${openbox_library}.*" -print | sort -V | tail -n 1)"
         [[ -n "$library_path" ]] || continue
         initramfs_files+=(
