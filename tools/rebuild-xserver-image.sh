@@ -356,6 +356,11 @@ done
 initramfs_files+=(
     "--data=/lib/.upstream-glib:enabled:0444"
     "--dir=/lib/.upstream-gtk3"
+    "--dir=/etc"
+    "--data=/etc/motd:akaOS XSCore initramfs\n"
+    "--file=/etc/passwd:$ROOT_DIR/userspace/etc/passwd:0644"
+    "--file=/etc/group:$ROOT_DIR/userspace/etc/group:0644"
+    "--file=/etc/shadow:$ROOT_DIR/userspace/etc/shadow:0600"
 )
 
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then

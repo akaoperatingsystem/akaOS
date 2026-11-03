@@ -801,7 +801,7 @@ int xscore_user_process_self_test(void) {
     uint64_t akash_jc_status = UINT64_MAX;
     if (!p_akash_jc || !xscore_process_wait(p_akash_jc, &akash_jc_status) || akash_jc_status != 0 || !xscore_process_reap(p_akash_jc)) return 0;
 
-    const char *akash_alias_args[] = {"/bin/akash", "-c", "alias c='clear'; alias c; alias -p; unalias c; alias c 2>&1 || true", 0};
+    const char *akash_alias_args[] = {"/bin/akash", "-c", "alias c='clear'; alias c; alias -p; c; unalias c", 0};
     struct xscore_process *p_akash_alias = xscore_process_create_path_args("/bin/akash", 3, akash_alias_args);
     uint64_t akash_alias_status = UINT64_MAX;
     if (!p_akash_alias || !xscore_process_wait(p_akash_alias, &akash_alias_status) || akash_alias_status != 0 || !xscore_process_reap(p_akash_alias)) return 0;
