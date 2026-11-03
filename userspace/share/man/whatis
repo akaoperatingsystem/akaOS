@@ -1,5 +1,9 @@
 # akaOS whatis manual page index database
 akash (1) - native userspace interactive shell
+at (1) - queue, examine or delete jobs for later execution
+atq (1) - list the user's pending jobs
+atrm (1) - delete jobs queued by at
+batch (1) - execute commands when system load levels permit
 alias (1) - define or display shell aliases
 unalias (1) - remove shell alias definitions
 bg (1) - send or resume jobs in the background

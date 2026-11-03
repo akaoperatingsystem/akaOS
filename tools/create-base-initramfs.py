@@ -10,12 +10,17 @@ raw_dirs = [
     "/tmp", "/lib", "/usr", "/usr/share", "/usr/share/aspell",
     "/usr/local", "/usr/local/bin", "/usr/local/lib",
     "/var", "/var/lib", "/var/lib/pkg", "/var/cache", "/var/cache/pkg",
-    "/var/www", "/var/www/cgi-bin"
+    "/var/www", "/var/www/cgi-bin",
+    "/var/spool", "/var/spool/at", "/var/spool/at/spool"
 ]
 
 raw_files = [
     f"/usr/share/aspell/en.dict:{ROOT_DIR}/userspace/share/aspell/en.dict:0644",
     f"/usr/share/aspell/en_US.dict:{ROOT_DIR}/userspace/share/aspell/en_US.dict:0644",
+    f"/bin/at:{BUILD_DIR}/AT.ELF:exec",
+    f"/bin/atq:{BUILD_DIR}/AT.ELF:exec",
+    f"/bin/atrm:{BUILD_DIR}/AT.ELF:exec",
+    f"/bin/batch:{BUILD_DIR}/AT.ELF:exec",
     f"/bin/hello:{BUILD_DIR}/HELLO.ELF:exec",
     f"/bin/hello-pie:{BUILD_DIR}/HELLO_PIE.ELF:exec",
     f"/bin/hello-pi:{BUILD_DIR}/HELLO_PIE.ELF:exec",
