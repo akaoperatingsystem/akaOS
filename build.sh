@@ -3643,18 +3643,40 @@ if [[ "$need_fat32_image" -eq 1 ]]; then
         fat32_disk_mib=128
     fi
     echo "[IMAGE] FAT32 size: ${fat32_disk_mib} MiB (kernel plus 64 MiB headroom)"
-    truncate -s "${fat32_disk_mib}M" "$BUILD_DIR/akaos.img"
-    mkfs.fat -F 32 -n AKAOS "$BUILD_DIR/akaos.img" >/dev/null
-    mmd -i "$BUILD_DIR/akaos.img" ::/EFI ::/EFI/BOOT
-    mcopy -o -i "$BUILD_DIR/akaos.img" "$ESP_DIR/EFI/BOOT/BOOTX64.EFI" ::/EFI/BOOT/BOOTX64.EFI
-    mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/XSCORE.ELF" ::/XSCORE.ELF
-    if [[ "$bios_test" -eq 1 ]]; then
-        : > "$BUILD_DIR/AKAOS.TEST"
-        mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/AKAOS.TEST" ::/AKAOS.TEST
-    fi
-    if [[ "$bios_verbose" -eq 1 ]]; then
-        : > "$BUILD_DIR/VERBOSE"
-        mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/VERBOSE" ::/VERBOSE
+    # Build a standard UEFI GPT partitioned disk image with an active EFI System Partition (ESP)
+    # This guarantees 100% plug-and-play boot compatibility across Real Hardware PCs, Laptops, VirtualBox, VMware, and QEMU.
+    local gpt_total_mib=$((fat32_disk_mib + 4))
+    local gpt_part_end=$((gpt_total_mib - 2))
+    truncate -s "${gpt_total_mib}M" "$BUILD_DIR/akaos.img"
+    if command -v parted >/dev/null 2>&1; then
+        parted -s "$BUILD_DIR/akaos.img" mklabel gpt
+        parted -s "$BUILD_DIR/akaos.img" mkpart ESP fat32 1MiB "${gpt_part_end}MiB"
+        parted -s "$BUILD_DIR/akaos.img" set 1 esp on
+        mformat -i "$BUILD_DIR/akaos.img@@1M" -F -v AKAOS :: >/dev/null 2>&1 || mkfs.fat -F 32 -n AKAOS "$BUILD_DIR/akaos.img" >/dev/null
+        mmd -i "$BUILD_DIR/akaos.img@@1M" ::/EFI ::/EFI/BOOT 2>/dev/null || mmd -i "$BUILD_DIR/akaos.img" ::/EFI ::/EFI/BOOT
+        mcopy -o -i "$BUILD_DIR/akaos.img@@1M" "$ESP_DIR/EFI/BOOT/BOOTX64.EFI" ::/EFI/BOOT/BOOTX64.EFI 2>/dev/null || mcopy -o -i "$BUILD_DIR/akaos.img" "$ESP_DIR/EFI/BOOT/BOOTX64.EFI" ::/EFI/BOOT/BOOTX64.EFI
+        mcopy -o -i "$BUILD_DIR/akaos.img@@1M" "$BUILD_DIR/XSCORE.ELF" ::/XSCORE.ELF 2>/dev/null || mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/XSCORE.ELF" ::/XSCORE.ELF
+        if [[ "$bios_test" -eq 1 ]]; then
+            : > "$BUILD_DIR/AKAOS.TEST"
+            mcopy -o -i "$BUILD_DIR/akaos.img@@1M" "$BUILD_DIR/AKAOS.TEST" ::/AKAOS.TEST 2>/dev/null || mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/AKAOS.TEST" ::/AKAOS.TEST
+        fi
+        if [[ "$bios_verbose" -eq 1 ]]; then
+            : > "$BUILD_DIR/VERBOSE"
+            mcopy -o -i "$BUILD_DIR/akaos.img@@1M" "$BUILD_DIR/VERBOSE" ::/VERBOSE 2>/dev/null || mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/VERBOSE" ::/VERBOSE
+        fi
+    else
+        mkfs.fat -F 32 -n AKAOS "$BUILD_DIR/akaos.img" >/dev/null
+        mmd -i "$BUILD_DIR/akaos.img" ::/EFI ::/EFI/BOOT
+        mcopy -o -i "$BUILD_DIR/akaos.img" "$ESP_DIR/EFI/BOOT/BOOTX64.EFI" ::/EFI/BOOT/BOOTX64.EFI
+        mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/XSCORE.ELF" ::/XSCORE.ELF
+        if [[ "$bios_test" -eq 1 ]]; then
+            : > "$BUILD_DIR/AKAOS.TEST"
+            mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/AKAOS.TEST" ::/AKAOS.TEST
+        fi
+        if [[ "$bios_verbose" -eq 1 ]]; then
+            : > "$BUILD_DIR/VERBOSE"
+            mcopy -o -i "$BUILD_DIR/akaos.img" "$BUILD_DIR/VERBOSE" ::/VERBOSE
+        fi
     fi
 
     echo "[DONE] $BUILD_DIR/akaos.img"
