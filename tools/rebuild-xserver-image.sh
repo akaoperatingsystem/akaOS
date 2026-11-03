@@ -335,7 +335,8 @@ initramfs_files+=(
 echo "[BUILD] staging core graphics & GUI runtime libraries"
 for core_lib in \
     libgdk_pixbuf-2.0.so.0 libgtk-3.so.0 libgdk-3.so.0 libatk-1.0.so.0 \
-    libpango-1.0.so.0 libpangocairo-1.0.so.0 libcairo.so.2 libcairo-gobject.so.2 \
+    libpango-1.0.so.0 libpangocairo-1.0.so.0 libpangoft2-1.0.so.0 libpangoxft-1.0.so.0 \
+    libcairo.so.2 libcairo-gobject.so.2 libXft.so.2 \
     libharfbuzz.so.0 libfreetype.so.6 libfontconfig.so.1 libfribidi.so.0 \
     libpixman-1.so.0 libpng16.so.16 libgraphene-1.0.so.0 libepoxy.so.0 \
     libglib-2.0.so.0 libgobject-2.0.so.0 libgio-2.0.so.0 libgmodule-2.0.so.0 \
