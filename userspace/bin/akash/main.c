@@ -323,6 +323,7 @@ static void check_completed_jobs(void) {
                 shell_jobs[i].state = 0;
             } else if (any_stopped) {
                 shell_jobs[i].state = 2;
+                shell_jobs[i].seq = ++job_seq_counter;
                 write_str(STDOUT_FILENO, "[");
                 print_num(STDOUT_FILENO, shell_jobs[i].id);
                 write_str(STDOUT_FILENO, "]+  Stopped                 ");
@@ -809,13 +810,28 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "help") == 0) {
+        if (argc > 1 && strcmp(argv[1], "bg") == 0) {
+            write_str(STDOUT_FILENO, "bg: bg [job_id...]\n");
+            write_str(STDOUT_FILENO, "    Send a job to background\n\n");
+            write_str(STDOUT_FILENO, "    Syntax\n");
+            write_str(STDOUT_FILENO, "          bg [job_id...]\n\n");
+            write_str(STDOUT_FILENO, "    Send the specified jobs to the background. A background job is executed\n");
+            write_str(STDOUT_FILENO, "    simultaneously with fish, and does not have access to the keyboard. If no\n");
+            write_str(STDOUT_FILENO, "    job is specified, the last job to be used is put in the background.\n\n");
+            write_str(STDOUT_FILENO, "    bg takes a \"job ID\" available from jobs, not a PID.\n");
+            write_str(STDOUT_FILENO, "    If jobspec is not present, the shell's notion of the current job is used.\n");
+            write_str(STDOUT_FILENO, "    To kill a specific background job use, kill %jobspec.\n\n");
+            write_str(STDOUT_FILENO, "    bg is a BASH shell builtin and a ZSH shell builtin.\n");
+            last_exit_status = 0;
+            return 1;
+        }
         if (argc != 1) {
             write_str(STDERR_FILENO, "help: no arguments supported\n");
             last_exit_status = 1;
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, test, [, echo, export\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, test, [, echo, export\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs\n");
         write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
@@ -930,6 +946,9 @@ static int execute_builtin(int argc, char *argv[]) {
                 return 1;
             }
         }
+        int cur_job = -1, prev_job = -1;
+        get_current_and_previous_jobs(&cur_job, &prev_job);
+
         for (int i = 0; i < MAX_SHELL_JOBS; ++i) {
             if (shell_jobs[i].state == 1) {
                 if (pids_only) {
@@ -938,7 +957,10 @@ static int execute_builtin(int argc, char *argv[]) {
                 } else {
                     write_str(STDOUT_FILENO, "[");
                     print_num(STDOUT_FILENO, shell_jobs[i].id);
-                    write_str(STDOUT_FILENO, "]  ");
+                    write_str(STDOUT_FILENO, "]");
+                    if (shell_jobs[i].id == cur_job) write_str(STDOUT_FILENO, "+ ");
+                    else if (shell_jobs[i].id == prev_job) write_str(STDOUT_FILENO, "- ");
+                    else write_str(STDOUT_FILENO, "  ");
                     if (show_pids) {
                         print_num(STDOUT_FILENO, shell_jobs[i].pid);
                         write_str(STDOUT_FILENO, " ");
@@ -954,7 +976,10 @@ static int execute_builtin(int argc, char *argv[]) {
                 } else {
                     write_str(STDOUT_FILENO, "[");
                     print_num(STDOUT_FILENO, shell_jobs[i].id);
-                    write_str(STDOUT_FILENO, "]+ ");
+                    write_str(STDOUT_FILENO, "]");
+                    if (shell_jobs[i].id == cur_job) write_str(STDOUT_FILENO, "+ ");
+                    else if (shell_jobs[i].id == prev_job) write_str(STDOUT_FILENO, "- ");
+                    else write_str(STDOUT_FILENO, "  ");
                     if (show_pids) {
                         print_num(STDOUT_FILENO, shell_jobs[i].pid);
                         write_str(STDOUT_FILENO, " ");
@@ -970,17 +995,12 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "fg") == 0) {
-        int jid = 1;
+        struct shell_job *job = NULL;
         if (argc > 1) {
-            const char *arg = argv[1];
-            if (arg[0] == '%') ++arg;
-            jid = 0;
-            while (*arg >= '0' && *arg <= '9') {
-                jid = jid * 10 + (*arg - '0');
-                ++arg;
-            }
+            job = find_job_by_spec(argv[1]);
+        } else {
+            job = find_current_job();
         }
-        struct shell_job *job = find_job_by_id(jid);
         if (!job) {
             write_str(STDERR_FILENO, "fg: no such job\n");
             last_exit_status = 1;
@@ -998,6 +1018,7 @@ static int execute_builtin(int argc, char *argv[]) {
                 (void)kill(job->processes[index], SIGCONT);
             }
             job->state = 1;
+            job->seq = ++job_seq_counter;
         }
         int status = 0;
         int stopped = 0;
@@ -1011,6 +1032,7 @@ static int execute_builtin(int argc, char *argv[]) {
         (void)tcsetpgrp(STDIN_FILENO, getpgrp());
         if (stopped) {
             job->state = 2;
+            job->seq = ++job_seq_counter;
             write_str(STDOUT_FILENO, "\n[");
             print_num(STDOUT_FILENO, job->id);
             write_str(STDOUT_FILENO, "]+ Stopped    ");
@@ -1025,32 +1047,154 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "bg") == 0) {
-        int jid = 1;
-        if (argc > 1) {
-            const char *arg = argv[1];
-            if (arg[0] == '%') ++arg;
-            jid = 0;
-            while (*arg >= '0' && *arg <= '9') {
-                jid = jid * 10 + (*arg - '0');
-                ++arg;
-            }
+        if (argc > 1 && strcmp(argv[1], "--help") == 0) {
+            write_str(STDOUT_FILENO, "bg: bg [job_id...]\n");
+            write_str(STDOUT_FILENO, "    Send a job to background\n\n");
+            write_str(STDOUT_FILENO, "    Syntax\n");
+            write_str(STDOUT_FILENO, "          bg [job_id...]\n\n");
+            write_str(STDOUT_FILENO, "    Send the specified jobs to the background. A background job is executed\n");
+            write_str(STDOUT_FILENO, "    simultaneously with fish, and does not have access to the keyboard. If no\n");
+            write_str(STDOUT_FILENO, "    job is specified, the last job to be used is put in the background.\n\n");
+            write_str(STDOUT_FILENO, "    bg takes a \"job ID\" available from jobs, not a PID.\n");
+            write_str(STDOUT_FILENO, "    If jobspec is not present, the shell's notion of the current job is used.\n");
+            write_str(STDOUT_FILENO, "    To kill a specific background job use, kill %jobspec.\n\n");
+            write_str(STDOUT_FILENO, "    bg is a BASH shell builtin and a ZSH shell builtin.\n");
+            last_exit_status = 0;
+            return 1;
         }
-        struct shell_job *job = find_job_by_id(jid);
-        if (!job) {
-            write_str(STDERR_FILENO, "bg: no such job\n");
+
+        int start_arg = 1;
+        int job_count = argc - 1;
+        int had_error = 0;
+
+        if (job_count == 0) {
+            struct shell_job *job = find_current_job();
+            if (!job) {
+                write_str(STDERR_FILENO, "bg: no current job\n");
+                last_exit_status = 1;
+                return 1;
+            }
+            for (int index = 0; index < job->process_count; ++index) {
+                (void)kill(job->processes[index], SIGCONT);
+            }
+            job->state = 1;
+            job->seq = ++job_seq_counter;
+            write_str(STDOUT_FILENO, "[");
+            print_num(STDOUT_FILENO, job->id);
+            write_str(STDOUT_FILENO, "] ");
+            write_str(STDOUT_FILENO, job->cmd);
+            write_str(STDOUT_FILENO, " &\n");
+            last_exit_status = 0;
+            return 1;
+        }
+
+        for (int a = start_arg; a < argc; ++a) {
+            struct shell_job *job = find_job_by_spec(argv[a]);
+            if (!job) {
+                write_str(STDERR_FILENO, "bg: ");
+                write_str(STDERR_FILENO, argv[a]);
+                write_str(STDERR_FILENO, ": no such job\n");
+                had_error = 1;
+                continue;
+            }
+            for (int index = 0; index < job->process_count; ++index) {
+                (void)kill(job->processes[index], SIGCONT);
+            }
+            job->state = 1;
+            job->seq = ++job_seq_counter;
+            write_str(STDOUT_FILENO, "[");
+            print_num(STDOUT_FILENO, job->id);
+            write_str(STDOUT_FILENO, "] ");
+            write_str(STDOUT_FILENO, job->cmd);
+            write_str(STDOUT_FILENO, " &\n");
+        }
+        last_exit_status = had_error ? 1 : 0;
+        return 1;
+    }
+
+    if (strcmp(argv[0], "kill") == 0) {
+        if (argc < 2) {
+            write_str(STDERR_FILENO, "kill: usage: kill [-s sigspec | -n signum | -sigspec] pid | %jobspec ...\n");
             last_exit_status = 1;
             return 1;
         }
-        for (int index = 0; index < job->process_count; ++index) {
-            (void)kill(job->processes[index], SIGCONT);
+        if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
+            write_str(STDOUT_FILENO, "Usage: kill [-s signal | -signal] PID | %job_id...\n");
+            write_str(STDOUT_FILENO, "Send signals to processes or shell jobs.\n");
+            last_exit_status = 0;
+            return 1;
         }
-        job->state = 1;
-        write_str(STDOUT_FILENO, "[");
-        print_num(STDOUT_FILENO, job->id);
-        write_str(STDOUT_FILENO, "] ");
-        write_str(STDOUT_FILENO, job->cmd);
-        write_str(STDOUT_FILENO, " &\n");
-        last_exit_status = 0;
+        int target_sig = SIGTERM;
+        int arg_idx = 1;
+        if (argv[1][0] == '-') {
+            if (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "-n") == 0) {
+                if (argc < 4) {
+                    write_str(STDERR_FILENO, "kill: option requires an argument\n");
+                    last_exit_status = 1;
+                    return 1;
+                }
+                const char *sname = argv[2];
+                if (strncmp(sname, "SIG", 3) == 0) sname += 3;
+                if (strcmp(sname, "HUP") == 0 || strcmp(sname, "1") == 0) target_sig = SIGHUP;
+                else if (strcmp(sname, "INT") == 0 || strcmp(sname, "2") == 0) target_sig = SIGINT;
+                else if (strcmp(sname, "QUIT") == 0 || strcmp(sname, "3") == 0) target_sig = SIGQUIT;
+                else if (strcmp(sname, "KILL") == 0 || strcmp(sname, "9") == 0) target_sig = SIGKILL;
+                else if (strcmp(sname, "TERM") == 0 || strcmp(sname, "15") == 0) target_sig = SIGTERM;
+                else if (strcmp(sname, "CONT") == 0 || strcmp(sname, "18") == 0) target_sig = SIGCONT;
+                else if (strcmp(sname, "STOP") == 0 || strcmp(sname, "19") == 0) target_sig = SIGSTOP;
+                else if (strcmp(sname, "TSTP") == 0 || strcmp(sname, "20") == 0) target_sig = SIGTSTP;
+                else target_sig = atoi(sname);
+                arg_idx = 3;
+            } else {
+                const char *sname = argv[1] + 1;
+                if (strncmp(sname, "SIG", 3) == 0) sname += 3;
+                if (strcmp(sname, "HUP") == 0 || strcmp(sname, "1") == 0) target_sig = SIGHUP;
+                else if (strcmp(sname, "INT") == 0 || strcmp(sname, "2") == 0) target_sig = SIGINT;
+                else if (strcmp(sname, "QUIT") == 0 || strcmp(sname, "3") == 0) target_sig = SIGQUIT;
+                else if (strcmp(sname, "KILL") == 0 || strcmp(sname, "9") == 0) target_sig = SIGKILL;
+                else if (strcmp(sname, "TERM") == 0 || strcmp(sname, "15") == 0) target_sig = SIGTERM;
+                else if (strcmp(sname, "CONT") == 0 || strcmp(sname, "18") == 0) target_sig = SIGCONT;
+                else if (strcmp(sname, "STOP") == 0 || strcmp(sname, "19") == 0) target_sig = SIGSTOP;
+                else if (strcmp(sname, "TSTP") == 0 || strcmp(sname, "20") == 0) target_sig = SIGTSTP;
+                else target_sig = atoi(sname);
+                arg_idx = 2;
+            }
+        }
+        if (arg_idx >= argc) {
+            write_str(STDERR_FILENO, "kill: no process or job specified\n");
+            last_exit_status = 1;
+            return 1;
+        }
+        int had_err = 0;
+        for (int i = arg_idx; i < argc; ++i) {
+            const char *target = argv[i];
+            if (target[0] == '%') {
+                struct shell_job *j = find_job_by_spec(target);
+                if (!j) {
+                    write_str(STDERR_FILENO, "kill: ");
+                    write_str(STDERR_FILENO, target);
+                    write_str(STDERR_FILENO, ": no such job\n");
+                    had_err = 1;
+                    continue;
+                }
+                for (int p = 0; p < j->process_count; ++p) {
+                    if (kill(j->processes[p], target_sig) != 0) {
+                        had_err = 1;
+                    }
+                }
+            } else {
+                int pid_val = atoi(target);
+                if (pid_val <= 0) {
+                    write_str(STDERR_FILENO, "kill: invalid process ID\n");
+                    had_err = 1;
+                    continue;
+                }
+                if (kill(pid_val, target_sig) != 0) {
+                    had_err = 1;
+                }
+            }
+        }
+        last_exit_status = had_err ? 1 : 0;
         return 1;
     }
 

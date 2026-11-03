@@ -332,6 +332,25 @@ initramfs_files+=(
     "--file=/bin/init:$BUILD_DIR/INIT.ELF:exec"
 )
 
+echo "[BUILD] staging core graphics & GUI runtime libraries"
+for core_lib in \
+    libgdk_pixbuf-2.0.so.0 libgtk-3.so.0 libgdk-3.so.0 libatk-1.0.so.0 \
+    libpango-1.0.so.0 libpangocairo-1.0.so.0 libcairo.so.2 libcairo-gobject.so.2 \
+    libharfbuzz.so.0 libfreetype.so.6 libfontconfig.so.1 libfribidi.so.0 \
+    libpixman-1.so.0 libpng16.so.16 libgraphene-1.0.so.0 libepoxy.so.0; do
+    library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
+        -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
+    if [[ -z "$library_path" ]]; then
+        library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
+            -maxdepth 1 -type f -name "${core_lib}" -print | head -n 1)"
+    fi
+    [[ -n "$library_path" ]] || continue
+    initramfs_files+=(
+        "--file=/lib/$core_lib:$library_path:0444"
+        "--file=/usr/local/lib/$core_lib:$library_path:0444"
+    )
+done
+
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
     echo "[BUILD] upstream window manager"
     initramfs_files+=(
