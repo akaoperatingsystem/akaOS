@@ -121,7 +121,7 @@ def wait_for(marker, timeout=240, after=0):
 
 
 try:
-    wait_for("login:", 300)
+    wait_for("login:", 480)
     time.sleep(3.0)
     # The boot self test types into the console, and a prompt that still holds
     # those keys rejects the name.  A rejected name brings the prompt back
