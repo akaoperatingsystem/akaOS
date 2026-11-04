@@ -648,3 +648,11 @@ clock_t clock(void) {
     }
     return (clock_t)-1;
 }
+
+#include <sys/times.h>
+clock_t times(struct tms *buf) {
+    if (buf) {
+        memset(buf, 0, sizeof(*buf));
+    }
+    return clock();
+}
