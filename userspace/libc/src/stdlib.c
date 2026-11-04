@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 static volatile uint32_t akaos_rand_state = UINT32_C(1);
 
@@ -98,6 +99,47 @@ int mkstemp(char *template_path) {
 
     errno = EEXIST;
     return -1;
+}
+
+char *mkdtemp(char *template_path) {
+    static const char alphabet[] =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    static volatile uint32_t sequence = 0U;
+    if (!template_path) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    size_t length = strlen(template_path);
+    if (length < 6U) {
+        errno = EINVAL;
+        return NULL;
+    }
+    char *suffix = template_path + length - 6U;
+    for (size_t i = 0; i < 6U; ++i) {
+        if (suffix[i] != 'X') {
+            errno = EINVAL;
+            return NULL;
+        }
+    }
+
+    for (uint32_t attempt = 0U; attempt < 256U; ++attempt) {
+        uint32_t serial = __atomic_add_fetch(&sequence, 1U, __ATOMIC_RELAXED);
+        uint32_t state = serial * UINT32_C(0x9E3779B9) ^
+                         (uint32_t)getpid() * UINT32_C(0x85EBCA6B) ^ attempt;
+        for (size_t i = 0; i < 6U; ++i) {
+            state ^= state << 13;
+            state ^= state >> 17;
+            state ^= state << 5;
+            suffix[i] = alphabet[state % (sizeof(alphabet) - 1U)];
+        }
+
+        if (mkdir(template_path, 0700) == 0) return template_path;
+        if (errno != EEXIST) return NULL;
+    }
+
+    errno = EEXIST;
+    return NULL;
 }
 
 /* In-place heapsort keeps qsort allocation-free and gives a bounded

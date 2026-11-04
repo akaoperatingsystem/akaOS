@@ -1480,6 +1480,20 @@ int waitpid(int pid, int *status, int options) {
         (uint64_t)(uintptr_t)status, (uint64_t)options));
 }
 
+pid_t wait(int *status) {
+    return (pid_t)waitpid(-1, status, 0);
+}
+
+pid_t wait3(int *status, int options, struct rusage *rusage) {
+    (void)rusage;
+    return (pid_t)waitpid(-1, status, options);
+}
+
+pid_t wait4(pid_t pid, int *status, int options, struct rusage *rusage) {
+    (void)rusage;
+    return (pid_t)waitpid((int)pid, status, options);
+}
+
 int pipe(int pipefd[2]) {
     return pipe2(pipefd, 0);
 }

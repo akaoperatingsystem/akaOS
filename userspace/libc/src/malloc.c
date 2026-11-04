@@ -758,6 +758,10 @@ long double strtold(const char *nptr, char **endptr) {
     return parse_floating(nptr, endptr);
 }
 
+long double __isoc23_strtold(const char *nptr, char **endptr) {
+    return strtold(nptr, endptr);
+}
+
 double strtod(const char *nptr, char **endptr) {
     long double parsed = parse_floating(nptr, endptr);
     double result = (double)parsed;

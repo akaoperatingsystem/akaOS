@@ -198,6 +198,7 @@ grep -Fq "[INFO] Manual page keyword lookup utility apropos verified" "$TEST_LOG
 grep -Fq "[INFO] Spell checker utility aspell verified" "$TEST_LOG"
 grep -Fq "[INFO] Command scheduling suite at/atq/atrm/batch verified" "$TEST_LOG"
 grep -Fq "[INFO] Text processing and pattern scanning utility awk verified" "$TEST_LOG"
+grep -Fq "[INFO] Path stripping utility basename verified" "$TEST_LOG"
 grep -Fq "[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified" "$TEST_LOG"
 grep -Fq "[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified" "$TEST_LOG"
 grep -Fq "[INFO] ACPI diagnostics utility acpi verified" "$TEST_LOG"

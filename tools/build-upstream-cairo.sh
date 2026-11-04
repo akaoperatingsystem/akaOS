@@ -124,8 +124,8 @@ CAIRO_MESON_ARGS=(
     --cross-file "$ROOT_DIR/tools/meson-akaos-x86_64.ini"
     -Ddefault_library=shared -Dbuildtype=release -Dtests=disabled
     -Dfontconfig=enabled -Dfreetype=enabled -Dpng=disabled
-    -Dzlib=enabled -Dquartz=disabled -Dtee=disabled -Dxcb=disabled
-    -Dxlib=enabled -Dxlib-xcb=disabled -Dglib=disabled
+    -Dzlib=enabled -Dquartz=disabled -Dtee=disabled -Dxcb=enabled
+    -Dxlib=enabled -Dxlib-xcb=enabled -Dglib=disabled
     -Ddwrite=disabled -Dspectre=disabled -Dlzo=disabled
     -Dsymbol-lookup=disabled -Dgtk_doc=false
 )

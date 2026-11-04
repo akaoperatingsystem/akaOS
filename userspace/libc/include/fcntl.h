@@ -65,6 +65,7 @@ int open(const char *path, int flags, ...);
 int openat(int directory, const char *path, int flags, ...);
 int creat(const char *path, mode_t mode);
 int fcntl(int descriptor, int command, ...);
+int posix_fallocate(int fd, off_t offset, off_t len);
 
 #ifdef __cplusplus
 }

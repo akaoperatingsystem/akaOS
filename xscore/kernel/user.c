@@ -847,6 +847,16 @@ int xscore_user_process_self_test(void) {
     uint64_t awk_f_status = UINT64_MAX;
     if (!p_awk_f || !xscore_process_wait(p_awk_f, &awk_f_status) || awk_f_status != 0 || !xscore_process_reap(p_awk_f)) return 0;
 
+    const char *basename_args[] = {"/bin/basename", "/usr/bin/sort", 0};
+    struct xscore_process *p_base = xscore_process_create_path_args("/bin/basename", 2, basename_args);
+    uint64_t base_status = UINT64_MAX;
+    if (!p_base || !xscore_process_wait(p_base, &base_status) || base_status != 0 || !xscore_process_reap(p_base)) return 0;
+
+    const char *basename_suf_args[] = {"/bin/basename", "/usr/include/stdio.h", ".h", 0};
+    struct xscore_process *p_base_suf = xscore_process_create_path_args("/bin/basename", 3, basename_suf_args);
+    uint64_t base_suf_status = UINT64_MAX;
+    if (!p_base_suf || !xscore_process_wait(p_base_suf, &base_suf_status) || base_suf_status != 0 || !xscore_process_reap(p_base_suf)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -909,6 +919,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Spell checker utility aspell verified\n");
     xscore_serial_write("[INFO] Command scheduling suite at/atq/atrm/batch verified\n");
     xscore_serial_write("[INFO] Text processing and pattern scanning utility awk verified\n");
+    xscore_serial_write("[INFO] Path stripping utility basename verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

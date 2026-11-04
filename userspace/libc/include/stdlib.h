@@ -48,6 +48,7 @@ void *realloc(void *ptr, size_t size);
 void *aligned_alloc(size_t alignment, size_t size);
 int posix_memalign(void **memptr, size_t alignment, size_t size);
 int mkstemp(char *template_path);
+char *mkdtemp(char *template_path);
 
 int atoi(const char *nptr);
 double atof(const char *nptr);

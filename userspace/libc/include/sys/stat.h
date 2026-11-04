@@ -47,6 +47,10 @@
 #define S_IWOTH 00002
 #define S_IXOTH 00001
 
+#define S_IREAD  S_IRUSR
+#define S_IWRITE S_IWUSR
+#define S_IEXEC  S_IXUSR
+
 struct stat {
     dev_t st_dev;
     ino_t st_ino;

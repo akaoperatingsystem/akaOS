@@ -37,7 +37,10 @@
 #define _SC_GETGR_R_SIZE_MAX 69
 #define _SC_GETPW_R_SIZE_MAX 70
 #define _SC_PAGESIZE 30
+#define _SC_PAGE_SIZE _SC_PAGESIZE
 #define _SC_NPROCESSORS_ONLN 84
+#define _SC_PHYS_PAGES 85
+#define _SC_AVPHYS_PAGES 86
 #define _PC_PATH_MAX 4
 #define _PC_NAME_MAX 3
 /* The remaining pathconf names use a dedicated range so they never collide
@@ -82,6 +85,11 @@ int gethostname(char *name, size_t length);
 long sysconf(int name);
 int getpagesize(void);
 long pathconf(const char *path, int name);
+
+#define _CS_PATH 1
+#define _CS_GNU_LIBC_VERSION 2
+#define _CS_GNU_LIBPTHREAD_VERSION 3
+size_t confstr(int name, char *buf, size_t len);
 int unlink(const char *path);
 int unlinkat(int directory, const char *path, int flags);
 int link(const char *oldpath, const char *newpath);

@@ -22,6 +22,8 @@
 #include <sys/statvfs.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+#include <glob.h>
+#include <iconv.h>
 
 struct __akaos_DIR {
     int descriptor;
@@ -262,6 +264,8 @@ long sysconf(int name) {
         case _SC_GETPW_R_SIZE_MAX: return 1024;
         case _SC_PAGESIZE: return 4096;
         case _SC_NPROCESSORS_ONLN: return 1;
+        case _SC_PHYS_PAGES:
+        case _SC_AVPHYS_PAGES: return 262144;
         default:
             errno = EINVAL;
             return -1;
@@ -1826,10 +1830,6 @@ double __isoc23_strtod(const char *nptr, char **endptr) {
     return strtod(nptr, endptr);
 }
 
-long double __isoc23_strtold(const char *nptr, char **endptr) {
-    return strtold(nptr, endptr);
-}
-
 int mincore(void *addr, size_t length, unsigned char *vec) {
     if (!addr || !vec) {
         errno = EFAULT;
@@ -1920,5 +1920,334 @@ const uint16_t **__ctype_b_loc(void) {
         initialized = 1;
     }
     return (const uint16_t **)&ctype_b_table_ptr;
+}
+
+char *__progname = NULL;
+char *program_invocation_name = NULL;
+char *program_invocation_short_name = NULL;
+
+void vwarn(const char *fmt, va_list args) {
+    int saved_errno = errno;
+    if (__progname && *__progname) fprintf(stderr, "%s: ", __progname);
+    if (fmt) {
+        vfprintf(stderr, fmt, args);
+        fprintf(stderr, ": %s\n", strerror(saved_errno));
+    } else {
+        fprintf(stderr, "%s\n", strerror(saved_errno));
+    }
+}
+
+void vwarnx(const char *fmt, va_list args) {
+    if (__progname && *__progname) fprintf(stderr, "%s: ", __progname);
+    if (fmt) vfprintf(stderr, fmt, args);
+    fputc('\n', stderr);
+}
+
+void verr(int eval, const char *fmt, va_list args) {
+    vwarn(fmt, args);
+    exit(eval);
+}
+
+void verrx(int eval, const char *fmt, va_list args) {
+    vwarnx(fmt, args);
+    exit(eval);
+}
+
+void warn(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vwarn(fmt, ap);
+    va_end(ap);
+}
+
+void warnx(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vwarnx(fmt, ap);
+    va_end(ap);
+}
+
+void err(int eval, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    verr(eval, fmt, ap);
+    va_end(ap);
+}
+
+void errx(int eval, const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    verrx(eval, fmt, ap);
+    va_end(ap);
+}
+
+size_t confstr(int name, char *buf, size_t len) {
+    const char *val = "";
+    if (name == _CS_PATH) val = "/bin:/usr/bin:/usr/local/bin";
+    else if (name == _CS_GNU_LIBC_VERSION) val = "akaOS libc 0.2";
+    else if (name == _CS_GNU_LIBPTHREAD_VERSION) val = "akaOS pthread 0.2";
+    else {
+        errno = EINVAL;
+        return 0;
+    }
+    size_t val_len = strlen(val) + 1;
+    if (len > 0 && buf) {
+        strncpy(buf, val, len);
+        buf[len - 1] = 0;
+    }
+    return val_len;
+}
+
+void globfree(glob_t *pglob) {
+    if (!pglob) return;
+    if (pglob->gl_pathv) {
+        for (size_t i = 0; i < pglob->gl_pathc; ++i) {
+            free(pglob->gl_pathv[pglob->gl_offs + i]);
+        }
+        free(pglob->gl_pathv);
+        pglob->gl_pathv = NULL;
+    }
+    pglob->gl_pathc = 0;
+}
+
+int glob(const char *pattern, int flags,
+         int (*errfunc)(const char *epath, int eerrno), glob_t *pglob) {
+    (void)errfunc;
+    if (!pattern || !pglob) return GLOB_ABORTED;
+
+    char resolved[1024];
+    resolved[0] = 0;
+
+    if ((flags & (GLOB_TILDE | GLOB_TILDE_CHECK)) && pattern[0] == '~') {
+        const char *home = getenv("HOME");
+        if (!home || !*home) home = "/root";
+        if (pattern[1] == '/' || pattern[1] == 0) {
+            snprintf(resolved, sizeof(resolved), "%s%s", home, pattern + 1);
+            pattern = resolved;
+        }
+    }
+
+    if (!(flags & GLOB_APPEND)) {
+        pglob->gl_pathc = 0;
+        pglob->gl_pathv = NULL;
+        if (!(flags & GLOB_DOOFFS)) pglob->gl_offs = 0;
+    }
+
+    if (!strpbrk(pattern, "*?[")) {
+        struct stat st;
+        if (stat(pattern, &st) == 0 || (flags & GLOB_NOCHECK)) {
+            size_t total = pglob->gl_offs + pglob->gl_pathc + 2;
+            char **new_pathv = (char **)realloc(pglob->gl_pathv, total * sizeof(char *));
+            if (!new_pathv) return GLOB_NOSPACE;
+            pglob->gl_pathv = new_pathv;
+            pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = strdup(pattern);
+            pglob->gl_pathc++;
+            pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
+            return 0;
+        }
+        return GLOB_NOMATCH;
+    }
+
+    char dirpath[1024];
+    const char *last_slash = strrchr(pattern, '/');
+    const char *pat_file = pattern;
+    if (last_slash) {
+        size_t dlen = (size_t)(last_slash - pattern);
+        if (dlen >= sizeof(dirpath)) return GLOB_NOSPACE;
+        memcpy(dirpath, pattern, dlen);
+        dirpath[dlen] = 0;
+        pat_file = last_slash + 1;
+    } else {
+        strcpy(dirpath, ".");
+    }
+
+    DIR *d = opendir(dirpath[0] ? dirpath : "/");
+    if (!d) {
+        if (flags & GLOB_NOCHECK) {
+            size_t total = pglob->gl_offs + pglob->gl_pathc + 2;
+            char **new_pathv = (char **)realloc(pglob->gl_pathv, total * sizeof(char *));
+            if (!new_pathv) return GLOB_NOSPACE;
+            pglob->gl_pathv = new_pathv;
+            pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = strdup(pattern);
+            pglob->gl_pathc++;
+            pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
+            return 0;
+        }
+        return GLOB_NOMATCH;
+    }
+
+    struct dirent *ent;
+    size_t matched = 0;
+    while ((ent = readdir(d)) != NULL) {
+        if (fnmatch(pat_file, ent->d_name, FNM_PATHNAME) == 0) {
+            char entry_path[1024];
+            if (last_slash) {
+                snprintf(entry_path, sizeof(entry_path), "%s/%s", dirpath, ent->d_name);
+            } else {
+                snprintf(entry_path, sizeof(entry_path), "%s", ent->d_name);
+            }
+            size_t total = pglob->gl_offs + pglob->gl_pathc + 2;
+            char **new_pathv = (char **)realloc(pglob->gl_pathv, total * sizeof(char *));
+            if (!new_pathv) {
+                closedir(d);
+                return GLOB_NOSPACE;
+            }
+            pglob->gl_pathv = new_pathv;
+            pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = strdup(entry_path);
+            pglob->gl_pathc++;
+            pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
+            matched++;
+        }
+    }
+    closedir(d);
+
+    if (matched == 0) {
+        if (flags & GLOB_NOCHECK) {
+            size_t total = pglob->gl_offs + pglob->gl_pathc + 2;
+            char **new_pathv = (char **)realloc(pglob->gl_pathv, total * sizeof(char *));
+            if (!new_pathv) return GLOB_NOSPACE;
+            pglob->gl_pathv = new_pathv;
+            pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = strdup(pattern);
+            pglob->gl_pathc++;
+            pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
+            return 0;
+        }
+        return GLOB_NOMATCH;
+    }
+
+    if (!(flags & GLOB_NOSORT) && pglob->gl_pathc > 1) {
+        qsort(pglob->gl_pathv + pglob->gl_offs, pglob->gl_pathc,
+              sizeof(char *), (int (*)(const void *, const void *))strcmp);
+    }
+
+    return 0;
+}
+
+enum __akaos_enc {
+    ENC_UTF8,
+    ENC_UCS2BE,
+    ENC_ASCII
+};
+
+struct __akaos_iconv_ctx {
+    enum __akaos_enc from;
+    enum __akaos_enc to;
+};
+
+static enum __akaos_enc parse_enc(const char *name) {
+    if (!name) return ENC_UTF8;
+    if (strncasecmp(name, "UCS-2BE", 7) == 0 || strncasecmp(name, "UTF-16BE", 8) == 0)
+        return ENC_UCS2BE;
+    if (strncasecmp(name, "ASCII", 5) == 0 || strncasecmp(name, "US-ASCII", 8) == 0)
+        return ENC_ASCII;
+    return ENC_UTF8;
+}
+
+iconv_t iconv_open(const char *tocode, const char *fromcode) {
+    if (!tocode || !fromcode) {
+        errno = EINVAL;
+        return (iconv_t)-1;
+    }
+    struct __akaos_iconv_ctx *ctx = (struct __akaos_iconv_ctx *)malloc(sizeof(struct __akaos_iconv_ctx));
+    if (!ctx) {
+        errno = ENOMEM;
+        return (iconv_t)-1;
+    }
+    ctx->to = parse_enc(tocode);
+    ctx->from = parse_enc(fromcode);
+    return (iconv_t)ctx;
+}
+
+int iconv_close(iconv_t cd) {
+    if (!cd || cd == (iconv_t)-1) {
+        errno = EBADF;
+        return -1;
+    }
+    free(cd);
+    return 0;
+}
+
+size_t iconv(iconv_t cd, char **inbuf, size_t *inbytesleft,
+             char **outbuf, size_t *outbytesleft) {
+    if (!cd || cd == (iconv_t)-1) {
+        errno = EBADF;
+        return (size_t)-1;
+    }
+    if (!inbuf || !*inbuf) return 0;
+    if (!outbuf || !*outbuf || !inbytesleft || !outbytesleft) return 0;
+
+    struct __akaos_iconv_ctx *ctx = (struct __akaos_iconv_ctx *)cd;
+    size_t in_left = *inbytesleft;
+    size_t out_left = *outbytesleft;
+    const unsigned char *in = (const unsigned char *)*inbuf;
+    unsigned char *out = (unsigned char *)*outbuf;
+    size_t non_identical = 0;
+
+    if (ctx->from == ENC_UCS2BE && ctx->to == ENC_UTF8) {
+        while (in_left >= 2 && out_left > 0) {
+            uint32_t cp = ((uint32_t)in[0] << 8) | (uint32_t)in[1];
+            in += 2;
+            in_left -= 2;
+
+            if (cp < 0x80) {
+                *out++ = (unsigned char)cp;
+                out_left--;
+            } else if (cp < 0x800) {
+                if (out_left < 2) { errno = E2BIG; goto done; }
+                *out++ = (unsigned char)(0xc0 | (cp >> 6));
+                *out++ = (unsigned char)(0x80 | (cp & 0x3f));
+                out_left -= 2;
+            } else {
+                if (out_left < 3) { errno = E2BIG; goto done; }
+                *out++ = (unsigned char)(0xe0 | (cp >> 12));
+                *out++ = (unsigned char)(0x80 | ((cp >> 6) & 0x3f));
+                *out++ = (unsigned char)(0x80 | (cp & 0x3f));
+                out_left -= 3;
+            }
+            non_identical++;
+        }
+    } else if (ctx->from == ENC_UTF8 && ctx->to == ENC_UCS2BE) {
+        while (in_left > 0 && out_left >= 2) {
+            uint32_t cp = 0;
+            size_t step = 0;
+            if (in[0] < 0x80) {
+                cp = in[0];
+                step = 1;
+            } else if ((in[0] & 0xe0) == 0xc0 && in_left >= 2) {
+                cp = ((in[0] & 0x1f) << 6) | (in[1] & 0x3f);
+                step = 2;
+            } else if ((in[0] & 0xf0) == 0xe0 && in_left >= 3) {
+                cp = ((in[0] & 0x0f) << 12) | ((in[1] & 0x3f) << 6) | (in[2] & 0x3f);
+                step = 3;
+            } else {
+                break;
+            }
+            in += step;
+            in_left -= step;
+            *out++ = (unsigned char)(cp >> 8);
+            *out++ = (unsigned char)(cp & 0xff);
+            out_left -= 2;
+            non_identical++;
+        }
+    } else {
+        size_t n = in_left < out_left ? in_left : out_left;
+        memcpy(out, in, n);
+        in += n;
+        in_left -= n;
+        out += n;
+        out_left -= n;
+    }
+
+done:
+    *inbuf = (char *)in;
+    *inbytesleft = in_left;
+    *outbuf = (char *)out;
+    *outbytesleft = out_left;
+    return non_identical;
+}
+
+int posix_fallocate(int fd, off_t offset, off_t len) {
+    if (offset < 0 || len <= 0) return EINVAL;
+    return ftruncate(fd, offset + len) == 0 ? 0 : errno;
 }
 
