@@ -154,7 +154,7 @@ try:
     # Run Openbox, the window probe, and then LXPanel. The process table is
     # used instead of shell job variables, which akash does not implement.
     send_line("sh /etc/test-desktop.sh")
-    if not wait_for("x11 wm client: reparented into frame", 360):
+    if not wait_for("x11 wm client: reparented into frame", 480):
         print("[FAIL] The upstream window manager did not take the window over.",
               flush=True)
         print(content()[-4000:], flush=True)

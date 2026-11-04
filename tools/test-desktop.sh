@@ -4,7 +4,7 @@ xserver &
 sleep 2
 
 env DISPLAY=:0 /usr/local/bin/openbox --sm-disable &
-sleep 45
+sleep 15
 env DISPLAY=:0 x11-wm-client
 echo CLIENT-EXIT=$?
 
