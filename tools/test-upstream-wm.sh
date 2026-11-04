@@ -310,6 +310,28 @@ try:
         raise SystemExit(1)
     print("[PASS] i3 tiling window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE.",
           flush=True)
+    if not wait_for("LXQT-PANEL-RUNNING=0", 120):
+        print("[FAIL] lxqt-panel did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if not re.search(r"\blxqt-panel\b", output):
+        print("[FAIL] lxqt-panel was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] lxqt-panel desktop panel started and remained active alongside i3/Cinnamon/MATE/XFCE/LXDE.",
+          flush=True)
+    if not wait_for("LXQT-SESSION-RUNNING=0", 120):
+        print("[FAIL] lxqt-session did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if not re.search(r"\blxqt-session\b", output):
+        print("[FAIL] lxqt-session was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] lxqt-session desktop session manager started and remained active.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)
