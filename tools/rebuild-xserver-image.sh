@@ -424,7 +424,10 @@ for core_lib in \
     libatk-bridge-2.0.so.0 libatspi.so.0 libdbus-1.so.3 \
     libev.so.4 libyajl.so.2 libxcb-xrm.so.0 libxcb-cursor.so.0 libxcb-ewmh.so.2 \
     libxcb-icccm.so.4 libxcb-image.so.0 libxcb-keysyms.so.1 libxcb-render-util.so.0 \
-    libxcb-util.so.1 libstartup-notification-1.so.0; do
+    libxcb-util.so.1 libstartup-notification-1.so.0 \
+    libxcb.so.1 libxcb-render.so.0 libxcb-shm.so.0 libxcb-sync.so.1 \
+    libxcb-xfixes.so.0 libxcb-shape.so.0 libxcb-randr.so.0 libxcb-xinerama.so.0 \
+    libxcb-xkb.so.1 libX11-xcb.so.1 libXau.so.6 libXdmcp.so.6; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
