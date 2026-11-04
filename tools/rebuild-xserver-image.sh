@@ -456,13 +456,17 @@ for core_lib in \
     libxcb.so.1 libxcb-render.so.0 libxcb-shm.so.0 libxcb-sync.so.1 \
     libxcb-xfixes.so.0 libxcb-shape.so.0 libxcb-randr.so.0 libxcb-xinerama.so.0 \
     libxcb-xkb.so.1 libX11-xcb.so.1 libXau.so.6 libXdmcp.so.6 \
-    libQt6Core.so.6 libQt6DBus.so.6 libQt6Gui.so.6 libQt6Widgets.so.6 \
-    libQt6Concurrent.so.6 libQt6Svg.so.6 libQt6Xml.so.6 \
-    libQt6WaylandClient.so.6 libQt6WlShellIntegration.so.6 \
-    libQt6Xdg.so.4 libQt6XdgIconLoader.so.4 liblxqt.so.2 \
-    liblxqt-globalkeys.so.2 liblxqt-globalkeys-ui.so.2 \
-    libdbusmenu-lxqt.so.0 libsysstat-qt6.so.1 \
-    libKF6WindowSystem.so.6 libLayerShellQtInterface.so.6; do
+    libQt6Core.so libQt6Core.so.6 libQt6DBus.so libQt6DBus.so.6 \
+    libQt6Gui.so libQt6Gui.so.6 libQt6Widgets.so libQt6Widgets.so.6 \
+    libQt6Concurrent.so libQt6Concurrent.so.6 libQt6Svg.so libQt6Svg.so.6 \
+    libQt6Xml.so libQt6Xml.so.6 libQt6WaylandClient.so libQt6WaylandClient.so.6 \
+    libQt6WlShellIntegration.so libQt6WlShellIntegration.so.6 \
+    libQt6Xdg.so libQt6Xdg.so.4 libQt6XdgIconLoader.so libQt6XdgIconLoader.so.4 \
+    liblxqt.so liblxqt.so.2 liblxqt-globalkeys.so liblxqt-globalkeys.so.2 \
+    liblxqt-globalkeys-ui.so liblxqt-globalkeys-ui.so.2 \
+    libdbusmenu-lxqt.so libdbusmenu-lxqt.so.0 libsysstat-qt6.so libsysstat-qt6.so.1 \
+    libKF6WindowSystem.so libKF6WindowSystem.so.6 \
+    libLayerShellQtInterface.so libLayerShellQtInterface.so.6; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
