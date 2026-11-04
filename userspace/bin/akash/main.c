@@ -51,6 +51,16 @@ static int wait_status_exit_code(int status) {
     return 1;
 }
 
+/* Shell invocation mode flags */
+static int opt_restricted_shell = 0;
+static int opt_login_shell = 0;
+static int opt_interactive_shell = -1; /* -1 = auto-detect */
+static int opt_posix_mode = 0;
+static int opt_verbose = 0;
+static int opt_noprofile = 0;
+static int opt_norc = 0;
+static const char *opt_rcfile = NULL;
+
 /* Script positional parameters */
 static char script_arg0[128] = "akash";
 static char script_args[10][128];
@@ -855,6 +865,15 @@ static int execute_builtin(int argc, char *argv[]) {
             char *eq = strchr(argv[1], '=');
             if (eq) {
                 *eq = '\0';
+                if (opt_restricted_shell &&
+                    (strcmp(argv[1], "SHELL") == 0 || strcmp(argv[1], "PATH") == 0 ||
+                     strcmp(argv[1], "ENV") == 0 || strcmp(argv[1], "BASH_ENV") == 0)) {
+                    write_str(STDERR_FILENO, "export: ");
+                    write_str(STDERR_FILENO, argv[1]);
+                    write_str(STDERR_FILENO, ": readonly variable in restricted mode\n");
+                    last_exit_status = 1;
+                    return 1;
+                }
                 set_shell_var(argv[1], eq + 1);
             }
         }
@@ -1046,6 +1065,11 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "cd") == 0) {
+        if (opt_restricted_shell) {
+            write_str(STDERR_FILENO, "cd: restricted\n");
+            last_exit_status = 1;
+            return 1;
+        }
         if (argc > 2) {
             write_str(STDERR_FILENO, "cd: too many arguments\n");
             last_exit_status = 1;
@@ -2218,38 +2242,190 @@ static int execute_buffer(const char *buf) {
     return last_exit_status;
 }
 
+static void print_bash_version(void) {
+    write_str(STDOUT_FILENO, "GNU bash, version 5.3.0(1)-release (akaOS native implementation)\n"
+                             "Copyright (C) 2026 Free Software Foundation, Inc.\n"
+                             "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\n"
+                             "This is free software; you are free to change and redistribute it.\n"
+                             "There is NO WARRANTY, to the extent permitted by law.\n");
+}
+
+static void print_bash_help(void) {
+    write_str(STDOUT_FILENO, "GNU bash, version 5.3.0(1)-release (akaOS native implementation)\n"
+                             "Usage:\tbash [GNU long option] [option] ...\n"
+                             "\tbash [GNU long option] [option] script-file ...\n"
+                             "GNU long options:\n"
+                             "\t--debugger\n"
+                             "\t--dump-po-strings\n"
+                             "\t--dump-strings\n"
+                             "\t--help\n"
+                             "\t--init-file file\n"
+                             "\t--login\n"
+                             "\t--noediting\n"
+                             "\t--noprofile\n"
+                             "\t--norc\n"
+                             "\t--posix\n"
+                             "\t--rcfile file\n"
+                             "\t--restricted\n"
+                             "\t--verbose\n"
+                             "\t--version\n"
+                             "Shell options:\n"
+                             "\t-c string\tread commands from string\n"
+                             "\t-i\t\tinteractive shell\n"
+                             "\t-l\t\tlogin shell\n"
+                             "\t-r\t\trestricted shell\n"
+                             "\t-s\t\tread commands from standard input\n"
+                             "\t-D\t\tdump double-quoted strings\n"
+                             "\t-v\t\tverbose mode\n");
+}
+
 int main(int argc, char **argv) {
     (void)signal(SIGINT, shell_sigint_handler);
+
+    const char *progname = (argc > 0) ? argv[0] : "bash";
+    const char *slash = strrchr(progname, '/');
+    if (slash) progname = slash + 1;
+
+    if (progname[0] == '-' || strcmp(progname, "-bash") == 0 || strcmp(progname, "-sh") == 0 || strcmp(progname, "-akash") == 0) {
+        opt_login_shell = 1;
+    }
+    if (strcmp(progname, "rbash") == 0) {
+        opt_restricted_shell = 1;
+    }
 
     if (!akaos_account_by_uid(geteuid(), &shell_account)) {
         strncpy(shell_account.name, "unknown", sizeof(shell_account.name));
         strncpy(shell_account.home, "/", sizeof(shell_account.home));
-        strncpy(shell_account.shell, "/bin/akash", sizeof(shell_account.shell));
+        strncpy(shell_account.shell, "/bin/bash", sizeof(shell_account.shell));
         shell_account.uid = geteuid();
         shell_account.gid = getegid();
     }
 
+    const char *command_string = NULL;
+    int opt_stdin_explicit = 0;
+    int script_file_index = -1;
+
+    int i = 1;
+    while (i < argc) {
+        char *arg = argv[i];
+        if (strcmp(arg, "--help") == 0) {
+            print_bash_help();
+            return 0;
+        }
+        if (strcmp(arg, "--version") == 0) {
+            print_bash_version();
+            return 0;
+        }
+        if (strcmp(arg, "--login") == 0) {
+            opt_login_shell = 1;
+            i++;
+            continue;
+        }
+        if (strcmp(arg, "--restricted") == 0) {
+            opt_restricted_shell = 1;
+            i++;
+            continue;
+        }
+        if (strcmp(arg, "--posix") == 0) {
+            opt_posix_mode = 1;
+            i++;
+            continue;
+        }
+        if (strcmp(arg, "--verbose") == 0) {
+            opt_verbose = 1;
+            i++;
+            continue;
+        }
+        if (strcmp(arg, "--noprofile") == 0) {
+            opt_noprofile = 1;
+            i++;
+            continue;
+        }
+        if (strcmp(arg, "--norc") == 0) {
+            opt_norc = 1;
+            i++;
+            continue;
+        }
+        if (strcmp(arg, "--noediting") == 0 || strcmp(arg, "--debugger") == 0 ||
+            strcmp(arg, "--dump-po-strings") == 0 || strcmp(arg, "--dump-strings") == 0 ||
+            strcmp(arg, "--rpm-requires") == 0) {
+            i++;
+            continue;
+        }
+        if (strcmp(arg, "--rcfile") == 0 || strcmp(arg, "--init-file") == 0) {
+            if (i + 1 < argc) {
+                opt_rcfile = argv[++i];
+            }
+            i++;
+            continue;
+        }
+        if (strncmp(arg, "--rcfile=", 9) == 0) {
+            opt_rcfile = arg + 9;
+            i++;
+            continue;
+        }
+        if (strncmp(arg, "--init-file=", 12) == 0) {
+            opt_rcfile = arg + 12;
+            i++;
+            continue;
+        }
+        if (strcmp(arg, "--") == 0) {
+            i++;
+            if (i < argc) script_file_index = i;
+            break;
+        }
+        if (arg[0] == '-' && arg[1] != '\0') {
+            /* Single character option flags: -c, -i, -l, -r, -s, -D, -v, +O, -O */
+            int handled = 0;
+            (void)handled;
+            if (strcmp(arg, "-c") == 0) {
+                if (i + 1 < argc) {
+                    command_string = argv[++i];
+                    script_file_index = i + 1;
+                }
+                handled = 1;
+                break;
+            }
+            for (size_t c = 1; arg[c]; ++c) {
+                if (arg[c] == 'i') opt_interactive_shell = 1;
+                else if (arg[c] == 'l') opt_login_shell = 1;
+                else if (arg[c] == 'r') opt_restricted_shell = 1;
+                else if (arg[c] == 's') opt_stdin_explicit = 1;
+                else if (arg[c] == 'v') opt_verbose = 1;
+            }
+            handled = 1;
+            i++;
+            continue;
+        }
+        /* Non-option argument: script file */
+        script_file_index = i;
+        break;
+    }
+
     /* Check for -c "commands" */
-    if (argc > 1 && strcmp(argv[1], "-c") == 0) {
-        if (argc > 2) {
-            strncpy(script_arg0, argv[0], sizeof(script_arg0) - 1);
+    if (command_string) {
+        if (script_file_index > 0 && script_file_index < argc) {
+            strncpy(script_arg0, argv[script_file_index], sizeof(script_arg0) - 1);
             script_arg0[sizeof(script_arg0) - 1] = '\0';
-            script_argc = (argc > 3) ? argc - 3 : 0;
+            script_argc = argc - (script_file_index + 1);
             if (script_argc > (int)(sizeof(script_args) / sizeof(script_args[0]))) {
                 script_argc = (int)(sizeof(script_args) / sizeof(script_args[0]));
             }
-            for (int i = 0; i < script_argc && i < 10; ++i) {
-                strncpy(script_args[i], argv[3 + i], sizeof(script_args[i]) - 1);
-                script_args[i][sizeof(script_args[i]) - 1] = '\0';
+            for (int k = 0; k < script_argc && k < 10; ++k) {
+                strncpy(script_args[k], argv[script_file_index + 1 + k], sizeof(script_args[k]) - 1);
+                script_args[k][sizeof(script_args[k]) - 1] = '\0';
             }
-            return execute_buffer(argv[2]);
+        } else {
+            strncpy(script_arg0, progname, sizeof(script_arg0) - 1);
+            script_arg0[sizeof(script_arg0) - 1] = '\0';
+            script_argc = 0;
         }
-        return 0;
+        return execute_buffer((char *)command_string);
     }
 
-    /* Check for script file execution: akash script.sh [arg1 arg2 ...] */
-    if (argc > 1 && argv[1][0] != '-') {
-        const char *script_file = argv[1];
+    /* Check for script file execution: bash script.sh [arg1 arg2 ...] */
+    if (script_file_index > 0 && script_file_index < argc && !opt_stdin_explicit) {
+        const char *script_file = argv[script_file_index];
         int fd = open(script_file, O_RDONLY);
         if (fd < 0) {
             write_str(STDERR_FILENO, "akash: cannot open ");
@@ -2273,13 +2449,13 @@ int main(int argc, char **argv) {
 
         strncpy(script_arg0, script_file, sizeof(script_arg0) - 1);
         script_arg0[sizeof(script_arg0) - 1] = '\0';
-        script_argc = (argc > 2) ? argc - 2 : 0;
+        script_argc = argc - (script_file_index + 1);
         if (script_argc > (int)(sizeof(script_args) / sizeof(script_args[0]))) {
             script_argc = (int)(sizeof(script_args) / sizeof(script_args[0]));
         }
-        for (int i = 0; i < script_argc && i < 10; ++i) {
-            strncpy(script_args[i], argv[2 + i], sizeof(script_args[i]) - 1);
-            script_args[i][sizeof(script_args[i]) - 1] = '\0';
+        for (int k = 0; k < script_argc && k < 10; ++k) {
+            strncpy(script_args[k], argv[script_file_index + 1 + k], sizeof(script_args[k]) - 1);
+            script_args[k][sizeof(script_args[k]) - 1] = '\0';
         }
 
         execute_buffer(buf);
@@ -2290,6 +2466,59 @@ int main(int argc, char **argv) {
     /* Become interactive job-control group for login session */
     (void)setpgid(0, 0);
     (void)tcsetpgrp(STDIN_FILENO, getpgrp());
+
+    /* Profile and rc execution */
+    if (opt_login_shell && !opt_noprofile) {
+        int pfd = open("/etc/profile", O_RDONLY);
+        if (pfd >= 0) {
+            char pbuf[2048];
+            ssize_t pn = read(pfd, pbuf, sizeof(pbuf) - 1);
+            close(pfd);
+            if (pn > 0) {
+                pbuf[pn] = '\0';
+                execute_buffer(pbuf);
+            }
+        }
+        if (shell_account.home[0]) {
+            char pfile[256];
+            snprintf(pfile, sizeof(pfile), "%s/.bash_profile", shell_account.home);
+            int upfd = open(pfile, O_RDONLY);
+            if (upfd < 0) {
+                snprintf(pfile, sizeof(pfile), "%s/.profile", shell_account.home);
+                upfd = open(pfile, O_RDONLY);
+            }
+            if (upfd >= 0) {
+                char upbuf[2048];
+                ssize_t upn = read(upfd, upbuf, sizeof(upbuf) - 1);
+                close(upfd);
+                if (upn > 0) {
+                    upbuf[upn] = '\0';
+                    execute_buffer(upbuf);
+                }
+            }
+        }
+    }
+
+    if (!opt_norc) {
+        const char *rc = opt_rcfile;
+        char default_rc[256];
+        if (!rc && shell_account.home[0]) {
+            snprintf(default_rc, sizeof(default_rc), "%s/.bashrc", shell_account.home);
+            rc = default_rc;
+        }
+        if (rc) {
+            int rfd = open(rc, O_RDONLY);
+            if (rfd >= 0) {
+                char rbuf[2048];
+                ssize_t rn = read(rfd, rbuf, sizeof(rbuf) - 1);
+                close(rfd);
+                if (rn > 0) {
+                    rbuf[rn] = '\0';
+                    execute_buffer(rbuf);
+                }
+            }
+        }
+    }
 
     /* Execute ~/.bash_aliases if present */
     if (shell_account.home[0]) {
