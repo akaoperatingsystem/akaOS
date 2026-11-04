@@ -1380,3 +1380,27 @@ void __aeabi_memclr8(void *dest, size_t n) {
     memset(dest, 0, n);
 }
 #endif
+
+char *basename(char *path) {
+    static char dot[] = ".";
+    if (!path || !*path) return dot;
+    size_t len = strlen(path);
+    while (len > 1 && path[len - 1] == '/') path[--len] = 0;
+    if (len == 1 && path[0] == '/') return path;
+    char *p = strrchr(path, '/');
+    return p ? p + 1 : path;
+}
+
+char *dirname(char *path) {
+    static char dot[] = ".";
+    static char slash[] = "/";
+    if (!path || !*path) return dot;
+    size_t len = strlen(path);
+    while (len > 1 && path[len - 1] == '/') path[--len] = 0;
+    if (len == 1 && path[0] == '/') return slash;
+    char *p = strrchr(path, '/');
+    if (!p) return dot;
+    if (p == path) return slash;
+    *p = 0;
+    return path;
+}

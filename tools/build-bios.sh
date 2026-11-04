@@ -149,6 +149,6 @@ elif [[ -d "${AKAOS_GRUB_BIOS_DIRECTORY:-/usr/lib/grub/i386-pc}" ]]; then
 fi
 grub-mkrescue "${grub_directory_args[@]}" -o "$STAGING_OUTPUT" "$STAGING_BIOS_ROOT" \
     -eltorito-alt-boot -eltorito-platform efi -e boot/akaos-efi.img \
-    -no-emul-boot >/dev/null
+    -no-emul-boot -efi-boot-part --efi-boot-image >/dev/null
 cp -- "$STAGING_OUTPUT" "$OUTPUT"
 echo "[DONE] $OUTPUT"

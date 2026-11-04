@@ -837,6 +837,16 @@ int xscore_user_process_self_test(void) {
     if (!p_atrm || !xscore_process_wait(p_atrm, &atrm_status) || atrm_status != 0 || !xscore_process_reap(p_atrm)) return 0;
     xscore_vfs_unlink_at(0, "/var/spool/at/.seq");
 
+    const char *awk_args[] = {"/bin/awk", "BEGIN { print 1+2 }", 0};
+    struct xscore_process *p_awk = xscore_process_create_path_args("/bin/awk", 2, awk_args);
+    uint64_t awk_status = UINT64_MAX;
+    if (!p_awk || !xscore_process_wait(p_awk, &awk_status) || awk_status != 0 || !xscore_process_reap(p_awk)) return 0;
+
+    const char *awk_f_args[] = {"/bin/awk", "-F:", "{ print $1 }", "/etc/passwd", 0};
+    struct xscore_process *p_awk_f = xscore_process_create_path_args("/bin/awk", 4, awk_f_args);
+    uint64_t awk_f_status = UINT64_MAX;
+    if (!p_awk_f || !xscore_process_wait(p_awk_f, &awk_f_status) || awk_f_status != 0 || !xscore_process_reap(p_awk_f)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -898,6 +908,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Manual page keyword lookup utility apropos verified\n");
     xscore_serial_write("[INFO] Spell checker utility aspell verified\n");
     xscore_serial_write("[INFO] Command scheduling suite at/atq/atrm/batch verified\n");
+    xscore_serial_write("[INFO] Text processing and pattern scanning utility awk verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

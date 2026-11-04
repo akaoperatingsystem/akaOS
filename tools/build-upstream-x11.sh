@@ -98,6 +98,13 @@ PACKAGES=(
     "libICE|1.1.1|libICE-1.1.1.tar.xz|$LIB_URL/libICE-1.1.1.tar.xz|03e77afaf72942c7ac02ccebb19034e6e20f456dcf8dddadfeb572aa5ad3e451||libICE.so.6"
     "libSM|1.2.4|libSM-1.2.4.tar.xz|$LIB_URL/libSM-1.2.4.tar.xz|fdcbe51e4d1276b1183da77a8a4e74a137ca203e0bcfb20972dd5f3347e97b84||libSM.so.6"
     "libxkbfile|1.1.2|libxkbfile-1.1.2.tar.xz|$LIB_URL/libxkbfile-1.1.2.tar.xz|b8a3784fac420b201718047cfb6c2d5ee7e8b9481564c2667b4215f6616644b1||libxkbfile.so.1"
+    "startup-notification|0.12|startup-notification-0.12.tar.gz|https://www.freedesktop.org/software/startup-notification/releases/startup-notification-0.12.tar.gz|3c391f7e930c583095045cd2d10eb73a64f085c7fde9d260f2652c7cb3cfbe4a||libstartup-notification-1.so.0"
+    "xcb-util|0.4.1|xcb-util-0.4.1.tar.xz|$XCB_URL/xcb-util-0.4.1.tar.xz|5abe3bbbd8e54f0fa3ec945291b7e8fa8cfd3cccc43718f8758430f94126e512||libxcb-util.so.1"
+    "xcb-util-keysyms|0.4.1|xcb-util-keysyms-0.4.1.tar.xz|$XCB_URL/xcb-util-keysyms-0.4.1.tar.xz|7c260a5294412aed429df1da2f8afd3bd07b7cba3fec772fba15a613a6d5c638||libxcb-keysyms.so.1"
+    "xcb-util-wm|0.4.2|xcb-util-wm-0.4.2.tar.xz|$XCB_URL/xcb-util-wm-0.4.2.tar.xz|62c34e21d06264687faea7edbf63632c9f04d55e72114aa4a57bb95e4f888a0b||libxcb-ewmh.so.2"
+    "xcb-util-renderutil|0.3.10|xcb-util-renderutil-0.3.10.tar.xz|$XCB_URL/xcb-util-renderutil-0.3.10.tar.xz|3e15d4f0e22d8ddbfbb9f5d77db43eacd7a304029bf25a6166cc63caa96d04ba||libxcb-render-util.so.0"
+    "xcb-util-image|0.4.1|xcb-util-image-0.4.1.tar.xz|$XCB_URL/xcb-util-image-0.4.1.tar.xz|ccad8ee5dadb1271fd4727ad14d9bd77a64e505608766c4e98267d9aede40d3d||libxcb-image.so.0"
+    "xcb-util-cursor|0.1.5|xcb-util-cursor-0.1.5.tar.xz|$XCB_URL/xcb-util-cursor-0.1.5.tar.xz|0caf99b0d60970f81ce41c7ba694e5eaaf833227bb2cbcdb2f6dc9666a663c57||libxcb-cursor.so.0"
 )
 
 selected_packages() {
@@ -197,6 +204,7 @@ build_package() {
             PKG_CONFIG_LIBDIR="$STAGE/usr/local/lib/pkgconfig:$STAGE/usr/local/share/pkgconfig:$STAGE/usr/lib/pkgconfig:$STAGE/usr/share/pkgconfig:$SYSROOT/usr/local/lib/pkgconfig:$SYSROOT/usr/local/share/pkgconfig" \
             PKG_CONFIG_SYSROOT_DIR="" \
             xorg_cv_malloc0_returns_null=no \
+            lf_cv_sane_realloc=yes \
             PYTHONPATH="$STAGE/usr/local/local/lib/python3.14/dist-packages:$STAGE/usr/local/lib/python3.14/dist-packages${PYTHONPATH:+:$PYTHONPATH}" \
             "$source_dir/configure" "${configure_args[@]}"
     ) >"$LOG_DIR/$name-configure.log" 2>&1 || {
@@ -218,6 +226,10 @@ build_package() {
                 "$config_header"
         fi
     done < <(find "$build_dir" -name config.h -type f 2>/dev/null)
+
+    if [[ -f "$build_dir/Makefile" ]]; then
+        sed -i 's/^SUBDIRS = image test/SUBDIRS = image/' "$build_dir/Makefile" 2>/dev/null || true
+    fi
 
     echo "[x11] building $name"
     make -C "$build_dir" -j"$JOBS" >"$LOG_DIR/$name-build.log" 2>&1 || {

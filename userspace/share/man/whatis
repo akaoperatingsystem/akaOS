@@ -123,3 +123,5 @@ at (1) - queue, examine or delete jobs for later execution
 atq (1) - list user pending jobs
 atrm (1) - delete queued jobs
 batch (1) - execute commands when system load levels permit
+awk (1) - pattern scanning and text processing language
+gawk (1) - pattern scanning and text processing language

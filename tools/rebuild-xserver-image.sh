@@ -363,11 +363,26 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-at-main.o" \
     -o "$BUILD_DIR/AT.ELF"
 
+echo "[BUILD] user awk"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/awk/main.c" -o "$BUILD_DIR/user-awk-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-awk-main.o" \
+    -o "$BUILD_DIR/AWK.ELF"
+
 initramfs_files+=(
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atrm:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/batch:$BUILD_DIR/AT.ELF:exec"
+    "--file=/bin/awk:$BUILD_DIR/AWK.ELF:exec"
+    "--file=/bin/gawk:$BUILD_DIR/AWK.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"
     "--dir=/var/spool/at/spool"
