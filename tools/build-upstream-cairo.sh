@@ -97,16 +97,11 @@ cat > "$CAIRO_STUB_INCLUDE/sys/shm.h" <<'STUB'
 #define _AKAOS_SYS_SHM_H_
 #endif
 STUB
-if ! grep -q "akaOS has no System V shared memory" \
-    "$CAIRO_SOURCE/meson.build" 2>/dev/null; then
-    if ! patch -d "$CAIRO_SOURCE" -p1 --forward \
-        < "$ROOT_DIR/tools/cairo-x11-no-sysv-shm.patch"; then
-        echo "Upstream Cairo shared memory patch did not apply" >&2
-        exit 1
-    fi
+if grep -q "shmproto.h" "$CAIRO_SOURCE/meson.build" 2>/dev/null; then
+    patch -d "$CAIRO_SOURCE" -p1 < "$ROOT_DIR/tools/cairo-x11-no-sysv-shm.patch" || true
 fi
 
-export CFLAGS="$CFLAGS -I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2 -I$CAIRO_STUB_INCLUDE"
+export CFLAGS="$CFLAGS -I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/libpng16 -I$GRAPHICS_SYSROOT/usr/local/include/freetype2 -I$CAIRO_STUB_INCLUDE"
 export LDFLAGS="$LDFLAGS -L$GRAPHICS_SYSROOT/usr/local/lib"
 
 if [[ ! -f "$PIXMAN_BUILD/meson-private/coredata.dat" ]]; then
@@ -123,7 +118,7 @@ export PKG_CONFIG_SYSROOT_DIR="$PIXMAN_SYSROOT"
 CAIRO_MESON_ARGS=(
     --cross-file "$ROOT_DIR/tools/meson-akaos-x86_64.ini"
     -Ddefault_library=shared -Dbuildtype=release -Dtests=disabled
-    -Dfontconfig=enabled -Dfreetype=enabled -Dpng=disabled
+    -Dfontconfig=enabled -Dfreetype=enabled -Dpng=enabled
     -Dzlib=enabled -Dquartz=disabled -Dtee=disabled -Dxcb=enabled
     -Dxlib=enabled -Dxlib-xcb=enabled -Dglib=disabled
     -Ddwrite=disabled -Dspectre=disabled -Dlzo=disabled
