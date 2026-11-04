@@ -51,6 +51,9 @@ static int wait_status_exit_code(int status) {
     return 1;
 }
 
+/* Loop control state */
+static int loop_break_count = 0;
+
 /* Shell invocation mode flags */
 static int opt_restricted_shell = 0;
 static int opt_login_shell = 0;
@@ -971,6 +974,16 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "help") == 0) {
+        if (argc > 1 && strcmp(argv[1], "break") == 0) {
+            write_str(STDOUT_FILENO, "break: break [n]\n"
+                                     "    Exit for, while, until, or select loops.\n\n"
+                                     "    Exit a FOR, WHILE, UNTIL or SELECT loop. If N is specified, break N\n"
+                                     "    enclosing loops. N must be >= 1.\n\n"
+                                     "    Exit Status:\n"
+                                     "    The exit status is 0 unless N is not greater than or equal to 1.\n");
+            last_exit_status = 0;
+            return 1;
+        }
         if (argc > 1 && strcmp(argv[1], "bg") == 0) {
             write_str(STDOUT_FILENO, "bg: bg [job_id...]\n");
             write_str(STDOUT_FILENO, "    Send a job to background\n\n");
@@ -992,9 +1005,9 @@ static int execute_builtin(int argc, char *argv[]) {
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind\n");
-        write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
+        write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, break [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
         return 1;
     }
@@ -1476,6 +1489,23 @@ static int execute_builtin(int argc, char *argv[]) {
         int status = 0;
         waitpid(pid, &status, 0);
         last_exit_status = wait_status_exit_code(status);
+        return 1;
+    }
+
+    if (strcmp(argv[0], "break") == 0) {
+        int count = 1;
+        if (argc > 1) {
+            count = atoi(argv[1]);
+            if (count < 1) {
+                write_str(STDERR_FILENO, "akash: break: ");
+                write_str(STDERR_FILENO, argv[1]);
+                write_str(STDERR_FILENO, ": loop count must be greater than or equal to 1\n");
+                last_exit_status = 1;
+                return 1;
+            }
+        }
+        loop_break_count = count;
+        last_exit_status = 0;
         return 1;
     }
 
@@ -1987,6 +2017,9 @@ static void tokenize_statements(const char *text, struct statement_list *list) {
 static int execute_statements(struct statement_list *list, int start, int end) {
     int i = start;
     while (i < end) {
+        if (loop_break_count > 0) {
+            return 0;
+        }
         char *stmt = list->items[i];
         if (!stmt || stmt[0] == '\0') {
             i++;
@@ -2176,6 +2209,11 @@ static int execute_statements(struct statement_list *list, int start, int end) {
                 set_shell_var(var_name, word_start);
                 execute_statements(list, do_idx + 1, done_idx);
 
+                if (loop_break_count > 0) {
+                    loop_break_count--;
+                    break;
+                }
+
                 if (saved) *wp++ = saved;
             }
 
@@ -2228,6 +2266,10 @@ static int execute_statements(struct statement_list *list, int start, int end) {
                 execute_command_line(cond);
                 if (last_exit_status != 0) break;
                 execute_statements(list, do_idx + 1, done_idx);
+                if (loop_break_count > 0) {
+                    loop_break_count--;
+                    break;
+                }
             }
 
             i = done_idx + 1;
@@ -2236,6 +2278,9 @@ static int execute_statements(struct statement_list *list, int start, int end) {
 
         /* 4. Normal command line */
         execute_command_line(stmt);
+        if (loop_break_count > 0) {
+            return 0;
+        }
         i++;
     }
     return 0;
