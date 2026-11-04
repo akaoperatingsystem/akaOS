@@ -100,6 +100,7 @@ ssize_t readlink(const char *path, char *buffer, size_t size);
 int rmdir(const char *path);
 int rename(const char *oldpath, const char *newpath);
 int chown(const char *path, uid_t uid, gid_t gid);
+int fchown(int fd, uid_t uid, gid_t gid);
 int spawn(const char *path, char *const argv[]);
 int execve(const char *path, char *const argv[], char *const envp[]);
 int execv(const char *path, char *const argv[]);

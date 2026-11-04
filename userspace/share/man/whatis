@@ -138,3 +138,6 @@ jobs (1) - display status of jobs in the current session
 bind (1) - set or display readline key and function bindings
 break (1) - exit for, while, until, or select loops
 builtin (1) - run a shell builtin command
+bzip2 (1) - a block-sorting file compressor
+bunzip2 (1) - decompress bzip2 compressed files
+bzcat (1) - decompresses files to standard output

@@ -858,6 +858,26 @@ build_xserver() {
         -o "$BUILD_DIR/$output"
 }
 
+build_bzip2() {
+    local source_dir="$ROOT_DIR/userspace/bin/bzip2"
+    local objects=()
+    for unit in blocksort huffman crctable randtable compress decompress bzlib bzip2; do
+        local object="$BUILD_DIR/bzip2-$unit.o"
+        clang --target=x86_64-unknown-none-elf \
+            -std=c17 -O2 -Wall -Wextra \
+            -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+            -mno-red-zone -mcmodel=small \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$source_dir" \
+            -D_FILE_OFFSET_BITS=64 \
+            -c "$source_dir/$unit.c" -o "$object"
+        objects+=("$object")
+    done
+    ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+        -T "$ROOT_DIR/userspace/linker/user.ld" \
+        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "${objects[@]}" \
+        -o "$BUILD_DIR/BZIP2.ELF"
+}
+
 build_user_cpp_program() {
     local name="$1"
     local source="$2"
@@ -1840,6 +1860,7 @@ build_user_program patch "$ROOT_DIR/userspace/bin/patch/main.c" PATCH.ELF
 build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
 build_user_program gunzip "$ROOT_DIR/userspace/bin/gunzip/main.c" GUNZIP.ELF
+build_bzip2
 build_user_program route "$ROOT_DIR/userspace/bin/route/main.c" ROUTE.ELF
 build_user_program traceroute "$ROOT_DIR/userspace/bin/traceroute/main.c" TRACEROUTE.ELF
 build_user_program dig "$ROOT_DIR/userspace/bin/dig/main.c" DIG.ELF
@@ -3453,6 +3474,9 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec" \
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \
     --file "/bin/gunzip:$BUILD_DIR/GUNZIP.ELF:exec" \
+    --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \
+    --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \
+    --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/route:$BUILD_DIR/ROUTE.ELF:exec" \
     --file "/bin/traceroute:$BUILD_DIR/TRACEROUTE.ELF:exec" \
     --file "/bin/dig:$BUILD_DIR/DIG.ELF:exec" \

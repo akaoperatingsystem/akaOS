@@ -89,10 +89,15 @@ uint64_t xscore_vmm_address_space_create(void) {
         pd[i] = 0;
     }
 
-    /* Share all kernel space mappings and MMIO (framebuffer, etc.) */
+    /* Share all kernel space and MMIO mappings across every process:
+     * 1. All kernel tables < KERNEL_SHARED_TABLES (0x00000000 - 0x3FFFFFFF, including identity map & thread stacks)
+     * 2. All MMIO tables >= 0xC0000000 (including framebuffer at 0xE0000000, APIC, PCI MMIO)
+     */
     for (uint32_t t = 0; t < 1024; ++t) {
-        if (t < KERNEL_SHARED_TABLES && initial_page_directory[t] != 0) {
-            pd[t] = initial_page_directory[t];
+        if (initial_page_directory[t] != 0) {
+            if (t < KERNEL_SHARED_TABLES || t >= 768) {
+                pd[t] = initial_page_directory[t];
+            }
         }
     }
 
@@ -102,10 +107,15 @@ uint64_t xscore_vmm_address_space_create(void) {
 void xscore_vmm_address_space_sync_kernel(uint64_t root_address) {
     if (!root_address) return;
     uint32_t *pd = (uint32_t*)(uintptr_t)root_address;
-    /* Share all kernel space mappings and MMIO (framebuffer, etc.) */
+    /* Share all kernel space and MMIO mappings across every process:
+     * 1. All kernel tables < KERNEL_SHARED_TABLES (0x00000000 - 0x3FFFFFFF, including identity map & thread stacks)
+     * 2. All MMIO tables >= 0xC0000000 (including framebuffer at 0xE0000000, APIC, PCI MMIO)
+     */
     for (uint32_t t = 0; t < 1024; ++t) {
-        if (t < KERNEL_SHARED_TABLES && initial_page_directory[t] != 0) {
-            pd[t] = initial_page_directory[t];
+        if (initial_page_directory[t] != 0) {
+            if (t < KERNEL_SHARED_TABLES || t >= 768) {
+                pd[t] = initial_page_directory[t];
+            }
         }
     }
 }
@@ -144,14 +154,14 @@ int xscore_vmm_map_page_in(uint64_t root_address, uint64_t virtual_address,
 
         pd[dir_idx] = (uint32_t)pt_phys | PAGE_PRESENT | PAGE_WRITABLE |
                       ((flags & XSCORE_PAGE_USER) ? PAGE_USER : 0);
-        if (dir_idx < KERNEL_SHARED_TABLES) {
+        if (!(flags & XSCORE_PAGE_USER)) {
             initial_page_directory[dir_idx] = pd[dir_idx];
         }
     } else {
         if (flags & XSCORE_PAGE_USER) {
             pd[dir_idx] |= PAGE_USER;
         }
-        if (dir_idx < KERNEL_SHARED_TABLES) {
+        if (!(flags & XSCORE_PAGE_USER)) {
             initial_page_directory[dir_idx] = pd[dir_idx];
         }
     }

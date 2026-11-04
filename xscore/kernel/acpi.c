@@ -259,7 +259,8 @@ void xscore_acpi_initialize(const struct akaos_boot_info *boot_info) {
     for (int i = 0; i < 6; ++i) g_acpi.oem_id[i] = rsdp->oem_id[i];
     g_acpi.oem_id[6] = '\0';
 
-    /* 3. Prefer XSDT (64-bit pointers) on ACPI 2.0+ */
+    /* 3. Prefer XSDT (64-bit pointers) on 64-bit platforms with ACPI 2.0+ */
+#if __SIZEOF_POINTER__ == 8
     if (rsdp->revision >= 2 && rsdp->xsdt_address != 0) {
         const struct acpi_sdt_header *xsdt =
             (const struct acpi_sdt_header *)(uintptr_t)rsdp->xsdt_address;
@@ -277,6 +278,7 @@ void xscore_acpi_initialize(const struct akaos_boot_info *boot_info) {
             }
         }
     }
+#endif
 
     /* 4. Use RSDT (32-bit pointers) if XSDT was absent or produced 0 tables */
     if (g_acpi.table_count == 0 && rsdp->rsdt_address != 0) {
@@ -288,7 +290,7 @@ void xscore_acpi_initialize(const struct akaos_boot_info *boot_info) {
             const uint32_t *ptrs = (const uint32_t *)((const uint8_t *)rsdt + sizeof(struct acpi_sdt_header));
             for (size_t i = 0; i < count; ++i) {
                 uint32_t addr = ptrs[i];
-                if (!addr) continue;
+                if (!addr || addr >= 0xe0000000U) continue;
                 const struct acpi_sdt_header *tbl = (const struct acpi_sdt_header *)(uintptr_t)addr;
                 if (tbl && acpi_checksum(tbl, tbl->length)) {
                     register_table(tbl, (uint64_t)addr);
