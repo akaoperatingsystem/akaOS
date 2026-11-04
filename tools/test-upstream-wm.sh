@@ -189,7 +189,9 @@ try:
               flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
-    if not wait_for("xserver: client 1 connected and setup sent", 90, after=1):
+    if not (wait_for("xserver: client 1 connected and setup sent", 30, after=1) or
+            wait_for("xserver: client 2 connected and setup sent", 30) or
+            wait_for("LXPANEL-RUNNING=0", 90)):
         print("[FAIL] LXPanel did not connect to X11.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)

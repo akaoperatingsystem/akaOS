@@ -10,47 +10,47 @@ sleep 45
 env DISPLAY=:0 x11-wm-client
 echo CLIENT-EXIT=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/lxpanel --profile default &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/lxpanel --profile default &
 sleep 15
 ps
 echo LXPANEL-RUNNING=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/pcmanfm --desktop --profile default &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/pcmanfm --desktop --profile default &
 sleep 15
 ps
 echo PCMANFM-RUNNING=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/xfwm4 --replace &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/xfwm4 --replace &
 sleep 15
 ps
 echo XFWM4-RUNNING=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/xfce4-panel &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/xfce4-panel &
 sleep 15
 ps
 echo XFCE4-PANEL-RUNNING=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/xfce4-session &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/xfce4-session &
 sleep 15
 ps
 echo XFCE4-SESSION-RUNNING=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/marco --replace &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/marco --replace &
 sleep 15
 ps
 echo MARCO-RUNNING=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/mate-panel &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/mate-panel &
 sleep 15
 ps
 echo MATE-PANEL-RUNNING=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/mate-session &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/mate-session &
 sleep 15
 ps
 echo MATE-SESSION-RUNNING=$?
 
-env DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/muffin --replace &
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/muffin --replace &
 sleep 15
 ps
 echo MUFFIN-RUNNING=$?

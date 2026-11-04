@@ -21,6 +21,11 @@
 #include "wlr-layer-shell-server-protocol.h"
 #include "wlr-foreign-toplevel-management-server-protocol.h"
 
+#define wl_client_post_no_memory(c) do { \
+    fprintf(stderr, "wayland-bridge: no-memory posted at %s:%d\n", __func__, __LINE__); \
+    (wl_client_post_no_memory)(c); \
+} while(0)
+
 extern char **environ;
 
 #define WAYLAND_SURFACE_LIMIT AKAOS_COMPOSITOR_MAX_SURFACES
