@@ -484,15 +484,17 @@ for core_lib in \
     libKF6WindowSystem.so libKF6WindowSystem.so.6 \
     libLayerShellQtInterface.so libLayerShellQtInterface.so.6; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
-        -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
+        -maxdepth 1 -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
         library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
-            -maxdepth 1 -type f -name "${core_lib}" -print | head -n 1)"
+            -maxdepth 1 -name "${core_lib}" -print | head -n 1)"
     fi
     [[ -n "$library_path" ]] || continue
+    real_path="$(readlink -f "$library_path")"
+    [[ -f "$real_path" ]] || continue
     initramfs_files+=(
-        "--file=/lib/$core_lib:$library_path:0444"
-        "--file=/usr/local/lib/$core_lib:$library_path:0444"
+        "--file=/lib/$core_lib:$real_path:0444"
+        "--file=/usr/local/lib/$core_lib:$real_path:0444"
     )
 done
 initramfs_files+=(
