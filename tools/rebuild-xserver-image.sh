@@ -595,6 +595,15 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/i3" ]]; then
         "--dir=/etc/i3"
         "--file=/etc/i3/config:$UPSTREAM_SYSROOT/usr/local/etc/i3/config:0644"
         "--file=/etc/i3/config.keycodes:$UPSTREAM_SYSROOT/usr/local/etc/i3/config.keycodes:0644"
+        "--dir=/usr/local/etc/i3"
+        "--file=/usr/local/etc/i3/config:$UPSTREAM_SYSROOT/usr/local/etc/i3/config:0644"
+        "--file=/usr/local/etc/i3/config.keycodes:$UPSTREAM_SYSROOT/usr/local/etc/i3/config.keycodes:0644"
+        "--dir=/etc/xdg/i3"
+        "--file=/etc/xdg/i3/config:$UPSTREAM_SYSROOT/usr/local/etc/i3/config:0644"
+        "--file=/etc/xdg/i3/config.keycodes:$UPSTREAM_SYSROOT/usr/local/etc/i3/config.keycodes:0644"
+        "--dir=/root/.i3"
+        "--file=/root/.i3/config:$UPSTREAM_SYSROOT/usr/local/etc/i3/config:0644"
+        "--file=/root/.i3/config.keycodes:$UPSTREAM_SYSROOT/usr/local/etc/i3/config.keycodes:0644"
     )
 fi
 
