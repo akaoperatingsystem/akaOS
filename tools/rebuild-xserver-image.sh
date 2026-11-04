@@ -389,6 +389,19 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-basename-main.o" \
     -o "$BUILD_DIR/BASENAME.ELF"
 
+echo "[BUILD] user base32"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/base32/main.c" -o "$BUILD_DIR/user-base32-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-base32-main.o" \
+    -o "$BUILD_DIR/BASE32.ELF"
+
 initramfs_files+=(
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
@@ -397,6 +410,7 @@ initramfs_files+=(
     "--file=/bin/awk:$BUILD_DIR/AWK.ELF:exec"
     "--file=/bin/gawk:$BUILD_DIR/AWK.ELF:exec"
     "--file=/bin/basename:$BUILD_DIR/BASENAME.ELF:exec"
+    "--file=/bin/base32:$BUILD_DIR/BASE32.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"
     "--dir=/var/spool/at/spool"

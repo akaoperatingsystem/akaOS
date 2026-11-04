@@ -857,6 +857,11 @@ int xscore_user_process_self_test(void) {
     uint64_t base_suf_status = UINT64_MAX;
     if (!p_base_suf || !xscore_process_wait(p_base_suf, &base_suf_status) || base_suf_status != 0 || !xscore_process_reap(p_base_suf)) return 0;
 
+    const char *base32_args[] = {"/bin/base32", "/etc/motd", 0};
+    struct xscore_process *p_b32 = xscore_process_create_path_args("/bin/base32", 2, base32_args);
+    uint64_t b32_status = UINT64_MAX;
+    if (!p_b32 || !xscore_process_wait(p_b32, &b32_status) || b32_status != 0 || !xscore_process_reap(p_b32)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -920,6 +925,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Command scheduling suite at/atq/atrm/batch verified\n");
     xscore_serial_write("[INFO] Text processing and pattern scanning utility awk verified\n");
     xscore_serial_write("[INFO] Path stripping utility basename verified\n");
+    xscore_serial_write("[INFO] Base32 encoding and decoding utility base32 verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");
