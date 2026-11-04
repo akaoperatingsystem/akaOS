@@ -58,12 +58,12 @@ sleep 15
 ps
 echo I3-RUNNING=$?
 
-env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 QT_QPA_PLATFORM=wayland XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/lxqt-panel &
+env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 QT_QPA_PLATFORM=wayland QT_PLUGIN_PATH=/usr/local/plugins:/usr/lib/qt6/plugins XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/lxqt-panel &
 sleep 15
 ps
 echo LXQT-PANEL-RUNNING=$?
 
-env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 QT_QPA_PLATFORM=wayland XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/lxqt-session &
+env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 QT_QPA_PLATFORM=wayland QT_PLUGIN_PATH=/usr/local/plugins:/usr/lib/qt6/plugins XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/lxqt-session &
 sleep 15
 ps
 echo LXQT-SESSION-RUNNING=$?
