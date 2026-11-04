@@ -299,6 +299,17 @@ try:
         raise SystemExit(1)
     print("[PASS] muffin window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE.",
           flush=True)
+    if not wait_for("I3-RUNNING=0", 120):
+        print("[FAIL] i3 did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if not re.search(r"\bi3\b", output):
+        print("[FAIL] i3 was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] i3 tiling window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)

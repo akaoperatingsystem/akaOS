@@ -421,7 +421,10 @@ for core_lib in \
     libgthread-2.0.so.0 libffi.so.8 libintl.so.8 libpcre2-8.so.0 libz.so.1 \
     libxkbcommon.so.0 libxkbcommon-x11.so.0 \
     libwayland-client.so.0 libwayland-server.so.0 libwayland-cursor.so.0 libwayland-egl.so.1 \
-    libatk-bridge-2.0.so.0 libatspi.so.0 libdbus-1.so.3; do
+    libatk-bridge-2.0.so.0 libatspi.so.0 libdbus-1.so.3 \
+    libev.so.4 libyajl.so.2 libxcb-xrm.so.0 libxcb-cursor.so.0 libxcb-ewmh.so.2 \
+    libxcb-icccm.so.4 libxcb-image.so.0 libxcb-keysyms.so.1 libxcb-render-util.so.0 \
+    libxcb-util.so.1 libstartup-notification-1.so.0; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
@@ -461,6 +464,21 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
             "--file=/usr/local/lib/$openbox_library:$library_path:0444"
         )
     done
+fi
+
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/i3" ]]; then
+    echo "[BUILD] upstream i3 window manager & tools"
+    initramfs_files+=(
+        "--file=/usr/local/bin/i3:$UPSTREAM_SYSROOT/usr/local/bin/i3:exec"
+        "--file=/usr/local/bin/i3bar:$UPSTREAM_SYSROOT/usr/local/bin/i3bar:exec"
+        "--file=/usr/local/bin/i3-msg:$UPSTREAM_SYSROOT/usr/local/bin/i3-msg:exec"
+        "--file=/usr/local/bin/i3-input:$UPSTREAM_SYSROOT/usr/local/bin/i3-input:exec"
+        "--file=/usr/local/bin/i3-nagbar:$UPSTREAM_SYSROOT/usr/local/bin/i3-nagbar:exec"
+        "--file=/usr/local/bin/i3-config-wizard:$UPSTREAM_SYSROOT/usr/local/bin/i3-config-wizard:exec"
+        "--dir=/etc/i3"
+        "--file=/etc/i3/config:$UPSTREAM_SYSROOT/usr/local/etc/i3/config:0644"
+        "--file=/etc/i3/config.keycodes:$UPSTREAM_SYSROOT/usr/local/etc/i3/config.keycodes:0644"
+    )
 fi
 
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/lxpanel" ]]; then
