@@ -201,6 +201,7 @@ grep -Fq "[INFO] Text processing and pattern scanning utility awk verified" "$TE
 grep -Fq "[INFO] Path stripping utility basename verified" "$TEST_LOG"
 grep -Fq "[INFO] Base32 encoding and decoding utility base32 verified" "$TEST_LOG"
 grep -Fq "[INFO] Base64 encoding and decoding utility base64 verified" "$TEST_LOG"
+grep -Fq "[INFO] GNU Bourne-Again SHell bash verified" "$TEST_LOG"
 grep -Fq "[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified" "$TEST_LOG"
 grep -Fq "[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified" "$TEST_LOG"
 grep -Fq "[INFO] ACPI diagnostics utility acpi verified" "$TEST_LOG"

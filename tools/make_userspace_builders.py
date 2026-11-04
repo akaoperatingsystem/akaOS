@@ -451,6 +451,7 @@ build_user_program tty "$ROOT_DIR/userspace/bin/tty/main.c" TTY.ELF
 build_user_program stty "$ROOT_DIR/userspace/bin/stty/main.c" STTY.ELF
 build_user_program ps "$ROOT_DIR/userspace/bin/ps/main.c" PS.ELF
 build_account_program akash "$ROOT_DIR/userspace/bin/akash/main.c" AKASH.ELF
+build_account_program bash "$ROOT_DIR/userspace/bin/bash/main.c" BASH.ELF
 build_user_program nslookup "$ROOT_DIR/userspace/bin/nslookup/main.c" NSLOOKUP.ELF
 build_user_program curl "$ROOT_DIR/userspace/bin/curl/main.c" CURL.ELF
 build_user_program pkg "$ROOT_DIR/userspace/bin/pkg/main.c" PKG.ELF
@@ -604,7 +605,10 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/tty:$BUILD_DIR/TTY.ELF:exec" \\
     --file "/bin/stty:$BUILD_DIR/STTY.ELF:exec" \\
     --file "/bin/ps:$BUILD_DIR/PS.ELF:exec" \\
-    --file "/bin/akash:$BUILD_DIR/AKASH.ELF:exec" \\
+    --file "/bin/akash:$BUILD_DIR/AKASH.ELF:exec" \
+    --file "/bin/bash:$BUILD_DIR/AKASH.ELF:exec" \
+    --file "/bin/sh:$BUILD_DIR/AKASH.ELF:exec" \
+    --file "/bin/rbash:$BUILD_DIR/AKASH.ELF:exec" \\
     --file "/bin/nslookup:$BUILD_DIR/NSLOOKUP.ELF:exec" \\
     --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec" \
     --file "/bin/pkg:$BUILD_DIR/PKG.ELF:exec" \\

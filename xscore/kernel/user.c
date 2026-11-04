@@ -867,6 +867,11 @@ int xscore_user_process_self_test(void) {
     uint64_t b64_status = UINT64_MAX;
     if (!p_b64 || !xscore_process_wait(p_b64, &b64_status) || b64_status != 0 || !xscore_process_reap(p_b64)) return 0;
 
+    const char *bash_args[] = {"/bin/bash", "-c", "echo BASH_OK", 0};
+    struct xscore_process *p_bash = xscore_process_create_path_args("/bin/bash", 3, bash_args);
+    uint64_t bash_status = UINT64_MAX;
+    if (!p_bash || !xscore_process_wait(p_bash, &bash_status) || bash_status != 0 || !xscore_process_reap(p_bash)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -932,6 +937,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Path stripping utility basename verified\n");
     xscore_serial_write("[INFO] Base32 encoding and decoding utility base32 verified\n");
     xscore_serial_write("[INFO] Base64 encoding and decoding utility base64 verified\n");
+    xscore_serial_write("[INFO] GNU Bourne-Again SHell bash verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

@@ -277,7 +277,9 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     -o "$BUILD_DIR/AKASH.ELF"
 initramfs_files+=(
     "--file=/bin/akash:$BUILD_DIR/AKASH.ELF:exec"
+    "--file=/bin/bash:$BUILD_DIR/AKASH.ELF:exec"
     "--file=/bin/sh:$BUILD_DIR/AKASH.ELF:exec"
+    "--file=/bin/rbash:$BUILD_DIR/AKASH.ELF:exec"
 )
 
 echo "[BUILD] user ps"
