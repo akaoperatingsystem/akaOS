@@ -1687,8 +1687,13 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
             argument1 > AKAOS_SIGNAL_MAX) {
             return (uint64_t)-AKAOS_EINVAL;
         }
-        int64_t res = xscore_process_signal(argument0,
-                                            (uint32_t)argument1);
+        int64_t res;
+        if ((int64_t)argument0 < 0) {
+            uint64_t target_pgid = (uint64_t)(-(int64_t)argument0);
+            res = xscore_process_signal_pgrp(target_pgid, (uint32_t)argument1) ? 0 : -AKAOS_ESRCH;
+        } else {
+            res = xscore_process_signal(argument0, (uint32_t)argument1);
+        }
         if (res == 0 && process) {
             uint64_t sig_res = check_and_deliver_pending_signals(process);
             if (sig_res != 0) return sig_res;

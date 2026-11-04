@@ -1513,14 +1513,23 @@ int pipe2(int pipefd[2], int flags) {
 }
 
 int kill(int pid, int signal) {
-    if (pid <= 0 || signal < AKAOS_SIGNAL_MIN ||
+    if (pid == 0 || signal < AKAOS_SIGNAL_MIN ||
         signal > AKAOS_SIGNAL_MAX) {
         errno = EINVAL;
         return -1;
     }
     return (int)translate_result(syscall3(
-        AKAOS_SYSCALL_KILL, (uint64_t)(unsigned int)pid,
+        AKAOS_SYSCALL_KILL, (uint64_t)(int64_t)pid,
         (uint64_t)(unsigned int)signal, 0));
+}
+
+int killpg(int pgrp, int signal) {
+    if (pgrp <= 0 || signal < AKAOS_SIGNAL_MIN ||
+        signal > AKAOS_SIGNAL_MAX) {
+        errno = EINVAL;
+        return -1;
+    }
+    return kill(-pgrp, signal);
 }
 
 const char *strsignal(int sig) {

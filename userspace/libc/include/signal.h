@@ -78,6 +78,7 @@ extern "C" {
 #endif
 
 int kill(int pid, int signal);
+int killpg(int pgrp, int signal);
 int raise(int sig);
 sighandler_t signal(int signal_number, sighandler_t handler);
 int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
