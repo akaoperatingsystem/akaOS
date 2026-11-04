@@ -849,6 +849,10 @@ __attribute__((noreturn)) static void xscore_shell_run(void) {
         init_path = "/bin/akash";
     }
 
+    serial_write("[INFO] Spawning userspace root process: ");
+    serial_write(init_path);
+    serial_write("\n");
+
     for (;;) {
         struct xscore_process *root_proc = xscore_process_create_path(init_path);
         if (root_proc) {
@@ -857,6 +861,9 @@ __attribute__((noreturn)) static void xscore_shell_run(void) {
             xscore_process_wait(root_proc, &exit_status);
             xscore_process_reap(root_proc);
         } else {
+            serial_write("[FATAL] xscore_process_create_path failed for: ");
+            serial_write(init_path);
+            serial_write("\n");
             shell_write_line("init: failed to start userspace init process", SHELL_AMBER);
             for (;;) {
                 xscore_tty_poll_keyboard();

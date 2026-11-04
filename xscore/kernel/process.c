@@ -2435,7 +2435,12 @@ static struct xscore_process *process_create_elf_args_on_cpu(
     const struct akaos_spawn_file_action *actions, uint32_t action_count,
     uint32_t target_cpu, uint32_t image_node) {
     if (!(process_runtime_flags & PROCESS_RUNTIME_INITIALIZED) ||
-        !image || image_size == 0) return 0;
+        !image || image_size == 0) {
+        xscore_serial_write("[WARN] process_create_elf rejected: uninit=");
+        xscore_serial_write(!(process_runtime_flags & PROCESS_RUNTIME_INITIALIZED) ? "yes " : "no ");
+        xscore_serial_write(!image ? "no_image\n" : "zero_size\n");
+        return 0;
+    }
     struct xscore_process *process = process_slot_reserve();
     if (!process) return 0;
 
@@ -2574,6 +2579,7 @@ static struct xscore_process *process_create_elf_args_on_cpu(
                                       argc, argv, envc, envp, exec_path,
                                       interpreter_result > 0);
     if (!image_loaded) {
+        xscore_serial_write("[WARN] load_elf_image failed for process\n");
         if (process->address_space_root) {
             release_process_pages(process);
             xscore_vmm_address_space_destroy(process->address_space_root);
@@ -2593,6 +2599,7 @@ static struct xscore_process *process_create_elf_args_on_cpu(
     if (!process->thread_id ||
         !xscore_thread_bind_fd_table(process->thread_id,
                                      &process->file_descriptors)) {
+        xscore_serial_write("[WARN] thread create/bind failed for process\n");
         release_process_pages(process);
         xscore_vmm_address_space_destroy(process->address_space_root);
         process->address_space_root = 0;
@@ -2656,6 +2663,9 @@ static struct xscore_process *xscore_process_create_path_args_env_on_cpu_at(
     uint32_t image_node = UINT32_MAX;
     if (!xscore_vfs_lookup_file_ref_at(cwd_node, path, &image, &image_size,
                                        &image_node)) {
+        xscore_serial_write("[WARN] VFS lookup failed for path: ");
+        xscore_serial_write(path ? path : "<null>");
+        xscore_serial_write("\n");
         return 0;
     }
     struct xscore_process *process = process_create_elf_args_on_cpu(
