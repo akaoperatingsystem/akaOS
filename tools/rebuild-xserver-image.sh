@@ -456,6 +456,19 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-bind-main.o" \
     -o "$BUILD_DIR/BIND.ELF"
 
+echo "[BUILD] user break"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/break/main.c" -o "$BUILD_DIR/user-break-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-break-main.o" \
+    -o "$BUILD_DIR/BREAK.ELF"
+
 initramfs_files+=(
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
@@ -469,6 +482,7 @@ initramfs_files+=(
     "--file=/bin/bc:$BUILD_DIR/BC.ELF:exec"
     "--file=/bin/bg:$BUILD_DIR/BG.ELF:exec"
     "--file=/bin/bind:$BUILD_DIR/BIND.ELF:exec"
+    "--file=/bin/break:$BUILD_DIR/BREAK.ELF:exec"
     "--file=/bin/wayland-bridge:$BUILD_DIR/WAYLAND_BRIDGE.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"
@@ -592,6 +606,31 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/lxqt-panel" ]]; then
         "--dir=/etc/xdg/lxqt"
         "--file=/etc/xdg/lxqt/lxqt.conf:$UPSTREAM_SYSROOT/usr/local/share/lxqt/lxqt.conf:0644"
     )
+fi
+
+if [[ -f "$UPSTREAM_SYSROOT/etc/fonts/fonts.conf" ]]; then
+    initramfs_files+=(
+        "--dir=/etc/fonts"
+        "--file=/etc/fonts/fonts.conf:$UPSTREAM_SYSROOT/etc/fonts/fonts.conf:0644"
+    )
+fi
+
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/gschemas.compiled" ]]; then
+    initramfs_files+=(
+        "--dir=/usr/share/glib-2.0"
+        "--dir=/usr/share/glib-2.0/schemas"
+        "--file=/usr/share/glib-2.0/schemas/gschemas.compiled:$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/gschemas.compiled:0444"
+        "--dir=/usr/local/share/glib-2.0"
+        "--dir=/usr/local/share/glib-2.0/schemas"
+        "--file=/usr/local/share/glib-2.0/schemas/gschemas.compiled:$UPSTREAM_SYSROOT/usr/local/share/glib-2.0/schemas/gschemas.compiled:0444"
+    )
+fi
+
+if [[ -d "$UPSTREAM_SYSROOT/usr/share/X11/xkb" ]]; then
+    while IFS= read -r xkb_file; do
+        rel_path="${xkb_file#$UPSTREAM_SYSROOT}"
+        initramfs_files+=("--file=$rel_path:$xkb_file:0444")
+    done < <(find "$UPSTREAM_SYSROOT/usr/share/X11/xkb" -type f)
 fi
 
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/lxpanel" ]]; then
