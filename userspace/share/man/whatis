@@ -127,3 +127,4 @@ awk (1) - pattern scanning and text processing language
 gawk (1) - pattern scanning and text processing language
 basename (1) - strip directory and suffix from filenames
 base32 (1) - base32 encode or decode data and print to standard output
+base64 (1) - base64 encode or decode data and print to standard output

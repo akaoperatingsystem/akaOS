@@ -402,6 +402,19 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-base32-main.o" \
     -o "$BUILD_DIR/BASE32.ELF"
 
+echo "[BUILD] user base64"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/base64/main.c" -o "$BUILD_DIR/user-base64-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-base64-main.o" \
+    -o "$BUILD_DIR/BASE64.ELF"
+
 initramfs_files+=(
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
@@ -411,6 +424,7 @@ initramfs_files+=(
     "--file=/bin/gawk:$BUILD_DIR/AWK.ELF:exec"
     "--file=/bin/basename:$BUILD_DIR/BASENAME.ELF:exec"
     "--file=/bin/base32:$BUILD_DIR/BASE32.ELF:exec"
+    "--file=/bin/base64:$BUILD_DIR/BASE64.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"
     "--dir=/var/spool/at/spool"
@@ -441,7 +455,14 @@ for core_lib in \
     libxcb-util.so.1 libstartup-notification-1.so.0 \
     libxcb.so.1 libxcb-render.so.0 libxcb-shm.so.0 libxcb-sync.so.1 \
     libxcb-xfixes.so.0 libxcb-shape.so.0 libxcb-randr.so.0 libxcb-xinerama.so.0 \
-    libxcb-xkb.so.1 libX11-xcb.so.1 libXau.so.6 libXdmcp.so.6; do
+    libxcb-xkb.so.1 libX11-xcb.so.1 libXau.so.6 libXdmcp.so.6 \
+    libQt6Core.so.6 libQt6DBus.so.6 libQt6Gui.so.6 libQt6Widgets.so.6 \
+    libQt6Concurrent.so.6 libQt6Svg.so.6 libQt6Xml.so.6 \
+    libQt6WaylandClient.so.6 libQt6WlShellIntegration.so.6 \
+    libQt6Xdg.so.4 libQt6XdgIconLoader.so.4 liblxqt.so.2 \
+    liblxqt-globalkeys.so.2 liblxqt-globalkeys-ui.so.2 \
+    libdbusmenu-lxqt.so.0 libsysstat-qt6.so.1 \
+    libKF6WindowSystem.so.6 libLayerShellQtInterface.so.6; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -type f -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
@@ -495,6 +516,26 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/i3" ]]; then
         "--dir=/etc/i3"
         "--file=/etc/i3/config:$UPSTREAM_SYSROOT/usr/local/etc/i3/config:0644"
         "--file=/etc/i3/config.keycodes:$UPSTREAM_SYSROOT/usr/local/etc/i3/config.keycodes:0644"
+    )
+fi
+
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/lxqt-panel" ]]; then
+    echo "[BUILD] upstream LXQt desktop panel & session"
+    initramfs_files+=(
+        "--file=/usr/local/bin/lxqt-panel:$UPSTREAM_SYSROOT/usr/local/bin/lxqt-panel:exec"
+        "--file=/usr/local/bin/lxqt-session:$UPSTREAM_SYSROOT/usr/local/bin/lxqt-session:exec"
+        "--file=/usr/local/bin/lxqt-leave:$UPSTREAM_SYSROOT/usr/local/bin/lxqt-leave:exec"
+        "--file=/usr/local/bin/startlxqt:$UPSTREAM_SYSROOT/usr/local/bin/startlxqt:0755"
+        "--dir=/usr/local/plugins"
+        "--dir=/usr/local/plugins/platforms"
+        "--file=/usr/local/plugins/platforms/libqwayland.so:$UPSTREAM_SYSROOT/usr/local/plugins/platforms/libqwayland.so:0444"
+        "--dir=/usr/local/lib/lxqt-panel"
+        "--file=/usr/local/lib/lxqt-panel/libcustomcommand.so:$UPSTREAM_SYSROOT/usr/local/lib/lxqt-panel/libcustomcommand.so:0444"
+        "--file=/usr/local/lib/lxqt-panel/libdirectorymenu.so:$UPSTREAM_SYSROOT/usr/local/lib/lxqt-panel/libdirectorymenu.so:0444"
+        "--file=/usr/local/lib/lxqt-panel/libdom.so:$UPSTREAM_SYSROOT/usr/local/lib/lxqt-panel/libdom.so:0444"
+        "--file=/usr/local/lib/lxqt-panel/libsysstat.so:$UPSTREAM_SYSROOT/usr/local/lib/lxqt-panel/libsysstat.so:0444"
+        "--dir=/etc/xdg/lxqt"
+        "--file=/etc/xdg/lxqt/lxqt.conf:$UPSTREAM_SYSROOT/usr/local/share/lxqt/lxqt.conf:0644"
     )
 fi
 

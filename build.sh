@@ -1820,6 +1820,7 @@ build_user_program at "$ROOT_DIR/userspace/bin/at/main.c" AT.ELF
 build_user_program awk "$ROOT_DIR/userspace/bin/awk/main.c" AWK.ELF
 build_user_program basename "$ROOT_DIR/userspace/bin/basename/main.c" BASENAME.ELF
 build_user_program base32 "$ROOT_DIR/userspace/bin/base32/main.c" BASE32.ELF
+build_user_program base64 "$ROOT_DIR/userspace/bin/base64/main.c" BASE64.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -3419,6 +3420,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/gawk:$BUILD_DIR/AWK.ELF:exec" \
     --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec" \
     --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec" \
+    --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \
