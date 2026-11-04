@@ -487,7 +487,7 @@ bz_objs=()
 for bz_unit in blocksort huffman crctable randtable compress decompress bzlib bzip2; do
     bz_obj="$BUILD_DIR/bzip2-$bz_unit.o"
     clang --target=x86_64-unknown-none-elf \
-        -std=c17 -O2 -Wall -Wextra \
+        -std=c17 -O2 -Wall -Wextra -Wno-unused-parameter \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/userspace/bin/bzip2" \
