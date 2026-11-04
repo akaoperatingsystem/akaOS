@@ -469,6 +469,7 @@ initramfs_files+=(
     "--file=/bin/bc:$BUILD_DIR/BC.ELF:exec"
     "--file=/bin/bg:$BUILD_DIR/BG.ELF:exec"
     "--file=/bin/bind:$BUILD_DIR/BIND.ELF:exec"
+    "--file=/bin/wayland-bridge:$BUILD_DIR/WAYLAND_BRIDGE.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"
     "--dir=/var/spool/at/spool"

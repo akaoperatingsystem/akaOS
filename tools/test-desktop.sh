@@ -1,5 +1,7 @@
 lumen --input-test &
-sleep 1
+sleep 2
+wayland-bridge &
+sleep 2
 xserver &
 sleep 2
 
