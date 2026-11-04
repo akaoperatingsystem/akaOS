@@ -418,7 +418,7 @@ static int parse_binding_line(const char *line) {
     char *k = key;
     while (*k == ' ' || *k == '\t' || *k == '"' || *k == '\'') k++;
     size_t kl = strlen(k);
-    while (kl > 0 && (k[kl - 1] == ' ' || k[kl - 1] == '\t' || k[kl - 1] == '"' || k[kl - 1] == ''')) {
+    while (kl > 0 && (k[kl - 1] == ' ' || k[kl - 1] == '\t' || k[kl - 1] == '"' || k[kl - 1] == '\'')) {
         k[--kl] = '\0';
     }
 
@@ -431,7 +431,7 @@ static int parse_binding_line(const char *line) {
     char *t = tgt;
     while (*t == ' ' || *t == '\t' || *t == '"' || *t == '\'') t++;
     size_t tl = strlen(t);
-    while (tl > 0 && (t[tl - 1] == ' ' || t[tl - 1] == '\t' || t[tl - 1] == '"' || t[tl - 1] == ''')) {
+    while (tl > 0 && (t[tl - 1] == ' ' || t[tl - 1] == '\t' || t[tl - 1] == '"' || t[tl - 1] == '\'')) {
         t[--tl] = '\0';
     }
 

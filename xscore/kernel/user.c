@@ -884,6 +884,12 @@ int xscore_user_process_self_test(void) {
     uint64_t bg_help_status = UINT64_MAX;
     if (!p_bg_help || !xscore_process_wait(p_bg_help, &bg_help_status) || bg_help_status != 0 || !xscore_process_reap(p_bg_help)) return 0;
 
+    /* Verify readline key and function bindings bind */
+    const char *bind_args[] = {"/bin/bind", "-q", "forward-char", 0};
+    struct xscore_process *p_bind = xscore_process_create_path_args("/bin/bind", 3, bind_args);
+    uint64_t bind_status = UINT64_MAX;
+    if (!p_bind || !xscore_process_wait(p_bind, &bind_status) || bind_status != 0 || !xscore_process_reap(p_bind)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -952,6 +958,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] GNU Bourne-Again SHell bash verified\n");
     xscore_serial_write("[INFO] Arbitrary precision calculator bc verified\n");
     xscore_serial_write("[INFO] Job control background command bg verified\n");
+    xscore_serial_write("[INFO] Readline key and function bindings bind verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");
