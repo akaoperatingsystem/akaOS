@@ -1828,6 +1828,7 @@ build_user_program fg "$ROOT_DIR/userspace/bin/fg/main.c" FG.ELF
 build_user_program jobs "$ROOT_DIR/userspace/bin/jobs/main.c" JOBS.ELF
 build_user_program bind "$ROOT_DIR/userspace/bin/bind/main.c" BIND.ELF
 build_user_program break "$ROOT_DIR/userspace/bin/break/main.c" BREAK.ELF
+build_user_program builtin "$ROOT_DIR/userspace/bin/builtin/main.c" BUILTIN.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -3437,6 +3438,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/jobs:$BUILD_DIR/JOBS.ELF:exec" \
     --file "/bin/bind:$BUILD_DIR/BIND.ELF:exec" \
     --file "/bin/break:$BUILD_DIR/BREAK.ELF:exec" \
+    --file "/bin/builtin:$BUILD_DIR/BUILTIN.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \

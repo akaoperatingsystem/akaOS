@@ -974,6 +974,18 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "help") == 0) {
+        if (argc > 1 && (strcmp(argv[1], "builtin") == 0 || strcmp(argv[1], "[b]uiltin") == 0)) {
+            write_str(STDOUT_FILENO, "builtin: builtin [shell-builtin [arg ...]]\n"
+                                     "    Execute shell builtins.\n\n"
+                                     "    Execute SHELL-BUILTIN with arguments ARGs without performing command\n"
+                                     "    lookup. This is useful when you wish to reimplement a shell builtin\n"
+                                     "    as a shell function, but need to execute the builtin within the function.\n\n"
+                                     "    Exit Status:\n"
+                                     "    Returns the exit status of SHELL-BUILTIN, or false if SHELL-BUILTIN is\n"
+                                     "    not a shell builtin.\n");
+            last_exit_status = 0;
+            return 1;
+        }
         if (argc > 1 && strcmp(argv[1], "break") == 0) {
             write_str(STDOUT_FILENO, "break: break [n]\n"
                                      "    Exit for, while, until, or select loops.\n\n"
@@ -1005,7 +1017,7 @@ static int execute_builtin(int argc, char *argv[]) {
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind\n");
         write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, break [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
@@ -1506,6 +1518,26 @@ static int execute_builtin(int argc, char *argv[]) {
         }
         loop_break_count = count;
         last_exit_status = 0;
+        return 1;
+    }
+
+    if (strcmp(argv[0], "builtin") == 0) {
+        if (argc < 2) {
+            last_exit_status = 0;
+            return 1;
+        }
+        if (strcmp(argv[1], "builtin") == 0) {
+            /* builtin builtin [args] */
+            return execute_builtin(argc - 1, argv + 1);
+        }
+        int b_res = execute_builtin(argc - 1, argv + 1);
+        if (b_res >= 0) {
+            return 1;
+        }
+        write_str(STDERR_FILENO, "akash: builtin: ");
+        write_str(STDERR_FILENO, argv[1]);
+        write_str(STDERR_FILENO, ": not a shell builtin\n");
+        last_exit_status = 1;
         return 1;
     }
 

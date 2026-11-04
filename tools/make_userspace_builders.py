@@ -498,6 +498,7 @@ build_user_program bc "$ROOT_DIR/userspace/bin/bc/main.c" BC.ELF
 build_user_program bg "$ROOT_DIR/userspace/bin/bg/main.c" BG.ELF
 build_user_program bind "$ROOT_DIR/userspace/bin/bind/main.c" BIND.ELF
 build_user_program break "$ROOT_DIR/userspace/bin/break/main.c" BREAK.ELF
+build_user_program builtin "$ROOT_DIR/userspace/bin/builtin/main.c" BUILTIN.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -675,6 +676,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/bg:$BUILD_DIR/BG.ELF:exec" \
     --file "/bin/bind:$BUILD_DIR/BIND.ELF:exec" \
     --file "/bin/break:$BUILD_DIR/BREAK.ELF:exec" \
+    --file "/bin/builtin:$BUILD_DIR/BUILTIN.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \\

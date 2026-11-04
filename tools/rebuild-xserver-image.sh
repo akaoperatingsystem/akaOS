@@ -469,6 +469,19 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-break-main.o" \
     -o "$BUILD_DIR/BREAK.ELF"
 
+echo "[BUILD] user builtin"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/builtin/main.c" -o "$BUILD_DIR/user-builtin-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-builtin-main.o" \
+    -o "$BUILD_DIR/BUILTIN.ELF"
+
 initramfs_files+=(
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
@@ -483,6 +496,7 @@ initramfs_files+=(
     "--file=/bin/bg:$BUILD_DIR/BG.ELF:exec"
     "--file=/bin/bind:$BUILD_DIR/BIND.ELF:exec"
     "--file=/bin/break:$BUILD_DIR/BREAK.ELF:exec"
+    "--file=/bin/builtin:$BUILD_DIR/BUILTIN.ELF:exec"
     "--file=/bin/wayland-bridge:$BUILD_DIR/WAYLAND_BRIDGE.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"
