@@ -143,8 +143,17 @@ static void split_fields(const char *line) {
     }
 }
 
-/* Evaluate an expression string like "$1", "NR", "length($0)", "5", "sum + $5" */
-static double eval_numeric_expr(const char *expr, const char **str_res) {
+/* Arithmetic parser forward declarations */
+static const char *math_ptr = NULL;
+static double parse_math_expr(void);
+static double parse_math_term(void);
+static double parse_math_factor(void);
+
+static void math_skip_ws(void) {
+    while (math_ptr && (*math_ptr == ' ' || *math_ptr == '\t')) math_ptr++;
+}
+
+static double eval_atom(const char *expr, const char **str_res) {
     while (*expr == ' ' || *expr == '\t') expr++;
     if (!*expr) {
         if (str_res) *str_res = "";
@@ -156,7 +165,6 @@ static double eval_numeric_expr(const char *expr, const char **str_res) {
         expr++;
         int f_idx = 0;
         if (*expr == '(') {
-            /* e.g. $(NF-2) */
             char inner[64];
             const char *close = strchr(expr, ')');
             if (close) {
@@ -164,7 +172,10 @@ static double eval_numeric_expr(const char *expr, const char **str_res) {
                 if (in_len >= sizeof(inner)) in_len = sizeof(inner) - 1;
                 memcpy(inner, expr + 1, in_len);
                 inner[in_len] = '\0';
-                f_idx = (int)eval_numeric_expr(inner, NULL);
+                const char *saved = math_ptr;
+                math_ptr = inner;
+                f_idx = (int)parse_math_expr();
+                math_ptr = saved;
             }
         } else if (isdigit((unsigned char)*expr)) {
             f_idx = atoi(expr);
@@ -179,7 +190,6 @@ static double eval_numeric_expr(const char *expr, const char **str_res) {
         return 0.0;
     }
 
-    /* Built-in variable names */
     if (strcmp(expr, "NR") == 0) {
         if (str_res) *str_res = NULL;
         return (double)var_NR;
@@ -193,7 +203,6 @@ static double eval_numeric_expr(const char *expr, const char **str_res) {
         return (double)var_FNR;
     }
 
-    /* Check length($0) or length(str) */
     if (strncmp(expr, "length(", 7) == 0) {
         const char *arg_start = expr + 7;
         const char *close = strchr(arg_start, ')');
@@ -204,22 +213,19 @@ static double eval_numeric_expr(const char *expr, const char **str_res) {
             memcpy(inner, arg_start, in_len);
             inner[in_len] = '\0';
             const char *s = "";
-            eval_numeric_expr(inner, &s);
+            eval_atom(inner, &s);
             if (str_res) *str_res = NULL;
-            return (double)strlen(s);
+            return (double)strlen(s ? s : "");
         }
     }
 
-    /* Check user variable */
     struct awk_var *v = get_var(expr);
     if (v) {
         if (str_res) *str_res = v->sval;
         return v->nval;
     }
 
-    /* Literal number or string */
     if (*expr == '"') {
-        /* Quoted string */
         static char sbuf[256];
         size_t slen = strlen(expr);
         if (slen >= 2 && expr[slen - 1] == '"') {
@@ -241,6 +247,125 @@ static double eval_numeric_expr(const char *expr, const char **str_res) {
     return 0.0;
 }
 
+static double parse_math_factor(void) {
+    math_skip_ws();
+    if (!math_ptr || !*math_ptr) return 0.0;
+
+    if (*math_ptr == '(') {
+        math_ptr++;
+        double v = parse_math_expr();
+        math_skip_ws();
+        if (*math_ptr == ')') math_ptr++;
+        return v;
+    }
+
+    /* Extract token */
+    char token[128];
+    size_t tlen = 0;
+    if (*math_ptr == '$') {
+        token[tlen++] = *math_ptr++;
+        if (*math_ptr == '(') {
+            token[tlen++] = *math_ptr++;
+            while (*math_ptr && *math_ptr != ')') {
+                if (tlen < sizeof(token) - 1) token[tlen++] = *math_ptr;
+                math_ptr++;
+            }
+            if (*math_ptr == ')') token[tlen++] = *math_ptr++;
+        } else {
+            while (*math_ptr && (isalnum((unsigned char)*math_ptr) || *math_ptr == '_')) {
+                if (tlen < sizeof(token) - 1) token[tlen++] = *math_ptr;
+                math_ptr++;
+            }
+        }
+        token[tlen] = '\0';
+        return eval_atom(token, NULL);
+    }
+
+    if (isalpha((unsigned char)*math_ptr) || *math_ptr == '_') {
+        while (*math_ptr && (isalnum((unsigned char)*math_ptr) || *math_ptr == '_' || *math_ptr == '(' || *math_ptr == ')' || *math_ptr == '$')) {
+            if (tlen < sizeof(token) - 1) token[tlen++] = *math_ptr;
+            math_ptr++;
+        }
+        token[tlen] = '\0';
+        return eval_atom(token, NULL);
+    }
+
+    if (isdigit((unsigned char)*math_ptr) || *math_ptr == '.') {
+        char *end;
+        double v = strtod(math_ptr, &end);
+        math_ptr = end;
+        return v;
+    }
+
+    return 0.0;
+}
+
+static double parse_math_term(void) {
+    double v = parse_math_factor();
+    for (;;) {
+        math_skip_ws();
+        if (!math_ptr) break;
+        if (*math_ptr == '*') {
+            math_ptr++;
+            v *= parse_math_factor();
+        } else if (*math_ptr == '/') {
+            math_ptr++;
+            double d = parse_math_factor();
+            if (d != 0.0) v /= d;
+        } else if (*math_ptr == '%') {
+            math_ptr++;
+            double d = parse_math_factor();
+            if (d != 0.0) v = (long)v % (long)d;
+        } else {
+            break;
+        }
+    }
+    return v;
+}
+
+static double parse_math_expr(void) {
+    double v = parse_math_term();
+    for (;;) {
+        math_skip_ws();
+        if (!math_ptr) break;
+        if (*math_ptr == '+') {
+            math_ptr++;
+            v += parse_math_term();
+        } else if (*math_ptr == '-') {
+            math_ptr++;
+            v -= parse_math_term();
+        } else {
+            break;
+        }
+    }
+    return v;
+}
+
+static double eval_full_expr(const char *expr, const char **str_res) {
+    while (*expr == ' ' || *expr == '\t') expr++;
+    if (*expr == '"') {
+        return eval_atom(expr, str_res);
+    }
+
+    int has_op = 0;
+    for (size_t i = 0; expr[i]; ++i) {
+        if (expr[i] == '+' || expr[i] == '*' || expr[i] == '/' || expr[i] == '%' ||
+            (expr[i] == '-' && i > 0 && expr[i - 1] != '(' && expr[i - 1] != 'e' && expr[i - 1] != 'E')) {
+            has_op = 1;
+            break;
+        }
+    }
+
+    if (has_op) {
+        math_ptr = expr;
+        double res = parse_math_expr();
+        if (str_res) *str_res = NULL;
+        return res;
+    }
+
+    return eval_atom(expr, str_res);
+}
+
 /* Evaluate pattern condition */
 static int eval_pattern(struct awk_rule *rule) {
     if (rule->pat_type == PAT_ALWAYS) return 1;
@@ -255,21 +380,18 @@ static int eval_pattern(struct awk_rule *rule) {
     const char *p = rule->pat_str;
     while (*p == ' ' || *p == '\t') p++;
 
-    /* e.g. NF > 0 */
     if (strncmp(p, "NF > 0", 6) == 0 || strncmp(p, "NF>0", 4) == 0) {
         return var_NF > 0;
     }
 
-    /* Comparison: LHS == RHS, LHS != RHS, LHS > RHS, LHS < RHS, LHS >= RHS, LHS <= RHS */
     const char *op = NULL;
-    int op_type = 0; /* 1: ==, 2: !=, 3: >=, 4: <=, 5: >, 6: <, 7: % */
+    int op_type = 0; /* 1: ==, 2: !=, 3: >=, 4: <=, 5: >, 6: < */
     if ((op = strstr(p, "=="))) op_type = 1;
     else if ((op = strstr(p, "!="))) op_type = 2;
     else if ((op = strstr(p, ">="))) op_type = 3;
     else if ((op = strstr(p, "<="))) op_type = 4;
     else if ((op = strstr(p, ">"))) op_type = 5;
     else if ((op = strstr(p, "<"))) op_type = 6;
-    else if ((op = strstr(p, "%"))) op_type = 7;
 
     if (op && op_type > 0) {
         char left[128], right[128];
@@ -282,7 +404,6 @@ static int eval_pattern(struct awk_rule *rule) {
         strncpy(right, op + oplen, sizeof(right) - 1);
         right[sizeof(right) - 1] = '\0';
 
-        /* Trim */
         char *l = left; while (*l == ' ') l++;
         char *r = right; while (*r == ' ') r++;
         size_t l_len = strlen(l); while (l_len > 0 && l[l_len - 1] == ' ') l[--l_len] = '\0';
@@ -290,18 +411,16 @@ static int eval_pattern(struct awk_rule *rule) {
 
         const char *l_str = NULL;
         const char *r_str = NULL;
-        double l_num = eval_numeric_expr(l, &l_str);
-        double r_num = eval_numeric_expr(r, &r_str);
+        double l_num = eval_full_expr(l, &l_str);
+        double r_num = eval_full_expr(r, &r_str);
 
         if (op_type == 1) {
-            /* == */
             if (l_str && r_str && (*l == '"' || *r == '"' || !isdigit((unsigned char)*l_str))) {
                 return strcmp(l_str, r_str) == 0;
             }
             return l_num == r_num;
         }
         if (op_type == 2) {
-            /* != */
             if (l_str && r_str && (*l == '"' || *r == '"' || !isdigit((unsigned char)*l_str))) {
                 return strcmp(l_str, r_str) != 0;
             }
@@ -311,10 +430,6 @@ static int eval_pattern(struct awk_rule *rule) {
         if (op_type == 4) return l_num <= r_num;
         if (op_type == 5) return l_num > r_num;
         if (op_type == 6) return l_num < r_num;
-        if (op_type == 7) {
-            /* e.g. NR % 2 == 0 handled above or directly */
-            return ((long)l_num % (long)r_num) != 0;
-        }
     }
 
     return 1;
@@ -323,7 +438,6 @@ static int eval_pattern(struct awk_rule *rule) {
 /* Execute action inside { ... } */
 static void execute_action(const char *action) {
     if (!action || !*action) {
-        /* Default action: print $0 */
         printf("%s%s", raw_line, var_ORS);
         return;
     }
@@ -331,7 +445,6 @@ static void execute_action(const char *action) {
     const char *p = action;
     while (*p == ' ' || *p == '\t' || *p == '{') p++;
 
-    /* Assignments: x += expr, sum += expr, var = expr */
     if (strstr(p, "+=")) {
         char vname[32];
         const char *plus = strstr(p, "+=");
@@ -342,7 +455,7 @@ static void execute_action(const char *action) {
             vname[vnlen] = '\0';
             const char *val_expr = plus + 2;
             while (*val_expr == ' ' || *val_expr == '\t') val_expr++;
-            double add_val = eval_numeric_expr(val_expr, NULL);
+            double add_val = eval_full_expr(val_expr, NULL);
             struct awk_var *v = get_var(vname);
             double cur_val = v ? v->nval : 0.0;
             double new_val = cur_val + add_val;
@@ -367,7 +480,6 @@ static void execute_action(const char *action) {
         }
     }
 
-    /* Print statements: print item1, item2, "string", ... */
     const char *pr = strstr(p, "print");
     if (pr) {
         pr += 5;
@@ -377,7 +489,6 @@ static void execute_action(const char *action) {
             return;
         }
 
-        /* Parse comma-separated or space-separated items */
         char arg_str[512];
         strncpy(arg_str, pr, sizeof(arg_str) - 1);
         arg_str[sizeof(arg_str) - 1] = '\0';
@@ -395,14 +506,17 @@ static void execute_action(const char *action) {
             char item[128];
             size_t ilen = 0;
             if (*tok == '"') {
-                tok++;
+                item[ilen++] = *tok++;
                 while (*tok && *tok != '"') {
                     if (ilen < sizeof(item) - 1) item[ilen++] = *tok;
                     tok++;
                 }
-                if (*tok == '"') tok++;
+                if (*tok == '"') {
+                    if (ilen < sizeof(item) - 1) item[ilen++] = *tok;
+                    tok++;
+                }
             } else {
-                while (*tok && *tok != ',' && *tok != ' ' && *tok != '\t') {
+                while (*tok && *tok != ',' && *tok != ';') {
                     if (ilen < sizeof(item) - 1) item[ilen++] = *tok;
                     tok++;
                 }
@@ -413,7 +527,7 @@ static void execute_action(const char *action) {
             }
 
             const char *res_s = NULL;
-            double res_n = eval_numeric_expr(item, &res_s);
+            double res_n = eval_full_expr(item, &res_s);
             if (!first_item) {
                 printf("%s", var_OFS);
             }
@@ -440,7 +554,6 @@ static int parse_program(const char *prog) {
         while (*cursor == ' ' || *cursor == '\t' || *cursor == '\r' || *cursor == '\n' || *cursor == ';') cursor++;
         if (!*cursor) break;
 
-        /* Comment */
         if (*cursor == '#') {
             while (*cursor && *cursor != '\n') cursor++;
             continue;
@@ -472,7 +585,6 @@ static int parse_program(const char *prog) {
         } else if (*cursor == '{') {
             rule->pat_type = PAT_ALWAYS;
         } else {
-            /* Expression pattern before { */
             rule->pat_type = PAT_EXPR;
             char *brace = strchr(cursor, '{');
             if (brace) {
@@ -482,7 +594,6 @@ static int parse_program(const char *prog) {
                 rule->pat_str[plen] = '\0';
                 cursor = brace;
             } else {
-                /* Pattern without action: print $0 */
                 strncpy(rule->pat_str, cursor, sizeof(rule->pat_str) - 1);
                 rule->pat_str[sizeof(rule->pat_str) - 1] = '\0';
                 rule->action[0] = '\0';
@@ -596,7 +707,6 @@ int main(int argc, char **argv) {
             break;
         }
         if (arg[0] == '-') {
-            /* Ignore compatibility / lint flags */
             continue;
         }
         if (!program_text && !program_file) {
@@ -626,11 +736,28 @@ int main(int argc, char **argv) {
 
     parse_program(program_text);
 
+    /* Check if program has only BEGIN rules */
+    int only_begin = 1;
+    for (int r = 0; r < rule_count; ++r) {
+        if (rules[r].pat_type != PAT_BEGIN) {
+            only_begin = 0;
+            break;
+        }
+    }
+
     /* Execute BEGIN rules */
     for (int r = 0; r < rule_count; ++r) {
         if (rules[r].pat_type == PAT_BEGIN) {
             execute_action(rules[r].action);
         }
+    }
+
+    if (only_begin && files_start >= argc) {
+        /* If only BEGIN rules and no input files given, exit cleanly without blocking */
+        for (int r = 0; r < rule_count; ++r) {
+            if (rules[r].preg_valid) regfree(&rules[r].preg);
+        }
+        return 0;
     }
 
     /* Process input files or stdin */
