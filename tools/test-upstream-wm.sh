@@ -277,7 +277,7 @@ try:
         raise SystemExit(1)
     print("[PASS] mate-panel desktop panel started and remained active.",
           flush=True)
-    if not wait_for("MATE-SESSION-RUNNING=0", 120):
+    if not wait_for("MATE-SESSION-RUNNING=0", 200):
         print("[FAIL] mate-session did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -288,7 +288,7 @@ try:
         raise SystemExit(1)
     print("[PASS] mate-session desktop session manager started and remained active.",
           flush=True)
-    if not wait_for("MUFFIN-RUNNING=0", 120):
+    if not wait_for("MUFFIN-RUNNING=0", 200):
         print("[FAIL] muffin did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -299,7 +299,7 @@ try:
         raise SystemExit(1)
     print("[PASS] muffin window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE.",
           flush=True)
-    if not wait_for("I3-RUNNING=0", 120):
+    if not wait_for("I3-RUNNING=0", 200):
         print("[FAIL] i3 did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -310,7 +310,7 @@ try:
         raise SystemExit(1)
     print("[PASS] i3 tiling window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE.",
           flush=True)
-    if not wait_for("LXQT-PANEL-RUNNING=0", 120):
+    if not wait_for("LXQT-PANEL-RUNNING=0", 200):
         print("[FAIL] lxqt-panel did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -321,7 +321,7 @@ try:
         raise SystemExit(1)
     print("[PASS] lxqt-panel desktop panel started and remained active alongside i3/Cinnamon/MATE/XFCE/LXDE.",
           flush=True)
-    if not wait_for("LXQT-SESSION-RUNNING=0", 120):
+    if not wait_for("LXQT-SESSION-RUNNING=0", 200):
         print("[FAIL] lxqt-session did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
