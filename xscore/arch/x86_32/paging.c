@@ -91,7 +91,7 @@ uint64_t xscore_vmm_address_space_create(void) {
 
     /* Share all kernel space mappings and MMIO (framebuffer, etc.) */
     for (uint32_t t = 0; t < 1024; ++t) {
-        if (initial_page_directory[t] != 0 && !(initial_page_directory[t] & PAGE_USER)) {
+        if (t < KERNEL_SHARED_TABLES && initial_page_directory[t] != 0) {
             pd[t] = initial_page_directory[t];
         }
     }
@@ -102,8 +102,9 @@ uint64_t xscore_vmm_address_space_create(void) {
 void xscore_vmm_address_space_sync_kernel(uint64_t root_address) {
     if (!root_address) return;
     uint32_t *pd = (uint32_t*)(uintptr_t)root_address;
+    /* Share all kernel space mappings and MMIO (framebuffer, etc.) */
     for (uint32_t t = 0; t < 1024; ++t) {
-        if (initial_page_directory[t] != 0 && !(initial_page_directory[t] & PAGE_USER)) {
+        if (t < KERNEL_SHARED_TABLES && initial_page_directory[t] != 0) {
             pd[t] = initial_page_directory[t];
         }
     }

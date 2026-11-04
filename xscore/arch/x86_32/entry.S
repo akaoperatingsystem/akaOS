@@ -367,6 +367,12 @@ xscore_user_resume:
     movl $11, %ecx
     rep movsl
 
+    /* Restore user data segments before returning to user space */
+    movw $0x23, %ax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+
     popl %ebx
     popl %ecx
     popl %edx

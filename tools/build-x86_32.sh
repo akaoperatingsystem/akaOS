@@ -71,7 +71,9 @@ BUILD_TIMESTAMP="${BUILD_TIMESTAMP:-$(date +%m%d%Y%H%M%S)}"
 export BUILD_TIMESTAMP
 
 # 1. Build 32-bit userspace binaries and initramfs archive
-bash "$ROOT_DIR/tools/build-user-32.sh"
+if [[ "${AKAOS_TEST_SKIP_USERSPACE:-0}" != 1 ]]; then
+    bash "$ROOT_DIR/tools/build-user-32.sh"
+fi
 
 echo "[BUILD] akaOS x86_32 XSCore Kernel"
 

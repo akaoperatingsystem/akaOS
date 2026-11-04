@@ -243,16 +243,21 @@ void xscore_32_trap_handler(struct xscore_32_trap_frame *frame) {
         /* Normalize the 32-bit trap frame to the common exception logger's
          * six-word layout. Passing the native frame as uint64_t[] combines
          * adjacent 32-bit registers and reports bogus EIP/RSP values. */
+        uint32_t kernel_esp = (uint32_t)(uintptr_t)&frame->user_esp;
         uint64_t normalized_frame[6] = {
             frame->int_no,
             frame->err_code,
             frame->eip,
             frame->cs,
             frame->eflags,
-            (frame->cs & 3U) ? frame->user_esp :
-                (uint64_t)(uintptr_t)frame +
-                    offsetof(struct xscore_32_trap_frame, user_esp)
+            (frame->cs & 3U) ? frame->user_esp : kernel_esp
         };
+        /* If a user process took the exception, terminate the process instead of panicking the kernel */
+        if ((frame->cs & 3U) == 3U) {
+            extern void xscore_exception_handler(uint64_t, uint64_t, const void *);
+            xscore_exception_handler((uint64_t)frame->int_no, (uint64_t)frame->err_code, normalized_frame);
+            return;
+        }
         xscore_exception_handler((uint64_t)frame->int_no,
                                  (uint64_t)frame->err_code,
                                  normalized_frame);
