@@ -218,6 +218,30 @@ long double roundl(long double value) {
     return signbit(value) ? -result : result;
 }
 
+long lround(double x) {
+    return (long)round(x);
+}
+
+long lroundf(float x) {
+    return (long)roundf(x);
+}
+
+long lroundl(long double x) {
+    return (long)roundl(x);
+}
+
+long long llround(double x) {
+    return (long long)round(x);
+}
+
+long long llroundf(float x) {
+    return (long long)roundf(x);
+}
+
+long long llroundl(long double x) {
+    return (long long)roundl(x);
+}
+
 static double akaos_log_series(double mantissa, int exponent) {
     const double ln2 = 0.693147180559945309417232121458176568;
     const double sqrt_half = 0.707106781186547524400844362104849039;
