@@ -1259,14 +1259,16 @@ __attribute__((noreturn)) static void xscore_boot_on_kernel_stack(uint64_t boot_
 #endif
 
     /* ============================================================
-     * Isolated user-process lifecycle self-test
+     * Isolated user-process lifecycle self-test (runs ONLY in test mode)
      * ============================================================ */
 
-    if (!xscore_user_process_self_test()) {
-        serial_write("[FATAL] Process isolation or Ring 3 milestone failed\n");
-        for (;;) __asm__ volatile("cli; hlt");
+    if (boot_info->flags & AKAOS_BOOT_FLAG_TEST_MODE) {
+        if (!xscore_user_process_self_test()) {
+            serial_write("[FATAL] Process isolation or Ring 3 milestone failed\n");
+            for (;;) __asm__ volatile("cli; hlt");
+        }
+        serial_write("[PASS] akaOS user-mode milestone complete\n");
     }
-    serial_write("[PASS] akaOS user-mode milestone complete\n");
 
 #if defined(__x86_64__)
     if ((boot_info->flags & AKAOS_BOOT_FLAG_TEST_MODE) &&

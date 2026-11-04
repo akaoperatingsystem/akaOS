@@ -430,6 +430,19 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-bc-main.o" \
     -o "$BUILD_DIR/BC.ELF"
 
+echo "[BUILD] user bg"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/bg/main.c" -o "$BUILD_DIR/user-bg-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-bg-main.o" \
+    -o "$BUILD_DIR/BG.ELF"
+
 initramfs_files+=(
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
@@ -441,6 +454,7 @@ initramfs_files+=(
     "--file=/bin/base32:$BUILD_DIR/BASE32.ELF:exec"
     "--file=/bin/base64:$BUILD_DIR/BASE64.ELF:exec"
     "--file=/bin/bc:$BUILD_DIR/BC.ELF:exec"
+    "--file=/bin/bg:$BUILD_DIR/BG.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"
     "--dir=/var/spool/at/spool"

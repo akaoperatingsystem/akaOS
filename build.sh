@@ -1823,6 +1823,9 @@ build_user_program basename "$ROOT_DIR/userspace/bin/basename/main.c" BASENAME.E
 build_user_program base32 "$ROOT_DIR/userspace/bin/base32/main.c" BASE32.ELF
 build_user_program base64 "$ROOT_DIR/userspace/bin/base64/main.c" BASE64.ELF
 build_user_program bc "$ROOT_DIR/userspace/bin/bc/main.c" BC.ELF
+build_user_program bg "$ROOT_DIR/userspace/bin/bg/main.c" BG.ELF
+build_user_program fg "$ROOT_DIR/userspace/bin/fg/main.c" FG.ELF
+build_user_program jobs "$ROOT_DIR/userspace/bin/jobs/main.c" JOBS.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -3427,6 +3430,9 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec" \
     --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec" \
     --file "/bin/bc:$BUILD_DIR/BC.ELF:exec" \
+    --file "/bin/bg:$BUILD_DIR/BG.ELF:exec" \
+    --file "/bin/fg:$BUILD_DIR/FG.ELF:exec" \
+    --file "/bin/jobs:$BUILD_DIR/JOBS.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \

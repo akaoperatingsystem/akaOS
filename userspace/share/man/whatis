@@ -132,3 +132,6 @@ bash (1) - GNU Bourne-Again SHell, command language interpreter
 rbash (1) - restricted GNU Bourne-Again SHell
 sh (1) - POSIX command language interpreter
 bc (1) - arbitrary precision calculator language
+bg (1) - send jobs to the background
+fg (1) - run jobs in the foreground
+jobs (1) - display status of jobs in the current session
