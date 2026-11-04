@@ -475,6 +475,7 @@ static void framebuffer_clear(void);
 static void splash_init(void);
 static void early_console_init(const struct akaos_boot_info *boot_info);
 static void early_console_scroll_if_needed(void);
+int xscore_process_initialize(void);
 __attribute__((noreturn)) static void xscore_shell_run(void);
 
 static void framebuffer_clear(void) {
@@ -1257,6 +1258,12 @@ __attribute__((noreturn)) static void xscore_boot_on_kernel_stack(uint64_t boot_
         for (;;) __asm__ volatile("cli; hlt");
     }
 #endif
+
+    /* Initialize process management subsystem */
+    if (!xscore_process_initialize()) {
+        serial_write("[FATAL] Process subsystem initialization failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
 
     /* ============================================================
      * Isolated user-process lifecycle self-test (runs ONLY in test mode)
