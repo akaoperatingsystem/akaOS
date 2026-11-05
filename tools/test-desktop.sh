@@ -74,3 +74,9 @@ env DISPLAY=:0 /usr/local/bin/dwm &
 sleep 15
 ps
 echo DWM-RUNNING=$?
+
+/usr/local/bin/bspwm -v
+echo BSPWM-VERSION=$?
+
+/usr/local/bin/bspc -v
+echo BSPC-VERSION=$?

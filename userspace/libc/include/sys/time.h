@@ -2,6 +2,7 @@
 #define AKAOS_LIBC_SYS_TIME_H
 
 #include <time.h>
+#include <sys/select.h>
 
 #ifndef timercmp
 #define timercmp(left, right, operation) \

@@ -345,6 +345,18 @@ try:
         raise SystemExit(1)
     print("[PASS] dwm dynamic tiling window manager started and remained active alongside i3/Cinnamon/MATE/XFCE/LXDE/LXQt.",
           flush=True)
+    if not wait_for("BSPWM-VERSION=0", 60):
+        print("[FAIL] bspwm binary space partitioning WM did not complete version check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] bspwm binary space partitioning window manager verified operational.",
+          flush=True)
+    if not wait_for("BSPC-VERSION=0", 60):
+        print("[FAIL] bspc client did not complete version check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] bspc client controller verified operational.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)

@@ -691,6 +691,16 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/dwm" ]]; then
     done
 fi
 
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/bspwm" ]]; then
+    echo "[BUILD] upstream bspwm binary space partitioning window manager"
+    initramfs_files+=(
+        "--file=/usr/local/bin/bspwm:$UPSTREAM_SYSROOT/usr/local/bin/bspwm:exec"
+        "--file=/usr/local/bin/bspc:$UPSTREAM_SYSROOT/usr/local/bin/bspc:exec"
+        "--dir=/etc/xdg/bspwm"
+        "--file=/etc/xdg/bspwm/bspwmrc:$UPSTREAM_SYSROOT/etc/xdg/bspwm/bspwmrc:0755"
+    )
+fi
+
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/i3" ]]; then
     echo "[BUILD] upstream i3 window manager & tools"
     initramfs_files+=(
