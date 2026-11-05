@@ -211,8 +211,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (akaos_toolkit_connect(&server.channel) != 0) {
-        fprintf(stderr, "xserver: cannot reach the compositor channel\n");
+    int toolkit_rc = akaos_toolkit_connect(&server.channel);
+    if (toolkit_rc != 0) {
+        fprintf(stderr, "xserver: cannot reach the compositor channel (rc=%d, errno=%d)\n", toolkit_rc, errno);
         return 1;
     }
     /* Fault in the compositor request queue.

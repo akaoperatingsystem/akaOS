@@ -492,8 +492,10 @@ static void report_xkb_failure(const struct bridge *bridge, const char *stage) {
 }
 
 static int connect_compositor(struct bridge *bridge) {
+    int last_rc = 0;
     for (unsigned attempt = 0U; attempt < 200U; ++attempt) {
-        if (akaos_toolkit_connect(&bridge->channel) == 0) {
+        last_rc = akaos_toolkit_connect(&bridge->channel);
+        if (last_rc == 0) {
             bridge->display_info.abi_version = bridge->channel->abi_version;
             bridge->display_info.width = bridge->channel->display_width;
             bridge->display_info.height = bridge->channel->display_height;
@@ -506,6 +508,8 @@ static int connect_compositor(struct bridge *bridge) {
         }
         (void)poll(NULL, 0U, 25);
     }
+    fprintf(stderr, "wayland-bridge: connect_compositor failed after 200 attempts (last_rc=%d, errno=%d)\n",
+            last_rc, errno);
     return 0;
 }
 

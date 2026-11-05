@@ -22,16 +22,16 @@ int akaos_toolkit_connect(struct akaos_compositor_channel **channel_out) {
     if (!channel_out) return -1;
     *channel_out = 0;
     int fd = shm_open(AKAOS_COMPOSITOR_IPC_PATH, O_RDWR, 0);
-    if (fd < 0) return -1;
+    if (fd < 0) return -2;
     void *mapping = mmap(NULL, sizeof(struct akaos_compositor_channel),
                          PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
-    if (mapping == MAP_FAILED) return -1;
+    if (mapping == MAP_FAILED) return -3;
     struct akaos_compositor_channel *channel = mapping;
     if (channel->abi_version != AKAOS_DISPLAY_ABI_VERSION ||
         channel->protocol_version != AKAOS_COMPOSITOR_PROTOCOL_VERSION) {
         (void)munmap(mapping, sizeof(*channel));
-        return -1;
+        return -4;
     }
     *channel_out = channel;
     return 0;
