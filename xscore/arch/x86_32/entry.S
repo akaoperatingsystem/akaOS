@@ -236,10 +236,10 @@ xscore_enter_user_32:
     movw %ax, %gs
 
     /* Push iret frame: SS, ESP, EFLAGS, CS, EIP */
-    pushl $0x1B          /* User SS: 0x18 | RPL 3 = 0x1B */
+    pushl $0x23          /* User SS: 0x20 | RPL 3 = 0x23 (User Data segment) */
     pushl %edx           /* User ESP */
     pushl $0x202         /* EFLAGS (IF = 1) */
-    pushl $0x23          /* User CS: 0x20 | RPL 3 = 0x23 */
+    pushl $0x1B          /* User CS: 0x18 | RPL 3 = 0x1B (User Code segment) */
     pushl %ecx           /* User EIP */
     /* Install the current thread's GS base and reload the user TLS selector. */
     /* After the five iret pushes, the original transition argument is at
