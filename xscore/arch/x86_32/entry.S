@@ -249,11 +249,8 @@ xscore_enter_user_32:
     addl $4, %esp
     movw $0x33, %ax
     movw %ax, %gs
-    /* i386 passes the first C argument at user_esp+4. */
-    testl %ebp, %ebp
-    jz .Luser_arg_done_32
-    movl %ebp, 4(%edx)
-.Luser_arg_done_32:
+    /* i386 userspace ELF programs find argc at (%esp), argv at 4(%esp).
+     * Do NOT clobber 4(%edx) (argv[0])! */
     iret
 
 .Luser_resumed_32:
