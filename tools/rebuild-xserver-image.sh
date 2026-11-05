@@ -500,7 +500,42 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "${bz_objs[@]}" \
     -o "$BUILD_DIR/BZIP2.ELF"
 
+echo "[BUILD] user lumen"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/lumen/main.c" -o "$BUILD_DIR/user-lumen-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-lumen-main.o" \
+    -o "$BUILD_DIR/LUMEN.ELF"
+
+echo "[BUILD] user wayland-bridge"
+PROTOCOL_DIR="$BUILD_DIR/wayland-bridge-protocol"
+clang --target=x86_64-unknown-none-elf \
+    -std=gnu17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -I"$UPSTREAM_SYSROOT/usr/local/include" -I"$PROTOCOL_DIR" \
+    -c "$ROOT_DIR/userspace/bin/wayland-bridge/main.c" -o "$BUILD_DIR/wayland-bridge.o"
+ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
+    --dynamic-linker /lib/ld-akaos.so \
+    -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
+    "$BUILD_DIR/user-dynamic-crt0.o" "$BUILD_DIR/wayland-bridge.o" \
+    "$PROTOCOL_DIR/xdg-shell-protocol.o" \
+    "$PROTOCOL_DIR/wlr-layer-shell-protocol.o" \
+    "$PROTOCOL_DIR/wlr-foreign-toplevel-management-protocol.o" \
+    --no-as-needed \
+    "$UPSTREAM_SYSROOT/usr/local/lib/libwayland-server.so.0" \
+    "$UPSTREAM_SYSROOT/usr/local/lib/libxkbcommon.so.0" \
+    "$BUILD_DIR/libm.so.6" "$BUILD_DIR/libc.so.6" -o "$BUILD_DIR/WAYLAND_BRIDGE.ELF"
+
 initramfs_files+=(
+    "--file=/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec"
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atrm:$BUILD_DIR/AT.ELF:exec"

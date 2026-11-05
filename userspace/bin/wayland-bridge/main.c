@@ -718,7 +718,18 @@ static int publish_surface(struct bridge_surface *surface, int resized) {
     copy_text(message.title, sizeof(message.title),
               surface->title[0] ? surface->title : "Wayland Window");
     copy_text(message.icon_name, sizeof(message.icon_name), surface->app_id);
-    if (!akaos_compositor_submit(surface->bridge->channel, &message)) return 0;
+    if (!akaos_compositor_submit(surface->bridge->channel, &message)) {
+        fprintf(stderr,
+                "wayland-bridge: compositor_submit failed for %u (abi=%u/%u proto=%u/%u queue=%u/%u)\n",
+                surface->surface_id,
+                surface->bridge->channel ? surface->bridge->channel->abi_version : 0,
+                AKAOS_DISPLAY_ABI_VERSION,
+                surface->bridge->channel ? surface->bridge->channel->protocol_version : 0,
+                AKAOS_COMPOSITOR_PROTOCOL_VERSION,
+                surface->bridge->channel ? surface->bridge->channel->request_head : 0,
+                surface->bridge->channel ? surface->bridge->channel->request_tail : 0);
+        return 0;
+    }
     if (surface->is_layer_surface && !resized) {
         size_t nonzero_pixels = 0U;
         size_t opaque_pixels = 0U;
