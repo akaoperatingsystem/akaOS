@@ -41,14 +41,15 @@ All desktop environments and window managers run as **completely unmodified upst
 | Desktop / Window Manager | Upstream Version | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
 | **Openbox WM** | Unmodified Upstream 3.6.1 | 100% | `[██████████]` 100% |
-| **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream | 100% | `[██████████]` 100% |
-| **LXQt Desktop & Session** | Unmodified Upstream | 65% | `[██████░░░░]` 65% |
+| **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream 0.10.1 / 1.3.2 | 100% | `[██████████]` 100% |
 | **XFCE Desktop (Xfwm4 + xfce4-panel + xfce4-session)** | Unmodified Upstream 4.18 | 100% | `[██████████]` 100% |
 | **MATE Desktop (Marco + mate-panel + mate-session)** | Unmodified Upstream 1.26 | 100% | `[██████████]` 100% |
-| **KDE Plasma & KWin** | Unmodified Upstream | 25% | `[██░░░░░░░░]` 25% |
-| **GNOME Desktop & Mutter** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
-| **Cinnamon Desktop & Muffin** | Unmodified Upstream | 20% | `[██░░░░░░░░]` 20% |
-| **Overall System Completion** | Full Native Operating System | 80% | `[████████░░]` 80% |
+| **Cinnamon Desktop (Muffin + cinnamon-desktop)** | Unmodified Upstream 5.6.4 / 5.6.1 | 100% | `[██████████]` 100% |
+| **i3 Tiling Window Manager (i3 + i3bar + i3-tools)** | Unmodified Upstream 4.23 | 100% | `[██████████]` 100% |
+| **LXQt Desktop (lxqt-panel + lxqt-session + Qt6 Wayland)** | Unmodified Upstream 2.4.0 | 100% | `[██████████]` 100% |
+| **KDE Plasma & KWin** | Unmodified Upstream | 45% | `[████░░░░░░]` 45% |
+| **GNOME Desktop & Mutter** | Unmodified Upstream | 40% | `[████░░░░░░]` 40% |
+| **Overall System Completion** | Full Native Operating System | 90% | `[█████████░]` 90% |
 
 
 ---
