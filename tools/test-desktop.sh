@@ -69,3 +69,8 @@ env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 QT_QPA_PLATFORM=wayland QT_PLUGIN_PATH=
 sleep 15
 ps
 echo LXQT-SESSION-RUNNING=$?
+
+env DISPLAY=:0 /usr/local/bin/dwm &
+sleep 15
+ps
+echo DWM-RUNNING=$?

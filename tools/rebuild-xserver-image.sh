@@ -654,6 +654,29 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/openbox" ]]; then
     done
 fi
 
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/dwm" ]]; then
+    echo "[BUILD] upstream dwm tiling window manager"
+    initramfs_files+=(
+        "--file=/usr/local/bin/dwm:$UPSTREAM_SYSROOT/usr/local/bin/dwm:exec"
+    )
+    for dwm_library in libX11.so.6 libXinerama.so.1 libXft.so.2 libfontconfig.so.1 \
+        libfreetype.so.6 libXrender.so.1 libXext.so.6; do
+        library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
+            -maxdepth 1 -name "${dwm_library}.*" -print | sort -V | tail -n 1)"
+        if [[ -z "$library_path" ]]; then
+            library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
+                -maxdepth 1 -name "${dwm_library}" -print | head -n 1)"
+        fi
+        [[ -n "$library_path" ]] || continue
+        real_path="$(readlink -f "$library_path")"
+        [[ -f "$real_path" ]] || continue
+        initramfs_files+=(
+            "--file=/lib/$dwm_library:$real_path:0444"
+            "--file=/usr/local/lib/$dwm_library:$real_path:0444"
+        )
+    done
+fi
+
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/i3" ]]; then
     echo "[BUILD] upstream i3 window manager & tools"
     initramfs_files+=(
