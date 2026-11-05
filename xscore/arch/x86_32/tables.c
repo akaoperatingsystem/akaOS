@@ -140,16 +140,16 @@ void xscore_gdt_initialize(void) {
      * 0: Null
      * 1: Kernel Code (0x08)
      * 2: Kernel Data (0x10)
-     * 3: User Data   (0x18 | 3 = 0x1B)
-     * 4: User Code   (0x20 | 3 = 0x23)
+     * 3: User Code   (0x18 | 3 = 0x1B)
+     * 4: User Data   (0x20 | 3 = 0x23)
      * 5: TSS         (0x28)
      * 6: User TLS    (0x30 | RPL3 = 0x33, GS base selected per thread)
      */
     gdt_set_gate(0, 0, 0, 0, 0);                /* Null */
     gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); /* Kernel Code (0x08) */
     gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); /* Kernel Data (0x10) */
-    gdt_set_gate(3, 0, 0xFFFFFFFF, 0xF2, 0xCF); /* User Data (0x18 | 3) */
-    gdt_set_gate(4, 0, 0xFFFFFFFF, 0xFA, 0xCF); /* User Code (0x20 | 3) */
+    gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); /* User Code (0x18 | 3 = 0x1B) */
+    gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); /* User Data (0x20 | 3 = 0x23) */
     gdt_set_gate(6, 0, 0xFFFFFFFF, 0xF2, 0xCF); /* User TLS data (0x33) */
 
     for (size_t i = 0; i < sizeof(tss); ++i) ((uint8_t*)&tss)[i] = 0;

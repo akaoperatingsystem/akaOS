@@ -266,6 +266,13 @@ xscore_enter_user_32:
 /* Syscall entry int 0x80 */
 .global syscall_entry_32
 syscall_entry_32:
+    /* Load kernel data segments for C handler execution */
+    pushl %eax
+    movw $0x10, %ax
+    movw %ax, %ds
+    movw %ax, %es
+    popl %eax
+
     pushl %ebp
     pushl %edi
     pushl %esi
@@ -322,6 +329,14 @@ syscall_entry_32:
     popl %esi
     popl %edi
     popl %ebp
+
+    /* Reload user data segments before returning to user space */
+    pushl %eax
+    movw $0x23, %ax
+    movw %ax, %ds
+    movw %ax, %es
+    popl %eax
+
     iret
 
 .Lsyscall_exit_32:
