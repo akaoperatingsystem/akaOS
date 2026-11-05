@@ -69,12 +69,67 @@ static char script_arg0[128] = "akash";
 static char script_args[10][128];
 static int script_argc = 0;
 
+/* Shell functions and call stack */
+#define MAX_SHELL_FUNCS 64
+#define MAX_CALL_FRAMES 64
+
+struct shell_func {
+    char name[64];
+    char *body;
+    char source_file[128];
+    int def_line;
+};
+static struct shell_func shell_funcs[MAX_SHELL_FUNCS];
+static int num_shell_funcs = 0;
+
+struct call_frame {
+    char sub_name[64];
+    char source_file[128];
+    int line_num;
+};
+static struct call_frame call_stack[MAX_CALL_FRAMES];
+static int call_depth = 0;
+static char current_exec_file[128] = "bash";
+static int current_exec_line = 1;
+
+static struct shell_func *find_shell_func(const char *name) {
+    if (!name || !*name) return NULL;
+    for (int i = 0; i < num_shell_funcs; ++i) {
+        if (strcmp(shell_funcs[i].name, name) == 0) return &shell_funcs[i];
+    }
+    return NULL;
+}
+
+static int set_shell_func(const char *name, const char *body, const char *file, int line) {
+    if (!name || !*name || !body) return 0;
+    for (int i = 0; i < num_shell_funcs; ++i) {
+        if (strcmp(shell_funcs[i].name, name) == 0) {
+            free(shell_funcs[i].body);
+            shell_funcs[i].body = strdup(body);
+            strncpy(shell_funcs[i].source_file, file ? file : "bash", sizeof(shell_funcs[i].source_file) - 1);
+            shell_funcs[i].def_line = line;
+            return 1;
+        }
+    }
+    if (num_shell_funcs < MAX_SHELL_FUNCS) {
+        strncpy(shell_funcs[num_shell_funcs].name, name, sizeof(shell_funcs[num_shell_funcs].name) - 1);
+        shell_funcs[num_shell_funcs].body = strdup(body);
+        strncpy(shell_funcs[num_shell_funcs].source_file, file ? file : "bash", sizeof(shell_funcs[num_shell_funcs].source_file) - 1);
+        shell_funcs[num_shell_funcs].def_line = line;
+        num_shell_funcs++;
+        return 1;
+    }
+    return 0;
+}
+
 /* The interactive shell catches terminal interrupts so Ctrl+C clears the
  * current read and returns a fresh prompt.  Child jobs reset this disposition
  * on exec, allowing foreground programs to receive the default SIGINT. */
 static void shell_sigint_handler(int signal_number) {
     (void)signal_number;
 }
+
+static int execute_buffer(const char *buf);
 
 /* Shell custom variables table */
 struct shell_var {
@@ -974,6 +1029,20 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "help") == 0) {
+        if (argc > 1 && strcmp(argv[1], "caller") == 0) {
+            write_str(STDOUT_FILENO, "caller: caller [expr]\n"
+                                     "    Return the context of the current subroutine call.\n\n"
+                                     "    Without EXPR, returns \"$line $filename\". With EXPR, returns\n"
+                                     "    \"$line $subroutine $filename\"; this extra information can be used to\n"
+                                     "    provide a stack trace.\n\n"
+                                     "    The value of EXPR indicates how many call frames to go back before the\n"
+                                     "    current one; the top frame is frame 0.\n\n"
+                                     "    Exit Status:\n"
+                                     "    Returns 0 unless the shell is not executing a shell function or EXPR\n"
+                                     "    is invalid.\n");
+            last_exit_status = 0;
+            return 1;
+        }
         if (argc > 1 && (strcmp(argv[1], "builtin") == 0 || strcmp(argv[1], "[b]uiltin") == 0)) {
             write_str(STDOUT_FILENO, "builtin: builtin [shell-builtin [arg ...]]\n"
                                      "    Execute shell builtins.\n\n"
@@ -1017,7 +1086,7 @@ static int execute_builtin(int argc, char *argv[]) {
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind, bzip2, bunzip2, bzcat, cal, ncal\n");
         write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, break [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
@@ -1541,6 +1610,94 @@ static int execute_builtin(int argc, char *argv[]) {
         return 1;
     }
 
+    if (strcmp(argv[0], "source") == 0 || strcmp(argv[0], ".") == 0) {
+        if (argc < 2) {
+            write_str(STDERR_FILENO, argv[0]);
+            write_str(STDERR_FILENO, ": filename argument required\n");
+            last_exit_status = 2;
+            return 1;
+        }
+        const char *filename = argv[1];
+        int fd = open(filename, O_RDONLY);
+        if (fd < 0) {
+            write_str(STDERR_FILENO, argv[0]);
+            write_str(STDERR_FILENO, ": ");
+            write_str(STDERR_FILENO, filename);
+            write_str(STDERR_FILENO, ": file not found\n");
+            last_exit_status = 1;
+            return 1;
+        }
+        struct akaos_stat st;
+        size_t sz = 8192;
+        if (stat(filename, &st) == 0 && st.size > 0) {
+            sz = (size_t)st.size + 1;
+        }
+        char *sbuf = (char *)malloc(sz);
+        if (!sbuf) {
+            close(fd);
+            last_exit_status = 1;
+            return 1;
+        }
+        ssize_t sn = read(fd, sbuf, sz - 1);
+        close(fd);
+        if (sn >= 0) sbuf[sn] = '\0'; else sbuf[0] = '\0';
+
+        char saved_file[128];
+        int saved_line = current_exec_line;
+        strncpy(saved_file, current_exec_file, sizeof(saved_file) - 1);
+        strncpy(current_exec_file, filename, sizeof(current_exec_file) - 1);
+
+        if (call_depth < MAX_CALL_FRAMES) {
+            strncpy(call_stack[call_depth].sub_name, "NULL", sizeof(call_stack[call_depth].sub_name) - 1);
+            strncpy(call_stack[call_depth].source_file, saved_file, sizeof(call_stack[call_depth].source_file) - 1);
+            call_stack[call_depth].line_num = saved_line;
+            call_depth++;
+        }
+
+        execute_buffer(sbuf);
+        free(sbuf);
+
+        if (call_depth > 0) call_depth--;
+        strncpy(current_exec_file, saved_file, sizeof(current_exec_file) - 1);
+        current_exec_line = saved_line;
+        return 1;
+    }
+
+    if (strcmp(argv[0], "caller") == 0) {
+        if (call_depth <= 0) {
+            last_exit_status = 1;
+            return 1;
+        }
+        int frame = -1;
+        if (argc > 1) {
+            frame = atoi(argv[1]);
+            if (frame < 0 || frame >= call_depth) {
+                last_exit_status = 1;
+                return 1;
+            }
+        }
+        if (frame < 0) {
+            /* Without expr: line number and source filename of current subroutine call */
+            struct call_frame *top = &call_stack[call_depth - 1];
+            print_num(STDOUT_FILENO, top->line_num > 0 ? top->line_num : 1);
+            write_str(STDOUT_FILENO, " ");
+            write_str(STDOUT_FILENO, top->source_file[0] ? top->source_file : "NULL");
+            write_str(STDOUT_FILENO, "\n");
+        } else {
+            /* With expr: line number, subroutine name, and source file */
+            int idx = (call_depth - 1) - frame;
+            struct call_frame *f = &call_stack[idx];
+            print_num(STDOUT_FILENO, f->line_num > 0 ? f->line_num : 1);
+            write_str(STDOUT_FILENO, " ");
+            write_str(STDOUT_FILENO, f->sub_name[0] ? f->sub_name : "NULL");
+            write_str(STDOUT_FILENO, " ");
+            write_str(STDOUT_FILENO, f->source_file[0] ? f->source_file : "NULL");
+            write_str(STDOUT_FILENO, "\n");
+        }
+        last_exit_status = 0;
+        return 1;
+    }
+
     return -1; /* Not a builtin */
 }
 
@@ -1590,6 +1747,45 @@ static int execute_single_stage(struct command_stage *stage) {
 
     int b_res = execute_builtin(stage->argc, stage->argv);
     if (b_res >= 0) {
+        dup2(saved_in, STDIN_FILENO);
+        close(saved_in);
+        dup2(saved_out, STDOUT_FILENO);
+        close(saved_out);
+        return 1;
+    }
+
+    struct shell_func *func = find_shell_func(stage->argv[0]);
+    if (func) {
+        if (call_depth < MAX_CALL_FRAMES) {
+            strncpy(call_stack[call_depth].sub_name, stage->argv[0], sizeof(call_stack[call_depth].sub_name) - 1);
+            strncpy(call_stack[call_depth].source_file, current_exec_file, sizeof(call_stack[call_depth].source_file) - 1);
+            call_stack[call_depth].line_num = current_exec_line;
+            call_depth++;
+        }
+        int saved_sub_line = current_exec_line;
+
+        /* Save and set positional parameters */
+        char saved_args[10][128];
+        int saved_argc = script_argc;
+        for (int k = 0; k < 10 && k < script_argc; ++k) {
+            strncpy(saved_args[k], script_args[k], sizeof(saved_args[k]) - 1);
+        }
+        script_argc = (stage->argc > 1) ? stage->argc - 1 : 0;
+        if (script_argc > 10) script_argc = 10;
+        for (int k = 0; k < script_argc; ++k) {
+            strncpy(script_args[k], stage->argv[k + 1], sizeof(script_args[k]) - 1);
+        }
+
+        execute_buffer(func->body);
+
+        /* Restore positional parameters */
+        script_argc = saved_argc;
+        for (int k = 0; k < 10 && k < saved_argc; ++k) {
+            strncpy(script_args[k], saved_args[k], sizeof(script_args[k]) - 1);
+        }
+        if (call_depth > 0) call_depth--;
+        current_exec_line = saved_sub_line;
+
         dup2(saved_in, STDIN_FILENO);
         close(saved_in);
         dup2(saved_out, STDOUT_FILENO);
@@ -1972,6 +2168,31 @@ static void free_statements(struct statement_list *list) {
 
 static void push_parsed_token(struct statement_list *list, char *trimmed) {
     if (!trimmed || !*trimmed) return;
+
+    /* Check for function definition start: name() { or function name { */
+    char *open_brace = strchr(trimmed, '{');
+    if (open_brace && (strstr(trimmed, "()") || strncmp(trimmed, "function ", 9) == 0)) {
+        size_t hlen = (size_t)(open_brace + 1 - trimmed);
+        char head[256];
+        if (hlen < sizeof(head)) {
+            memcpy(head, trimmed, hlen);
+            head[hlen] = '\0';
+            char *rest = trim_str(open_brace + 1);
+            add_statement(list, trim_str(head));
+            if (*rest) push_parsed_token(list, rest);
+            return;
+        }
+    }
+
+    size_t tlen = strlen(trimmed);
+    if (tlen > 1 && trimmed[tlen - 1] == '}' && trimmed[0] != '{') {
+        trimmed[tlen - 1] = '\0';
+        char *head = trim_str(trimmed);
+        if (*head) push_parsed_token(list, head);
+        add_statement(list, "}");
+        return;
+    }
+
     if (strncmp(trimmed, "then ", 5) == 0) {
         add_statement(list, "then");
         char *rest = trim_str(trimmed + 5);
@@ -1981,7 +2202,6 @@ static void push_parsed_token(struct statement_list *list, char *trimmed) {
         char *rest = trim_str(trimmed + 3);
         if (*rest) push_parsed_token(list, rest);
     } else {
-        size_t tlen = strlen(trimmed);
         if (tlen > 5 && strcmp(trimmed + tlen - 5, " then") == 0) {
             trimmed[tlen - 5] = '\0';
             char *head = trim_str(trimmed);
@@ -2056,6 +2276,51 @@ static int execute_statements(struct statement_list *list, int start, int end) {
         if (!stmt || stmt[0] == '\0') {
             i++;
             continue;
+        }
+
+        /* 0. Function definitions: name() { ... } or function name [()] { ... } */
+        char *open_b = strchr(stmt, '{');
+        if (open_b && (strstr(stmt, "()") || strncmp(stmt, "function ", 9) == 0)) {
+            char func_name[64];
+            func_name[0] = '\0';
+            const char *sp = stmt;
+            while (*sp == ' ' || *sp == '\t') sp++;
+            if (strncmp(sp, "function ", 9) == 0) {
+                sp += 9;
+                while (*sp == ' ' || *sp == '\t') sp++;
+            }
+            size_t nlen = 0;
+            while (sp[nlen] && sp[nlen] != ' ' && sp[nlen] != '\t' && sp[nlen] != '(' && sp[nlen] != '{') {
+                if (nlen < sizeof(func_name) - 1) func_name[nlen] = sp[nlen];
+                nlen++;
+            }
+            func_name[nlen] = '\0';
+
+            int close_b_idx = -1;
+            int depth = 0;
+            for (int k = i + 1; k < end; ++k) {
+                if (strchr(list->items[k], '{')) depth++;
+                if (strcmp(list->items[k], "}") == 0) {
+                    if (depth == 0) {
+                        close_b_idx = k;
+                        break;
+                    }
+                    depth--;
+                }
+            }
+            if (close_b_idx > i) {
+                /* Assemble body */
+                char body_buf[2048] = "";
+                for (int k = i + 1; k < close_b_idx; ++k) {
+                    if (strlen(body_buf) + strlen(list->items[k]) + 2 < sizeof(body_buf)) {
+                        strcat(body_buf, list->items[k]);
+                        strcat(body_buf, "\n");
+                    }
+                }
+                set_shell_func(func_name, body_buf, current_exec_file, current_exec_line);
+                i = close_b_idx + 1;
+                continue;
+            }
         }
 
         /* 1. Conditionals: if CONDITION */
@@ -2325,7 +2590,13 @@ static int execute_buffer(const char *buf) {
     list.capacity = 0;
     tokenize_statements(buf, &list);
     if (list.count > 0) {
-        execute_statements(&list, 0, list.count);
+        int saved_line = current_exec_line;
+        for (int idx = 0; idx < list.count; ++idx) {
+            current_exec_line = idx + 1;
+            execute_statements(&list, idx, idx + 1);
+            if (loop_break_count > 0) break;
+        }
+        current_exec_line = saved_line;
     }
     free_statements(&list);
     return last_exit_status;
