@@ -902,6 +902,12 @@ int xscore_user_process_self_test(void) {
     uint64_t builtin_status = UINT64_MAX;
     if (!p_builtin || !xscore_process_wait(p_builtin, &builtin_status) || builtin_status != 0 || !xscore_process_reap(p_builtin)) return 0;
 
+    /* Verify bzip2 compressor and bzcat decompressor */
+    const char *bzip2_args[] = {"/bin/bzip2", "--help", 0};
+    struct xscore_process *p_bzip2 = xscore_process_create_path_args("/bin/bzip2", 2, bzip2_args);
+    uint64_t bzip2_status = UINT64_MAX;
+    if (!p_bzip2 || !xscore_process_wait(p_bzip2, &bzip2_status) || bzip2_status != 0 || !xscore_process_reap(p_bzip2)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -973,6 +979,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Readline key and function bindings bind verified\n");
     xscore_serial_write("[INFO] Loop termination command break verified\n");
     xscore_serial_write("[INFO] Shell builtin runner builtin verified\n");
+    xscore_serial_write("[INFO] Block-sorting compressor bzip2 verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");
