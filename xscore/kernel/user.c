@@ -908,6 +908,12 @@ int xscore_user_process_self_test(void) {
     uint64_t bzip2_status = UINT64_MAX;
     if (!p_bzip2 || !xscore_process_wait(p_bzip2, &bzip2_status) || bzip2_status != 0 || !xscore_process_reap(p_bzip2)) return 0;
 
+    /* Verify calendar display utility cal */
+    const char *cal_args[] = {"/bin/cal", "2027", 0};
+    struct xscore_process *p_cal = xscore_process_create_path_args("/bin/cal", 2, cal_args);
+    uint64_t cal_status = UINT64_MAX;
+    if (!p_cal || !xscore_process_wait(p_cal, &cal_status) || cal_status != 0 || !xscore_process_reap(p_cal)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -980,6 +986,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Loop termination command break verified\n");
     xscore_serial_write("[INFO] Shell builtin runner builtin verified\n");
     xscore_serial_write("[INFO] Block-sorting compressor bzip2 verified\n");
+    xscore_serial_write("[INFO] Calendar display utility cal verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

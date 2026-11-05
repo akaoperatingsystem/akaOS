@@ -141,3 +141,5 @@ builtin (1) - run a shell builtin command
 bzip2 (1) - a block-sorting file compressor
 bunzip2 (1) - decompress bzip2 compressed files
 bzcat (1) - decompresses files to standard output
+cal (1) - display a calendar
+ncal (1) - display a calendar and the date of easter
