@@ -624,7 +624,8 @@ for core_lib in \
     liblxqt-globalkeys-ui.so liblxqt-globalkeys-ui.so.2 \
     libdbusmenu-lxqt.so libdbusmenu-lxqt.so.0 libsysstat-qt6.so libsysstat-qt6.so.1 \
     libKF6WindowSystem.so libKF6WindowSystem.so.6 \
-    libLayerShellQtInterface.so libLayerShellQtInterface.so.6; do
+    libLayerShellQtInterface.so libLayerShellQtInterface.so.6 \
+    libXpresent.so libXpresent.so.1 libmetacity.so libmetacity.so.3; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
         -maxdepth 1 -name "${core_lib}.*" -print | sort -V | tail -n 1)"
     if [[ -z "$library_path" ]]; then
@@ -698,6 +699,13 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/bspwm" ]]; then
         "--file=/usr/local/bin/bspc:$UPSTREAM_SYSROOT/usr/local/bin/bspc:exec"
         "--dir=/etc/xdg/bspwm"
         "--file=/etc/xdg/bspwm/bspwmrc:$UPSTREAM_SYSROOT/etc/xdg/bspwm/bspwmrc:0755"
+    )
+fi
+
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/metacity" ]]; then
+    echo "[BUILD] upstream metacity GNOME window manager"
+    initramfs_files+=(
+        "--file=/usr/local/bin/metacity:$UPSTREAM_SYSROOT/usr/local/bin/metacity:exec"
     )
 fi
 

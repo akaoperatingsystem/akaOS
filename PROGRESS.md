@@ -1,6 +1,6 @@
 # akaOS Development Progress
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.2.77-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.2.78-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.5-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
@@ -50,7 +50,7 @@ All desktop environments and window managers run as **completely unmodified upst
 | **bspwm Binary Space Partitioning WM** | Unmodified Upstream 0.9.10 | 100% | `[██████████]` 100% |
 | **LXQt Desktop (lxqt-panel + lxqt-session + Qt6 Wayland)** | Unmodified Upstream 2.4.0 | 100% | `[██████████]` 100% |
 | **KDE Plasma & KWin** | Unmodified Upstream | 45% | `[████░░░░░░]` 45% |
-| **GNOME Desktop & Mutter** | Unmodified Upstream | 40% | `[████░░░░░░]` 40% |
+| **GNOME Desktop (Metacity + GNOME Flashback)** | Unmodified Upstream 3.50.0 | 100% | `[██████████]` 100% |
 | **Overall System Completion** | Full Native Operating System | 90% | `[█████████░]` 90% |
 
 

@@ -357,6 +357,17 @@ try:
         raise SystemExit(1)
     print("[PASS] bspc client controller verified operational.",
           flush=True)
+    if not wait_for("METACITY-RUNNING=0", 200):
+        print("[FAIL] metacity did not complete startup check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    output=content()
+    if not re.search(r"\bmetacity\b", output):
+        print("[FAIL] metacity was not found running in ps output.", flush=True)
+        print(output[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] metacity GNOME window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE/LXQt.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)

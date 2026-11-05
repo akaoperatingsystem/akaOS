@@ -80,3 +80,8 @@ echo BSPWM-VERSION=$?
 
 /usr/local/bin/bspc
 echo BSPC-RESULT=$?
+
+env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/0/bus /usr/local/bin/metacity --replace &
+sleep 15
+ps
+echo METACITY-RUNNING=$?
