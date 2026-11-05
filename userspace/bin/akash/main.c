@@ -44,6 +44,7 @@ static struct shell_job *find_current_job(void);
 static struct shell_job *find_previous_job(void);
 static struct shell_job *find_job_by_spec(const char *spec);
 static void get_current_and_previous_jobs(int *cur_id, int *prev_id);
+static int execute_buffer(const char *buf);
 
 static int wait_status_exit_code(int status) {
     if (WIFEXITED(status)) return WEXITSTATUS(status);
@@ -1087,7 +1088,7 @@ static int execute_builtin(int argc, char *argv[]) {
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
         write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller\n");
-        write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind, bzip2, bunzip2, bzcat, cal, ncal\n");
+        write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind, bzip2, bunzip2, bzcat, cal, ncal, caller\n");
         write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, break [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
         return 1;
@@ -2309,12 +2310,11 @@ static int execute_statements(struct statement_list *list, int start, int end) {
                 }
             }
             if (close_b_idx > i) {
-                /* Assemble body */
                 char body_buf[2048] = "";
                 for (int k = i + 1; k < close_b_idx; ++k) {
                     if (strlen(body_buf) + strlen(list->items[k]) + 2 < sizeof(body_buf)) {
                         strcat(body_buf, list->items[k]);
-                        strcat(body_buf, "\n");
+                        strcat(body_buf, "; ");
                     }
                 }
                 set_shell_func(func_name, body_buf, current_exec_file, current_exec_line);
@@ -2591,11 +2591,7 @@ static int execute_buffer(const char *buf) {
     tokenize_statements(buf, &list);
     if (list.count > 0) {
         int saved_line = current_exec_line;
-        for (int idx = 0; idx < list.count; ++idx) {
-            current_exec_line = idx + 1;
-            execute_statements(&list, idx, idx + 1);
-            if (loop_break_count > 0) break;
-        }
+        execute_statements(&list, 0, list.count);
         current_exec_line = saved_line;
     }
     free_statements(&list);

@@ -20,7 +20,7 @@ CFLAGS=(
     -ffreestanding -fno-builtin -fno-stack-protector -fpie
     -mno-red-zone -mcmodel=small
     -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700L
-    -DVERSION=\"6.5\" -DXINERAMA
+    -DVERSION=\"6.5\" -DXINERAMA -D_DWM_C
     -I"$ROOT_DIR/sdk/include"
     -I"$ROOT_DIR/userspace/libc/include"
     -I"$GRAPHICS_SYSROOT/usr/local/include"

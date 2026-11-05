@@ -914,6 +914,12 @@ int xscore_user_process_self_test(void) {
     uint64_t cal_status = UINT64_MAX;
     if (!p_cal || !xscore_process_wait(p_cal, &cal_status) || cal_status != 0 || !xscore_process_reap(p_cal)) return 0;
 
+    /* Verify subroutine caller context builtin */
+    const char *caller_args[] = {"/bin/akash", "-c", "sub() { caller 0; }; sub", 0};
+    struct xscore_process *p_caller = xscore_process_create_path_args("/bin/akash", 3, caller_args);
+    uint64_t caller_status = UINT64_MAX;
+    if (!p_caller || !xscore_process_wait(p_caller, &caller_status) || caller_status != 0 || !xscore_process_reap(p_caller)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -987,6 +993,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Shell builtin runner builtin verified\n");
     xscore_serial_write("[INFO] Block-sorting compressor bzip2 verified\n");
     xscore_serial_write("[INFO] Calendar display utility cal verified\n");
+    xscore_serial_write("[INFO] Subroutine caller context builtin caller verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

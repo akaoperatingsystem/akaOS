@@ -143,3 +143,4 @@ bunzip2 (1) - decompress bzip2 compressed files
 bzcat (1) - decompresses files to standard output
 cal (1) - display a calendar
 ncal (1) - display a calendar and the date of easter
+caller (1) - return the context of an active subroutine call
