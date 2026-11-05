@@ -351,8 +351,8 @@ try:
         raise SystemExit(1)
     print("[PASS] bspwm binary space partitioning window manager verified operational.",
           flush=True)
-    if not wait_for("BSPC-VERSION=0", 60):
-        print("[FAIL] bspc client did not complete version check.", flush=True)
+    if not wait_for("BSPC-RESULT=1", 60):
+        print("[FAIL] bspc client did not complete client socket check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] bspc client controller verified operational.",

@@ -78,5 +78,5 @@ echo DWM-RUNNING=$?
 /usr/local/bin/bspwm -v
 echo BSPWM-VERSION=$?
 
-/usr/local/bin/bspc -v
-echo BSPC-VERSION=$?
+/usr/local/bin/bspc
+echo BSPC-RESULT=$?
