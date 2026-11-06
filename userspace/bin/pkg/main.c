@@ -22,7 +22,7 @@
 #define DEFAULT_DBDIR "/var/lib/pkg"
 
 #define TAR_BLOCK_SIZE 512
-#define MAX_PACKAGES 1024
+#define MAX_PACKAGES 256
 #define MAX_LINE 2048
 #define HTTP_TIMEOUT_MS 15000
 #define MAX_RECURSION_DEPTH 32

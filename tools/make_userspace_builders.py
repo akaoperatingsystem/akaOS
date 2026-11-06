@@ -558,6 +558,7 @@ build_user_program case "$ROOT_DIR/userspace/bin/case/main.c" CASE.ELF
 build_user_program cd "$ROOT_DIR/userspace/bin/cd/main.c" CD.ELF
 build_user_program cfdisk "$ROOT_DIR/userspace/bin/cfdisk/main.c" CFDISK.ELF
 build_user_program chattr "$ROOT_DIR/userspace/bin/chattr/main.c" CHATTR.ELF
+build_user_program chgrp "$ROOT_DIR/userspace/bin/chgrp/main.c" CHGRP.ELF
 build_bzip2
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
@@ -764,6 +765,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/cd:$BUILD_DIR/CD.ELF:exec" \
     --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec" \
     --file "/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec" \
+    --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec" \
     --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \

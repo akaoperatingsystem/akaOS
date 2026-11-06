@@ -40,6 +40,14 @@ while [[ $# -gt 0 ]]; do
             verbose_mode=1
             shift
             ;;
+        --software|--software-bundle)
+            export AKAOS_SOFTWARE_BUNDLE="${2:-all}"
+            shift 2
+            ;;
+        --desktop)
+            export AKAOS_DESKTOP="${2:-none}"
+            shift 2
+            ;;
         *)
             shift
             ;;
@@ -72,7 +80,7 @@ export BUILD_TIMESTAMP
 
 # 1. Build 32-bit userspace binaries and initramfs archive
 if [[ "${AKAOS_TEST_SKIP_USERSPACE:-0}" != 1 ]]; then
-    bash "$ROOT_DIR/tools/build-user-32.sh"
+    bash "$ROOT_DIR/tools/build-user-32.sh" --software "${AKAOS_SOFTWARE_BUNDLE:-all}"
 fi
 
 echo "[BUILD] akaOS x86_32 XSCore Kernel"

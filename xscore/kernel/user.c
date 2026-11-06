@@ -950,6 +950,12 @@ int xscore_user_process_self_test(void) {
     uint64_t chattr_status = UINT64_MAX;
     if (!p_chattr || !xscore_process_wait(p_chattr, &chattr_status) || chattr_status != 0 || !xscore_process_reap(p_chattr)) return 0;
 
+    /* Verify group ownership modifier chgrp */
+    const char *chgrp_args[] = {"/bin/chgrp", "-v", "root", "/etc/motd", 0};
+    struct xscore_process *p_chgrp = xscore_process_create_path_args("/bin/chgrp", 4, chgrp_args);
+    uint64_t chgrp_status = UINT64_MAX;
+    if (!p_chgrp || !xscore_process_wait(p_chgrp, &chgrp_status) || chgrp_status != 0 || !xscore_process_reap(p_chgrp)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -1029,6 +1035,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Change directory builtin cd verified\n");
     xscore_serial_write("[INFO] Disk partition table manipulator cfdisk verified\n");
     xscore_serial_write("[INFO] File attributes modifier chattr verified\n");
+    xscore_serial_write("[INFO] Group ownership modifier chgrp verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

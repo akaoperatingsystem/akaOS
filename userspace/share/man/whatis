@@ -148,3 +148,4 @@ case (1) - conditionally perform a command based on pattern matching
 cd (1) - change the current working directory
 cfdisk (8) - curses based disk partition table manipulator
 chattr (1) - change file attributes on a Linux file system
+chgrp (1) - change group ownership
