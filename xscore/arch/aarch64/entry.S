@@ -33,6 +33,15 @@ _start_aarch64:
 3:  /* Jump into C main */
     bl xscore_aarch64_main
 
+.Laarch64_syscall_exit:
+    bl xscore_thread_current_user_transition
+    cbz x0, 2f
+    str xzr, [x0, #24]  /* transition->active = 0 */
+    ldr x1, [x0, #0]    /* transition->kernel_rsp */
+    ldr x2, [x0, #8]    /* transition->kernel_rip */
+    mov sp, x1
+    br x2
+
 2:  /* Halted state */
     wfe
     b 2b
@@ -303,7 +312,7 @@ el0_sync_handler:
     mov x1, #1
     lsl x1, x1, #63
     cmp x0, x1
-    b.eq 2f
+    b.eq .Laarch64_syscall_exit
 
     /* Overwrite saved x0 with return value */
     str x0, [sp, #0]

@@ -112,7 +112,13 @@ void x_server_publish_damage(struct x_server *state) {
             fflush(stdout);
             return;
         }
+#if defined(__x86_64__) || defined(__i386__)
         __asm__ volatile("pause");
+#elif defined(__aarch64__) || defined(__arm__)
+        __asm__ volatile("yield");
+#else
+        __asm__ volatile("" ::: "memory");
+#endif
     }
 
     struct akaos_display_message message;

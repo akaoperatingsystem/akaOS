@@ -74,7 +74,7 @@
  * below the signal trampoline at 0x10f00000 and above the heap. */
 #define USER_MMAP_START (USER_CODE_ADDRESS + UINT64_C(0x00600000))
 #define USER_MMAP_END   (USER_CODE_ADDRESS + UINT64_C(0x00e00000))
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64)
 /* Real toolkit dependency graphs occupy tens of MiB of mapped ELF segments.
  * Keep them above the executable, heap, and signal trampoline while leaving
  * a 256 MiB virtual window for the 64 MiB per-process mmap page budget. */
