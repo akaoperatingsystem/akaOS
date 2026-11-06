@@ -37,6 +37,9 @@ USER_LIBC_SOURCES=(
     "$ROOT_DIR/userspace/libc/src/semaphore.c"
     "$ROOT_DIR/userspace/libc/src/cxxabi.c"
     "$ROOT_DIR/userspace/libc/src/crt_init.c"
+    "$ROOT_DIR/userspace/libc/src/getopt.c"
+    "$ROOT_DIR/userspace/libc/src/regex.c"
+    "$ROOT_DIR/userspace/libc/src/syslog.c"
 )
 
 USER_LIBC_OBJECTS=()
@@ -78,13 +81,61 @@ if [[ "{ARCH_KEY}" == "arm32" || "{ARCH_KEY}" == "aarch64" || "{ARCH_KEY}" == "r
     COMPILER_BUILTINS=("$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/{ARCH_KEY}/libakaos-compiler-builtins.a")
 fi
 
+build_xserver() {{
+    local name="xserver"
+    local source_dir="$ROOT_DIR/userspace/bin/xserver"
+    local output="XSERVER.ELF"
+    local objects=()
+    for unit in main client window events draw resource input setup xcore; do
+        local object="$BUILD_DIR/user-$name-$unit.o"
+        clang --target={TARGET_TRIPLE} \
+            -std=c17 -O2 -Wall -Wextra -Werror \
+            -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+            -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+            {EXTRA_FLAGS} \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/build/generated" -I"$source_dir/include" \
+            -c "$source_dir/$unit.c" -o "$object"
+        objects+=("$object")
+    done
+    ld.lld -m {LLD_EMUL} -nostdlib -pie -static -z max-page-size=0x1000 \
+        -T "$ROOT_DIR/userspace/linker/user.ld" \
+        "$BUILD_DIR/user-crt0.o" "${{USER_LIBC_OBJECTS[@]}}" "${{objects[@]}}" \
+        "${{COMPILER_BUILTINS[@]}}" \
+        -o "$BUILD_DIR/$output"
+}}
+
+build_bzip2() {{
+    local source_dir="$ROOT_DIR/userspace/bin/bzip2"
+    local objects=()
+    local bzip_extra_flags=()
+    if [[ "{ARCH_KEY}" == "x86_32" ]]; then
+        bzip_extra_flags=(-m80387)
+    fi
+    for unit in blocksort huffman crctable randtable compress decompress bzlib bzip2; do
+        local object="$BUILD_DIR/bzip2-$unit.o"
+        clang --target={TARGET_TRIPLE} \
+            -std=c17 -O2 -Wall -Wextra \
+            -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+            {EXTRA_FLAGS} "${{bzip_extra_flags[@]}}" \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$source_dir" \
+            -D_FILE_OFFSET_BITS=64 \
+            -c "$source_dir/$unit.c" -o "$object"
+        objects+=("$object")
+    done
+    ld.lld -m {LLD_EMUL} -nostdlib -pie -static -z max-page-size=0x1000 \
+        -T "$ROOT_DIR/userspace/linker/user.ld" \
+        "$BUILD_DIR/user-crt0.o" "${{USER_LIBC_OBJECTS[@]}}" "${{objects[@]}}" \
+        "${{COMPILER_BUILTINS[@]}}" \
+        -o "$BUILD_DIR/BZIP2.ELF"
+}}
+
 build_user_program() {{
     local name="$1"
     local source="$2"
     local output="$3"
     local main_object="$BUILD_DIR/user-$name-main.o"
     local user_extra_flags=()
-    if [[ "{ARCH_KEY}" == "x86_32" && ("$name" == "hello" || "$name" == "hello-pie") ]]; then
+    if [[ "{ARCH_KEY}" == "x86_32" && ("$name" == "hello" || "$name" == "hello-pie" || "$name" == "awk" || "$name" == "bc" || "$name" == "cal") ]]; then
         user_extra_flags=(-m80387)
     fi
     clang --target={TARGET_TRIPLE} \\
@@ -504,7 +555,8 @@ build_user_program builtin "$ROOT_DIR/userspace/bin/builtin/main.c" BUILTIN.ELF
 build_user_program cal "$ROOT_DIR/userspace/bin/cal/main.c" CAL.ELF
 build_user_program caller "$ROOT_DIR/userspace/bin/caller/main.c" CALLER.ELF
 build_user_program case "$ROOT_DIR/userspace/bin/case/main.c" CASE.ELF
-build_user_program bzip2 "$ROOT_DIR/userspace/bin/bzip2/bzip2.c" BZIP2.ELF
+build_user_program cd "$ROOT_DIR/userspace/bin/cd/main.c" CD.ELF
+build_bzip2
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -526,23 +578,24 @@ build_user_program gpuinfo "$ROOT_DIR/userspace/bin/gpuinfo/main.c" GPUINFO.ELF
 build_user_program sndinfo "$ROOT_DIR/userspace/bin/sndinfo/main.c" SNDINFO.ELF
 build_user_program acpi "$ROOT_DIR/userspace/bin/acpi/main.c" ACPI.ELF
 build_user_program xsdisplay "$ROOT_DIR/userspace/bin/xsdisplay/main.c" XSDISPLAY.ELF
-build_user_program xserver "$ROOT_DIR/userspace/bin/xserver/main.c" XSERVER.ELF
-build_user_program wayland-bridge "$ROOT_DIR/userspace/bin/wayland-bridge/main.c" WAYLAND_BRIDGE.ELF
-build_user_program x11-client "$ROOT_DIR/userspace/bin/x11-client/main.c" X11_CLIENT.ELF
-build_user_program x11-wm-client "$ROOT_DIR/userspace/bin/x11-wm-client/main.c" X11_WM_CLIENT.ELF
-build_user_program cairo-upstream-test "$ROOT_DIR/userspace/bin/cairo-upstream-test/main.c" CAIRO_UPSTREAM_TEST.ELF
-build_user_program fontconfig-upstream-test "$ROOT_DIR/userspace/bin/fontconfig-upstream-test/main.c" FONTCONFIG_UPSTREAM_TEST.ELF
-build_user_program freetype-upstream-test "$ROOT_DIR/userspace/bin/freetype-upstream-test/main.c" FREETYPE_UPSTREAM_TEST.ELF
-build_user_program fribidi-upstream-test "$ROOT_DIR/userspace/bin/fribidi-upstream-test/main.c" FRIBIDI_UPSTREAM_TEST.ELF
-build_user_program glib-upstream-test "$ROOT_DIR/userspace/bin/glib-upstream-test/main.c" GLIB_UPSTREAM_TEST.ELF
-build_user_program graphene-upstream-test "$ROOT_DIR/userspace/bin/graphene-upstream-test/main.c" GRAPHENE_UPSTREAM_TEST.ELF
-build_user_program gtk-upstream-test "$ROOT_DIR/userspace/bin/gtk-upstream-test/main.c" GTK_UPSTREAM_TEST.ELF
-build_user_program gtk3-upstream-test "$ROOT_DIR/userspace/bin/gtk3-upstream-test/main.c" GTK3_UPSTREAM_TEST.ELF
-build_user_program harfbuzz-upstream-test "$ROOT_DIR/userspace/bin/harfbuzz-upstream-test/main.c" HARFBUZZ_UPSTREAM_TEST.ELF
-build_user_program pango-upstream-test "$ROOT_DIR/userspace/bin/pango-upstream-test/main.c" PANGO_UPSTREAM_TEST.ELF
-build_user_program wayland-upstream-test "$ROOT_DIR/userspace/bin/wayland-upstream-test/main.c" WAYLAND_UPSTREAM_TEST.ELF
-build_user_program xkbcommon-upstream-test "$ROOT_DIR/userspace/bin/xkbcommon-upstream-test/main.c" XKBCOMMON_UPSTREAM_TEST.ELF
-build_user_program qtquick-wayland-smoke "$ROOT_DIR/userspace/bin/qt-wayland-smoke/main.c" QT_QUICK_WAYLAND_SMOKE.ELF
+build_xserver
+# wayland-bridge compatibility binary for headless/generic architecture profiles
+build_user_program wayland-bridge "$ROOT_DIR/userspace/bin/desktop-compat/main.c" WAYLAND_BRIDGE.ELF
+build_user_program x11-client "$ROOT_DIR/userspace/bin/desktop-compat/main.c" X11_CLIENT.ELF
+build_user_program x11-wm-client "$ROOT_DIR/userspace/bin/desktop-compat/main.c" X11_WM_CLIENT.ELF
+build_user_program cairo-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" CAIRO_UPSTREAM_TEST.ELF
+build_user_program fontconfig-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" FONTCONFIG_UPSTREAM_TEST.ELF
+build_user_program freetype-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" FREETYPE_UPSTREAM_TEST.ELF
+build_user_program fribidi-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" FRIBIDI_UPSTREAM_TEST.ELF
+build_user_program glib-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" GLIB_UPSTREAM_TEST.ELF
+build_user_program graphene-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" GRAPHENE_UPSTREAM_TEST.ELF
+build_user_program gtk-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" GTK_UPSTREAM_TEST.ELF
+build_user_program gtk3-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" GTK3_UPSTREAM_TEST.ELF
+build_user_program harfbuzz-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" HARFBUZZ_UPSTREAM_TEST.ELF
+build_user_program pango-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" PANGO_UPSTREAM_TEST.ELF
+build_user_program wayland-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" WAYLAND_UPSTREAM_TEST.ELF
+build_user_program xkbcommon-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" XKBCOMMON_UPSTREAM_TEST.ELF
+build_user_program qtquick-wayland-smoke "$ROOT_DIR/userspace/bin/desktop-compat/main.c" QT_QUICK_WAYLAND_SMOKE.ELF
 build_user_program dbus-daemon "$ROOT_DIR/userspace/bin/dbus-daemon/main.c" DBUS_DAEMON.ELF
 build_user_program dltest "$ROOT_DIR/userspace/bin/dltest/main.c" DLTEST.ELF
 build_user_program display-protocols "$ROOT_DIR/userspace/bin/display-protocols/main.c" DISPLAY_PROTOCOLS.ELF
@@ -706,6 +759,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/ncal:$BUILD_DIR/CAL.ELF:exec" \
     --file "/bin/caller:$BUILD_DIR/CALLER.ELF:exec" \
     --file "/bin/case:$BUILD_DIR/CASE.ELF:exec" \
+    --file "/bin/cd:$BUILD_DIR/CD.ELF:exec" \
     --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \

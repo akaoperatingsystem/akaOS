@@ -932,6 +932,12 @@ int xscore_user_process_self_test(void) {
     uint64_t cat_flags_status = UINT64_MAX;
     if (!p_cat_flags || !xscore_process_wait(p_cat_flags, &cat_flags_status) || cat_flags_status != 0 || !xscore_process_reap(p_cat_flags)) return 0;
 
+    /* Verify cd command with OLDPWD and toggle cd - */
+    const char *cd_args[] = {"/bin/akash", "-c", "cd /tmp; cd /etc; cd -; pwd", 0};
+    struct xscore_process *p_cd = xscore_process_create_path_args("/bin/akash", 3, cd_args);
+    uint64_t cd_status = UINT64_MAX;
+    if (!p_cd || !xscore_process_wait(p_cd, &cd_status) || cd_status != 0 || !xscore_process_reap(p_cd)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -1008,6 +1014,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Subroutine caller context builtin caller verified\n");
     xscore_serial_write("[INFO] Conditional pattern matching statement case verified\n");
     xscore_serial_write("[INFO] Concatenation utility cat full options verified\n");
+    xscore_serial_write("[INFO] Change directory builtin cd verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

@@ -1030,6 +1030,27 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "help") == 0) {
+        if (argc > 1 && strcmp(argv[1], "cd") == 0) {
+            write_str(STDOUT_FILENO, "cd: cd [-L|-P] [dir]\n"
+                                     "    Change the shell working directory.\n\n"
+                                     "    Change the current directory to DIR. The default DIR is the value of the\n"
+                                     "    HOME shell variable.\n\n"
+                                     "    The variable CDPATH defines the search path for the directory containing\n"
+                                     "    DIR. Alternative directory names in CDPATH are separated by a colon (:).\n"
+                                     "    A null directory name in CDPATH is the same as the current directory.\n\n"
+                                     "    Options:\n"
+                                     "      -L    force symbolic links to be followed: resolve symbolic\n"
+                                     "            links in DIR after processing instances of `..' (default)\n"
+                                     "      -P    use the physical directory structure without following\n"
+                                     "            symbolic links\n\n"
+                                     "    The default is to follow symbolic links, as if `-L' were specified.\n"
+                                     "    `..' is processed by removing the immediately previous pathname component,\n"
+                                     "    back to a slash or the beginning of DIR.\n\n"
+                                     "    Exit Status:\n"
+                                     "    Returns 0 if the directory is changed; non-zero otherwise.\n");
+            last_exit_status = 0;
+            return 1;
+        }
         if (argc > 1 && strcmp(argv[1], "case") == 0) {
             write_str(STDOUT_FILENO, "case: case WORD in [PATTERN [| PATTERN]...) COMMANDS ;;]... esac\n"
                                      "    Execute commands based on pattern matching.\n\n"
@@ -1176,20 +1197,125 @@ static int execute_builtin(int argc, char *argv[]) {
             last_exit_status = 1;
             return 1;
         }
-        if (argc > 2) {
+        if (argc > 1 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
+            write_str(STDOUT_FILENO, "cd: cd [-L|-P] [dir]\n"
+                                     "    Change the shell working directory.\n\n"
+                                     "    Change the current directory to DIR. The default DIR is the value of the\n"
+                                     "    HOME shell variable.\n\n"
+                                     "    The variable CDPATH defines the search path for the directory containing\n"
+                                     "    DIR. Alternative directory names in CDPATH are separated by a colon (:).\n"
+                                     "    A null directory name in CDPATH is the same as the current directory.\n\n"
+                                     "    Options:\n"
+                                     "      -L    force symbolic links to be followed: resolve symbolic\n"
+                                     "            links in DIR after processing instances of `..' (default)\n"
+                                     "      -P    use the physical directory structure without following\n"
+                                     "            symbolic links\n\n"
+                                     "    The default is to follow symbolic links, as if `-L' were specified.\n"
+                                     "    `..' is processed by removing the immediately previous pathname component,\n"
+                                     "    back to a slash or the beginning of DIR.\n\n"
+                                     "    Exit Status:\n"
+                                     "    Returns 0 if the directory is changed; non-zero otherwise.\n");
+            last_exit_status = 0;
+            return 1;
+        }
+
+        int opt_phys = 0;
+        int arg_idx = 1;
+        while (arg_idx < argc && argv[arg_idx][0] == '-' && argv[arg_idx][1] != '\0' && strcmp(argv[arg_idx], "--") != 0) {
+            if (strcmp(argv[arg_idx], "-P") == 0) {
+                opt_phys = 1;
+                arg_idx++;
+            } else if (strcmp(argv[arg_idx], "-L") == 0) {
+                opt_phys = 0;
+                arg_idx++;
+            } else if (strcmp(argv[arg_idx], "-") == 0) {
+                break;
+            } else {
+                write_str(STDERR_FILENO, "cd: invalid option: ");
+                write_str(STDERR_FILENO, argv[arg_idx]);
+                write_str(STDERR_FILENO, "\n");
+                last_exit_status = 2;
+                return 1;
+            }
+        }
+        if (arg_idx < argc && strcmp(argv[arg_idx], "--") == 0) {
+            arg_idx++;
+        }
+
+        if (argc - arg_idx > 1) {
             write_str(STDERR_FILENO, "cd: too many arguments\n");
             last_exit_status = 1;
             return 1;
         }
-        if (argc == 2 && strcmp(argv[1], "-") == 0) {
-            write_str(STDERR_FILENO, "cd: '-' is not supported\n");
-            last_exit_status = 1;
-            return 1;
+
+        char cur_dir[256];
+        if (!getcwd(cur_dir, sizeof(cur_dir))) {
+            strncpy(cur_dir, "/", sizeof(cur_dir));
         }
-        const char *target = (argc > 1) ? argv[1] : shell_account.home;
-        if (chdir(target) != 0) {
+
+        char target_dir[256] = "";
+        int print_new_dir = 0;
+
+        if (arg_idx >= argc) {
+            /* cd with no arguments -> $HOME */
+            const char *home_val = get_shell_var("HOME");
+            if (!home_val || !*home_val) home_val = shell_account.home;
+            if (!home_val || !*home_val) home_val = "/";
+            strncpy(target_dir, home_val, sizeof(target_dir) - 1);
+        } else if (strcmp(argv[arg_idx], "-") == 0) {
+            /* cd - -> $OLDPWD */
+            const char *oldpwd = get_shell_var("OLDPWD");
+            if (!oldpwd || !*oldpwd) {
+                write_str(STDERR_FILENO, "cd: OLDPWD not set\n");
+                last_exit_status = 1;
+                return 1;
+            }
+            strncpy(target_dir, oldpwd, sizeof(target_dir) - 1);
+            print_new_dir = 1;
+        } else {
+            const char *req_dir = argv[arg_idx];
+            int found_cdpath = 0;
+
+            /* Check CDPATH if path is not absolute or relative starting with . or / */
+            if (req_dir[0] != '/' && req_dir[0] != '.') {
+                const char *cdpath = get_shell_var("CDPATH");
+                if (cdpath && *cdpath) {
+                    char cp_copy[512];
+                    strncpy(cp_copy, cdpath, sizeof(cp_copy) - 1);
+                    cp_copy[sizeof(cp_copy) - 1] = '\0';
+                    char *tok = strtok(cp_copy, ":");
+                    while (tok) {
+                        char candidate[256];
+                        if (strcmp(tok, ".") == 0 || *tok == '\0') {
+                            snprintf(candidate, sizeof(candidate), "%s", req_dir);
+                        } else if (tok[0] == '~' && (tok[1] == '/' || tok[1] == '\0')) {
+                            const char *h = shell_account.home[0] ? shell_account.home : "/";
+                            snprintf(candidate, sizeof(candidate), "%s%s", h, tok + 1);
+                            if (candidate[strlen(candidate) - 1] != '/') strcat(candidate, "/");
+                            strcat(candidate, req_dir);
+                        } else {
+                            snprintf(candidate, sizeof(candidate), "%s/%s", tok, req_dir);
+                        }
+                        struct akaos_stat st;
+                        if (stat(candidate, &st) == 0 && st.type == AKAOS_DT_DIRECTORY) {
+                            strncpy(target_dir, candidate, sizeof(target_dir) - 1);
+                            found_cdpath = 1;
+                            print_new_dir = 1;
+                            break;
+                        }
+                        tok = strtok(NULL, ":");
+                    }
+                }
+            }
+
+            if (!found_cdpath) {
+                strncpy(target_dir, req_dir, sizeof(target_dir) - 1);
+            }
+        }
+
+        if (chdir(target_dir) != 0) {
             write_str(STDERR_FILENO, "cd: ");
-            write_str(STDERR_FILENO, target);
+            write_str(STDERR_FILENO, target_dir);
             if (errno == ENOENT) {
                 write_str(STDERR_FILENO, ": No such file or directory\n");
             } else if (errno == ENOTDIR) {
@@ -1198,9 +1324,22 @@ static int execute_builtin(int argc, char *argv[]) {
                 write_str(STDERR_FILENO, ": Cannot change directory\n");
             }
             last_exit_status = 1;
-        } else {
-            last_exit_status = 0;
+            return 1;
         }
+
+        /* Update PWD and OLDPWD */
+        char new_dir[256];
+        if (getcwd(new_dir, sizeof(new_dir))) {
+            set_shell_var("OLDPWD", cur_dir);
+            set_shell_var("PWD", new_dir);
+            if (print_new_dir) {
+                write_str(STDOUT_FILENO, new_dir);
+                write_str(STDOUT_FILENO, "\n");
+            }
+        }
+        (void)opt_phys;
+
+        last_exit_status = 0;
         return 1;
     }
 
