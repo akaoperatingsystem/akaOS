@@ -307,6 +307,52 @@ struct passwd *getpwuid(uid_t uid) {
     return result;
 }
 
+static int akaos_pwent_file_len = -1;
+static size_t akaos_pwent_offset = 0U;
+
+void setpwent(void) {
+    akaos_pwent_offset = 0U;
+    akaos_pwent_file_len = read_file("/etc/passwd", account_buffer, ACCOUNT_FILE_MAX);
+}
+
+void endpwent(void) {
+    akaos_pwent_offset = 0U;
+    akaos_pwent_file_len = -1;
+}
+
+struct passwd *getpwent(void) {
+    if (akaos_pwent_file_len < 0) {
+        akaos_pwent_file_len = read_file("/etc/passwd", account_buffer, ACCOUNT_FILE_MAX);
+        akaos_pwent_offset = 0U;
+    }
+    if (akaos_pwent_file_len <= 0) return NULL;
+
+    const char *file = account_buffer;
+    const char *limit = file + akaos_pwent_file_len;
+    const char *cursor = file + akaos_pwent_offset;
+
+    while (cursor < limit) {
+        const char *end = cursor;
+        while (end < limit && *end != '\n') ++end;
+        struct akaos_account account;
+        if (parse_account_line(cursor, end, &account)) {
+            akaos_pwent_offset = (size_t)((end < limit ? end + 1 : limit) - file);
+            char *buf_cursor = passwd_static_buffer;
+            size_t remaining = sizeof(passwd_static_buffer);
+            passwd_copy_string(&passwd_static_entry.pw_name, &buf_cursor, &remaining, account.name);
+            passwd_copy_string(&passwd_static_entry.pw_passwd, &buf_cursor, &remaining, "x");
+            passwd_static_entry.pw_uid = account.uid;
+            passwd_static_entry.pw_gid = account.gid;
+            passwd_copy_string(&passwd_static_entry.pw_gecos, &buf_cursor, &remaining, account.name);
+            passwd_copy_string(&passwd_static_entry.pw_dir, &buf_cursor, &remaining, account.home);
+            passwd_copy_string(&passwd_static_entry.pw_shell, &buf_cursor, &remaining, account.shell);
+            return &passwd_static_entry;
+        }
+        cursor = end < limit ? end + 1 : limit;
+    }
+    return NULL;
+}
+
 struct akaos_group_record {
     const char *name;
     gid_t gid;
