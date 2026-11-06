@@ -22,6 +22,7 @@
 #include <sys/statvfs.h>
 #include <sys/statfs.h>
 #include <sys/utsname.h>
+#include <mntent.h>
 #include <unistd.h>
 #include <glob.h>
 #include <iconv.h>
@@ -622,6 +623,70 @@ int fstatfs(int fd, struct statfs *buf) {
         return -1;
     }
     return statfs("/", buf);
+}
+
+static struct mntent akaos_static_mntent;
+static char akaos_static_mntent_buffer[1024];
+
+FILE *setmntent(const char *filename, const char *type) {
+    return fopen(filename ? filename : "/etc/fstab", type ? type : "r");
+}
+
+int endmntent(FILE *stream) {
+    if (stream) fclose(stream);
+    return 1;
+}
+
+struct mntent *getmntent_r(FILE *stream, struct mntent *result,
+                           char *buffer, int bufsize) {
+    if (!stream || !result || !buffer || bufsize <= 0) return NULL;
+    char line[512];
+    while (fgets(line, sizeof(line), stream)) {
+        char *p = line;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p == '#' || *p == '\n' || *p == '\0') continue;
+        char *fsname = strtok(p, " \t\n");
+        char *dir = strtok(NULL, " \t\n");
+        char *type = strtok(NULL, " \t\n");
+        char *opts = strtok(NULL, " \t\n");
+        char *freq_str = strtok(NULL, " \t\n");
+        char *pass_str = strtok(NULL, " \t\n");
+        if (!fsname || !dir || !type) continue;
+        int written = snprintf(buffer, (size_t)bufsize, "%s%c%s%c%s%c%s",
+                               fsname, 0, dir, 0, type, 0, opts ? opts : "defaults");
+        if (written < 0 || written >= bufsize) return NULL;
+        char *b = buffer;
+        result->mnt_fsname = b; b += strlen(fsname) + 1;
+        result->mnt_dir = b; b += strlen(dir) + 1;
+        result->mnt_type = b; b += strlen(type) + 1;
+        result->mnt_opts = b;
+        result->mnt_freq = freq_str ? atoi(freq_str) : 0;
+        result->mnt_passno = pass_str ? atoi(pass_str) : 0;
+        return result;
+    }
+    return NULL;
+}
+
+struct mntent *getmntent(FILE *stream) {
+    return getmntent_r(stream, &akaos_static_mntent,
+                       akaos_static_mntent_buffer,
+                       sizeof(akaos_static_mntent_buffer));
+}
+
+int addmntent(FILE *stream, const struct mntent *mnt) {
+    if (!stream || !mnt) return 1;
+    fprintf(stream, "%s %s %s %s %d %d\n",
+            mnt->mnt_fsname ? mnt->mnt_fsname : "none",
+            mnt->mnt_dir ? mnt->mnt_dir : "/",
+            mnt->mnt_type ? mnt->mnt_type : "akafs",
+            mnt->mnt_opts ? mnt->mnt_opts : "defaults",
+            mnt->mnt_freq, mnt->mnt_passno);
+    return 0;
+}
+
+char *hasmntopt(const struct mntent *mnt, const char *opt) {
+    if (!mnt || !mnt->mnt_opts || !opt) return NULL;
+    return strstr(mnt->mnt_opts, opt);
 }
 
 int setrlimit(int resource, const struct rlimit *limit) {

@@ -638,6 +638,7 @@ for core_lib in \
     liblxqt-globalkeys-ui.so liblxqt-globalkeys-ui.so.2 \
     libdbusmenu-lxqt.so libdbusmenu-lxqt.so.0 libsysstat-qt6.so libsysstat-qt6.so.1 \
     libKF6WindowSystem.so libKF6WindowSystem.so.6 \
+    libKF6CoreAddons.so libKF6CoreAddons.so.6 libmount.so libmount.so.1 \
     libLayerShellQtInterface.so libLayerShellQtInterface.so.6 \
     libXpresent.so libXpresent.so.1 libmetacity.so libmetacity.so.3; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
