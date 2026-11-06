@@ -23,6 +23,8 @@
 #include <sys/statfs.h>
 #include <sys/utsname.h>
 #include <mntent.h>
+#include <sys/prctl.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <glob.h>
 #include <iconv.h>
@@ -711,6 +713,32 @@ int setrlimit(int resource, const struct rlimit *limit) {
     }
     errno = resource == RLIMIT_CORE ? EOPNOTSUPP : EINVAL;
     return -1;
+}
+
+int prctl(int option, ...) {
+    va_list ap;
+    va_start(ap, option);
+    if (option == PR_SET_NAME) {
+        const char *name = va_arg(ap, const char *);
+        va_end(ap);
+        if (!name) {
+            errno = EFAULT;
+            return -1;
+        }
+        return 0;
+    }
+    if (option == PR_GET_NAME) {
+        char *name = va_arg(ap, char *);
+        va_end(ap);
+        if (!name) {
+            errno = EFAULT;
+            return -1;
+        }
+        strncpy(name, "akaos", 16);
+        return 0;
+    }
+    va_end(ap);
+    return 0;
 }
 
 int fchmodat(int directory, const char *path, mode_t mode, int flags) {

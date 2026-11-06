@@ -456,6 +456,12 @@ struct group *getgrent(void) {
     return result;
 }
 
+int setgroups(size_t size, const gid_t *list) {
+    (void)size;
+    (void)list;
+    return 0;
+}
+
 static int shadow_hash(const char *name, char salt[33], char hash[65]) {
     char *file = account_buffer;
     int length = read_file("/etc/shadow", file, ACCOUNT_FILE_MAX);

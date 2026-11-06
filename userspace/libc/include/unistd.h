@@ -60,11 +60,12 @@
 #define PATH_MAX 128
 #endif
 
-extern char **environ;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern char **environ;
+int setgroups(size_t size, const gid_t *list);
 
 ssize_t read(int descriptor, void *buffer, size_t length);
 ssize_t write(int descriptor, const void *buffer, size_t length);

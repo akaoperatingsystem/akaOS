@@ -25,6 +25,7 @@ int getgrgid_r(gid_t gid, struct group *entry, char *buffer,
 void setgrent(void);
 void endgrent(void);
 struct group *getgrent(void);
+int setgroups(size_t size, const gid_t *list);
 
 #ifdef __cplusplus
 }

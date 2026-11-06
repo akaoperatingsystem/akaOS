@@ -49,7 +49,7 @@ All desktop environments and window managers run as **completely unmodified upst
 | **dwm Dynamic Tiling WM** | Unmodified Upstream 6.5 | 100% | `[██████████]` 100% |
 | **bspwm Binary Space Partitioning WM** | Unmodified Upstream 0.9.10 | 100% | `[██████████]` 100% |
 | **LXQt Desktop (lxqt-panel + lxqt-session + Qt6 Wayland)** | Unmodified Upstream 2.4.0 | 100% | `[██████████]` 100% |
-| **KDE Plasma & KWin (KF6 KWindowSystem + KCoreAddons + KConfig + KGlobalAccel)** | Unmodified Upstream | 85% | `[█████████░]` 85% |
+| **KDE Plasma & KWin (KF6 KWindowSystem + KCoreAddons + KConfig + KGlobalAccel + KCrash)** | Unmodified Upstream | 90% | `[█████████░]` 90% |
 | **GNOME Desktop (Metacity + GNOME Flashback)** | Unmodified Upstream 3.50.0 | 100% | `[██████████]` 100% |
 | **Overall System Completion** | Full Native Operating System | 90% | `[█████████░]` 90% |
 

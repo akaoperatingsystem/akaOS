@@ -683,6 +683,7 @@ for core_lib in \
     libKF6CoreAddons.so libKF6CoreAddons.so.6 libmount.so libmount.so.1 \
     libKF6ConfigCore.so libKF6ConfigCore.so.6 libKF6ConfigGui.so libKF6ConfigGui.so.6 \
     libKF6GlobalAccel.so libKF6GlobalAccel.so.6 \
+    libKF6Crash.so libKF6Crash.so.6 \
     libLayerShellQtInterface.so libLayerShellQtInterface.so.6 \
     libXpresent.so libXpresent.so.1 libmetacity.so libmetacity.so.3; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
