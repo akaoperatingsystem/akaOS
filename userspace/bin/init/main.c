@@ -17,8 +17,10 @@ static int write_str(int fd, const char *str) {
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+    if (argc > 1 && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)) {
+        write_str(STDOUT_FILENO, "Usage: init\nakaOS process supervisor and service manager (PID 1).\n");
+        return 0;
+    }
 
     (void)chown("/home/user", 1000, 1000);
     (void)chmod("/home/user", 0755);

@@ -721,7 +721,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
     --file "/lib/libQt6Gui.so.6:$BUILD_DIR/libQt6Gui.so:0444" \
     --file "/lib/libQt6Widgets.so:$BUILD_DIR/libQt6Widgets.so:0444" \
     --file "/lib/libQt6Widgets.so.6:$BUILD_DIR/libQt6Widgets.so:0444" \
-    --file "/etc/passwd:$ROOT_DIR/userspace/etc/passwd:0644" \
+        --file "/etc/test_all_181_commands.sh:$ROOT_DIR/userspace/etc/test_all_181_commands.sh:0755" \
+--file "/etc/passwd:$ROOT_DIR/userspace/etc/passwd:0644" \
     --file "/etc/group:$ROOT_DIR/userspace/etc/group:0644" \
     --file "/etc/sudoers:$ROOT_DIR/userspace/etc/sudoers:0440" \
     --file "/etc/shadow:$ROOT_DIR/userspace/etc/shadow:0600" \
