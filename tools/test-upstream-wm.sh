@@ -368,6 +368,12 @@ try:
         raise SystemExit(1)
     print("[PASS] metacity GNOME window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE/LXQt.",
           flush=True)
+    if not wait_for("KREADCONFIG6-HELP=0", 60):
+        print("[FAIL] kreadconfig6 did not complete help check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] kreadconfig6 KDE configuration utility verified operational.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)

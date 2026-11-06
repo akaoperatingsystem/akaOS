@@ -639,6 +639,7 @@ for core_lib in \
     libdbusmenu-lxqt.so libdbusmenu-lxqt.so.0 libsysstat-qt6.so libsysstat-qt6.so.1 \
     libKF6WindowSystem.so libKF6WindowSystem.so.6 \
     libKF6CoreAddons.so libKF6CoreAddons.so.6 libmount.so libmount.so.1 \
+    libKF6ConfigCore.so libKF6ConfigCore.so.6 libKF6ConfigGui.so libKF6ConfigGui.so.6 \
     libLayerShellQtInterface.so libLayerShellQtInterface.so.6 \
     libXpresent.so libXpresent.so.1 libmetacity.so libmetacity.so.3; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
@@ -721,6 +722,14 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/metacity" ]]; then
     echo "[BUILD] upstream metacity GNOME window manager"
     initramfs_files+=(
         "--file=/usr/local/bin/metacity:$UPSTREAM_SYSROOT/usr/local/bin/metacity:exec"
+    )
+fi
+
+if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/kreadconfig6" ]]; then
+    echo "[BUILD] upstream KDE kreadconfig6 and kwriteconfig6"
+    initramfs_files+=(
+        "--file=/usr/local/bin/kreadconfig6:$UPSTREAM_SYSROOT/usr/local/bin/kreadconfig6:exec"
+        "--file=/usr/local/bin/kwriteconfig6:$UPSTREAM_SYSROOT/usr/local/bin/kwriteconfig6:exec"
     )
 fi
 

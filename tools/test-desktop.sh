@@ -85,3 +85,6 @@ env GDK_BACKEND=x11 DISPLAY=:0 XDG_RUNTIME_DIR=/run/user/0 DBUS_SESSION_BUS_ADDR
 sleep 15
 ps
 echo METACITY-RUNNING=$?
+
+/usr/local/bin/kreadconfig6 --help
+echo KREADCONFIG6-HELP=$?
