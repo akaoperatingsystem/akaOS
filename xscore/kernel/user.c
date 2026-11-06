@@ -944,6 +944,12 @@ int xscore_user_process_self_test(void) {
     uint64_t cfdisk_status = UINT64_MAX;
     if (!p_cfdisk || !xscore_process_wait(p_cfdisk, &cfdisk_status) || cfdisk_status != 0 || !xscore_process_reap(p_cfdisk)) return 0;
 
+    /* Verify file attributes modifier chattr */
+    const char *chattr_args[] = {"/bin/chattr", "-V", "+i", "/etc/motd", 0};
+    struct xscore_process *p_chattr = xscore_process_create_path_args("/bin/chattr", 4, chattr_args);
+    uint64_t chattr_status = UINT64_MAX;
+    if (!p_chattr || !xscore_process_wait(p_chattr, &chattr_status) || chattr_status != 0 || !xscore_process_reap(p_chattr)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -1022,6 +1028,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Concatenation utility cat full options verified\n");
     xscore_serial_write("[INFO] Change directory builtin cd verified\n");
     xscore_serial_write("[INFO] Disk partition table manipulator cfdisk verified\n");
+    xscore_serial_write("[INFO] File attributes modifier chattr verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

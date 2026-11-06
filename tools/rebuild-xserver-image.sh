@@ -565,6 +565,19 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-cfdisk-main.o" \
     -o "$BUILD_DIR/CFDISK.ELF"
 
+echo "[BUILD] user chattr"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/chattr/main.c" -o "$BUILD_DIR/user-chattr-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-chattr-main.o" \
+    -o "$BUILD_DIR/CHATTR.ELF"
+
 echo "[BUILD] user lumen"
 clang --target=x86_64-unknown-none-elf \
     -std=c17 -O2 -Wall -Wextra -Werror \
@@ -624,6 +637,7 @@ initramfs_files+=(
     "--file=/bin/case:$BUILD_DIR/CASE.ELF:exec"
     "--file=/bin/cd:$BUILD_DIR/CD.ELF:exec"
     "--file=/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec"
+    "--file=/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec"
     "--file=/bin/wayland-bridge:$BUILD_DIR/WAYLAND_BRIDGE.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"

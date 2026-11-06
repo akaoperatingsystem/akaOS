@@ -214,6 +214,7 @@ grep -Fq "[INFO] Conditional pattern matching statement case verified" "$TEST_LO
 grep -Fq "[INFO] Concatenation utility cat full options verified" "$TEST_LOG"
 grep -Fq "[INFO] Change directory builtin cd verified" "$TEST_LOG"
 grep -Fq "[INFO] Disk partition table manipulator cfdisk verified" "$TEST_LOG"
+grep -Fq "[INFO] File attributes modifier chattr verified" "$TEST_LOG"
 grep -Fq "[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified" "$TEST_LOG"
 grep -Fq "[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified" "$TEST_LOG"
 grep -Fq "[INFO] ACPI diagnostics utility acpi verified" "$TEST_LOG"
