@@ -698,6 +698,7 @@ for core_lib in \
     libKF6ConfigCore.so libKF6ConfigCore.so.6 libKF6ConfigGui.so libKF6ConfigGui.so.6 \
     libKF6GlobalAccel.so libKF6GlobalAccel.so.6 \
     libKF6Crash.so libKF6Crash.so.6 \
+    libKF6DBusAddons.so libKF6DBusAddons.so.6 \
     libLayerShellQtInterface.so libLayerShellQtInterface.so.6 \
     libXpresent.so libXpresent.so.1 libmetacity.so libmetacity.so.3; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
@@ -784,11 +785,16 @@ if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/metacity" ]]; then
 fi
 
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/kreadconfig6" ]]; then
-    echo "[BUILD] upstream KDE kreadconfig6 and kwriteconfig6"
+    echo "[BUILD] upstream KDE kreadconfig6, kwriteconfig6, and kquitapp6"
     initramfs_files+=(
         "--file=/usr/local/bin/kreadconfig6:$UPSTREAM_SYSROOT/usr/local/bin/kreadconfig6:exec"
         "--file=/usr/local/bin/kwriteconfig6:$UPSTREAM_SYSROOT/usr/local/bin/kwriteconfig6:exec"
     )
+    if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/kquitapp6" ]]; then
+        initramfs_files+=(
+            "--file=/usr/local/bin/kquitapp6:$UPSTREAM_SYSROOT/usr/local/bin/kquitapp6:exec"
+        )
+    fi
 fi
 
 if [[ -f "$UPSTREAM_SYSROOT/usr/local/bin/i3" ]]; then
