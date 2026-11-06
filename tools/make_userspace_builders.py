@@ -501,6 +501,7 @@ build_user_program break "$ROOT_DIR/userspace/bin/break/main.c" BREAK.ELF
 build_user_program builtin "$ROOT_DIR/userspace/bin/builtin/main.c" BUILTIN.ELF
 build_user_program cal "$ROOT_DIR/userspace/bin/cal/main.c" CAL.ELF
 build_user_program caller "$ROOT_DIR/userspace/bin/caller/main.c" CALLER.ELF
+build_user_program case "$ROOT_DIR/userspace/bin/case/main.c" CASE.ELF
 build_user_program bzip2 "$ROOT_DIR/userspace/bin/bzip2/bzip2.c" BZIP2.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
@@ -683,6 +684,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/cal:$BUILD_DIR/CAL.ELF:exec" \
     --file "/bin/ncal:$BUILD_DIR/CAL.ELF:exec" \
     --file "/bin/caller:$BUILD_DIR/CALLER.ELF:exec" \
+    --file "/bin/case:$BUILD_DIR/CASE.ELF:exec" \
     --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \

@@ -1030,6 +1030,17 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "help") == 0) {
+        if (argc > 1 && strcmp(argv[1], "case") == 0) {
+            write_str(STDOUT_FILENO, "case: case WORD in [PATTERN [| PATTERN]...) COMMANDS ;;]... esac\n"
+                                     "    Execute commands based on pattern matching.\n\n"
+                                     "    Selectively execute the command-list corresponding to the first\n"
+                                     "    pattern that matches WORD.\n\n"
+                                     "    Exit Status:\n"
+                                     "    Returns the status of the executed command-list, or zero if no pattern\n"
+                                     "    matches.\n");
+            last_exit_status = 0;
+            return 1;
+        }
         if (argc > 1 && strcmp(argv[1], "caller") == 0) {
             write_str(STDOUT_FILENO, "caller: caller [expr]\n"
                                      "    Return the context of the current subroutine call.\n\n"
@@ -1087,9 +1098,9 @@ static int execute_builtin(int argc, char *argv[]) {
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller, case\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind, bzip2, bunzip2, bzcat, cal, ncal, caller\n");
-        write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, break [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
+        write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, case/in/esac, break [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
         return 1;
     }
@@ -2170,6 +2181,29 @@ static void free_statements(struct statement_list *list) {
 static void push_parsed_token(struct statement_list *list, char *trimmed) {
     if (!trimmed || !*trimmed) return;
 
+    /* Check for 'case WORD in REST' */
+    if (strncmp(trimmed, "case ", 5) == 0) {
+        const char *p = trimmed + 5;
+        while (*p == ' ' || *p == '\t') p++;
+        const char *in_pos = strstr(p, " in");
+        while (in_pos) {
+            char after = in_pos[3];
+            if (after == '\0' || after == ' ' || after == '\t' || after == '(' || after == '\n') {
+                size_t hlen = (size_t)(in_pos + 3 - trimmed);
+                char head[256];
+                if (hlen < sizeof(head)) {
+                    memcpy(head, trimmed, hlen);
+                    head[hlen] = '\0';
+                    char *rest = trim_str((char *)(in_pos + 3));
+                    add_statement(list, trim_str(head));
+                    if (*rest) push_parsed_token(list, rest);
+                    return;
+                }
+            }
+            in_pos = strstr(in_pos + 3, " in");
+        }
+    }
+
     /* Check for function definition start: name() { or function name { */
     char *open_brace = strchr(trimmed, '{');
     if (open_brace && (strstr(trimmed, "()") || strncmp(trimmed, "function ", 9) == 0)) {
@@ -2244,6 +2278,16 @@ static void tokenize_statements(const char *text, struct statement_list *list) {
 
         if (!in_quote && c == '#') {
             in_comment = 1;
+            continue;
+        }
+
+        if (!in_quote && c == ';' && *p == ';') {
+            p++; /* consume second ';' */
+            current[cur_len] = '\0';
+            char *trimmed = trim_str(current);
+            if (*trimmed) push_parsed_token(list, trimmed);
+            push_parsed_token(list, ";;");
+            cur_len = 0;
             continue;
         }
 
@@ -2570,6 +2614,110 @@ static int execute_statements(struct statement_list *list, int start, int end) {
             }
 
             i = done_idx + 1;
+            continue;
+        }
+
+        /* 3b. Conditionals: case WORD in ... esac */
+        if (strncmp(stmt, "case ", 5) == 0) {
+            char header[256];
+            strncpy(header, stmt + 5, sizeof(header) - 1);
+            header[sizeof(header) - 1] = '\0';
+
+            char *in_pos = strstr(header, " in");
+            if (in_pos) *in_pos = '\0';
+            char expanded_word[256];
+            expand_variables(trim_str(header), expanded_word, sizeof(expanded_word));
+            char target_word[256];
+            strncpy(target_word, trim_str(expanded_word), sizeof(target_word) - 1);
+            target_word[sizeof(target_word) - 1] = '\0';
+
+            int esac_idx = -1;
+            int depth = 0;
+            for (int k = i + 1; k < end; ++k) {
+                if (strncmp(list->items[k], "case ", 5) == 0) depth++;
+                else if (strcmp(list->items[k], "esac") == 0) {
+                    if (depth == 0) {
+                        esac_idx = k;
+                        break;
+                    }
+                    depth--;
+                }
+            }
+            if (esac_idx < 0) {
+                write_str(STDERR_FILENO, "akash: syntax error: missing esac\n");
+                last_exit_status = 2;
+                return 1;
+            }
+
+            int matched = 0;
+            int k = i + 1;
+            while (k < esac_idx) {
+                if (strcmp(list->items[k], ";;") == 0) {
+                    k++;
+                    continue;
+                }
+
+                /* Find clause end: either ';;' or 'esac' */
+                int clause_end = esac_idx;
+                int cdepth = 0;
+                for (int m = k; m < esac_idx; ++m) {
+                    if (strncmp(list->items[m], "case ", 5) == 0) cdepth++;
+                    else if (strcmp(list->items[m], "esac") == 0) cdepth--;
+                    else if (cdepth == 0 && strcmp(list->items[m], ";;") == 0) {
+                        clause_end = m;
+                        break;
+                    }
+                }
+
+                if (!matched) {
+                    char *first_stmt = list->items[k];
+                    char *close_paren = strchr(first_stmt, ')');
+                    if (close_paren) {
+                        size_t plen = (size_t)(close_paren - first_stmt);
+                        char pat_buf[256];
+                        if (plen >= sizeof(pat_buf)) plen = sizeof(pat_buf) - 1;
+                        memcpy(pat_buf, first_stmt, plen);
+                        pat_buf[plen] = '\0';
+
+                        char *pats = trim_str(pat_buf);
+                        if (pats[0] == '(') pats = trim_str(pats + 1);
+
+                        /* Check pipe-delimited patterns: pat1 | pat2 | ... */
+                        int pat_match = 0;
+                        char pat_copy[256];
+                        strncpy(pat_copy, pats, sizeof(pat_copy) - 1);
+                        pat_copy[sizeof(pat_copy) - 1] = '\0';
+
+                        char *token = strtok(pat_copy, "|");
+                        while (token) {
+                            char *one_pat = trim_str(token);
+                            char exp_pat[128];
+                            expand_variables(one_pat, exp_pat, sizeof(exp_pat));
+                            char *trimmed_pat = trim_str(exp_pat);
+                            if (wildcard_matches(trimmed_pat, target_word)) {
+                                pat_match = 1;
+                                break;
+                            }
+                            token = strtok(NULL, "|");
+                        }
+
+                        if (pat_match) {
+                            matched = 1;
+                            char *inline_cmd = trim_str(close_paren + 1);
+                            if (*inline_cmd) {
+                                execute_command_line(inline_cmd);
+                            }
+                            if (k + 1 < clause_end) {
+                                execute_statements(list, k + 1, clause_end);
+                            }
+                        }
+                    }
+                }
+
+                k = (clause_end < esac_idx && strcmp(list->items[clause_end], ";;") == 0) ? clause_end + 1 : clause_end;
+            }
+
+            i = esac_idx + 1;
             continue;
         }
 

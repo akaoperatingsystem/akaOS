@@ -36,6 +36,13 @@ int memfd_create(const char *name, unsigned int flags);
 int shm_open(const char *name, int flags, mode_t mode);
 int shm_unlink(const char *name);
 int mincore(void *addr, size_t length, unsigned char *vec);
+int mlock(const void *address, size_t length);
+int munlock(const void *address, size_t length);
+int mlockall(int flags);
+int munlockall(void);
+#define MCL_CURRENT 1
+#define MCL_FUTURE 2
+#define MCL_ONFAULT 4
 #ifdef __cplusplus
 }
 #endif

@@ -559,8 +559,39 @@ int getrlimit(int resource, struct rlimit *limit) {
         limit->rlim_max = 0;
         return 0;
     }
+    if (resource == RLIMIT_MEMLOCK || resource == RLIMIT_AS ||
+        resource == RLIMIT_DATA || resource == RLIMIT_STACK) {
+        limit->rlim_cur = RLIM_INFINITY;
+        limit->rlim_max = RLIM_INFINITY;
+        return 0;
+    }
     errno = EINVAL;
     return -1;
+}
+
+int mlock(const void *address, size_t length) {
+    if (!address && length > 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    return 0;
+}
+
+int munlock(const void *address, size_t length) {
+    if (!address && length > 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    return 0;
+}
+
+int mlockall(int flags) {
+    (void)flags;
+    return 0;
+}
+
+int munlockall(void) {
+    return 0;
 }
 
 int setrlimit(int resource, const struct rlimit *limit) {

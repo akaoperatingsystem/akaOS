@@ -144,3 +144,4 @@ bzcat (1) - decompresses files to standard output
 cal (1) - display a calendar
 ncal (1) - display a calendar and the date of easter
 caller (1) - return the context of an active subroutine call
+case (1) - conditionally perform a command based on pattern matching

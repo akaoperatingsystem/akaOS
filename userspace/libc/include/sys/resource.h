@@ -14,6 +14,7 @@ typedef unsigned long rlim_t;
 #define RLIMIT_STACK 3
 #define RLIMIT_CORE 4
 #define RLIMIT_NOFILE 7
+#define RLIMIT_MEMLOCK 8
 #define RLIMIT_AS 9
 struct rlimit { rlim_t rlim_cur; rlim_t rlim_max; };
 struct rusage {

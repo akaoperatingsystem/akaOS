@@ -241,12 +241,14 @@ xscore_enter_user_32:
     pushl $0x202         /* EFLAGS (IF = 1) */
     pushl $0x1B          /* User CS: 0x18 | RPL 3 = 0x1B (User Code segment) */
     pushl %ecx           /* User EIP */
-    /* Install the current thread's GS base and reload the user TLS selector. */
-    /* After the five iret pushes, the original transition argument is at
-       56(%esp).  EAX now contains the user-data selector, not the pointer. */
-    pushl 56(%esp)
+    /* Install the current thread's GS base (transition->user_tp at offset 48) and reload the user TLS selector. */
+    movl 56(%esp), %eax      /* transition pointer */
+    testl %eax, %eax
+    jz .Luser_no_tls_32
+    pushl 48(%eax)           /* push transition->user_tp */
     call xscore_32_set_user_tls_base
     addl $4, %esp
+.Luser_no_tls_32:
     movw $0x33, %ax
     movw %ax, %gs
     /* i386 userspace ELF programs find argc at (%esp), argv at 4(%esp).
