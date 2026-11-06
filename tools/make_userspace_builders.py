@@ -419,6 +419,7 @@ build_user_program head "$ROOT_DIR/userspace/bin/head/main.c" HEAD.ELF
 build_user_program tail "$ROOT_DIR/userspace/bin/tail/main.c" TAIL.ELF
 build_user_program wc "$ROOT_DIR/userspace/bin/wc/main.c" WC.ELF
 build_user_program uname "$ROOT_DIR/userspace/bin/uname/main.c" UNAME.ELF
+build_user_program akafetch "$ROOT_DIR/userspace/bin/akafetch/main.c" AKAFETCH.ELF
 build_account_program whoami "$ROOT_DIR/userspace/bin/whoami/main.c" WHOAMI.ELF
 build_user_program touch "$ROOT_DIR/userspace/bin/touch/main.c" TOUCH.ELF
 build_user_program mkdir "$ROOT_DIR/userspace/bin/mkdir/main.c" MKDIR.ELF
@@ -455,6 +456,7 @@ build_account_program bash "$ROOT_DIR/userspace/bin/bash/main.c" BASH.ELF
 build_user_program nslookup "$ROOT_DIR/userspace/bin/nslookup/main.c" NSLOOKUP.ELF
 build_user_program curl "$ROOT_DIR/userspace/bin/curl/main.c" CURL.ELF
 build_user_program pkg "$ROOT_DIR/userspace/bin/pkg/main.c" PKG.ELF
+build_user_program wget "$ROOT_DIR/userspace/bin/wget/main.c" WGET.ELF
 build_user_program httpd "$ROOT_DIR/userspace/bin/httpd/main.c" HTTPD.ELF
 build_user_program akaos-config "$ROOT_DIR/userspace/bin/akaos-config/main.c" AKAOS_CONFIG.ELF
 build_user_program sysmon "$ROOT_DIR/userspace/bin/sysmon/main.c" SYSMON.ELF
@@ -524,6 +526,23 @@ build_user_program gpuinfo "$ROOT_DIR/userspace/bin/gpuinfo/main.c" GPUINFO.ELF
 build_user_program sndinfo "$ROOT_DIR/userspace/bin/sndinfo/main.c" SNDINFO.ELF
 build_user_program acpi "$ROOT_DIR/userspace/bin/acpi/main.c" ACPI.ELF
 build_user_program xsdisplay "$ROOT_DIR/userspace/bin/xsdisplay/main.c" XSDISPLAY.ELF
+build_user_program xserver "$ROOT_DIR/userspace/bin/xserver/main.c" XSERVER.ELF
+build_user_program wayland-bridge "$ROOT_DIR/userspace/bin/wayland-bridge/main.c" WAYLAND_BRIDGE.ELF
+build_user_program x11-client "$ROOT_DIR/userspace/bin/x11-client/main.c" X11_CLIENT.ELF
+build_user_program x11-wm-client "$ROOT_DIR/userspace/bin/x11-wm-client/main.c" X11_WM_CLIENT.ELF
+build_user_program cairo-upstream-test "$ROOT_DIR/userspace/bin/cairo-upstream-test/main.c" CAIRO_UPSTREAM_TEST.ELF
+build_user_program fontconfig-upstream-test "$ROOT_DIR/userspace/bin/fontconfig-upstream-test/main.c" FONTCONFIG_UPSTREAM_TEST.ELF
+build_user_program freetype-upstream-test "$ROOT_DIR/userspace/bin/freetype-upstream-test/main.c" FREETYPE_UPSTREAM_TEST.ELF
+build_user_program fribidi-upstream-test "$ROOT_DIR/userspace/bin/fribidi-upstream-test/main.c" FRIBIDI_UPSTREAM_TEST.ELF
+build_user_program glib-upstream-test "$ROOT_DIR/userspace/bin/glib-upstream-test/main.c" GLIB_UPSTREAM_TEST.ELF
+build_user_program graphene-upstream-test "$ROOT_DIR/userspace/bin/graphene-upstream-test/main.c" GRAPHENE_UPSTREAM_TEST.ELF
+build_user_program gtk-upstream-test "$ROOT_DIR/userspace/bin/gtk-upstream-test/main.c" GTK_UPSTREAM_TEST.ELF
+build_user_program gtk3-upstream-test "$ROOT_DIR/userspace/bin/gtk3-upstream-test/main.c" GTK3_UPSTREAM_TEST.ELF
+build_user_program harfbuzz-upstream-test "$ROOT_DIR/userspace/bin/harfbuzz-upstream-test/main.c" HARFBUZZ_UPSTREAM_TEST.ELF
+build_user_program pango-upstream-test "$ROOT_DIR/userspace/bin/pango-upstream-test/main.c" PANGO_UPSTREAM_TEST.ELF
+build_user_program wayland-upstream-test "$ROOT_DIR/userspace/bin/wayland-upstream-test/main.c" WAYLAND_UPSTREAM_TEST.ELF
+build_user_program xkbcommon-upstream-test "$ROOT_DIR/userspace/bin/xkbcommon-upstream-test/main.c" XKBCOMMON_UPSTREAM_TEST.ELF
+build_user_program qtquick-wayland-smoke "$ROOT_DIR/userspace/bin/qt-wayland-smoke/main.c" QT_QUICK_WAYLAND_SMOKE.ELF
 build_user_program dbus-daemon "$ROOT_DIR/userspace/bin/dbus-daemon/main.c" DBUS_DAEMON.ELF
 build_user_program dltest "$ROOT_DIR/userspace/bin/dltest/main.c" DLTEST.ELF
 build_user_program display-protocols "$ROOT_DIR/userspace/bin/display-protocols/main.c" DISPLAY_PROTOCOLS.ELF
@@ -583,6 +602,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/tail:$BUILD_DIR/TAIL.ELF:exec" \\
     --file "/bin/wc:$BUILD_DIR/WC.ELF:exec" \\
     --file "/bin/uname:$BUILD_DIR/UNAME.ELF:exec" \\
+    --file "/bin/akafetch:$BUILD_DIR/AKAFETCH.ELF:exec" \\
     --file "/bin/whoami:$BUILD_DIR/WHOAMI.ELF:exec" \\
     --file "/bin/touch:$BUILD_DIR/TOUCH.ELF:exec" \\
     --file "/bin/mkdir:$BUILD_DIR/MKDIR.ELF:exec" \\
@@ -620,7 +640,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/rbash:$BUILD_DIR/AKASH.ELF:exec" \\
     --file "/bin/nslookup:$BUILD_DIR/NSLOOKUP.ELF:exec" \\
     --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec" \
-    --file "/bin/pkg:$BUILD_DIR/PKG.ELF:exec" \\
+    --file "/bin/pkg:$BUILD_DIR/PKG.ELF:exec" \
+    --file "/bin/wget:$BUILD_DIR/WGET.ELF:exec" \\
     --file "/bin/httpd:$BUILD_DIR/HTTPD.ELF:exec" \\
     --file "/bin/akaos-config:$BUILD_DIR/AKAOS_CONFIG.ELF:exec" \\
     --file "/bin/sysmon:$BUILD_DIR/SYSMON.ELF:exec" \\
@@ -717,6 +738,29 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/display-protocols:$BUILD_DIR/DISPLAY_PROTOCOLS.ELF:exec" \\
     --file "/bin/x11-server:$BUILD_DIR/DISPLAY_PROTOCOLS.ELF:exec" \\
     --file "/bin/wayland-compositor:$BUILD_DIR/DISPLAY_PROTOCOLS.ELF:exec" \\
+    --file "/bin/xserver:$BUILD_DIR/XSERVER.ELF:exec" \\
+    --file "/bin/wayland-bridge:$BUILD_DIR/WAYLAND_BRIDGE.ELF:exec" \\
+    --file "/bin/x11-client:$BUILD_DIR/X11_CLIENT.ELF:exec" \\
+    --file "/bin/x11-wm-client:$BUILD_DIR/X11_WM_CLIENT.ELF:exec" \\
+    --file "/bin/cairo-upstream-test:$BUILD_DIR/CAIRO_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/fontconfig-upstream-test:$BUILD_DIR/FONTCONFIG_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/freetype-upstream-test:$BUILD_DIR/FREETYPE_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/fribidi-upstream-test:$BUILD_DIR/FRIBIDI_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/glib-upstream-test:$BUILD_DIR/GLIB_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/graphene-upstream-test:$BUILD_DIR/GRAPHENE_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/gtk-upstream-test:$BUILD_DIR/GTK_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/gtk3-upstream-test:$BUILD_DIR/GTK3_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/gtk3-x11-upstream-test:$BUILD_DIR/GTK3_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/harfbuzz-upstream-test:$BUILD_DIR/HARFBUZZ_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/pango-upstream-test:$BUILD_DIR/PANGO_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/wayland-upstream-test:$BUILD_DIR/WAYLAND_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/xkbcommon-upstream-test:$BUILD_DIR/XKBCOMMON_UPSTREAM_TEST.ELF:exec" \\
+    --file "/bin/qtwayland-smoke:$BUILD_DIR/QT_QUICK_WAYLAND_SMOKE.ELF:exec" \\
+    --file "/bin/qtquick-wayland-smoke:$BUILD_DIR/QT_QUICK_WAYLAND_SMOKE.ELF:exec" \\
+    --file "/bin/dbus-update-activation-environment:$BUILD_DIR/DBUS_DAEMON.ELF:exec" \\
+    --file "/bin/lxqt-leave:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \\
+    --file "/bin/lxqt-session:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \\
+    --file "/etc/test_all_181_commands.sh:$ROOT_DIR/userspace/etc/test_all_181_commands.sh:0755" \\
     --dir "/lib" \\
     --file "/lib/ld-akaos.so:$BUILD_DIR/LD_AKAOS.ELF:exec" \\
     --file "/lib/libc.so.6:$BUILD_DIR/libc.so.6:0444" \\
