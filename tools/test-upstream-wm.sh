@@ -374,6 +374,12 @@ try:
         raise SystemExit(1)
     print("[PASS] kreadconfig6 KDE configuration utility verified operational.",
           flush=True)
+    if not wait_for("KQUITAPP6-HELP=0", 120):
+        print("[FAIL] kquitapp6 did not complete help check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] kquitapp6 KDE D-Bus application control utility verified operational.",
+          flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)

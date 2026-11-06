@@ -88,3 +88,6 @@ echo METACITY-RUNNING=$?
 
 /usr/local/bin/kreadconfig6 --help
 echo KREADCONFIG6-HELP=$?
+
+/usr/local/bin/kquitapp6 --help
+echo KQUITAPP6-HELP=$?
