@@ -552,6 +552,19 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-cd-main.o" \
     -o "$BUILD_DIR/CD.ELF"
 
+echo "[BUILD] user cfdisk"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/cfdisk/main.c" -o "$BUILD_DIR/user-cfdisk-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-cfdisk-main.o" \
+    -o "$BUILD_DIR/CFDISK.ELF"
+
 echo "[BUILD] user lumen"
 clang --target=x86_64-unknown-none-elf \
     -std=c17 -O2 -Wall -Wextra -Werror \
@@ -610,6 +623,7 @@ initramfs_files+=(
     "--file=/bin/caller:$BUILD_DIR/CALLER.ELF:exec"
     "--file=/bin/case:$BUILD_DIR/CASE.ELF:exec"
     "--file=/bin/cd:$BUILD_DIR/CD.ELF:exec"
+    "--file=/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec"
     "--file=/bin/wayland-bridge:$BUILD_DIR/WAYLAND_BRIDGE.ELF:exec"
     "--dir=/var/spool"
     "--dir=/var/spool/at"
@@ -654,6 +668,7 @@ for core_lib in \
     libKF6WindowSystem.so libKF6WindowSystem.so.6 \
     libKF6CoreAddons.so libKF6CoreAddons.so.6 libmount.so libmount.so.1 \
     libKF6ConfigCore.so libKF6ConfigCore.so.6 libKF6ConfigGui.so libKF6ConfigGui.so.6 \
+    libKF6GlobalAccel.so libKF6GlobalAccel.so.6 \
     libLayerShellQtInterface.so libLayerShellQtInterface.so.6 \
     libXpresent.so libXpresent.so.1 libmetacity.so libmetacity.so.3; do
     library_path="$(find "$UPSTREAM_SYSROOT/usr/local/lib" "$UPSTREAM_SYSROOT/usr/lib" \
