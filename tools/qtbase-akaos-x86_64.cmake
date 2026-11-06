@@ -60,7 +60,7 @@ if(DEFINED QT_HOST_PATH AND
 endif()
 
 set(akaos_target_flags
-    "-ffreestanding -fno-builtin -fno-stack-protector -fPIC -D__AKAOS__ -D__linux__ -D_POSIX_THREAD_ATTR_STACKSIZE=200809L -I${akaos_root}/sdk/include -I${akaos_root}/userspace/libc/include")
+    "-ffreestanding -fno-builtin -fno-stack-protector -fPIC -D__AKAOS__ -D__linux__ -D_POSIX_THREAD_ATTR_STACKSIZE=200809L -I${akaos_root}/sdk/include -I${akaos_root}/userspace/libc/include -isystem ${akaos_graphics_sysroot}/usr/local/include")
 set(CMAKE_C_FLAGS_INIT
     "-nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include ${akaos_target_flags}")
 set(akaos_cxx_flags

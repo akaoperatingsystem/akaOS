@@ -228,7 +228,14 @@ secondary_stacks:
 
 .text
 el0_sync_handler:
-    /* Save full user register frame */
+    /* Save ELR_EL1 and SPSR_EL1 first so context switches and deferred
+     * preemption during blocking syscalls cannot clobber user return state. */
+    sub sp, sp, #16
+    mrs x9, elr_el1
+    mrs x10, spsr_el1
+    stp x9, x10, [sp, #0]
+
+    /* Save full user register frame (256 bytes) */
     stp x29, x30, [sp, #-16]!
     stp x27, x28, [sp, #-16]!
     stp x25, x26, [sp, #-16]!
@@ -342,6 +349,10 @@ el0_sync_handler:
     ldp x25, x26, [sp], #16
     ldp x27, x28, [sp], #16
     ldp x29, x30, [sp], #16
+    /* Restore ELR_EL1 and SPSR_EL1 saved on entry */
+    ldp x9, x10, [sp], #16
+    msr elr_el1, x9
+    msr spsr_el1, x10
     eret
 
 2:  /* Exit to kernel continuation */

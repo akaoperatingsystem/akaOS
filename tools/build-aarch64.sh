@@ -21,7 +21,9 @@ BUILD_TIMESTAMP="${BUILD_TIMESTAMP:-$(date +%m%d%Y%H%M%S)}"
 export BUILD_TIMESTAMP
 
 # 1. Build AArch64 userspace binaries and initramfs archive
-bash "$ROOT_DIR/tools/build-user-aarch64.sh"
+if [[ "${AKAOS_TEST_SKIP_USERSPACE:-0}" != 1 ]]; then
+    bash "$ROOT_DIR/tools/build-user-aarch64.sh"
+fi
 
 echo "[BUILD] akaOS AArch64 XSCore Kernel"
 
