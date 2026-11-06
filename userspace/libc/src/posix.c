@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <sys/statvfs.h>
+#include <sys/statfs.h>
 #include <sys/utsname.h>
 #include <unistd.h>
 #include <glob.h>
@@ -592,6 +593,35 @@ int mlockall(int flags) {
 
 int munlockall(void) {
     return 0;
+}
+
+int statfs(const char *path, struct statfs *buf) {
+    if (!path || !buf) {
+        errno = EFAULT;
+        return -1;
+    }
+    struct statvfs sv;
+    if (statvfs(path, &sv) != 0) return -1;
+    memset(buf, 0, sizeof(*buf));
+    buf->f_type = 0x858458F6UL; /* RAMFS / VFS magic */
+    buf->f_bsize = sv.f_bsize;
+    buf->f_blocks = sv.f_blocks;
+    buf->f_bfree = sv.f_bfree;
+    buf->f_bavail = sv.f_bavail;
+    buf->f_files = sv.f_files;
+    buf->f_ffree = sv.f_ffree;
+    buf->f_namelen = sv.f_namemax ? sv.f_namemax : 255;
+    buf->f_frsize = sv.f_frsize;
+    buf->f_flags = sv.f_flag;
+    return 0;
+}
+
+int fstatfs(int fd, struct statfs *buf) {
+    if (fd < 0 || !buf) {
+        errno = EBADF;
+        return -1;
+    }
+    return statfs("/", buf);
 }
 
 int setrlimit(int resource, const struct rlimit *limit) {

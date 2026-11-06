@@ -26,6 +26,7 @@ Software in akaOS relies on two distinct tiers of shared libraries:
 | Bundle Name | Primary Target | Includes Core Libs? (`libc`, `libm`) | Includes Heavy GUI Libs? (GTK, Qt, Cairo, X11) | Packaged Software Highlights | Approximate Disk Size |
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **`all`** | Full Operating System | **YES** | **YES** | All 124+ tools, GUI apps, WMs, daemons, diagnostics | ~150 - 300 MB |
+| **`apps`** | All Apps Without Libs | **YES** (core) | **NO** | All 124+ CLI utilities & native apps without heavy GUI toolkits | ~50 - 80 MB |
 | **`desktop`** | Daily Workstation | **YES** | **YES** | Desktops (XFCE, LXDE, Openbox), GUI apps, terminal | ~100 - 180 MB |
 | **`libs`** | Shared Library Runtime | **YES** | **YES** | All 30+ shared libraries & toolkits for dev testing | ~90 - 150 MB |
 | **`dev`** | Hardware & Development | **YES** | **NO** | `pkg`, `akafetch`, `lscpu`, `lspci`, `gpuinfo`, `sysmon` | ~35 - 50 MB |
@@ -41,6 +42,11 @@ Software in akaOS relies on two distinct tiers of shared libraries:
 ### `all` (Full Suite)
 - **When to choose:** You want a full-featured desktop OS with every utility, window manager, and server daemon ready out-of-the-box.
 - **Includes:** All desktop environments (XFCE 4.18, LXDE, Openbox 3.6.1, Aurora), all GUI utilities (`terminal`, `notepad`, `taskmgr`, `webviewer`), all servers (`httpd`, `sshd`, `telnetd`, `tftpd`), all diagnostic tools, and all shared libraries.
+
+### `apps` (All Apps Without Heavy Upstream GUI Libs)
+- **When to choose:** You want all native console tools, shell utilities, networking servers, compression suites, and developer diagnostics, but without compiling or packaging heavy upstream GUI toolkits (Wayland, GTK 3/4, Qt 6, Cairo, X11).
+- **Includes:** Core C/C++ runtime (`libc.so.6`, `libm.so.6`, `ld-akaos.so`), all 124+ tools in `/bin`, network servers (`httpd`, `sshd`, `telnetd`, `tftpd`), and developer tools.
+- **Omits:** Heavy upstream GUI toolkits (`libgtk-3`, `libgtk-4`, `libQt6*`, `libcairo`, `libX11`, `libpango`).
 
 ### `desktop` (Desktop Essentials)
 - **When to choose:** You want a graphical desktop workstation without running background server services.

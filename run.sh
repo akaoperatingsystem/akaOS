@@ -215,6 +215,7 @@ configure_run_interactively() {
                 if selection="$(akaos_ui_menu \
                     "Software Packages" "Select software bundle for QEMU:" "$menu_software" \
                     "all" "Full Suite (All 124+ Tools, GUIs, Net, Dev, Audio, WMs)" \
+                    "apps" "All Apps (All 124+ tools without heavy upstream GUI libs)" \
                     "desktop" "Desktop Essentials (GUIs, Editors, Panels, Tools)" \
                     "net" "Network & Servers (wget, curl, httpd, sshd, telnetd)" \
                     "dev" "Developer & Diagnostics (akafetch, pkg, lscpu, lspci)" \
@@ -543,7 +544,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --software|--software-bundle)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires all, desktop, net, dev, manual, minimal, or none" >&2
+                echo "$1 requires all, apps, desktop, libs, net, dev, manual, minimal, or none" >&2
                 exit 2
             fi
             menu_software="$2"

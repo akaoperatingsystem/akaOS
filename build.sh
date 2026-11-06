@@ -261,6 +261,7 @@ configure_build_interactively() {
                 if selection="$(akaos_ui_menu \
                     "Software Packages" "Select software bundle to include in akaOS:" "$menu_software" \
                     "all" "Full Suite (All 124+ Tools, GUI apps, WMs, GTK3/4, Qt6, X11 libs)" \
+                    "apps" "All Apps (All 124+ tools without heavy upstream GUI libs)" \
                     "libs" "Runtime Libraries (Shared libc, GLib, GTK3/4, Qt6, Cairo, X11 libs)" \
                     "desktop" "Desktop Essentials (GUIs, Editors, Panels, Tools, Compositors)" \
                     "manual" "Manual Package Selector (Checklist of individual packages)" \
@@ -565,7 +566,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --software|--software-bundle)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires all, desktop, net, dev, manual, minimal, or none" >&2
+                echo "$1 requires all, apps, desktop, libs, net, dev, manual, minimal, or none" >&2
                 exit 2
             fi
             menu_software="$2"
@@ -1938,7 +1939,10 @@ GIO_SONAME_IMAGE="$BUILD_DIR/libgio.so"
 # Determine if upstream graphical desktop libraries (Wayland, GTK, Qt, Cairo, X11) are needed.
 # If desktop is 'none' and software bundle is 'dev', 'net', or 'minimal', skip heavy upstream GUI compilation!
 need_upstream_gui=1
-if [[ "$target_desktop" == "none" ]]; then
+if [[ "$menu_software" == "apps" ]]; then
+    need_upstream_gui=0
+    echo "[INFO] 'apps' software bundle selected (all applications without heavy upstream GUI libraries). Skipping heavy upstream GUI toolkits (Wayland, GTK, Qt, Cairo)."
+elif [[ "$target_desktop" == "none" ]]; then
     if [[ "$menu_software" == "dev" || "$menu_software" == "net" || "$menu_software" == "minimal" || "$menu_software" == "none" ]]; then
         need_upstream_gui=0
         echo "[INFO] Headless/console profile selected ($menu_software bundle with no desktop). Skipping heavy upstream GUI toolkits (Wayland, GTK, Qt, Cairo)."

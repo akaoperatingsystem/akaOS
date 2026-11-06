@@ -19,6 +19,9 @@ struct passwd {
 extern "C" {
 #endif
 
+void setpwent(void);
+struct passwd *getpwent(void);
+void endpwent(void);
 struct passwd *getpwnam(const char *name);
 struct passwd *getpwuid(uid_t uid);
 int getpwnam_r(const char *name, struct passwd *entry, char *buffer,
