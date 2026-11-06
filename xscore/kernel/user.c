@@ -938,6 +938,12 @@ int xscore_user_process_self_test(void) {
     uint64_t cd_status = UINT64_MAX;
     if (!p_cd || !xscore_process_wait(p_cd, &cd_status) || cd_status != 0 || !xscore_process_reap(p_cd)) return 0;
 
+    /* Verify cfdisk disk partition table manipulator */
+    const char *cfdisk_args[] = {"/bin/cfdisk", "-v", 0};
+    struct xscore_process *p_cfdisk = xscore_process_create_path_args("/bin/cfdisk", 2, cfdisk_args);
+    uint64_t cfdisk_status = UINT64_MAX;
+    if (!p_cfdisk || !xscore_process_wait(p_cfdisk, &cfdisk_status) || cfdisk_status != 0 || !xscore_process_reap(p_cfdisk)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -1015,6 +1021,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Conditional pattern matching statement case verified\n");
     xscore_serial_write("[INFO] Concatenation utility cat full options verified\n");
     xscore_serial_write("[INFO] Change directory builtin cd verified\n");
+    xscore_serial_write("[INFO] Disk partition table manipulator cfdisk verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

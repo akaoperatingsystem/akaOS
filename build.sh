@@ -1854,6 +1854,7 @@ build_user_program cal "$ROOT_DIR/userspace/bin/cal/main.c" CAL.ELF
 build_user_program caller "$ROOT_DIR/userspace/bin/caller/main.c" CALLER.ELF
 build_user_program case "$ROOT_DIR/userspace/bin/case/main.c" CASE.ELF
 build_user_program cd "$ROOT_DIR/userspace/bin/cd/main.c" CD.ELF
+build_user_program cfdisk "$ROOT_DIR/userspace/bin/cfdisk/main.c" CFDISK.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -3473,6 +3474,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/caller:$BUILD_DIR/CALLER.ELF:exec" \
     --file "/bin/case:$BUILD_DIR/CASE.ELF:exec" \
     --file "/bin/cd:$BUILD_DIR/CD.ELF:exec" \
+    --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \
