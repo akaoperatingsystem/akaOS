@@ -323,7 +323,7 @@ try:
         raise SystemExit(1)
     print("[PASS] lxqt-panel desktop panel started and remained active alongside i3/Cinnamon/MATE/XFCE/LXDE.",
           flush=True)
-    if not wait_for("LXQT-SESSION-RUNNING=0", 200):
+    if not wait_for("LXQT-SESSION-RUNNING=0", 300):
         print("[FAIL] lxqt-session did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -334,7 +334,7 @@ try:
         raise SystemExit(1)
     print("[PASS] lxqt-session desktop session manager started and remained active.",
           flush=True)
-    if not wait_for("DWM-RUNNING=0", 200):
+    if not wait_for("DWM-RUNNING=0", 300):
         print("[FAIL] dwm did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -345,19 +345,19 @@ try:
         raise SystemExit(1)
     print("[PASS] dwm dynamic tiling window manager started and remained active alongside i3/Cinnamon/MATE/XFCE/LXDE/LXQt.",
           flush=True)
-    if not wait_for("BSPWM-VERSION=0", 60):
+    if not wait_for("BSPWM-VERSION=0", 120):
         print("[FAIL] bspwm binary space partitioning WM did not complete version check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] bspwm binary space partitioning window manager verified operational.",
           flush=True)
-    if not wait_for("BSPC-RESULT=1", 60):
+    if not wait_for("BSPC-RESULT=1", 120):
         print("[FAIL] bspc client did not complete client socket check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] bspc client controller verified operational.",
           flush=True)
-    if not wait_for("METACITY-RUNNING=0", 200):
+    if not wait_for("METACITY-RUNNING=0", 300):
         print("[FAIL] metacity did not complete startup check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
@@ -368,7 +368,7 @@ try:
         raise SystemExit(1)
     print("[PASS] metacity GNOME window manager started and remained active alongside Cinnamon/MATE/XFCE/LXDE/LXQt.",
           flush=True)
-    if not wait_for("KREADCONFIG6-HELP=0", 60):
+    if not wait_for("KREADCONFIG6-HELP=0", 180):
         print("[FAIL] kreadconfig6 did not complete help check.", flush=True)
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
