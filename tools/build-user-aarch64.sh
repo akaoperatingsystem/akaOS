@@ -89,7 +89,7 @@ build_xserver() {
         clang --target=aarch64-unknown-none-elf             -std=c17 -O2 -Wall -Wextra -Werror             -ffreestanding -fno-builtin -fno-stack-protector -fpie             -DXSCORE_BUILD_TIMESTAMP=""$BUILD_TIMESTAMP""                          -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/build/generated" -I"$source_dir/include"             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
-    ld.lld -m aarch64elf -nostdlib -pie -static -z max-page-size=0x1000         -T "$ROOT_DIR/userspace/linker/user.ld"         "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "${objects[@]}"         "${COMPILER_BUILTINS[@]}"         -o "$BUILD_DIR/$output"
+    ld.lld -m aarch64elf -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000         -T "$ROOT_DIR/userspace/linker/user.ld"         "$BUILD_DIR/user-crt0.o" "${objects[@]}"         --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive         "$BUILD_DIR/libc.a"         "${COMPILER_BUILTINS[@]}"         -o "$BUILD_DIR/$output"
 }
 
 build_bzip2() {
@@ -104,7 +104,7 @@ build_bzip2() {
         clang --target=aarch64-unknown-none-elf             -std=c17 -O2 -Wall -Wextra             -ffreestanding -fno-builtin -fno-stack-protector -fpie              "${bzip_extra_flags[@]}"             -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$source_dir"             -D_FILE_OFFSET_BITS=64             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
-    ld.lld -m aarch64elf -nostdlib -pie -static -z max-page-size=0x1000         -T "$ROOT_DIR/userspace/linker/user.ld"         "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "${objects[@]}"         "${COMPILER_BUILTINS[@]}"         -o "$BUILD_DIR/BZIP2.ELF"
+    ld.lld -m aarch64elf -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000         -T "$ROOT_DIR/userspace/linker/user.ld"         "$BUILD_DIR/user-crt0.o" "${objects[@]}"         --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive         "$BUILD_DIR/libc.a"         "${COMPILER_BUILTINS[@]}"         -o "$BUILD_DIR/BZIP2.ELF"
 }
 
 build_user_program() {
@@ -533,6 +533,10 @@ build_user_program builtin "$ROOT_DIR/userspace/bin/builtin/main.c" BUILTIN.ELF
 build_user_program cal "$ROOT_DIR/userspace/bin/cal/main.c" CAL.ELF
 build_user_program caller "$ROOT_DIR/userspace/bin/caller/main.c" CALLER.ELF
 build_user_program case "$ROOT_DIR/userspace/bin/case/main.c" CASE.ELF
+build_user_program cd "$ROOT_DIR/userspace/bin/cd/main.c" CD.ELF
+build_user_program cfdisk "$ROOT_DIR/userspace/bin/cfdisk/main.c" CFDISK.ELF
+build_user_program chattr "$ROOT_DIR/userspace/bin/chattr/main.c" CHATTR.ELF
+build_user_program chgrp "$ROOT_DIR/userspace/bin/chgrp/main.c" CHGRP.ELF
 build_bzip2
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
@@ -710,7 +714,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_aarch64.img"
     --file "/bin/tr:$BUILD_DIR/TR.ELF:exec" \
     --file "/bin/df:$BUILD_DIR/DF.ELF:exec" \
     --file "/bin/du:$BUILD_DIR/DU.ELF:exec" \
-    --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec"     --file "/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec"     --file "/bin/aspell:$BUILD_DIR/ASPELL.ELF:exec"     --file "/bin/at:$BUILD_DIR/AT.ELF:exec"     --file "/bin/atq:$BUILD_DIR/AT.ELF:exec"     --file "/bin/atrm:$BUILD_DIR/AT.ELF:exec"     --file "/bin/batch:$BUILD_DIR/AT.ELF:exec"     --file "/bin/awk:$BUILD_DIR/AWK.ELF:exec"     --file "/bin/gawk:$BUILD_DIR/AWK.ELF:exec"     --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec"     --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec"     --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec"     --file "/bin/bc:$BUILD_DIR/BC.ELF:exec"     --file "/bin/bg:$BUILD_DIR/BG.ELF:exec"     --file "/bin/bind:$BUILD_DIR/BIND.ELF:exec"     --file "/bin/break:$BUILD_DIR/BREAK.ELF:exec"     --file "/bin/builtin:$BUILD_DIR/BUILTIN.ELF:exec"     --file "/bin/cal:$BUILD_DIR/CAL.ELF:exec"     --file "/bin/ncal:$BUILD_DIR/CAL.ELF:exec"     --file "/bin/caller:$BUILD_DIR/CALLER.ELF:exec"     --file "/bin/case:$BUILD_DIR/CASE.ELF:exec"     --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec"     --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec"     --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec"     --dir "/var/spool"     --dir "/var/spool/at"     --dir "/var/spool/at/spool" \
+    --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec"     --file "/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec"     --file "/bin/aspell:$BUILD_DIR/ASPELL.ELF:exec"     --file "/bin/at:$BUILD_DIR/AT.ELF:exec"     --file "/bin/atq:$BUILD_DIR/AT.ELF:exec"     --file "/bin/atrm:$BUILD_DIR/AT.ELF:exec"     --file "/bin/batch:$BUILD_DIR/AT.ELF:exec"     --file "/bin/awk:$BUILD_DIR/AWK.ELF:exec"     --file "/bin/gawk:$BUILD_DIR/AWK.ELF:exec"     --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec"     --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec"     --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec"     --file "/bin/bc:$BUILD_DIR/BC.ELF:exec"     --file "/bin/bg:$BUILD_DIR/BG.ELF:exec"     --file "/bin/bind:$BUILD_DIR/BIND.ELF:exec"     --file "/bin/break:$BUILD_DIR/BREAK.ELF:exec"     --file "/bin/builtin:$BUILD_DIR/BUILTIN.ELF:exec"     --file "/bin/cal:$BUILD_DIR/CAL.ELF:exec"     --file "/bin/ncal:$BUILD_DIR/CAL.ELF:exec"     --file "/bin/caller:$BUILD_DIR/CALLER.ELF:exec"     --file "/bin/case:$BUILD_DIR/CASE.ELF:exec"     --file "/bin/cd:$BUILD_DIR/CD.ELF:exec"     --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec"     --file "/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec"     --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec"     --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec"     --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec"     --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec"     --dir "/var/spool"     --dir "/var/spool/at"     --dir "/var/spool/at/spool" \
     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \
     --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \

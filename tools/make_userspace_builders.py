@@ -97,9 +97,11 @@ build_xserver() {{
             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
-    ld.lld -m {LLD_EMUL} -nostdlib -pie -static -z max-page-size=0x1000 \
+    ld.lld -m {LLD_EMUL} -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
-        "$BUILD_DIR/user-crt0.o" "${{USER_LIBC_OBJECTS[@]}}" "${{objects[@]}}" \
+        "$BUILD_DIR/user-crt0.o" "${{objects[@]}}" \
+        --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
         "${{COMPILER_BUILTINS[@]}}" \
         -o "$BUILD_DIR/$output"
 }}
@@ -122,9 +124,11 @@ build_bzip2() {{
             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
-    ld.lld -m {LLD_EMUL} -nostdlib -pie -static -z max-page-size=0x1000 \
+    ld.lld -m {LLD_EMUL} -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
-        "$BUILD_DIR/user-crt0.o" "${{USER_LIBC_OBJECTS[@]}}" "${{objects[@]}}" \
+        "$BUILD_DIR/user-crt0.o" "${{objects[@]}}" \
+        --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
         "${{COMPILER_BUILTINS[@]}}" \
         -o "$BUILD_DIR/BZIP2.ELF"
 }}

@@ -956,6 +956,12 @@ int xscore_user_process_self_test(void) {
     uint64_t chgrp_status = UINT64_MAX;
     if (!p_chgrp || !xscore_process_wait(p_chgrp, &chgrp_status) || chgrp_status != 0 || !xscore_process_reap(p_chgrp)) return 0;
 
+    /* Verify access permissions modifier chmod */
+    const char *chmod_ver_args[] = {"/bin/chmod", "-v", "644", "/etc/motd", 0};
+    struct xscore_process *p_chmod_ver = xscore_process_create_path_args("/bin/chmod", 4, chmod_ver_args);
+    uint64_t chmod_ver_status = UINT64_MAX;
+    if (!p_chmod_ver || !xscore_process_wait(p_chmod_ver, &chmod_ver_status) || chmod_ver_status != 0 || !xscore_process_reap(p_chmod_ver)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -1036,6 +1042,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Disk partition table manipulator cfdisk verified\n");
     xscore_serial_write("[INFO] File attributes modifier chattr verified\n");
     xscore_serial_write("[INFO] Group ownership modifier chgrp verified\n");
+    xscore_serial_write("[INFO] Access permissions modifier chmod verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");
