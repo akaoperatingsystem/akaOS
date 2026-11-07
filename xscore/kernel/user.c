@@ -974,6 +974,12 @@ int xscore_user_process_self_test(void) {
     uint64_t chpasswd_status = UINT64_MAX;
     if (!p_chpasswd || !xscore_process_wait(p_chpasswd, &chpasswd_status) || chpasswd_status != 0 || !xscore_process_reap(p_chpasswd)) return 0;
 
+    /* Verify root directory changer chroot */
+    const char *chroot_args[] = {"/bin/chroot", "--help", 0};
+    struct xscore_process *p_chroot = xscore_process_create_path_args("/bin/chroot", 2, chroot_args);
+    uint64_t chroot_status = UINT64_MAX;
+    if (!p_chroot || !xscore_process_wait(p_chroot, &chroot_status) || chroot_status != 0 || !xscore_process_reap(p_chroot)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
