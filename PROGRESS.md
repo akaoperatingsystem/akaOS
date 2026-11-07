@@ -86,7 +86,7 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 
 | Target Device | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **USB HID** | Keyboard, Mouse, Tablet | 98% | `[██████████]` 98% |
+| **USB HID** | Keyboard, Mouse, Tablet, Linux USB Driver Shims | 100% | `[██████████]` 100% |
 | **PS/2** | Legacy Keyboard, Mouse | 95% | `[█████████░]` 95% |
 | **VirtIO-Input** | VirtIO Keyboard, Mouse, Tablet | 100% | `[██████████]` 100% |
 
