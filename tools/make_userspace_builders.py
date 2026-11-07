@@ -576,6 +576,8 @@ build_user_program chpasswd "$ROOT_DIR/userspace/bin/chpasswd/main.c" CHPASSWD.E
 build_user_program chroot "$ROOT_DIR/userspace/bin/chroot/main.c" CHROOT.ELF
 build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFIG.ELF
 build_user_program cksum "$ROOT_DIR/userspace/bin/cksum/main.c" CKSUM.ELF
+build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
+build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
 build_bzip2
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
@@ -762,7 +764,11 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/chpasswd:$BUILD_DIR/CHPASSWD.ELF:exec" \
     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec" \
     --file "/bin/chkconfig:$BUILD_DIR/CHKCONFIG.ELF:exec" \
-    --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec" \\\n    --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --dir "/var/spool" \\\n    --dir "/var/spool/at" \\\n    --dir "/var/spool/at/spool" \\
+    --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec" \
+    --file "/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
+    --file "/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \
+    --file "/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
+    --file "/usr/local/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \\\n    --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --dir "/var/spool" \\\n    --dir "/var/spool/at" \\\n    --dir "/var/spool/at/spool" \\
     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \\
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \\
     --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \\

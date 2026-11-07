@@ -723,10 +723,15 @@ int xscore_user_process_self_test(void) {
     uint64_t diff_status = UINT64_MAX;
     if (!p_diff || !xscore_process_wait(p_diff, &diff_status) || diff_status != 0 || !xscore_process_reap(p_diff)) return 0;
 
-    const char *cmp_args[] = {"/bin/cmp", "/etc/motd", "/etc/motd", 0};
-    struct xscore_process *p_cmp = xscore_process_create_path_args("/bin/cmp", 3, cmp_args);
+    const char *cmp_args[] = {"/bin/cmp", "-s", "/etc/motd", "/etc/motd", 0};
+    struct xscore_process *p_cmp = xscore_process_create_path_args("/bin/cmp", 4, cmp_args);
     uint64_t cmp_status = UINT64_MAX;
     if (!p_cmp || !xscore_process_wait(p_cmp, &cmp_status) || cmp_status != 0 || !xscore_process_reap(p_cmp)) return 0;
+
+    const char *cmp_c_args[] = {"/bin/cmp", "-c", "/etc/motd", "/etc/motd", 0};
+    struct xscore_process *p_cmp_c = xscore_process_create_path_args("/bin/cmp", 4, cmp_c_args);
+    uint64_t cmp_c_status = UINT64_MAX;
+    if (!p_cmp_c || !xscore_process_wait(p_cmp_c, &cmp_c_status) || cmp_c_status != 0 || !xscore_process_reap(p_cmp_c)) return 0;
 
     const char *patch_args[] = {"/bin/patch", "--help", 0};
     struct xscore_process *p_patch = xscore_process_create_path_args("/bin/patch", 2, patch_args);
