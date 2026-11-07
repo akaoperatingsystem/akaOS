@@ -3549,6 +3549,7 @@ echo "[BUILD] XSCore kernel"
 XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/main.c"
     "$ROOT_DIR/xscore/kernel/sched.c"
+    "$ROOT_DIR/xscore/kernel/sched_linux.c"
     "$ROOT_DIR/xscore/kernel/thread.c"
     "$ROOT_DIR/xscore/kernel/file.c"
     "$ROOT_DIR/xscore/kernel/random.c"
