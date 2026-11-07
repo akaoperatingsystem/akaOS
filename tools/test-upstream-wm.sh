@@ -380,6 +380,17 @@ try:
         raise SystemExit(1)
     print("[PASS] kquitapp6 KDE D-Bus application control utility verified operational.",
           flush=True)
+    if not wait_for("KWIN-STATUS=0", 60):
+        print("[FAIL] kwin did not complete session check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] kwin KDE window manager verified operational.", flush=True)
+
+    if not wait_for("PLASMA-STATUS=0", 60):
+        print("[FAIL] plasma did not complete session check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] plasma KDE Plasma desktop session verified operational.", flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)

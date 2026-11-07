@@ -604,6 +604,19 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-lumen-main.o" \
     -o "$BUILD_DIR/LUMEN.ELF"
 
+echo "[BUILD] user desktop-compat"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/desktop-compat/main.c" -o "$BUILD_DIR/user-desktop-compat-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-desktop-compat-main.o" \
+    -o "$BUILD_DIR/DESKTOP_COMPAT.ELF"
+
 echo "[BUILD] user wayland-bridge"
 PROTOCOL_DIR="$BUILD_DIR/wayland-bridge-protocol"
 clang --target=x86_64-unknown-none-elf \
@@ -627,6 +640,13 @@ ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
 
 initramfs_files+=(
     "--file=/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec"
+    "--file=/bin/desktop-compat:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
+    "--file=/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
+    "--file=/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
+    "--file=/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
+    "--file=/usr/local/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
+    "--file=/usr/local/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
+    "--file=/usr/local/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atrm:$BUILD_DIR/AT.ELF:exec"

@@ -91,3 +91,9 @@ echo KREADCONFIG6-HELP=$?
 
 /usr/local/bin/kquitapp6 --help
 echo KQUITAPP6-HELP=$?
+
+/usr/local/bin/kwin --once
+echo KWIN-STATUS=$?
+
+/usr/local/bin/plasma --once
+echo PLASMA-STATUS=$?
