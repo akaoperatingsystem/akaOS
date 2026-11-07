@@ -28,3 +28,6 @@ __pycache__/
 /config.h
 /Makefile
 /man/
+
+# Ignore accidental unexpanded Windows environment variable paths
+%SystemDrive%/
