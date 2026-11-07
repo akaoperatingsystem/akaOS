@@ -78,7 +78,7 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 
 | Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **ACPI** | ACPI 6.x Tables, DSDT/SSDT Parsing | 65% | `[██████░░░░]` 65% |
+| **ACPI** | ACPI 6.x Tables, Linux ACPI Shim Foundation, DSDT/SSDT Parsing | 75% | `[███████░░░]` 75% |
 | **Power States** | Suspend-to-RAM (S3), Resume | 40% | `[████░░░░░░]` 40% |
 | **Thermal Mgmt** | ACPI Thermal Zones | 35% | `[███░░░░░░░]` 35% |
 
