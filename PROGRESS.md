@@ -72,7 +72,7 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 | :--- | :--- | :--- | :--- |
 | **NVMe Controllers** | Generic NVMe 1.x / 2.0 (PCIe) | 100% | `[██████████]` 100% |
 | **AHCI & SATA** | Generic AHCI, VirtIO-Block | 95% | `[█████████░]` 95% |
-| **eMMC / SDHCI** | eMMC 5.1 / SD 3.0 Controllers | 60% | `[██████░░░░]` 60% |
+| **eMMC / SDHCI** | eMMC 5.1 / SD 3.0 Controllers, Linux SDHCI Driver Shims | 80% | `[████████░░]` 80% |
 
 ## Power Management & ACPI
 
