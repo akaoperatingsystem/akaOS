@@ -58,6 +58,7 @@ int main(void) {
      * the probe waits for the window to be moved into a frame. */
     Window frame = 0;
     for (int attempt = 0; attempt < 600 && !reparented; ++attempt) {
+        XSync(display, False);
         XEvent event;
         if (!XCheckTypedWindowEvent(display, window, ReparentNotify, &event)) {
             usleep(50000);
