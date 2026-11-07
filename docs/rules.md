@@ -4,14 +4,14 @@ Welcome to **akaOS**! To ensure the project remains high quality, legal, transpa
 
 ---
 
-## 1. Universal MIT License Compliance (Strict)
+## 1. Universal BSD 3-Clause License Compliance (Strict)
 
-- **Everything is MIT Licensed**: Every line of code, header file, assembly file, driver, user utility, script, and documentation contributed to akaOS must be released under the **[MIT License](../../LICENSE)**.
-- **Header Notice**: Where appropriate, include the standard SPDX MIT license header:
+- **Everything is BSD 3-Clause Licensed**: Every line of code, header file, assembly file, driver, user utility, script, and documentation contributed to akaOS must be released under the **[BSD 3-Clause License](../../LICENSE)**.
+- **Header Notice**: Where appropriate, include the standard SPDX BSD 3-Clause license header:
   ```c
   /*
    * Copyright (c) 2026 akaOS Authors
-   * SPDX-License-Identifier: MIT
+   * SPDX-License-Identifier: BSD-3-Clause
    */
   ```
 - **Zero Proprietary or Incompatible Code**: Never copy, paste, or import code with GPL/AGPL viral copyleft terms into the core kernel/libc, proprietary code, decompiled binaries, or uncredited snippets from other projects. All code in akaOS and XSCore must be clean and freely forkable for everyone, including commercial companies.
@@ -46,7 +46,7 @@ Welcome to **akaOS**! To ensure the project remains high quality, legal, transpa
 
 If you are using AI coding assistants (such as Cursor, Copilot, DeepSeek, Claude, ChatGPT, etc.) to generate or assist with code:
 
-1. **Verify License Cleanliness**: Ensure the AI model does not generate verbatim snippets from copyleft or proprietary codebases. The resulting code must be 100% compatible with the MIT License.
+1. **Verify License Cleanliness**: Ensure the AI model does not generate verbatim snippets from copyleft or proprietary codebases. The resulting code must be 100% compatible with the BSD 3-Clause License.
 2. **Review Before Submitting**: AI-generated code must be thoroughly reviewed by a human contributor. Do not submit hallucinations, dead code, or untested stubs.
 3. **No Breaking Regressions**: Test all AI-generated code against automated QEMU regression scripts:
    ```sh

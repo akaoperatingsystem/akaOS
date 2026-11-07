@@ -3,7 +3,7 @@
  * Displays visual system information, real CPU brand, and active GPU adapter
  *
  * Copyright (c) 2026 akaOS Authors
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <akaos/version.h>

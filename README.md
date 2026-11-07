@@ -1,8 +1,8 @@
 # akaOS
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.2.97-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.2.98-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.6-green.svg)](sdk/include/akaos/version.h)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
 [![Build & Test](https://img.shields.io/badge/QEMU%20Tests-Passing-brightgreen.svg)](docs/development/workflow.md)
 
 **akaOS** is an original, independent Unix-like operating system engineered from scratch around the **XSCore** kernel.
@@ -202,7 +202,7 @@ akaOS maintains an extensive automated QEMU regression suite:
 
 All contributors — **both human developers and anyone utilizing AI coding assistants** (Cursor, Copilot, DeepSeek, Claude, ChatGPT, etc.) — **must read and follow the mandatory guidelines** in **[docs/rules.md](docs/rules.md)**:
 
-1. **Universal MIT License**: Every single line of code, header, script, and documentation contributed to akaOS must be licensed under the [MIT License](LICENSE). Incompatible or copyleft code must never be introduced into core subsystems.
+1. **Universal BSD 3-Clause License**: Every single line of code, header, script, and documentation contributed to akaOS must be licensed under the [BSD 3-Clause License](LICENSE). Incompatible or copyleft code must never be introduced into core subsystems.
 2. **Upstream Desktop Purity**: All desktop environments (GNOME, KDE, XFCE, MATE, Cinnamon, LXQt, LXDE) and window managers must run as **completely unmodified upstream software**. Compatibility belongs inside akaOS subsystems (kernel, libc, display server), never by patching desktop code.
 3. **Code Quality & Verification**: All code (human-written or AI-assisted) must be verified against automated QEMU regression scripts (`./test.sh`) and architecture targets (`./tools/build-arch-smoke.sh --all`).
 4. **Independent Dual Versioning**: Follow the semantic versioning contract for akaOS and the XSCore kernel defined in [`sdk/include/akaos/version.h`](sdk/include/akaos/version.h).
@@ -224,7 +224,7 @@ If you find a bug, crash, or hardware incompatibility:
    ```sh
    git checkout -b feature/your-feature-name
    ```
-2. **Adhere to [docs/rules.md](docs/rules.md)** (MIT License and zero-patching upstream rule).
+2. **Adhere to [docs/rules.md](docs/rules.md)** (BSD 3-Clause License and zero-patching upstream rule).
 3. **Verify Builds & Tests**:
    ```sh
    ./tools/build-arch-smoke.sh --all
@@ -236,5 +236,5 @@ If you find a bug, crash, or hardware incompatibility:
 
 ## License
 
-akaOS is open-source software licensed under the **[MIT License](LICENSE)**.
+akaOS is open-source software licensed under the **[BSD 3-Clause License](LICENSE)**.
 You are completely free to use, modify, distribute, and fork this project for personal, educational, or commercial purposes.

@@ -8,7 +8,7 @@ Welcome to the **akaOS** technical documentation library. This directory contain
 
 | Topic | Document | Description |
 | :--- | :--- | :--- |
-| **Guidelines** | **[Contributor & AI Rules](rules.md)** | **Mandatory reading** for humans and AI coding assistants (MIT license, upstream purity). |
+| **Guidelines** | **[Contributor & AI Rules](rules.md)** | **Mandatory reading** for humans and AI coding assistants (BSD 3-Clause license, upstream purity). |
 | **Quick Start** | **[Building & Running](BUILDING.md)** | Prerequisites, toolchain setup, interactive TUI menus, and CLI options. |
 | **Architecture** | **[System Architecture](architecture.md)** | Core system design, loader-to-kernel handoffs, and subsystem layout. |
 | **Boot Flow** | **[Boot Sequence](boot.md)** | From UEFI/BIOS firmware entry to userspace PID 1 initialization. |

@@ -55,7 +55,7 @@ Total Applications: 124+ Native & Ported Tools
                         libwnck-3.so (window tracking), libxkbcommon.so (keyboard layouts)
 
 ================================================================================
-All software executes natively on the XSCore kernel under MIT licensing.
+All software executes natively on the XSCore kernel under BSD 3-Clause licensing.
 EOF
 }
 
