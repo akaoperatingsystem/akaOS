@@ -24,7 +24,7 @@ This document tracks the live implementation progress, hardware readiness, subsy
 
 | Target Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **Memory Management** | 4-Level Paging, 131K Refcount Slots, 2048-Page Cache, Dynamic Stack Growth, 32MB Heap | 100% | `[██████████]` 100% |
+| **Memory Management** | 4-Level Paging, 131K Refcount Slots, 2048-Page Cache, Dynamic Stack Growth, 32MB Heap, Linux MM Shims | 100% | `[██████████]` 100% |
 | **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Stack COW Fault Isolation | 94% | `[█████████░]` 94% |
 | **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen, X11 Server (64MB Backing, XYBitmap/PutImage, SHAPE, X-Res), Mode Query | 94% | `[█████████░]` 94% |
 | **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
