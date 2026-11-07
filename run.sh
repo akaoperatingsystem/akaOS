@@ -4,61 +4,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/tools/qemu-common.sh"
 
-print_software_list() {
-    cat <<'EOF'
-================================================================================
-                    akaOS Software Catalog & Userspace Suite
-================================================================================
-
-Total Applications: 124+ Native & Ported Tools
-
-1. Core Unix & POSIX Utilities (/bin):
-   - Shell & Terminal : akash, login, su, sudo, tty, stty, clear, env, reset
-   - File Operations  : ls, cat, cp, mv, rm, mkdir, touch, chmod, chown, ln, pwd
-   - Text Processing  : grep, sed, cut, tr, sort, uniq, head, tail, wc, cmp, diff, patch
-   - Archive & Zip    : tar, gzip, gunzip
-   - Process & System : ps, kill, pkill, sleep, wait, watch, test, true, false, xargs, which
-   - Performance & Info: akafetch, lscpu, lspci, gpuinfo, sndinfo, acpi, uptime, free, df, du
-
-2. Networking & Internet Applications:
-   - File Retrieval   : wget (GNU-compatible HTTP client), curl (libcurl client)
-   - Daemons & Servers: httpd (micro web server), sshd, telnetd, tftpd
-   - Network Admin    : ip, route, netstat, arp, ping, traceroute, dig, nslookup, ssh, tftp
-
-3. Desktop Infrastructure & Display Servers:
-   - Display Servers  : xserver (native X11 protocol server), lumen (hardware compositor)
-   - Desktop Shells   : aurora (resident desktop & taskbar), desktop (session manager)
-   - Window Managers  : openbox (3.6.1), xfwm4 (XFCE 4.18), marco (MATE), kwin (KDE), mutter (GNOME)
-   - Desktop Sessions : xfce4-session, lxsession, startlxqt
-   - Desktop Panels   : lxpanel (0.11.1), xfce4-panel (4.18), lxqt-panel
-   - File Managers    : pcmanfm (1.3.2 desktop & file manager)
-   - Configuration    : akaos-config (TUI configuration tool), xfconfd, pkg (package manager)
-   - IPC & Activation : dbus-daemon (native D-Bus message broker & service activator)
-
-4. Graphical Applications:
-   - Productivity     : notepad (GUI text editor), ted (simple editor)
-   - System Monitors  : taskmgr (graphical task manager), sysmon (hardware monitor)
-   - Utilities        : terminal (GUI terminal emulator), palette (color selector)
-   - Web & Media      : webviewer (graphical HTML viewer), beep (sound generator)
-
-5. Shared Libraries & GUI Toolkits (/lib & /usr/local/lib):
-   - C & C++ Runtime  : libc.so.6 (akaOS libc), libm.so.6 (math), ld-akaos.so (dynamic linker)
-                        libc++.so.1 (LLVM C++), libc++abi.so.1, libunwind.so.1, libpthread.so.0
-   - Core Application : libglib-2.0.so, libgobject-2.0.so, libgio-2.0.so, libgmodule-2.0.so
-   - GUI Toolkits     : libgtk-3.so.0 (GTK+ 3.24), libgtk-4.so.1 (GTK 4.22)
-                        libQt6Core.so.6, libQt6Gui.so.6, libQt6Widgets.so.6 (Qt 6.12)
-   - 2D & Font Engine : libcairo.so.2 (vector graphics), libpixman-1.so, libpango-1.0.so (text layout)
-                        libharfbuzz.so (text shaping), libfreetype.so.6, libfontconfig.so.1
-   - X11 Protocol Libs: libX11.so.6, libXext.so.6, libXrender.so.1, libXinerama.so.1, libXrandr.so.2
-                        libXfixes.so.3, libXcomposite.so.1, libXdamage.so.1, libICE.so.6, libSM.so.6
-   - Desktop & Media  : libdbus-1.so.3 (IPC), libcanberra.so (audio), libfm-gtk3.so (file management)
-                        libwnck-3.so (window tracking), libxkbcommon.so (keyboard layouts)
-
-================================================================================
-All software executes natively on the XSCore kernel under BSD 3-Clause licensing.
-EOF
-}
-
 print_desktop_list() {
     cat <<'EOF'
 ================================================================================
@@ -184,7 +129,7 @@ configure_run_interactively() {
     local menu_session=console
     local menu_display=auto
     local menu_vga=virtio
-    local menu_smp=2
+    local menu_smp="${AKAOS_SMP_CORES:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
     local menu_mem=512M
     local action selection summary report
     local -a dependency_args
@@ -500,7 +445,7 @@ menu_custom_packages=""
 display_mode=auto
 gpu_device=virtio
 net_device=virtio
-smp_cores=2
+smp_cores="${AKAOS_SMP_CORES:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
 custom_memory=""
 enable_kvm=0
 qemu_extra_args=()
@@ -611,10 +556,7 @@ while [[ $# -gt 0 ]]; do
             enable_kvm=1
             shift
             ;;
-        --list-software)
-            print_software_list
-            exit 0
-            ;;
+
         --list-desktops)
             print_desktop_list
             exit 0
