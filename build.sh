@@ -3563,6 +3563,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/fb_console.c"
     "$ROOT_DIR/xscore/kernel/process.c"
     "$ROOT_DIR/xscore/kernel/vfs.c"
+    "$ROOT_DIR/xscore/kernel/ext2_bridge.c"
     "$ROOT_DIR/xscore/kernel/time.c"
     "$ROOT_DIR/xscore/kernel/bufcache.c"
     "$ROOT_DIR/xscore/kernel/initramfs.c"
