@@ -80,7 +80,7 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 | :--- | :--- | :--- | :--- |
 | **ACPI** | ACPI 6.x Tables, DSDT/SSDT Parsing | 65% | `[██████░░░░]` 65% |
 | **Power States** | Suspend-to-RAM (S3), Resume | 40% | `[████░░░░░░]` 40% |
-| **Thermal Mgmt** | ACPI Thermal Zones | 35% | `[███░░░░░░░]` 35% |
+| **Thermal Mgmt** | ACPI Thermal Zones, Linux Thermal Driver Shims | 65% | `[██████░░░░]` 65% |
 
 ## Input Subsystem
 
