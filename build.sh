@@ -802,14 +802,16 @@ USER_LIBC_OBJECTS=()
 for source in "${USER_LIBC_SOURCES[@]}"; do
     object="$BUILD_DIR/user-libc-$(basename "${source%.c}").o"
     clang --target=x86_64-unknown-none-elf \
-        -std=c17 -O2 -Wall -Wextra -Werror \
+        -std=c17 -Os -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -ffunction-sections -fdata-sections \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
         -c "$source" -o "$object"
     USER_LIBC_OBJECTS+=("$object")
 done
+llvm-ar rcs "$BUILD_DIR/libc.a" "${USER_LIBC_OBJECTS[@]}"
 clang --target=x86_64-unknown-none-elf \
     -ffreestanding -fpie -mno-red-zone -mcmodel=small \
     -c "$ROOT_DIR/userspace/libc/crt/x86_64/crt0.S" \
@@ -825,15 +827,18 @@ build_user_program() {
     local output="$3"
     local main_object="$BUILD_DIR/user-$name-main.o"
     clang --target=x86_64-unknown-none-elf \
-        -std=c17 -O2 -Wall -Wextra -Werror \
+        -std=c17 -Os -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -ffunction-sections -fdata-sections \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
         -c "$source" -o "$main_object"
-    ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
-        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "$main_object" \
+        "$BUILD_DIR/user-crt0.o" "$main_object" \
+        --whole-archive "$BUILD_DIR/user-libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
         -o "$BUILD_DIR/$output"
 }
 
@@ -853,9 +858,11 @@ build_xserver() {
             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
-    ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
-        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "${objects[@]}" \
+        "$BUILD_DIR/user-crt0.o" "${objects[@]}" \
+        --whole-archive "$BUILD_DIR/user-libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
         -o "$BUILD_DIR/$output"
 }
 
@@ -873,9 +880,11 @@ build_bzip2() {
             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
-    ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
-        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "${objects[@]}" \
+        "$BUILD_DIR/user-crt0.o" "${objects[@]}" \
+        --whole-archive "$BUILD_DIR/user-libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
         -o "$BUILD_DIR/BZIP2.ELF"
 }
 
@@ -936,16 +945,19 @@ build_account_program() {
     local output="$3"
     local main_object="$BUILD_DIR/user-$name-main.o"
     clang --target=x86_64-unknown-none-elf \
-        -std=c17 -O2 -Wall -Wextra -Werror \
+        -std=c17 -Os -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -ffunction-sections -fdata-sections \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
         -c "$source" -o "$main_object"
-    ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
-        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" \
-        "$main_object" -o "$BUILD_DIR/$output"
+        "$BUILD_DIR/user-crt0.o" "$main_object" \
+        --whole-archive "$BUILD_DIR/user-libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
+        -o "$BUILD_DIR/$output"
 }
 
 build_shared_object() {
