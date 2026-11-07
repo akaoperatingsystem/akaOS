@@ -980,6 +980,12 @@ int xscore_user_process_self_test(void) {
     uint64_t chroot_status = UINT64_MAX;
     if (!p_chroot || !xscore_process_wait(p_chroot, &chroot_status) || chroot_status != 0 || !xscore_process_reap(p_chroot)) return 0;
 
+    /* Verify runlevel manager chkconfig */
+    const char *chkconfig_args[] = {"/bin/chkconfig", "--list", 0};
+    struct xscore_process *p_chkconfig = xscore_process_create_path_args("/bin/chkconfig", 2, chkconfig_args);
+    uint64_t chkconfig_status = UINT64_MAX;
+    if (!p_chkconfig || !xscore_process_wait(p_chkconfig, &chkconfig_status) || chkconfig_status != 0 || !xscore_process_reap(p_chkconfig)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -1064,6 +1070,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] File owner and group modifier chown verified\n");
     xscore_serial_write("[INFO] Batch password updater chpasswd verified\n");
     xscore_serial_write("[INFO] Root directory changer chroot verified\n");
+    xscore_serial_write("[INFO] Runlevel manager chkconfig verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

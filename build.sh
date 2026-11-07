@@ -60,6 +60,9 @@ if [[ -z "$UPSTREAM_QT_HOST_QML_TOOLS_DIR" &&
 fi
 source "$ROOT_DIR/tools/host-common.sh"
 
+AKAOS_BUILD_JOBS="${AKAOS_BUILD_JOBS:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
+export AKAOS_BUILD_JOBS
+
 run_upstream_refresh() {
     local component="$1"
     shift
@@ -112,7 +115,6 @@ Desktop & Session Configuration:
   --packages LIST              Comma-separated list of individual packages to bundle (manual mode)
 
 Kernel & Build Flags:
-  --list-software              Display comprehensive directory of all native and ported software
   --list-desktops              Display detailed support matrix for all desktop environments & WMs
   --test                       Enable automated self-test mode in generated boot media
   --verbose                    Enable verbose kernel hardware and boot diagnostics
@@ -127,61 +129,6 @@ Examples:
   ./build.sh --arch x86_64 --desktop lxde --session-mode desktop
   ./build.sh --arch aarch64 --session-mode console
   ./build.sh --arch riscv64 --test
-EOF
-}
-
-print_software_list() {
-    cat <<'EOF'
-================================================================================
-                    akaOS Software Catalog & Userspace Suite
-================================================================================
-
-Total Applications: 124+ Native & Ported Tools
-
-1. Core Unix & POSIX Utilities (/bin):
-   - Shell & Terminal : akash, login, su, sudo, tty, stty, clear, env, reset
-   - File Operations  : ls, cat, cp, mv, rm, mkdir, touch, chmod, chown, ln, pwd
-   - Text Processing  : grep, sed, cut, tr, sort, uniq, head, tail, wc, cmp, diff, patch
-   - Archive & Zip    : tar, gzip, gunzip
-   - Process & System : ps, kill, pkill, sleep, wait, watch, test, true, false, xargs, which
-   - Performance & Info: akafetch, lscpu, lspci, gpuinfo, sndinfo, acpi, uptime, free, df, du
-
-2. Networking & Internet Applications:
-   - File Retrieval   : wget (GNU-compatible HTTP client), curl (libcurl client)
-   - Daemons & Servers: httpd (micro web server), sshd, telnetd, tftpd
-   - Network Admin    : ip, route, netstat, arp, ping, traceroute, dig, nslookup, ssh, tftp
-
-3. Desktop Infrastructure & Display Servers:
-   - Display Servers  : xserver (native X11 protocol server), lumen (hardware compositor)
-   - Desktop Shells   : aurora (resident desktop & taskbar), desktop (session manager)
-   - Window Managers  : openbox (3.6.1), xfwm4 (XFCE 4.18), marco (MATE), kwin (KDE), mutter (GNOME)
-   - Desktop Sessions : xfce4-session, lxsession, startlxqt
-   - Desktop Panels   : lxpanel (0.11.1), xfce4-panel (4.18), lxqt-panel
-   - File Managers    : pcmanfm (1.3.2 desktop & file manager)
-   - Configuration    : akaos-config (TUI configuration tool), xfconfd, pkg (package manager)
-   - IPC & Activation : dbus-daemon (native D-Bus message broker & service activator)
-
-4. Graphical Applications:
-   - Productivity     : notepad (GUI text editor), ted (simple editor)
-   - System Monitors  : taskmgr (graphical task manager), sysmon (hardware monitor)
-   - Utilities        : terminal (GUI terminal emulator), palette (color selector)
-   - Web & Media      : webviewer (graphical HTML viewer), beep (sound generator)
-
-5. Shared Libraries & GUI Toolkits (/lib & /usr/local/lib):
-   - C & C++ Runtime  : libc.so.6 (akaOS libc), libm.so.6 (math), ld-akaos.so (dynamic linker)
-                        libc++.so.1 (LLVM C++), libc++abi.so.1, libunwind.so.1, libpthread.so.0
-   - Core Application : libglib-2.0.so, libgobject-2.0.so, libgio-2.0.so, libgmodule-2.0.so
-   - GUI Toolkits     : libgtk-3.so.0 (GTK+ 3.24), libgtk-4.so.1 (GTK 4.22)
-                        libQt6Core.so.6, libQt6Gui.so.6, libQt6Widgets.so.6 (Qt 6.12)
-   - 2D & Font Engine : libcairo.so.2 (vector graphics), libpixman-1.so, libpango-1.0.so (text layout)
-                        libharfbuzz.so (text shaping), libfreetype.so.6, libfontconfig.so.1
-   - X11 Protocol Libs: libX11.so.6, libXext.so.6, libXrender.so.1, libXinerama.so.1, libXrandr.so.2
-                        libXfixes.so.3, libXcomposite.so.1, libXdamage.so.1, libICE.so.6, libSM.so.6
-   - Desktop & Media  : libdbus-1.so.3 (IPC), libcanberra.so (audio), libfm-gtk3.so (file management)
-                        libwnck-3.so (window tracking), libxkbcommon.so (keyboard layouts)
-
-================================================================================
-All software executes natively on the XSCore kernel under BSD 3-Clause licensing.
 EOF
 }
 
@@ -597,10 +544,7 @@ while [[ $# -gt 0 ]]; do
             session_mode=desktop
             shift
             ;;
-        --list-software)
-            print_software_list
-            exit 0
-            ;;
+
         --list-desktops)
             print_desktop_list
             exit 0
@@ -1871,6 +1815,7 @@ build_user_program chattr "$ROOT_DIR/userspace/bin/chattr/main.c" CHATTR.ELF
 build_user_program chgrp "$ROOT_DIR/userspace/bin/chgrp/main.c" CHGRP.ELF
 build_user_program chpasswd "$ROOT_DIR/userspace/bin/chpasswd/main.c" CHPASSWD.ELF
 build_user_program chroot "$ROOT_DIR/userspace/bin/chroot/main.c" CHROOT.ELF
+build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFIG.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -1986,7 +1931,7 @@ if [[ -f "$UPSTREAM_GLIB_BUILD/gio/libgio-2.0.so.0.9000.0" &&
     fi
     echo "[BUILD] Refreshing upstream GLib/GObject/GIO against the current akaOS libc"
     run_upstream_refresh "GLib/GObject/GIO" \
-        meson compile -C "$UPSTREAM_GLIB_BUILD" --jobs 2
+        meson compile -C "$UPSTREAM_GLIB_BUILD" --jobs "$AKAOS_BUILD_JOBS"
     echo "[BUILD] Upstream GLib/GObject/GIO smoke application"
     build_upstream_glib_program
     UPSTREAM_GLIB_ENABLED=1
@@ -2017,7 +1962,7 @@ if [[ -f "$UPSTREAM_FREETYPE_BUILD/build.ninja" &&
     fi
     echo "[BUILD] Refreshing upstream FreeType against the current akaOS libc/libm"
     run_upstream_refresh "FreeType" \
-        meson compile -C "$UPSTREAM_FREETYPE_BUILD" --jobs 2
+        meson compile -C "$UPSTREAM_FREETYPE_BUILD" --jobs "$AKAOS_BUILD_JOBS"
     DESTDIR="$BUILD_DIR/upstream-sysroot/freetype-2.14.3-x86_64" \
         run_upstream_refresh "FreeType target install" \
         meson install -C "$UPSTREAM_FREETYPE_BUILD"
@@ -2054,7 +1999,7 @@ if [[ -f "$UPSTREAM_PIXMAN_BUILD/build.ninja" &&
     fi
     echo "[BUILD] Refreshing upstream Pixman and Cairo against the current akaOS libc/libm"
     run_upstream_refresh "Pixman" \
-        meson compile -C "$UPSTREAM_PIXMAN_BUILD" --jobs 2
+        meson compile -C "$UPSTREAM_PIXMAN_BUILD" --jobs "$AKAOS_BUILD_JOBS"
     DESTDIR="$BUILD_DIR/upstream-sysroot/pixman-0.46.4-x86_64" \
         run_upstream_refresh "Pixman target install" \
         meson install -C "$UPSTREAM_PIXMAN_BUILD"
@@ -2064,7 +2009,7 @@ if [[ -f "$UPSTREAM_PIXMAN_BUILD/build.ninja" &&
             meson install -C "$UPSTREAM_PIXMAN_BUILD"
     fi
     run_upstream_refresh "Cairo" \
-        meson compile -C "$UPSTREAM_CAIRO_BUILD" --jobs 2
+        meson compile -C "$UPSTREAM_CAIRO_BUILD" --jobs "$AKAOS_BUILD_JOBS"
     echo "[BUILD] Upstream Cairo/Pixman smoke application"
     build_upstream_cairo_program
     UPSTREAM_CAIRO_ENABLED=1
@@ -2084,7 +2029,7 @@ if [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 &&
     fi
     echo "[BUILD] Refreshing upstream HarfBuzz against akaOS FreeType and libc++"
     run_upstream_refresh "HarfBuzz" \
-        meson compile -C "$UPSTREAM_HARFBUZZ_BUILD" --jobs 2
+        meson compile -C "$UPSTREAM_HARFBUZZ_BUILD" --jobs "$AKAOS_BUILD_JOBS"
     DESTDIR="$UPSTREAM_GRAPHICS_SYSROOT" \
         run_upstream_refresh "HarfBuzz install" \
         meson install -C "$UPSTREAM_HARFBUZZ_BUILD"
@@ -3495,6 +3440,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec" \
     --file "/bin/chpasswd:$BUILD_DIR/CHPASSWD.ELF:exec" \
     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec" \
+    --file "/bin/chkconfig:$BUILD_DIR/CHKCONFIG.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \
