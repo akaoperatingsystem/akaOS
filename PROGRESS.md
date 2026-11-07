@@ -27,7 +27,7 @@ This document tracks the live implementation progress, hardware readiness, subsy
 | **Memory Management** | 4-Level Paging, 131K Refcount Slots, 2048-Page Cache, Dynamic Stack Growth, 32MB Heap | 100% | `[██████████]` 100% |
 | **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Stack COW Fault Isolation | 94% | `[█████████░]` 94% |
 | **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen, X11 Server (64MB Backing, XYBitmap/PutImage, SHAPE, X-Res), Mode Query | 94% | `[█████████░]` 94% |
-| **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
+| **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS, Linux Input Shims | 90% | `[█████████░]` 90% |
 | **NVMe Driver** | Linux NVMe Driver Port (Lockless Zero-Copy Admin Ring, Controller Init) | 100% | `[██████████]` 100% |
 | **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX pthread_atfork Canonical Guards | 90% | `[█████████░]` 90% |
 | **Networking Stack** | VirtIO-Net, Linux netdevice/sk_buff bridge, IPv4/ARP/UDP/TCP Sockets | 95% | `[█████████░]` 95% |
