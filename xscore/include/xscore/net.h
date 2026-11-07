@@ -83,6 +83,7 @@ struct akaos_tcp_hdr {
 
 
 void xscore_net_initialize(void);
+void xscore_linux_net_bridge_init(void);
 int64_t xscore_net_transmit(const void *buf, uint64_t len);
 int64_t xscore_net_receive(void *buf, uint64_t max_len);
 int xscore_net_poll_readable(void);

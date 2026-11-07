@@ -1,6 +1,6 @@
 # akaOS Development Progress
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.00-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.01-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.6-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
@@ -24,14 +24,19 @@ This document tracks the live implementation progress, hardware readiness, subsy
 
 | Target Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **Memory Management** | 4-Level Paging, 131K Refcount Slots, 2048-Page Cache, Dynamic Stack Growth, 32MB Heap | 100% | `[██████████]` 100% |
+| **Memory Management** | 4-Level Paging, 131K Refcount Slots, 2048-Page Cache, Dynamic Stack Growth, 32MB Heap, Linux MM Shims | 100% | `[██████████]` 100% |
 | **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Stack COW Fault Isolation | 94% | `[█████████░]` 94% |
 | **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen, X11 Server (64MB Backing, XYBitmap/PutImage, SHAPE, X-Res), Mode Query | 94% | `[█████████░]` 94% |
 | **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
 | **NVMe Driver** | Linux NVMe Driver Port (Lockless Zero-Copy Admin Ring, Controller Init) | 100% | `[██████████]` 100% |
 | **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX pthread_atfork Canonical Guards | 90% | `[█████████░]` 90% |
+<<<<<<< HEAD
 | **Networking Stack** | VirtIO-Net, IPv4/ARP/UDP/TCP Sockets, DNS Resolver, HTTP Server | 80% | `[████████░░]` 80% |
 | **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 85% | `[█████████░]` 85% |
+=======
+| **Networking Stack** | VirtIO-Net, Linux netdevice/sk_buff bridge, IPv4/ARP/UDP/TCP Sockets | 95% | `[█████████░]` 95% |
+| **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 70% | `[███████░░░]` 70% |
+>>>>>>> 09b0a3cd2072608cac634b0d859c1e2c9f88cb69
 
 ---
 
