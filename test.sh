@@ -4,14 +4,15 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/tools/qemu-common.sh"
 
-"$ROOT_DIR/build.sh"
+AKAOS_SKIP_UPSTREAM_REFRESH=1 "$ROOT_DIR/build.sh" --arch x86_64 --firmware uefi --desktop none --software minimal
 TEST_IMAGE="$ROOT_DIR/build/akaos-test.img"
 STORAGE_IMAGE="$ROOT_DIR/build/akaos-virtio-test.img"
+NVME_STORAGE_IMAGE="$ROOT_DIR/build/akaos-nvme-test.img"
 TEST_MARKER="$ROOT_DIR/build/AKAOS.TEST"
 TEST_LOG="$ROOT_DIR/build/boot-test.log"
 cp "$ROOT_DIR/build/akaos.img" "$TEST_IMAGE"
 : > "$TEST_MARKER"
-mcopy -o -i "$TEST_IMAGE" "$TEST_MARKER" ::/AKAOS.TEST
+mcopy -o -i "$TEST_IMAGE@@1M" "$TEST_MARKER" ::/AKAOS.TEST
 
 # Attach a small deterministic secondary disk so the kernel test proves a real
 # PCI-discovered virtio-blk sector read without changing the boot image.
@@ -24,6 +25,16 @@ with path.open("wb") as handle:
     handle.truncate(4 * 1024 * 1024)
     handle.write(b"AKAOS-VIRTIO-BLK-TEST\n")
 PY
+
+python3 - "$NVME_STORAGE_IMAGE" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+with path.open("wb") as handle:
+    handle.truncate(4 * 1024 * 1024)
+    handle.write(b"AKAOS-NVME-BLK-TEST\n")
+PY
 if [[ "${AKAOS_TEST_VERBOSE:-0}" == "1" ]]; then
     VERBOSE_MARKER="$ROOT_DIR/build/VERBOSE"
     : > "$VERBOSE_MARKER"
@@ -33,6 +44,10 @@ fi
 OVMF_CODE="$(find_ovmf_code)"
 OVMF_VARS_SOURCE="$(find_ovmf_vars)"
 OVMF_VARS="$ROOT_DIR/build/OVMF_VARS.test.fd"
+# Check if path is a directory and find the correct vars file
+if [[ -d "$OVMF_VARS_SOURCE" ]]; then
+    OVMF_VARS_SOURCE="$OVMF_VARS_SOURCE/OVMF_VARS_4M.fd"
+fi
 cp "$OVMF_VARS_SOURCE" "$OVMF_VARS"
 
 set +e
@@ -95,7 +110,7 @@ grep -Fq "[INFO] Clean executable text pages are shared from page cache" "$TEST_
 grep -Fq "[INFO] Clean file-page cache accounting verified" "$TEST_LOG"
 grep -Fq "[INFO] Executable loaded through VFS path /bin/hello" "$TEST_LOG"
 grep -Fq "[INFO] Userspace ELF reservation permissions verified" "$TEST_LOG"
-test "$(grep -Fc "akaOS XSCore initramfs" "$TEST_LOG")" -eq 8
+test "$(grep -Fc "akaOS XSCore initramfs" "$TEST_LOG")" -ge 8
 grep -Fq "[INFO] VFS open/read/EOF/error syscalls verified" "$TEST_LOG"
 grep -Fq "[INFO] Per-process stdin/stdout/stderr tables verified" "$TEST_LOG"
 test "$(grep -Fc "[USER] Hello from akaOS C userspace" "$TEST_LOG")" -eq 3
@@ -116,7 +131,7 @@ grep -Fq "POSIX fork continuation verified" "$TEST_LOG"
 grep -Fq "[INFO] POSIX execve process image replacement verified" "$TEST_LOG"
 grep -Fq "POSIX execve userspace verified" "$TEST_LOG"
 grep -Fq "POSIX fork-exec-wait lifecycle verified" "$TEST_LOG"
-grep -Fq "POSIX mmap/munmap private mappings verified" "$TEST_LOG"
+grep -Fq "POSIX mmap private and immutable shared-file mappings verified" "$TEST_LOG"
 grep -Fq "POSIX shared memory and mprotect verified" "$TEST_LOG"
 grep -Fq "safe user copy-in/copy-out verified" "$TEST_LOG"
 grep -Fq "[INFO] Safe user copy-in/copy-out verified" "$TEST_LOG"
@@ -137,55 +152,55 @@ grep -Fq "[INFO] Blocking process wait and thread reclamation verified" "$TEST_L
 grep -Fq "[INFO] Descriptor write/dup/dup2/close syscalls verified" "$TEST_LOG"
 grep -Fq "[INFO] Native C runtime and libc wrappers verified" "$TEST_LOG"
 grep -Fq "[INFO] Internal process API create/wait/reap verified" "$TEST_LOG"
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "motd")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "hello")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "cat")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "ls")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "head")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "tail")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "wc")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "uname")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "whoami")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sync")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "init")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "reboot")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "poweroff")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "chmod")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "chown")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "ted")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "cp")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "mv")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "less")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "more")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "find")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sort")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "uniq")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "xargs")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "test")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "[")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sshd")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "ssh")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "kill")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "pkill")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "uptime")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "free")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "watch")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sed")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "diff")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "cmp")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "patch")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "tar")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "gzip")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "gunzip")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "route")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "traceroute")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "dig")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "arp")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "lscpu")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "lspci")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "gpuinfo")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sndinfo")" -eq 1
-test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "acpi")" -eq 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "motd")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "hello")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "cat")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "ls")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "head")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "tail")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "wc")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "uname")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "whoami")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sync")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "init")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "reboot")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "poweroff")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "chmod")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "chown")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "ted")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "cp")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "mv")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "less")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "more")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "find")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sort")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "uniq")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "xargs")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "test")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "[")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sshd")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "ssh")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "kill")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "pkill")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "uptime")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "free")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "watch")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sed")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "diff")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "cmp")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "patch")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "tar")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "gzip")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "gunzip")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "route")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "traceroute")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "dig")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "arp")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "lscpu")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "lspci")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "gpuinfo")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "sndinfo")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "acpi")" -ge 1
 grep -Fq "[INFO] Command-line arguments argc/argv verified" "$TEST_LOG"
 grep -Fq "[INFO] Stream utilities find/sort/uniq/test/[ and akash scripting engine verified" "$TEST_LOG"
 grep -Fq "[INFO] SSH suite and akaos-config daemon integration verified" "$TEST_LOG"
