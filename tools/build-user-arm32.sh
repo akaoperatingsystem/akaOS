@@ -677,9 +677,14 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_arm32.img" \
     --file "/bin/tty:$BUILD_DIR/TTY.ELF:exec" \
     --file "/bin/stty:$BUILD_DIR/STTY.ELF:exec" \
     --file "/bin/ps:$BUILD_DIR/PS.ELF:exec" \
-    --file "/bin/akash:$BUILD_DIR/AKASH.ELF:exec"     --file "/bin/bash:$BUILD_DIR/AKASH.ELF:exec"     --file "/bin/sh:$BUILD_DIR/AKASH.ELF:exec"     --file "/bin/rbash:$BUILD_DIR/AKASH.ELF:exec" \
+    --file "/bin/akash:$BUILD_DIR/AKASH.ELF:exec" \
+    --file "/bin/bash:$BUILD_DIR/AKASH.ELF:exec" \
+    --file "/bin/sh:$BUILD_DIR/AKASH.ELF:exec" \
+    --file "/bin/rbash:$BUILD_DIR/AKASH.ELF:exec" \
     --file "/bin/nslookup:$BUILD_DIR/NSLOOKUP.ELF:exec" \
-    --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec"     --file "/bin/pkg:$BUILD_DIR/PKG.ELF:exec"     --file "/bin/wget:$BUILD_DIR/WGET.ELF:exec" \
+    --file "/bin/curl:$BUILD_DIR/CURL.ELF:exec" \
+    --file "/bin/pkg:$BUILD_DIR/PKG.ELF:exec" \
+    --file "/bin/wget:$BUILD_DIR/WGET.ELF:exec" \
     --file "/bin/httpd:$BUILD_DIR/HTTPD.ELF:exec" \
     --file "/bin/akaos-config:$BUILD_DIR/AKAOS_CONFIG.ELF:exec" \
     --file "/bin/sysmon:$BUILD_DIR/SYSMON.ELF:exec" \
@@ -723,7 +728,37 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_arm32.img" \
     --file "/bin/tr:$BUILD_DIR/TR.ELF:exec" \
     --file "/bin/df:$BUILD_DIR/DF.ELF:exec" \
     --file "/bin/du:$BUILD_DIR/DU.ELF:exec" \
-    --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec"     --file "/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec"     --file "/bin/aspell:$BUILD_DIR/ASPELL.ELF:exec"     --file "/bin/at:$BUILD_DIR/AT.ELF:exec"     --file "/bin/atq:$BUILD_DIR/AT.ELF:exec"     --file "/bin/atrm:$BUILD_DIR/AT.ELF:exec"     --file "/bin/batch:$BUILD_DIR/AT.ELF:exec"     --file "/bin/awk:$BUILD_DIR/AWK.ELF:exec"     --file "/bin/gawk:$BUILD_DIR/AWK.ELF:exec"     --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec"     --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec"     --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec"     --file "/bin/bc:$BUILD_DIR/BC.ELF:exec"     --file "/bin/bg:$BUILD_DIR/BG.ELF:exec"     --file "/bin/bind:$BUILD_DIR/BIND.ELF:exec"     --file "/bin/break:$BUILD_DIR/BREAK.ELF:exec"     --file "/bin/builtin:$BUILD_DIR/BUILTIN.ELF:exec"     --file "/bin/cal:$BUILD_DIR/CAL.ELF:exec"     --file "/bin/ncal:$BUILD_DIR/CAL.ELF:exec"     --file "/bin/caller:$BUILD_DIR/CALLER.ELF:exec"     --file "/bin/case:$BUILD_DIR/CASE.ELF:exec"     --file "/bin/cd:$BUILD_DIR/CD.ELF:exec"     --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec"     --file "/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec"     --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec"     --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec"     --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec"     --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec"     --dir "/var/spool"     --dir "/var/spool/at"     --dir "/var/spool/at/spool" \
+    --file "/bin/kill:$BUILD_DIR/KILL.ELF:exec" \
+    --file "/bin/apropos:$BUILD_DIR/APROPOS.ELF:exec" \
+    --file "/bin/aspell:$BUILD_DIR/ASPELL.ELF:exec" \
+    --file "/bin/at:$BUILD_DIR/AT.ELF:exec" \
+    --file "/bin/atq:$BUILD_DIR/AT.ELF:exec" \
+    --file "/bin/atrm:$BUILD_DIR/AT.ELF:exec" \
+    --file "/bin/batch:$BUILD_DIR/AT.ELF:exec" \
+    --file "/bin/awk:$BUILD_DIR/AWK.ELF:exec" \
+    --file "/bin/gawk:$BUILD_DIR/AWK.ELF:exec" \
+    --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec" \
+    --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec" \
+    --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec" \
+    --file "/bin/bc:$BUILD_DIR/BC.ELF:exec" \
+    --file "/bin/bg:$BUILD_DIR/BG.ELF:exec" \
+    --file "/bin/bind:$BUILD_DIR/BIND.ELF:exec" \
+    --file "/bin/break:$BUILD_DIR/BREAK.ELF:exec" \
+    --file "/bin/builtin:$BUILD_DIR/BUILTIN.ELF:exec" \
+    --file "/bin/cal:$BUILD_DIR/CAL.ELF:exec" \
+    --file "/bin/ncal:$BUILD_DIR/CAL.ELF:exec" \
+    --file "/bin/caller:$BUILD_DIR/CALLER.ELF:exec" \
+    --file "/bin/case:$BUILD_DIR/CASE.ELF:exec" \
+    --file "/bin/cd:$BUILD_DIR/CD.ELF:exec" \
+    --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec" \
+    --file "/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec" \
+    --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec" \
+    --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \
+    --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \
+    --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \
+    --dir "/var/spool" \
+    --dir "/var/spool/at" \
+    --dir "/var/spool/at/spool" \
     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \
     --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \
@@ -830,12 +865,17 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_arm32.img" \
     --file "/etc/group:$ROOT_DIR/userspace/etc/group:0644" \
     --file "/etc/sudoers:$ROOT_DIR/userspace/etc/sudoers:0440" \
     --file "/etc/shadow:$ROOT_DIR/userspace/etc/shadow:0600" \
-    --file "/etc/akaos.conf:$ROOT_DIR/userspace/etc/akaos.conf:0644"     --file "/etc/pkg.conf:$ROOT_DIR/userspace/etc/pkg.conf:0644" \
+    --file "/etc/akaos.conf:$ROOT_DIR/userspace/etc/akaos.conf:0644" \
+    --file "/etc/pkg.conf:$ROOT_DIR/userspace/etc/pkg.conf:0644" \
     --file "/etc/dbus-services.conf:$ROOT_DIR/userspace/etc/dbus-services.conf:0644" \
     --file "/etc/resolv.conf:$ROOT_DIR/userspace/etc/resolv.conf:0644" \
     --file "/etc/fstab:$ROOT_DIR/userspace/etc/fstab:0644" \
     --file "/etc/aurora-apps:$ROOT_DIR/userspace/etc/aurora-apps:0644" \
-    --dir "/var"     --dir "/var/lib"     --dir "/var/lib/pkg"     --dir "/var/cache"     --dir "/var/cache/pkg" \
+    --dir "/var" \
+    --dir "/var/lib" \
+    --dir "/var/lib/pkg" \
+    --dir "/var/cache" \
+    --dir "/var/cache/pkg" \
     --dir "/var/www" \
     --dir "/var/www/cgi-bin" \
     --file "/var/www/cgi-bin/status:$BUILD_DIR/STATUS_CGI.ELF:exec" \
