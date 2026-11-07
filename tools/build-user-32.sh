@@ -53,14 +53,17 @@ for source in "${USER_LIBC_SOURCES[@]}"; do
         source_extra_flags=(-m80387)
     fi
     clang --target=i686-unknown-none-elf \
-        -std=c17 -O2 -Wall -Wextra -Werror \
+        -std=c17 -Os -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -ffunction-sections -fdata-sections \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
         -mno-sse -mno-mmx -mno-80387 "${source_extra_flags[@]}" \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
         -c "$source" -o "$object"
     USER_LIBC_OBJECTS+=("$object")
 done
+
+llvm-ar rcs "$BUILD_DIR/libc.a" "${USER_LIBC_OBJECTS[@]}"
 
 clang --target=i686-unknown-none-elf \
     -ffreestanding -fpie \
@@ -123,9 +126,11 @@ build_user_program() {
         -mno-sse -mno-mmx -mno-80387 "${user_extra_flags[@]}" \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
         -c "$source" -o "$main_object"
-    ld.lld -m elf_i386 -nostdlib -static -z max-page-size=0x1000 \
+    ld.lld -m elf_i386 -nostdlib -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user32.ld" \
-        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "$main_object" \
+        "$BUILD_DIR/user-crt0.o" "$main_object" \
+        --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
         "${COMPILER_BUILTINS[@]}" \
         -o "$BUILD_DIR/$output"
 }
@@ -174,9 +179,11 @@ build_user_pie_program() {
         -c "$source" -o "$main_object"
     # ET_DYN static PIE images use zero-based segments; XSCore applies their
     # bounded REL/RELA relative relocations at the native user load base.
-    ld.lld -m elf_i386 -nostdlib -pie -static -z max-page-size=0x1000 \
+    ld.lld -m elf_i386 -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
-        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "$main_object" \
+        "$BUILD_DIR/user-crt0.o" "$main_object" \
+        --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
         "${COMPILER_BUILTINS[@]}" \
         -o "$BUILD_DIR/$output"
 }
@@ -193,10 +200,12 @@ build_account_program() {
         -mno-sse -mno-mmx -mno-80387 \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
         -c "$source" -o "$main_object"
-    ld.lld -m elf_i386 -nostdlib -static -z max-page-size=0x1000 \
+    ld.lld -m elf_i386 -nostdlib -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user32.ld" \
-        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" \
-        "$main_object" "${COMPILER_BUILTINS[@]}" \
+        "$BUILD_DIR/user-crt0.o" "$main_object" \
+        --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
+        "${COMPILER_BUILTINS[@]}" \
         -o "$BUILD_DIR/$output"
 }
 
