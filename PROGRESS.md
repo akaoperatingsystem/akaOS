@@ -96,7 +96,13 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 | **Build Infrastructure** | akaOS/build.sh TUI, Tools Generator | 90% | `[█████████░]` 90% |
 | **CI/CD** | GitHub Actions Pipeline | 60% | `[██████░░░░]` 60% |
 | **Automated Testing** | QEMU Guest Testing, Boot-Tests | 80% | `[████████░░]` 80% |
- | :--- | :--- | :--- |
+
+---
+
+## GPU Subsystem Summary
+
+| GPU Family / Vendor | Architecture Range | Target Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
 | **Generic & Virtual GPUs** | UEFI GOP, VESA, Bochs-VGA, VirtIO-GPU, QEMU Standard VGA | 95% | `[█████████░]` 95% |
 | **NVIDIA Corporation** | NV1 through Blackwell / Rubin (Consumer, Workstation, Data Center) | 42% | `[████░░░░░░]` 42% |
 | **ATI Technologies & AMD** | Mach64 through RDNA 4 / CDNA 4 (Radeon, APU, FirePro, Instinct) | 45% | `[████░░░░░░]` 45% |
