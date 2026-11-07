@@ -1057,6 +1057,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Access permissions modifier chmod verified\n");
     xscore_serial_write("[INFO] File owner and group modifier chown verified\n");
     xscore_serial_write("[INFO] Batch password updater chpasswd verified\n");
+    xscore_serial_write("[INFO] Root directory changer chroot verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

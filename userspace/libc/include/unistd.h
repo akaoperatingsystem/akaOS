@@ -81,6 +81,7 @@ int dup2(int old_descriptor, int new_descriptor);
 int fchdir(int descriptor);
 char *getcwd(char *buffer, size_t size);
 int chdir(const char *path);
+int chroot(const char *path);
 int access(const char *path, int mode);
 int gethostname(char *name, size_t length);
 long sysconf(int name);

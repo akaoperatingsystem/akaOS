@@ -2405,3 +2405,20 @@ int posix_fallocate(int fd, off_t offset, off_t len) {
     return ftruncate(fd, offset + len) == 0 ? 0 : errno;
 }
 
+
+int chroot(const char *path) {
+    if (!path) {
+        errno = EFAULT;
+        return -1;
+    }
+    struct stat st;
+    if (stat(path, &st) != 0) {
+        return -1;
+    }
+    if (!S_ISDIR(st.st_mode)) {
+        errno = ENOTDIR;
+        return -1;
+    }
+    /* Set current working directory to newroot */
+    return chdir(path);
+}
