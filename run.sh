@@ -4,47 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/tools/qemu-common.sh"
 
-print_desktop_list() {
-    cat <<'EOF'
-================================================================================
-             akaOS Desktop Environments & Window Managers Matrix
-================================================================================
-
-Desktop Environment       Status       Upstream Components & Integration
---------------------------------------------------------------------------------
-1. LXDE                   100% PASS    Openbox 3.6.1 + LXPanel 0.11.1 + PCManFM 1.3.2
-                                       LXSession 0.5.5 + LXMenu-Data 0.1.5
-                                       (Fully verified live in QEMU guest testing)
-
-2. XFCE                   100% PASS    Xfwm4 4.18 + xfconf 4.18 + libxfce4ui 4.18.2
-                                       libxfce4util 4.18.2 + xfce4-panel + xfce4-session
-                                       (Fully verified live in QEMU guest testing)
-
-3. Openbox (Standalone)   100% PASS    Unmodified Upstream 3.6.1 window manager
-                                       Root composite painting, frame decoration
-
-4. Aurora (Native)        100% PASS    akaOS resident desktop shell & Lumen compositor
-                                       Taskbar, app launcher, system tray, notifications
-
-5. LXQt                   65% ACTIVE   liblxqt, lxqt-panel, lxqt-session, Qt6 base
-                                       (Building and verifying Qt6 Wayland/X11 stack)
-
-6. MATE Desktop           30% ACTIVE   Marco WM, mate-panel, Caja file manager
-
-7. KDE Plasma             25% ACTIVE   KWin window manager, KF6 WindowSystem, Qt6
-
-8. GNOME Desktop          20% ACTIVE   Mutter window manager, GTK4/GTK3, D-Bus
-
-================================================================================
-Rule: 100% Unmodified Upstream Software — Zero Patching applied to desktop code!
-================================================================================
-EOF
-}
-
-
 usage() {
-    cat <<
-  --list-desktops              Display detailed support matrix for all desktop environments & WMs'EOF'
+    cat <<'EOF'
 Usage: ./run.sh [options] [-- QEMU_OPTIONS...]
 
 Run without options in an interactive terminal to open the enhanced configuration menu.
@@ -104,7 +65,6 @@ Hardware Device & Emulation Flags:
   --mem, --memory SIZE         Guest memory limit (e.g. 256M, 512M, 1G, 2G)
   --kvm, --accel               Enable host hardware virtualization acceleration (KVM/WHPX)
   --list-software              Display comprehensive directory of all native and ported software
-  --list-desktops              Display detailed support matrix for all desktop environments & WMs
   --check-deps                 Check selected host dependencies and exit
   --menu                       Open the interactive configuration menu
   -h, --help                   Display this comprehensive help manual
@@ -558,10 +518,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
 
-        --list-desktops)
-            print_desktop_list
-            exit 0
-            ;;
+
         --check-deps)
             check_deps_only=1
             shift
