@@ -63,7 +63,39 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 ### GPU Subsystem Summary
 
 | GPU Family / Vendor | Architecture Range | Target Readiness | Progress Bar |
+| :---
+## Storage Hardware Matrix
+
+| Controller Family | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
+| **NVMe Controllers** | Generic NVMe 1.x / 2.0 (PCIe) | 70% | `[███████░░░]` 70% |
+| **AHCI & SATA** | Generic AHCI, VirtIO-Block | 95% | `[█████████░]` 95% |
+| **eMMC / SDHCI** | eMMC 5.1 / SD 3.0 Controllers | 60% | `[██████░░░░]` 60% |
+
+## Power Management & ACPI
+
+| Subsystem | Scope / Implementation | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **ACPI** | ACPI 6.x Tables, DSDT/SSDT Parsing | 65% | `[██████░░░░]` 65% |
+| **Power States** | Suspend-to-RAM (S3), Resume | 40% | `[████░░░░░░]` 40% |
+| **Thermal Mgmt** | ACPI Thermal Zones | 35% | `[███░░░░░░░]` 35% |
+
+## Input Subsystem
+
+| Target Device | Scope / Implementation | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **USB HID** | Keyboard, Mouse, Tablet | 98% | `[██████████]` 98% |
+| **PS/2** | Legacy Keyboard, Mouse | 95% | `[█████████░]` 95% |
+| **VirtIO-Input** | VirtIO Keyboard, Mouse, Tablet | 100% | `[██████████]` 100% |
+
+## Build, CI/CD & Automated Testing
+
+| Subsystem | Scope / Implementation | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **Build Infrastructure** | akaOS/build.sh TUI, Tools Generator | 90% | `[█████████░]` 90% |
+| **CI/CD** | GitHub Actions Pipeline | 60% | `[██████░░░░]` 60% |
+| **Automated Testing** | QEMU Guest Testing, Boot-Tests | 80% | `[████████░░]` 80% |
+ | :--- | :--- | :--- |
 | **Generic & Virtual GPUs** | UEFI GOP, VESA, Bochs-VGA, VirtIO-GPU, QEMU Standard VGA | 95% | `[█████████░]` 95% |
 | **NVIDIA Corporation** | NV1 through Blackwell / Rubin (Consumer, Workstation, Data Center) | 42% | `[████░░░░░░]` 42% |
 | **ATI Technologies & AMD** | Mach64 through RDNA 4 / CDNA 4 (Radeon, APU, FirePro, Instinct) | 45% | `[████░░░░░░]` 45% |
