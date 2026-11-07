@@ -89,6 +89,30 @@ build_one() {
         exit 1
     fi
     echo "[PASS] $arch architecture smoke build: $machine"
+
+    # Build and verify standalone static PIE xmrig compute engine binary for target architecture
+    local xmrig_arch_dir="$arch_dir/xmrig"
+    mkdir -p "$xmrig_arch_dir"
+    clang --target="$target" \
+        -std=c17 -Os -Wall -Wextra -Werror \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -ffunction-sections -fdata-sections \
+        -I"$INCLUDE_DIR" -I"$ROOT_DIR/userspace/libc/include" \
+        -I"$ROOT_DIR/xscore/include" \
+        -c "$SOURCE_DIR/xmrig_smoke.c" -o "$xmrig_arch_dir/xmrig.o"
+
+    ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+        -T "$SOURCE_DIR/linker.ld" \
+        "$arch_dir/start.o" "$xmrig_arch_dir/xmrig.o" \
+        -o "$xmrig_arch_dir/xmrig-$arch.ELF"
+
+    local xmrig_machine
+    xmrig_machine="$(readelf -h "$xmrig_arch_dir/xmrig-$arch.ELF" | sed -n 's/^  Machine: *//p')"
+    if [[ "$xmrig_machine" != *"$expected_machine"* ]]; then
+        echo "Unexpected ELF machine for xmrig on $arch: $xmrig_machine" >&2
+        exit 1
+    fi
+    echo "[PASS] $arch native xmrig compute engine smoke build: $xmrig_machine"
 }
 
 mkdir -p "$OUT_DIR"

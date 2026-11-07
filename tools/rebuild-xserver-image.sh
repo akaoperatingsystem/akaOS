@@ -55,6 +55,22 @@ read_build_array() {
     python3 "$ROOT_DIR/tools/extract-build-array.py" "$ROOT_DIR" "$1"
 }
 
+# ---------------------------------------------------------------- xmrig compute engine
+echo "[BUILD] XMRig native compute engine"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -Os -Wall -Wextra \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -ffunction-sections -fdata-sections \
+    -mno-red-zone -mcmodel=small \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/xmrig/main.c" -o "$BUILD_DIR/xmrig-main.o"
+ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "$BUILD_DIR/xmrig-main.o" \
+    --whole-archive "$BUILD_DIR/user-libc-crt_init.o" --no-whole-archive \
+    "$BUILD_DIR/libc.a" \
+    -o "$BUILD_DIR/XMRIG.ELF"
+
 # ---------------------------------------------------------------- display server
 echo "[BUILD] X11 display server"
 objects=()
@@ -184,6 +200,7 @@ ld.lld -m elf_x86_64 -nostdlib -shared -soname libpthread.so \
 # image as well, or the guest keeps running the program of the last build.
 UPSTREAM_SYSROOT="$BUILD_DIR/upstream-sysroot/graphics-x86_64"
 initramfs_files=(
+    "--file=/bin/xmrig:$BUILD_DIR/XMRIG.ELF:exec"
     "--file=/bin/xserver:$BUILD_DIR/XSERVER.ELF:exec"
     "--file=/lib/ld-akaos.so:$BUILD_DIR/LD_AKAOS.ELF:exec"
     "--file=/lib/libc.so.6:$BUILD_DIR/libc.so.6:0444"

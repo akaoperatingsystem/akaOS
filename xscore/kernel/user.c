@@ -1004,6 +1004,13 @@ int xscore_user_process_self_test(void) {
     if (!p_clear || !xscore_process_wait(p_clear, &clear_status) || clear_status != 0 || !xscore_process_reap(p_clear)) return 0;
     xscore_serial_write("[INFO] Terminal clearer clear verified\n");
 
+    /* Verify standalone native XMRig compute engine */
+    const char *xmrig_args[] = {"/bin/xmrig", "--help", 0};
+    struct xscore_process *p_xmrig = xscore_process_create_path_args("/bin/xmrig", 2, xmrig_args);
+    uint64_t xmrig_status = UINT64_MAX;
+    if (!p_xmrig || !xscore_process_wait(p_xmrig, &xmrig_status) || xmrig_status != 0 || !xscore_process_reap(p_xmrig)) return 0;
+    xscore_serial_write("[INFO] XMRig native compute engine verified\n");
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);

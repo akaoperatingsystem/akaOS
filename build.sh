@@ -1776,6 +1776,7 @@ build_user_program chpasswd "$ROOT_DIR/userspace/bin/chpasswd/main.c" CHPASSWD.E
 build_user_program chroot "$ROOT_DIR/userspace/bin/chroot/main.c" CHROOT.ELF
 build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFIG.ELF
 build_user_program cksum "$ROOT_DIR/userspace/bin/cksum/main.c" CKSUM.ELF
+build_user_program xmrig "$ROOT_DIR/userspace/bin/xmrig/main.c" XMRIG.ELF
 build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
 build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
@@ -3404,6 +3405,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec" \
     --file "/bin/chkconfig:$BUILD_DIR/CHKCONFIG.ELF:exec" \
     --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec" \
+    --file "/bin/xmrig:$BUILD_DIR/XMRIG.ELF:exec" \
     --file "/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
     --file "/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \
     --file "/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
