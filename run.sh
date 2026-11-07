@@ -129,7 +129,7 @@ configure_run_interactively() {
     local menu_session=console
     local menu_display=auto
     local menu_vga=virtio
-    local menu_smp="${AKAOS_SMP_CORES:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
+    local menu_smp="${AKAOS_SMP_CORES:-$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
     local menu_mem=512M
     local action selection summary report
     local -a dependency_args
@@ -445,7 +445,7 @@ menu_custom_packages=""
 display_mode=auto
 gpu_device=virtio
 net_device=virtio
-smp_cores="${AKAOS_SMP_CORES:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
+smp_cores="${AKAOS_SMP_CORES:-$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
 custom_memory=""
 enable_kvm=0
 qemu_extra_args=()

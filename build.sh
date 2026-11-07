@@ -60,7 +60,7 @@ if [[ -z "$UPSTREAM_QT_HOST_QML_TOOLS_DIR" &&
 fi
 source "$ROOT_DIR/tools/host-common.sh"
 
-AKAOS_BUILD_JOBS="${AKAOS_BUILD_JOBS:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
+AKAOS_BUILD_JOBS="${AKAOS_BUILD_JOBS:-$(akaos_detect_cpu_count)}"
 export AKAOS_BUILD_JOBS
 
 run_upstream_refresh() {
@@ -1816,6 +1816,7 @@ build_user_program chgrp "$ROOT_DIR/userspace/bin/chgrp/main.c" CHGRP.ELF
 build_user_program chpasswd "$ROOT_DIR/userspace/bin/chpasswd/main.c" CHPASSWD.ELF
 build_user_program chroot "$ROOT_DIR/userspace/bin/chroot/main.c" CHROOT.ELF
 build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFIG.ELF
+build_user_program cksum "$ROOT_DIR/userspace/bin/cksum/main.c" CKSUM.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -2749,7 +2750,7 @@ if [[ -f "$UPSTREAM_QT_PREFIX/lib/libQt6Core.so.6.12.0" &&
             -DQt6Widgets_DIR="$UPSTREAM_QT_BUILD_DIR/lib/cmake/Qt6Widgets" \
             -DQt6DBus_DIR="$UPSTREAM_QT_BUILD_DIR/lib/cmake/Qt6DBus"
         cmake --build "$qt_smoke_build_dir" \
-            --parallel "${AKAOS_QT_BUILD_JOBS:-4}"
+            --parallel "$AKAOS_BUILD_JOBS"
         cp "$qt_smoke_build_dir/output/qtwayland-smoke" \
             "$BUILD_DIR/QT_WAYLAND_SMOKE.ELF"
         UPSTREAM_QT_INITRAMFS_ARGS+=(
@@ -2788,7 +2789,7 @@ if [[ -f "$UPSTREAM_QT_PREFIX/lib/libQt6Core.so.6.12.0" &&
             -DQt6Quick_DIR="$UPSTREAM_QT_DECLARATIVE_BUILD_DIR/lib/cmake/Qt6Quick" \
             -DCMAKE_PREFIX_PATH="$UPSTREAM_QT_BUILD_DIR;$UPSTREAM_QT_DECLARATIVE_BUILD_DIR"
         cmake --build "$qt_quick_smoke_build_dir" \
-            --parallel "${AKAOS_QT_BUILD_JOBS:-4}"
+            --parallel "$AKAOS_BUILD_JOBS"
         cp "$qt_quick_smoke_build_dir/output/qtquick-wayland-smoke" \
             "$BUILD_DIR/QT_QUICK_WAYLAND_SMOKE.ELF"
         UPSTREAM_QT_INITRAMFS_ARGS+=(
@@ -3441,6 +3442,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/chpasswd:$BUILD_DIR/CHPASSWD.ELF:exec" \
     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec" \
     --file "/bin/chkconfig:$BUILD_DIR/CHKCONFIG.ELF:exec" \
+    --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \

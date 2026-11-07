@@ -52,3 +52,12 @@ akaos_find_grub_platform_dir() {
     done
     return 1
 }
+
+akaos_detect_cpu_count() {
+    local count
+    count="$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
+    if [[ ! "$count" =~ ^[0-9]+$ ]] || [[ "$count" -lt 1 ]]; then
+        count=4
+    fi
+    printf '%s\n' "$count"
+}
