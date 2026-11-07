@@ -71,7 +71,7 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 | Controller Family | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
 | **NVMe Controllers** | Generic NVMe 1.x / 2.0 (PCIe) | 100% | `[██████████]` 100% |
-| **AHCI & SATA** | Generic AHCI, VirtIO-Block | 95% | `[█████████░]` 95% |
+| **AHCI & SATA** | Generic AHCI (PCIe MMIO GHC.AE), VirtIO-Block | 100% | `[██████████]` 100% |
 | **eMMC / SDHCI** | eMMC 5.1 / SD 3.0 Controllers | 60% | `[██████░░░░]` 60% |
 
 ## Power Management & ACPI

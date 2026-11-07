@@ -22,6 +22,7 @@
 #include <xscore/gpu.h>
 #include <xscore/sound.h>
 #include <xscore/nvme.h>
+#include <xscore/ahci.h>
 #include <xscore/virtio_blk.h>
 #include <xscore/bufcache.h>
 #include <xscore/net.h>
@@ -1228,6 +1229,7 @@ __attribute__((noreturn)) static void xscore_boot_on_kernel_stack(uint64_t boot_
     xscore_sound_initialize();
     /* NVMe initialization after PCI and memory are online */
     xscore_nvme_initialize();
+    xscore_ahci_initialize();
     if (!xscore_virtio_blk_initialize()) {
         serial_write("[WARN] virtio-blk initialization failed; continuing without persistent storage\n");
     } else {
