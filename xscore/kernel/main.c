@@ -130,27 +130,6 @@ static void serial_number(const char *prefix, uint64_t value, const char *suffix
     serial_write(line);
 }
 
-static char *append_hex(char *cursor, uint64_t value) {
-    *cursor++ = '0';
-    *cursor++ = 'x';
-    for (int i = 60; i >= 0; i -= 4) {
-        uint8_t nibble = (value >> i) & 0xF;
-        *cursor++ = (nibble < 10) ? ('0' + nibble) : ('a' + nibble - 10);
-    }
-    return cursor;
-}
-
-static void serial_hex(const char *prefix, uint64_t value, const char *suffix) {
-    char line[96];
-    char *cursor = line;
-    while (*prefix) *cursor++ = *prefix++;
-    cursor = append_hex(cursor, value);
-    while (*suffix) *cursor++ = *suffix++;
-    *cursor = 0;
-    serial_write(line);
-}
-
-
 /* ================================================================
  * CPU identification
  * ================================================================ */
@@ -215,10 +194,7 @@ void xscore_exception_handler(uint64_t vector, uint64_t error_code, const uint64
         struct xscore_process *process = xscore_process_current();
         if (process) {
             serial_number("[WARN] User process ", xscore_process_pid(process), " terminated by page fault\n");
-            serial_hex("       fault_addr=", fault_address, "");
-            serial_hex(" ip=", frame[2], "");
-            serial_number(" err=", error_code, "\n");
-            process_mark_exited(process, AKAOS_SIGSEGV);
+            xscore_process_record_termination_signal(AKAOS_SIGSEGV);
             xscore_thread_record_user_exit(UINT64_C(128) + AKAOS_SIGSEGV);
             xscore_thread_exit();
             return;
@@ -1328,3 +1304,220 @@ __attribute__((noreturn)) static void xscore_boot_on_kernel_stack(uint64_t boot_
 
 /* ================================================================
  * Kernel entry point
+ * ================================================================ */
+
+__attribute__((noreturn)) void xscore_entry(const struct akaos_boot_info *boot_info) {
+    serial_write("[INFO] XSCore entry reached\n");
+
+    /* Validate boot handoff */
+    if (!boot_info || boot_info->magic != AKAOS_BOOT_INFO_MAGIC || boot_info->version != AKAOS_BOOT_INFO_VERSION) {
+        serial_write("[FATAL] Invalid boot information\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    xscore_framebuffer_register(&boot_info->framebuffer);
+
+    /* ---- Quiet flag: verbose shows early console, quiet goes straight to splash ---- */
+    verbose_mode = (boot_info->flags & AKAOS_BOOT_FLAG_VERBOSE) != 0;
+    splash_active = 0;
+    early_console_ready = 0;
+
+    // Stage 1: Early console (text-only) — like Linux earlycon
+    // In verbose mode we show [ OK ] logs on framebuffer; in quiet we stay black until splash.
+    if (verbose_mode) {
+        early_console_init(boot_info);
+        if (!early_console_ready) {
+            // Fallback: framebuffer not available, continue serial-only
+            verbose_mode = 0;
+            boot_canvas_valid = canvas_from_boot_info(boot_info, &boot_canvas);
+            if (boot_canvas_valid) framebuffer_clear();
+        }
+    } else {
+        // Quiet: prepare canvas for later splash but keep black (no early logs on screen)
+        boot_canvas_valid = canvas_from_boot_info(boot_info, &boot_canvas);
+        if (boot_canvas_valid) framebuffer_clear();
+        serial_write("[INFO] Quiet boot: early console hidden, splash will follow\n");
+    }
+
+    boot_log_ok((boot_info->flags & AKAOS_BOOT_FLAG_BIOS) ?
+                "BIOS Multiboot2 handoff received" : "UEFI handoff received");
+    boot_status("Initializing XSCore...");
+
+    /* CPU identification */
+    char vendor[13];
+    cpu_vendor(vendor);
+    uint64_t memory_mib = conventional_memory_mib(boot_info);
+#if defined(__x86_64__)
+    serial_write("[INFO] CPU: x86-64 ");
+#elif defined(__i386__)
+    serial_write("[INFO] CPU: x86_32 ");
+#else
+    serial_write("[INFO] CPU: generic ");
+#endif
+    serial_write(vendor);
+    serial_write("\n");
+    serial_number("[INFO] Usable memory: ", memory_mib, " MB\n");
+    serial_number("[INFO] Framebuffer width: ", boot_info->framebuffer.width, " pixels\n");
+    serial_number("[INFO] Framebuffer height: ", boot_info->framebuffer.height, " pixels\n");
+
+    boot_log_ok("CPU identified");
+    boot_overview("Processor", vendor);
+
+    char memory_text[32];
+    char *end = append_u64(memory_text, memory_mib);
+    *end++ = ' '; *end++ = 'M'; *end++ = 'B'; *end = 0;
+    boot_overview("Memory", memory_text);
+
+    char display_text[40];
+    end = append_u64(display_text, boot_info->framebuffer.width);
+    *end++ = 'x';
+    end = append_u64(end, boot_info->framebuffer.height);
+    *end = 0;
+    boot_overview("Display", display_text);
+
+    /* GDT */
+    xscore_gdt_initialize();
+    serial_write("[INFO] GDT initialized\n");
+    boot_log_ok("GDT installed");
+
+    /* IDT with 32 exception vectors */
+    xscore_idt_initialize();
+    serial_write("[INFO] IDT initialized with 32 exception vectors\n");
+    boot_log_ok("IDT installed (32 vectors)");
+
+    /* Exception self-test */
+    xscore_breakpoint_self_test();
+    if (!xscore_breakpoint_was_handled()) {
+        serial_write("[FATAL] Breakpoint exception self-test failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    boot_log_ok("Exception self-test passed");
+
+    /* Physical memory manager */
+    struct xscore_physical_memory_stats memory_stats;
+    if (!xscore_pmm_initialize(boot_info, &memory_stats)) {
+        serial_write("[FATAL] Physical memory manager initialization failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    serial_number("[INFO] Physical pages managed: ", memory_stats.managed_pages, "\n");
+    serial_number("[INFO] Physical pages free: ", memory_stats.free_pages, "\n");
+
+    /* PMM self-test */
+    uint64_t first_page = xscore_pmm_allocate_page();
+    uint64_t second_page = xscore_pmm_allocate_page();
+    if (!first_page || !second_page || first_page == second_page) {
+        serial_write("[FATAL] Physical page allocation self-test failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    *(volatile uint64_t *)(uintptr_t)first_page = UINT64_C(0x5845434f52453121);
+    *(volatile uint64_t *)(uintptr_t)second_page = UINT64_C(0x5845434f52453221);
+    if (*(volatile uint64_t *)(uintptr_t)first_page != UINT64_C(0x5845434f52453121) ||
+        *(volatile uint64_t *)(uintptr_t)second_page != UINT64_C(0x5845434f52453221) ||
+        !xscore_pmm_free_page(first_page) || !xscore_pmm_free_page(second_page) ||
+        xscore_pmm_free_page_count() != memory_stats.free_pages) {
+        serial_write("[FATAL] Physical page allocator integrity test failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    serial_write("[INFO] Physical page allocator verified\n");
+    boot_log_ok("Physical memory initialized");
+
+    /* Virtual memory manager */
+    struct xscore_virtual_memory_stats virtual_stats;
+    if (!xscore_vmm_initialize(boot_info, &memory_stats, &virtual_stats)) {
+        serial_write("[FATAL] Virtual memory initialization failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    serial_number("[INFO] XSCore CR3: ", virtual_stats.root_table_address, "\n");
+    serial_number("[INFO] Identity mapped: ", virtual_stats.identity_mapped_bytes / (1024 * 1024), " MB\n");
+    serial_number("[INFO] Page-table pages: ", virtual_stats.page_table_pages, "\n");
+    if (!virtual_stats.null_page_guarded || xscore_vmm_map_page(0, 0, XSCORE_PAGE_WRITABLE)) {
+        serial_write("[FATAL] Null-page guard self-test failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    serial_write("[INFO] Null-page guard active\n");
+    serial_write("[INFO] XSCore virtual memory active\n");
+    boot_log_ok("Virtual memory active");
+    boot_overview("Boot", (boot_info->flags & AKAOS_BOOT_FLAG_BIOS) ?
+                           "BIOS Multiboot2 handoff" : "UEFI handoff");
+    boot_overview("Virtual memory", "XSCore CR3");
+
+    /* Kernel heap */
+    if (!xscore_heap_initialize()) {
+        serial_write("[FATAL] Kernel heap initialization failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    uint8_t *small = xscore_heap_allocate(64);
+    uint8_t *large = xscore_heap_allocate(8192);
+    uint8_t *odd = xscore_heap_allocate(257);
+    if (!small || !large || !odd || small == large || large == odd) {
+        serial_write("[FATAL] Kernel heap allocation self-test failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    for (size_t index = 0; index < 64; ++index) small[index] = (uint8_t)(index ^ 0x5a);
+    for (size_t index = 0; index < 8192; ++index) large[index] = (uint8_t)(index ^ 0xa5);
+    for (size_t index = 0; index < 257; ++index) odd[index] = (uint8_t)(index * 3);
+    if (!xscore_heap_free(large)) {
+        serial_write("[FATAL] Kernel heap free self-test failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    uint8_t *reused = xscore_heap_allocate(4096);
+    int heap_valid = reused == large;
+    for (size_t index = 0; index < 64; ++index) heap_valid &= small[index] == (uint8_t)(index ^ 0x5a);
+    for (size_t index = 0; index < 257; ++index) heap_valid &= odd[index] == (uint8_t)(index * 3);
+    if (!heap_valid || !xscore_heap_free(reused) || !xscore_heap_free(small) || !xscore_heap_free(odd)) {
+        serial_write("[FATAL] Kernel heap integrity self-test failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    struct xscore_heap_stats heap_stats;
+    xscore_heap_get_stats(&heap_stats);
+    if (heap_stats.allocated_bytes != 0 || heap_stats.allocation_count != 0) {
+        serial_write("[FATAL] Kernel heap accounting self-test failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    serial_number("[INFO] Kernel heap mapped: ", heap_stats.mapped_bytes / 1024, " KB\n");
+    serial_write("[INFO] Kernel heap verified\n");
+    boot_log_ok("Kernel heap ready");
+
+    // ---- Stage 1 complete: Early text logs were on framebuffer (if verbose) or serial only (if quiet) ----
+    // Stage 2: Clean graphical splash — like Windows boot logo + Plymouth
+    // Clear everything Stage 1 drew and show only logo + spinner. This decouples logging from UI.
+    boot_status("Transitioning to graphical splash...");
+    splash_init();
+    // From now on, logging remains serial-only. Splash updates are explicit.
+
+    boot_status("Applying section permissions...");
+
+    /* ============================================================
+     * Phase 3 — Kernel section permissions
+     * ============================================================ */
+
+    if (!apply_section_permissions()) {
+        serial_write("[FATAL] Failed to apply kernel section permissions\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    serial_write("[INFO] Section permissions: .text=RX .rodata=R .data=RW+NX .bss=RW+NX\n");
+    boot_log_ok("Section permissions applied");
+    splash_progress_step();
+    boot_overview("Sections", "W^X enforced");
+
+    /* ============================================================
+     * Phase 3 — Dedicated kernel stacks
+     * ============================================================ */
+
+    boot_status("Allocating kernel stacks...");
+
+    if (!xscore_stack_initialize()) {
+        serial_write("[FATAL] Kernel stack allocation failed\n");
+        for (;;) __asm__ volatile("cli; hlt");
+    }
+    serial_write("[INFO] Kernel boot stack allocated\n");
+    boot_log_ok("Kernel stacks allocated");
+    splash_progress_step();
+
+    /*
+     * Transfer the rest of the boot onto the dedicated kernel stack.
+     * The loader stack is abandoned permanently (interrupts are still
+     * disabled, so nothing else references it).
+     */
+    xscore_stack_enter(xscore_stack_boot_top(), xscore_boot_on_kernel_stack,
+                       (uint64_t)(uintptr_t)boot_info);
+}
