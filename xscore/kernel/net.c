@@ -76,6 +76,7 @@ void xscore_net_initialize(void) {
         xscore_virtio_net_get_mac(net_stats.mac);
         xscore_net_send_gratuitous_arp();
     }
+    xscore_linux_net_bridge_init();
     xscore_socket_initialize();
 }
 

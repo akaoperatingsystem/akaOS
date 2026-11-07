@@ -30,7 +30,7 @@ This document tracks the live implementation progress, hardware readiness, subsy
 | **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
 | **NVMe Driver** | Linux NVMe Driver Port (Lockless Zero-Copy Admin Ring, Controller Init) | 100% | `[██████████]` 100% |
 | **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX pthread_atfork Canonical Guards | 90% | `[█████████░]` 90% |
-| **Networking Stack** | VirtIO-Net, IPv4/ARP/UDP/TCP Sockets, DNS Resolver, HTTP Server | 80% | `[████████░░]` 80% |
+| **Networking Stack** | VirtIO-Net, Linux netdevice/sk_buff bridge, IPv4/ARP/UDP/TCP Sockets | 95% | `[█████████░]` 95% |
 | **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 70% | `[███████░░░]` 70% |
 
 ---

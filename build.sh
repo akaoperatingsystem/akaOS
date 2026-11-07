@@ -3566,6 +3566,8 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/page_cache.c"
     "$ROOT_DIR/xscore/kernel/audio.c"
     "$ROOT_DIR/xscore/kernel/net.c"
+    "$ROOT_DIR/xscore/kernel/net_core.c"
+    "$ROOT_DIR/xscore/kernel/net_virtio_bridge.c"
     "$ROOT_DIR/xscore/kernel/socket.c"
     "$ROOT_DIR/xscore/kernel/virtio_net.c"
     "$ROOT_DIR/xscore/kernel/pci.c"
