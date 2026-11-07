@@ -74,7 +74,8 @@ run_upstream_refresh() {
 }
 
 usage() {
-    cat <<'EOF'
+    cat <<
+  --list-desktops              Display detailed support matrix for all desktop environments & WMs'EOF'
 Usage: ./build.sh [options]
 
 Run without options in an interactive terminal to open the enhanced configuration menu.

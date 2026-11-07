@@ -43,7 +43,8 @@ EOF
 
 
 usage() {
-    cat <<'EOF'
+    cat <<
+  --list-desktops              Display detailed support matrix for all desktop environments & WMs'EOF'
 Usage: ./run.sh [options] [-- QEMU_OPTIONS...]
 
 Run without options in an interactive terminal to open the enhanced configuration menu.
