@@ -3571,6 +3571,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/pci.c"
     "$ROOT_DIR/xscore/kernel/cpu.c"
     "$ROOT_DIR/xscore/kernel/gpu.c"
+    "$ROOT_DIR/xscore/kernel/nvme.c"
     "$ROOT_DIR/xscore/kernel/audio_drivers.c"
     "$ROOT_DIR/xscore/kernel/virtio_blk.c"
     "$ROOT_DIR/xscore/kernel/bios.c"
@@ -3647,8 +3648,8 @@ if [[ "$need_fat32_image" -eq 1 ]]; then
     echo "[IMAGE] FAT32 size: ${fat32_disk_mib} MiB (kernel plus 64 MiB headroom)"
     # Build a standard UEFI GPT partitioned disk image with an active EFI System Partition (ESP)
     # This guarantees 100% plug-and-play boot compatibility across Real Hardware PCs, Laptops, VirtualBox, VMware, and QEMU.
-    local gpt_total_mib=$((fat32_disk_mib + 4))
-    local gpt_part_end=$((gpt_total_mib - 2))
+    gpt_total_mib=$((fat32_disk_mib + 4))
+    gpt_part_end=$((gpt_total_mib - 2))
     truncate -s "${gpt_total_mib}M" "$BUILD_DIR/akaos.img"
     if command -v parted >/dev/null 2>&1; then
         parted -s "$BUILD_DIR/akaos.img" mklabel gpt

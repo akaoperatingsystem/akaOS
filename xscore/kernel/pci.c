@@ -1,4 +1,5 @@
 #include <xscore/pci.h>
+#include <xscore/nvme.h>
 #include <xscore/serial.h>
 #include <xscore/vmm.h>
 #include <xscore/apic.h>
