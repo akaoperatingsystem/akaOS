@@ -968,6 +968,12 @@ int xscore_user_process_self_test(void) {
     uint64_t chown_ver_status = UINT64_MAX;
     if (!p_chown_ver || !xscore_process_wait(p_chown_ver, &chown_ver_status) || chown_ver_status != 0 || !xscore_process_reap(p_chown_ver)) return 0;
 
+    /* Verify batch password updater chpasswd */
+    const char *chpasswd_args[] = {"/bin/chpasswd", "--help", 0};
+    struct xscore_process *p_chpasswd = xscore_process_create_path_args("/bin/chpasswd", 2, chpasswd_args);
+    uint64_t chpasswd_status = UINT64_MAX;
+    if (!p_chpasswd || !xscore_process_wait(p_chpasswd, &chpasswd_status) || chpasswd_status != 0 || !xscore_process_reap(p_chpasswd)) return 0;
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);
@@ -1050,6 +1056,7 @@ int xscore_user_process_self_test(void) {
     xscore_serial_write("[INFO] Group ownership modifier chgrp verified\n");
     xscore_serial_write("[INFO] Access permissions modifier chmod verified\n");
     xscore_serial_write("[INFO] File owner and group modifier chown verified\n");
+    xscore_serial_write("[INFO] Batch password updater chpasswd verified\n");
     xscore_serial_write("[INFO] Network diagnostics & management suite netstat/route/traceroute/dig/arp verified\n");
     xscore_serial_write("[INFO] Hardware drivers and diagnostics suite lscpu/lspci/gpuinfo/sndinfo verified\n");
     xscore_serial_write("[INFO] ACPI diagnostics utility acpi verified\n");

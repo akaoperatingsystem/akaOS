@@ -1869,6 +1869,7 @@ build_user_program cd "$ROOT_DIR/userspace/bin/cd/main.c" CD.ELF
 build_user_program cfdisk "$ROOT_DIR/userspace/bin/cfdisk/main.c" CFDISK.ELF
 build_user_program chattr "$ROOT_DIR/userspace/bin/chattr/main.c" CHATTR.ELF
 build_user_program chgrp "$ROOT_DIR/userspace/bin/chgrp/main.c" CHGRP.ELF
+build_user_program chpasswd "$ROOT_DIR/userspace/bin/chpasswd/main.c" CHPASSWD.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -3491,6 +3492,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec" \
     --file "/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec" \
     --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec" \
+    --file "/bin/chpasswd:$BUILD_DIR/CHPASSWD.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \
