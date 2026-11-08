@@ -4,11 +4,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdint.h>
+#include <getopt.h>
 
 #define MAX_SELECT 1024
 static uint8_t selected[MAX_SELECT];
 static int select_all_above = 0;
 static char line_buf[4096];
+static char *output_delimiter = NULL;
 
 static void print_usage(void) {
     printf("Usage: cut OPTION... [FILE]...\n");
@@ -17,7 +20,9 @@ static void print_usage(void) {
     printf("  -d DELIM       use DELIM instead of TAB for field delimiter\n");
     printf("  -f LIST        select only these fields\n");
     printf("  -c LIST        select only these characters (bytes)\n");
+    printf("  -b LIST        select only these bytes\n");
     printf("  -s             do not print lines not containing delimiters\n");
+    printf("  --output-delimiter=STRING  use STRING as output delimiter\n");
     printf("  -h, --help     display this help and exit\n");
 }
 
@@ -96,13 +101,14 @@ static void process_line_fields(const char *line, char delim, int only_delim) {
     int field_idx = 1;
     int printed_any = 0;
     const char *cur = line;
+    const char *sep = output_delimiter ? output_delimiter : (char[]){delim, '\0'};
 
     while (*cur) {
         const char *next = strchr(cur, delim);
         size_t flen = next ? (size_t)(next - cur) : strlen(cur);
 
         if (is_selected(field_idx)) {
-            if (printed_any) putchar(delim);
+            if (printed_any) printf("%s", sep);
             write(STDOUT_FILENO, cur, flen);
             printed_any = 1;
         }
@@ -113,8 +119,7 @@ static void process_line_fields(const char *line, char delim, int only_delim) {
     }
 
     if (cur[0] == '\0' && is_selected(field_idx)) {
-        /* Trailing empty field */
-        if (printed_any) putchar(delim);
+        if (printed_any) printf("%s", sep);
     }
 
     putchar('\n');
@@ -166,64 +171,39 @@ static void process_fd(int fd, int mode_fields, char delim, int only_delim) {
 
 int main(int argc, char *argv[]) {
     char delim = '\t';
-    int mode_fields = -1; /* 1 for fields, 0 for chars */
+    int mode_fields = -1; /* 1 for fields, 0 for chars/bytes */
     int only_delim = 0;
     const char *list_str = NULL;
     int first_file = -1;
+    int option_index = 0;
 
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-            print_usage();
-            return 0;
-        } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--only-delimited") == 0) {
-            only_delim = 1;
-        } else if (strcmp(argv[i], "-d") == 0) {
-            if (i + 1 >= argc) {
-                fprintf(stderr, "cut: option requires an argument -- 'd'\n");
-                return 1;
-            }
-            if (strlen(argv[i + 1]) != 1) {
-                fprintf(stderr, "cut: the delimiter must be a single character\n");
-                return 1;
-            }
-            delim = argv[i + 1][0];
-            i++;
-        } else if (strncmp(argv[i], "-d", 2) == 0 && strlen(argv[i]) == 3) {
-            delim = argv[i][2];
-        } else if (strcmp(argv[i], "-f") == 0) {
-            if (i + 1 >= argc) {
-                fprintf(stderr, "cut: option requires an argument -- 'f'\n");
-                return 1;
-            }
-            mode_fields = 1;
-            list_str = argv[i + 1];
-            i++;
-        } else if (strncmp(argv[i], "-f", 2) == 0) {
-            mode_fields = 1;
-            list_str = argv[i] + 2;
-        } else if (strcmp(argv[i], "-c") == 0) {
-            if (i + 1 >= argc) {
-                fprintf(stderr, "cut: option requires an argument -- 'c'\n");
-                return 1;
-            }
-            mode_fields = 0;
-            list_str = argv[i + 1];
-            i++;
-        } else if (strncmp(argv[i], "-c", 2) == 0) {
-            mode_fields = 0;
-            list_str = argv[i] + 2;
-        } else if (strcmp(argv[i], "--") == 0) {
-            first_file = i + 1;
-            break;
-        } else if (argv[i][0] == '-' && argv[i][1] != '\0') {
-            fprintf(stderr, "cut: invalid option -- '%s'\n", argv[i]);
-            print_usage();
-            return 1;
-        } else {
-            first_file = i;
-            break;
+    static struct option long_options[] = {
+        {"help", no_argument, 0, 'h'},
+        {"only-delimited", no_argument, 0, 's'},
+        {"output-delimiter", required_argument, 0, 1000},
+        {0, 0, 0, 0}
+    };
+
+    int c;
+    while ((c = getopt_long(argc, argv, "d:f:c:b:sh", long_options, &option_index)) != -1) {
+        switch (c) {
+            case 'd':
+                if (strlen(optarg) != 1) {
+                    fprintf(stderr, "cut: the delimiter must be a single character\n");
+                    return 1;
+                }
+                delim = optarg[0];
+                break;
+            case 'f': mode_fields = 1; list_str = optarg; break;
+            case 'c':
+            case 'b': mode_fields = 0; list_str = optarg; break;
+            case 's': only_delim = 1; break;
+            case 'h': print_usage(); return 0;
+            case 1000: output_delimiter = optarg; break;
+            default: print_usage(); return 1;
         }
     }
+    first_file = optind;
 
     if (mode_fields == -1 || !list_str) {
         fprintf(stderr, "cut: you must specify a list of bytes, characters, or fields\n");
@@ -236,7 +216,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (first_file == -1 || first_file >= argc) {
+    if (first_file >= argc) {
         process_fd(STDIN_FILENO, mode_fields, delim, only_delim);
         return 0;
     }
