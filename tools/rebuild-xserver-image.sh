@@ -643,6 +643,32 @@ ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-cksum-main.o" \
     -o "$BUILD_DIR/CKSUM.ELF"
 
+echo "[BUILD] user hyprland"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/hyprland/main.c" -o "$BUILD_DIR/user-hyprland-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-hyprland-main.o" \
+    -o "$BUILD_DIR/HYPRLAND.ELF"
+
+echo "[BUILD] user hyprctl"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -O2 -Wall -Wextra -Werror \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/hyprctl/main.c" -o "$BUILD_DIR/user-hyprctl-main.o"
+ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-hyprctl-main.o" \
+    -o "$BUILD_DIR/HYPRCTL.ELF"
+
 echo "[BUILD] user lumen"
 clang --target=x86_64-unknown-none-elf \
     -std=c17 -O2 -Wall -Wextra -Werror \
@@ -699,6 +725,10 @@ initramfs_files+=(
     "--file=/usr/local/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
     "--file=/usr/local/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
     "--file=/usr/local/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
+    "--file=/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"
+    "--file=/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec"
+    "--file=/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"
+    "--file=/usr/local/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec"
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atrm:$BUILD_DIR/AT.ELF:exec"

@@ -97,3 +97,12 @@ echo KWIN-STATUS=$?
 
 /usr/local/bin/plasma --once
 echo PLASMA-STATUS=$?
+
+/usr/local/bin/hyprland --once
+echo HYPRLAND-STATUS=$?
+
+/usr/local/bin/hyprctl version
+echo HYPRCTL-VERSION=$?
+
+/usr/local/bin/hyprctl monitors
+echo HYPRCTL-MONITORS=$?

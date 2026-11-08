@@ -391,6 +391,18 @@ try:
         print(content()[-6000:], flush=True)
         raise SystemExit(1)
     print("[PASS] plasma KDE Plasma desktop session verified operational.", flush=True)
+
+    if not wait_for("HYPRLAND-STATUS=0", 60):
+        print("[FAIL] hyprland did not complete compositor verification check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] hyprland dynamic tiling Wayland compositor verified operational.", flush=True)
+
+    if not wait_for("HYPRCTL-VERSION=0", 60):
+        print("[FAIL] hyprctl did not complete version check.", flush=True)
+        print(content()[-6000:], flush=True)
+        raise SystemExit(1)
+    print("[PASS] hyprctl client control utility verified operational.", flush=True)
 finally:
     proc.kill()
     storage.unlink(missing_ok=True)
