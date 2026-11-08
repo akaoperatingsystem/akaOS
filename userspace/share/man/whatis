@@ -163,3 +163,4 @@ csplit (1) - split a file into context-determined pieces
 date (1) - display or change the date and time
 dc (1) - desk calculator
 dd (1) - data duplicator - convert and copy a file
+ddrescue (1) - data recovery tool

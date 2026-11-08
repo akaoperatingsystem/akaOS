@@ -302,7 +302,7 @@ EOF
         # They are intentionally self-contained and can each be >10 MiB, so
         # a 16 MiB FAT image can overflow when both files are copied.  Keep
         # enough headroom for either loader plus FAT metadata.
-        truncate -s 64M "$EFI_IMAGE"
+        truncate -s 16M "$EFI_IMAGE"
         mkfs.fat -F 16 -n AKAOS32EFI "$EFI_IMAGE" >/dev/null
         mmd -i "$EFI_IMAGE" ::/EFI ::/EFI/BOOT
         mcopy -o -i "$EFI_IMAGE" "$BUILD_DIR/BOOTX64.EFI" ::/EFI/BOOT/BOOTX64.EFI
