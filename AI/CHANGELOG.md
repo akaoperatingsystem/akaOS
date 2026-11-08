@@ -1,3 +1,14 @@
+## 2026-11-08 (seventieth continuation) — Extreme Optimization, Cleanup & System Performance
+
+- System-wide performance and size optimization:
+  - Global compilation flags: Enforce `-Os -ffunction-sections -fdata-sections` across `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
+  - Linker optimizations: Enforce `--gc-sections -s` and fine-grained `libc.a` archive linking on all static ELF binaries.
+  - Kernel physical allocator: Accelerate `xscore_pmm_allocate_page()` with O(1) `__builtin_ctzll` bit scanning.
+  - Kernel scheduler: Implement O(1) bitscan fast-path in `find_next_runnable()` and eliminate serial I/O overhead in `sched_linux.c`.
+  - Kernel virtual memory: Remove redundant CR3 read in `xscore_vmm_activate()`.
+  - Repository sanitization: Clean up ephemeral scripts and enable tracking of project AI documentation in `.gitignore`.
+- Bump akaOS to 0.3.15, XSCore kernel to 0.2.16.
+
 ## 2026-11-08 (sixty-ninth continuation) — Loop Continuation Shell Builtin: continue (POSIX special builtin)
 
 - Implement native POSIX-compliant `continue` shell builtin in `userspace/bin/akash/main.c`:
@@ -674,56 +685,3 @@
 - Stage i3 suite and XCB libraries in `tools/rebuild-xserver-image.sh` and add automated startup validation in `tools/test-desktop.sh` and `tools/test-upstream-wm.sh`.
 - Verified all 16 desktop processes running concurrently in QEMU guest (`test-upstream-wm.sh` 100% PASS with Openbox, LXPanel, PCManFM, XFWM4, XFCE Panel, XFCE Session, Marco, MATE Panel, MATE Session, Muffin, and i3).
 - Bump akaOS to 0.2.48, XSCore kernel to 0.2.3.
-
-## 2026-11-04 (forty-second continuation) — Base32 Encoding and Decoding Utility: base32
-
-- Implement native POSIX-compatible `/bin/base32` in `userspace/bin/base32/main.c`:
-  - RFC 4648 Base32 encoding and decoding with standard 32-character alphabet (`A-Z`, `2-7`) and `=` padding.
-  - Supports standard options:
-    - `-d`, `--decode`: decode data.
-    - `-i`, `--ignore-garbage`: ignore non-alphabet characters during decoding.
-    - `-w COLS`, `--wrap=COLS`: line wrapping after COLS characters (default 76, 0 disables wrapping).
-    - `--help`, `--version`.
-  - Supports streaming input from files or standard input (`-`).
-- Deploy `/bin/base32` across `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-- Register `base32` in `akash` shell Utilities list and `whatis` manual page index database.
-- Integrate `base32 /etc/motd` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.
-- Bump akaOS to 0.2.48 (XSCore kernel at 0.2.3).
-
-## 2026-11-04 (forty-first continuation) — Validate ARM and RISC-V Architectures
-
-- Run multi-architecture cross-compiler validation across ARM (AArch64, ARM32) and RISC-V (64-bit, 32-bit) architectures.
-- Verify 100% pass across all 6 ports in `tools/test-desktop-libc-cross-compile.sh` and `tools/build-arch-smoke.sh`.
-- Bump akaOS to 0.2.46.
-
-## 2026-11-04 (fortieth continuation) — Fix 32-bit (x86_32) userspace compilation
-
-- Relocate `__isoc23_strtold` to `malloc.c` to ensure long double compilation on i686.
-- Fix 32-bit pointer bounds check in `pthread.c`.
-- Build and verify 32-bit x86 userspace and kernel binaries.
-- Bump akaOS to 0.2.45.
-
-## 2026-11-04 (forty-first continuation) — Path Stripping Utility: basename
-
-- Implement native POSIX-compatible `/bin/basename` in `userspace/bin/basename/main.c`:
-  - Strips leading directory components from pathnames.
-  - Strips trailing suffix if specified and does not equal the full basename.
-  - Supports multiple arguments via `-a`, `--multiple`, suffix stripping via `-s SUFFIX`, `--suffix=SUFFIX`, and NUL line delimiter via `-z`, `--zero`.
-  - Handles edge cases: root directory (`/`, `///`), empty strings, trailing slashes.
-- Deploy `/bin/basename` across `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-- Register `basename` in `akash` shell Utilities list and `whatis` manual page index database.
-- Integrate `basename /usr/bin/sort` and `basename /usr/include/stdio.h .h` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.
-- Bump akaOS to 0.2.45 (XSCore kernel at 0.2.2).
-
-## 2026-11-04 (thirty-ninth continuation) — Embed EFI System Partition in Hybrid ISO
-
-- Add `-efi-boot-part --efi-boot-image` in `tools/build-bios.sh` to embed a valid GPT EFI System Partition directly into `akaos.iso`.
-- Fix VirtualBox and physical motherboard UEFI booting from ISO media.
-- Increment akaOS to 0.2.44.
-
-## 2026-11-03 (fortieth continuation) — Pattern Scanning and Processing Language: awk (gawk)
-
-- Implement native POSIX-compatible `/bin/awk` and `/bin/gawk` in `userspace/bin/awk/main.c`:
-  - Pattern and rule evaluation: supports `BEGIN`, `END`, regular expressions (`/pattern/`), relational/comparison expressions (`$1 == "val"`, `NF > 0`, `NR % 2 == 0`), and unconditional actions (`{ ... }`).
-  - Field and record splitting: parses `$0` through `$NF`, $(NF-n), with custom input field separator (`-F`, `--field-separator`, `FS`), record separator (`RS`), and output separators (`OFS`, `ORS`).
-  - Variables and expressions: supports built-ins (`NR`, `NF`, `FNR`, `FILENAME`, `FS`, `OFS`, `RS`, `ORS`), command-line assignment (`-v VAR=VAL`, `--assign`), arithmetic accumulators (`+=`, `++`), and built-in functions (`length()`).

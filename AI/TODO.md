@@ -1,3 +1,12 @@
+## 2026-11-08 continuation 70: Extreme Optimization, Cleanup & System Performance
+
+- [x] Global compilation & linker size optimization (-Os, -ffunction-sections, -fdata-sections, --gc-sections, -s).
+- [x] Fine-grained static archive linking (libc.a) across all architecture user builders.
+- [x] Kernel scheduler O(1) bitscan fast-path and removal of blocking serial I/O in yield path.
+- [x] Kernel physical memory allocator O(1) page allocation with hardware CTZ.
+- [x] Repository audit, purging of ephemeral one-off scripts, and .gitignore hardening.
+- [x] Dual semantic version bump: akaOS 0.3.15, XSCore 0.2.16 with synchronized README and PROGRESS badges.
+
 ## 2026-11-08 continuation 69: Loop Continuation Shell Builtin (continue)
 
 - [x] Implement and verify loop continuation builtin `continue`:
