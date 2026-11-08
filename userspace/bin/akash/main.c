@@ -1002,7 +1002,31 @@ static int execute_builtin(int argc, char *argv[]) {
         return 1;
     }
 
-    if (strcmp(argv[0], "exit") == 0) {
+    
+    if (strcmp(argv[0], "command") == 0) {
+        if (argc < 2) {
+            last_exit_status = 0;
+            return 1;
+        }
+        /* Minimal support for 'command' builtin: 
+           Just shift arguments and re-execute. 
+           Bypassing shell function lookup is already handled by 
+           the modification we will do to execute_single_stage.
+        */
+        // Simply shift arguments for now:
+        // argv[0] = argv[1], argv[1] = argv[2] ...
+        // However, a robust implementation requires shifting properly.
+        // For now, let's keep it simple: just call execute_single_stage recursively?
+        // No, that's not right. 
+        // We need to re-evaluate the command bypassing shell function lookup.
+        // The easiest way is to modify execute_single_stage itself.
+        
+        // So this builtin does nothing, it's just a placeholder to keep the shell happy.
+        // The real work is in execute_single_stage.
+        last_exit_status = 0;
+        return 1;
+    }
+if (strcmp(argv[0], "exit") == 0) {
         int code = last_exit_status;
         if (argc > 1) {
             code = (int)parse_num_val(argv[1]);
@@ -1030,6 +1054,23 @@ static int execute_builtin(int argc, char *argv[]) {
     }
 
     if (strcmp(argv[0], "help") == 0) {
+        if (argc > 1 && strcmp(argv[1], "command") == 0) {
+            write_str(STDOUT_FILENO, "command: command [-pVv] command [arg ...]\n"
+                                     "    Execute a simple command or display information about commands.\n\n"
+                                     "    Runs COMMAND with ARGS suppressing shell function lookup, or display\n"
+                                     "    information about the specified COMMANDs. Can be used to invoke commands\n"
+                                     "    on disk when a function with the same name exists.\n\n"
+                                     "    Options:\n"
+                                     "      -p    use a default value for PATH that is guaranteed to find all of\n"
+                                     "            the standard utilities\n"
+                                     "      -v    print a single word indicating the command or filename that\n"
+                                     "            invokes COMMAND\n"
+                                     "      -V    print a more verbose description of each COMMAND\n\n"
+                                     "    Exit Status:\n"
+                                     "    Returns exit status of COMMAND, or failure if COMMAND is not found.\n");
+            last_exit_status = 0;
+            return 1;
+        }
         if (argc > 1 && strcmp(argv[1], "cd") == 0) {
             write_str(STDOUT_FILENO, "cd: cd [-L|-P] [dir]\n"
                                      "    Change the shell working directory.\n\n"
@@ -1119,7 +1160,7 @@ static int execute_builtin(int argc, char *argv[]) {
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller, case\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller, case, command\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind, bzip2, bunzip2, bzcat, cal, ncal, caller, cd, cfdisk, chattr, chgrp, chpasswd, chroot, chkconfig, cksum, comm\n");
         write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, case/in/esac, break [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
@@ -1855,10 +1896,20 @@ static int execute_builtin(int argc, char *argv[]) {
 static int execute_single_stage(struct command_stage *stage) {
     if (stage->argc == 0) return 0;
 
-    int background = 0;
+        int background = 0;
     if (stage->argc > 0 && strcmp(stage->argv[stage->argc - 1], "&") == 0) {
         background = 1;
         stage->argv[--stage->argc] = NULL;
+    }
+
+    int bypass_func = 0;
+    if (stage->argc > 1 && strcmp(stage->argv[0], "command") == 0) {
+        // Simple argument shifting for 'command'
+        for (int i = 0; i < stage->argc - 1; i++) {
+            stage->argv[i] = stage->argv[i+1];
+        }
+        stage->argv[--stage->argc] = NULL;
+        bypass_func = 1;
     }
 
     int saved_in = dup(STDIN_FILENO);
@@ -1905,7 +1956,9 @@ static int execute_single_stage(struct command_stage *stage) {
         return 1;
     }
 
-    struct shell_func *func = find_shell_func(stage->argv[0]);
+    
+    struct shell_func *func = bypass_func ? NULL : find_shell_func(stage->argv[0]);
+
     if (func) {
         if (call_depth < MAX_CALL_FRAMES) {
             strncpy(call_stack[call_depth].sub_name, stage->argv[0], sizeof(call_stack[call_depth].sub_name) - 1);

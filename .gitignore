@@ -1,18 +1,53 @@
+# akaOS Build Outputs & Test Results
 /build/
 /.test-results/
-/AI/
-/.freebuff/
+/bin/
+*.img
+*.iso
+*.vdi
+*.qcow2
+*.ELF
+*.o
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# Python Cache & Bytecode
 __pycache__/
 *.py[cod]
+*$py.class
+*.pyc
+
+# Logs & Debugging Remnants
 *.log
+*.tmp
+*.bak
+*.orig
+*.rej
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Secrets & Environment Files
 .env
 .env.*
 *.key
 *.pem
+
+# AI Scratchpad / Internal Notes
+/AI/
+/.freebuff/
+
+# Host Environment & Accidental Artifacts
+%SystemDrive%/
 /Microsoft/
 =*
 
-# Upstream out-of-tree build remnants
+# Upstream Out-of-Tree Build Artifacts
 /applets/
 /data/
 /doc/
@@ -28,6 +63,3 @@ __pycache__/
 /config.h
 /Makefile
 /man/
-
-# Ignore accidental unexpanded Windows environment variable paths
-%SystemDrive%/

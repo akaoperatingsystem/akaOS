@@ -724,7 +724,51 @@ initramfs_files+=(
     "--file=/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
     "--file=/usr/local/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
     "--file=/usr/local/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
-    "--file=/usr/local/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
+    "--file=/usr/local/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    "--file=/bin/sway:$BUILD_DIR/SWAY.ELF:exec" 
+    "--file=/usr/local/bin/sway:$BUILD_DIR/SWAY.ELF:exec"
+    "--file=/bin/river:$BUILD_DIR/RIVER.ELF:exec" 
+    "--file=/usr/local/bin/river:$BUILD_DIR/RIVER.ELF:exec"
+    "--file=/bin/niri:$BUILD_DIR/NIRI.ELF:exec" 
+    "--file=/usr/local/bin/niri:$BUILD_DIR/NIRI.ELF:exec"
+    "--file=/bin/wayfire:$BUILD_DIR/WAYFIRE.ELF:exec" 
+    "--file=/usr/local/bin/wayfire:$BUILD_DIR/WAYFIRE.ELF:exec"
+    "--file=/bin/labwc:$BUILD_DIR/LABWC.ELF:exec" 
+    "--file=/usr/local/bin/labwc:$BUILD_DIR/LABWC.ELF:exec"
+    "--file=/bin/weston:$BUILD_DIR/WESTON.ELF:exec" 
+    "--file=/usr/local/bin/weston:$BUILD_DIR/WESTON.ELF:exec"
+    "--file=/bin/qtile:$BUILD_DIR/QTILE.ELF:exec" 
+    "--file=/usr/local/bin/qtile:$BUILD_DIR/QTILE.ELF:exec"
+    "--file=/bin/awesome:$BUILD_DIR/AWESOME.ELF:exec" 
+    "--file=/usr/local/bin/awesome:$BUILD_DIR/AWESOME.ELF:exec"
+    "--file=/bin/xmonad:$BUILD_DIR/XMONAD.ELF:exec" 
+    "--file=/usr/local/bin/xmonad:$BUILD_DIR/XMONAD.ELF:exec"
+    "--file=/bin/herbstluftwm:$BUILD_DIR/HERBSTLUFTWM.ELF:exec" 
+    "--file=/usr/local/bin/herbstluftwm:$BUILD_DIR/HERBSTLUFTWM.ELF:exec"
+    "--file=/bin/spectrwm:$BUILD_DIR/SPECTRWM.ELF:exec" 
+    "--file=/usr/local/bin/spectrwm:$BUILD_DIR/SPECTRWM.ELF:exec"
+    "--file=/bin/fluxbox:$BUILD_DIR/FLUXBOX.ELF:exec" 
+    "--file=/usr/local/bin/fluxbox:$BUILD_DIR/FLUXBOX.ELF:exec"
+    "--file=/bin/icewm:$BUILD_DIR/ICEWM.ELF:exec" 
+    "--file=/usr/local/bin/icewm:$BUILD_DIR/ICEWM.ELF:exec"
+    "--file=/bin/jwm:$BUILD_DIR/JWM.ELF:exec" 
+    "--file=/usr/local/bin/jwm:$BUILD_DIR/JWM.ELF:exec"
+    "--file=/bin/wmaker:$BUILD_DIR/WMAKER.ELF:exec" 
+    "--file=/usr/local/bin/wmaker:$BUILD_DIR/WMAKER.ELF:exec"
+    "--file=/bin/fvwm:$BUILD_DIR/FVWM.ELF:exec" 
+    "--file=/usr/local/bin/fvwm:$BUILD_DIR/FVWM.ELF:exec"
+    "--file=/bin/budgie:$BUILD_DIR/BUDGIE.ELF:exec" 
+    "--file=/usr/local/bin/budgie:$BUILD_DIR/BUDGIE.ELF:exec"
+    "--file=/bin/cosmic:$BUILD_DIR/COSMIC.ELF:exec" 
+    "--file=/usr/local/bin/cosmic:$BUILD_DIR/COSMIC.ELF:exec"
+    "--file=/bin/deepin:$BUILD_DIR/DEEPIN.ELF:exec" 
+    "--file=/usr/local/bin/deepin:$BUILD_DIR/DEEPIN.ELF:exec"
+    "--file=/bin/pantheon:$BUILD_DIR/PANTHEON.ELF:exec" 
+    "--file=/usr/local/bin/pantheon:$BUILD_DIR/PANTHEON.ELF:exec"
+    "--file=/bin/ukui:$BUILD_DIR/UKUI.ELF:exec" 
+    "--file=/usr/local/bin/ukui:$BUILD_DIR/UKUI.ELF:exec"
+    "--file=/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec" 
+    "--file=/usr/local/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec"
     "--file=/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"
     "--file=/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec"
     "--file=/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"
@@ -1397,20 +1441,3 @@ ld.lld -nostdlib -static -z max-page-size=0x1000 \
 # ------------------------------------------------------------------------- ISO
 echo "[BUILD] dual-firmware ISO"
 bash "$ROOT_DIR/tools/build-bios.sh" --no-build
-        " - - f i l e = / b i n / s w a y : $ B U I L D _ D I R / S W A Y . E L F : e x e c "   \  
-         " - - f i l e = / b i n / r i v e r : $ B U I L D _ D I R / R I V E R . E L F : e x e c "   \  
-         " - - f i l e = / b i n / n i r i : $ B U I L D _ D I R / N I R I . E L F : e x e c "   \  
-         " - - f i l e = / b i n / w a y f i r e : $ B U I L D _ D I R / W A Y F I R E . E L F : e x e c "   \  
-         " - - f i l e = / b i n / l a b w c : $ B U I L D _ D I R / L A B W C . E L F : e x e c "   \  
-         " - - f i l e = / b i n / w e s t o n : $ B U I L D _ D I R / W E S T O N . E L F : e x e c "   \  
-         " - - f i l e = / b i n / q t i l e : $ B U I L D _ D I R / Q T I L E . E L F : e x e c "   \  
-         " - - f i l e = / b i n / a w e s o m e : $ B U I L D _ D I R / A W E S O M E . E L F : e x e c "   \  
-         " - - f i l e = / b i n / x m o n a d : $ B U I L D _ D I R / X M O N A D . E L F : e x e c "   \  
-         " - - f i l e = / b i n / h e r b s t l u f t w m : $ B U I L D _ D I R / H E R B S T L U F T W M . E L F : e x e c "   \  
-         " - - f i l e = / b i n / s p e c t r w m : $ B U I L D _ D I R / S P E C T R W M . E L F : e x e c "   \  
-         " - - f i l e = / b i n / f l u x b o x : $ B U I L D _ D I R / F L U X B O X . E L F : e x e c "   \  
-         " - - f i l e = / b i n / i c e w m : $ B U I L D _ D I R / I C E W M . E L F : e x e c "   \  
-         " - - f i l e = / b i n / j w m : $ B U I L D _ D I R / J W M . E L F : e x e c "   \  
-         " - - f i l e = / b i n / w m a k e r : $ B U I L D _ D I R / W M A K E R . E L F : e x e c "   \  
-         " - - f i l e = / b i n / f v w m : $ B U I L D _ D I R / F V W M . E L F : e x e c "   \  
- 

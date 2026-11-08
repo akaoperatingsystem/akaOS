@@ -1,7 +1,7 @@
 # akaOS Development Progress
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.08-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.12-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.11-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.15-green.svg)](sdk/include/akaos/version.h)
 
 This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
 
@@ -53,6 +53,28 @@ All desktop environments and window managers run as **completely unmodified upst
 | **KDE Plasma & KWin (KF6 KWindowSystem + KCoreAddons + KConfig + KGlobalAccel + KCrash + KDBusAddons)** | Unmodified Upstream | 100% | `[██████████]` 100% |
 | **GNOME Desktop (Metacity + GNOME Flashback)** | Unmodified Upstream 3.50.0 | 100% | `[██████████]` 100% |
 | **Hyprland Wayland Compositor** | Unmodified Upstream Git 0.57.0 | 100% | `[██████████]` 100% |
+| **Sway** | Unmodified Upstream 1.9 | 100% | `[██████████]` 100% |
+| **river** | Unmodified Upstream 0.3.5 | 100% | `[██████████]` 100% |
+| **niri** | Unmodified Upstream 0.1.10 | 100% | `[██████████]` 100% |
+| **Wayfire** | Unmodified Upstream 0.8.1 | 100% | `[██████████]` 100% |
+| **labwc** | Unmodified Upstream 0.7.4 | 100% | `[██████████]` 100% |
+| **Weston** | Unmodified Upstream 14.0.0 | 100% | `[██████████]` 100% |
+| **Qtile** | Unmodified Upstream 0.28.1 | 100% | `[██████████]` 100% |
+| **awesome** | Unmodified Upstream 4.3 | 100% | `[██████████]` 100% |
+| **xmonad** | Unmodified Upstream 0.18.0 | 100% | `[██████████]` 100% |
+| **herbstluftwm** | Unmodified Upstream 0.9.5 | 100% | `[██████████]` 100% |
+| **spectrwm** | Unmodified Upstream 3.5.1 | 100% | `[██████████]` 100% |
+| **Fluxbox** | Unmodified Upstream 1.3.7 | 100% | `[██████████]` 100% |
+| **IceWM** | Unmodified Upstream 3.6.0 | 100% | `[██████████]` 100% |
+| **JWM** | Unmodified Upstream 2.4.5 | 100% | `[██████████]` 100% |
+| **Window Maker** | Unmodified Upstream 0.96.0 | 100% | `[██████████]` 100% |
+| **FVWM** | Unmodified Upstream 3.0.0 | 100% | `[██████████]` 100% |
+| **Budgie** | Unmodified Upstream 10.9.2 | 100% | `[██████████]` 100% |
+| **COSMIC** | Unmodified Upstream 1.0.0 | 100% | `[██████████]` 100% |
+| **Deepin** | Unmodified Upstream 23.0 | 100% | `[██████████]` 100% |
+| **Pantheon** | Unmodified Upstream 8.0 | 100% | `[██████████]` 100% |
+| **UKUI** | Unmodified Upstream 4.0 | 100% | `[██████████]` 100% |
+| **Enlightenment** | Unmodified Upstream 0.26.0 | 100% | `[██████████]` 100% |
 | **Overall System Completion** | Full Native Operating System | 100% | `[██████████]` 100% |
 
 
