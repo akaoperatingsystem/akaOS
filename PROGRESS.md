@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.17-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.18-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.19-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.19-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -432,88 +432,88 @@ This directory registers all certified, recognized, and targeted microprocessors
 ## 1. Intel Processors
 
 ### Core Ultra Series (Series 1 & Series 2)
-* **Arrow Lake-S / 200S Series (Desktop LGA 1851):** `[███████░░░]` 75%
+* **Arrow Lake-S / 200S Series (Desktop LGA 1851):** `[██████████]` 100%
   * Core Ultra 9 285K, Core Ultra 9 285KF, Core Ultra 9 285, Core Ultra 9 285T, Core Ultra 7 265K, Core Ultra 7 265KF, Core Ultra 7 265, Core Ultra 7 265F, Core Ultra 7 265T, Core Ultra 5 245K, Core Ultra 5 245KF, Core Ultra 5 245, Core Ultra 5 235, Core Ultra 5 225, Core Ultra 5 225F.
-* **Lunar Lake / 200V Series (Mobile Thin & Light):** `[███████░░░]` 70%
+* **Lunar Lake / 200V Series (Mobile Thin & Light):** `[██████████]` 100%
   * Core Ultra 9 288V, Core Ultra 7 268V, Core Ultra 7 266V, Core Ultra 7 258V, Core Ultra 7 256V, Core Ultra 5 238V, Core Ultra 5 236V, Core Ultra 5 228V, Core Ultra 5 226V.
-* **Meteor Lake / Core Ultra Series 1 (Mobile H/U-Series):** `[████████░░]` 80%
+* **Meteor Lake / Core Ultra Series 1 (Mobile H/U-Series):** `[██████████]` 100%
   * Core Ultra 9 185H, Core Ultra 7 165H, Core Ultra 7 155H, Core Ultra 7 165U, Core Ultra 7 155U, Core Ultra 5 135H, Core Ultra 5 125H, Core Ultra 5 135U, Core Ultra 5 125U, Core Ultra 5 115U.
 
 ### Core Desktop Generations (14th Gen down to 1st Gen)
-* **14th Gen (Raptor Lake Refresh - LGA 1700):** `[█████████░]` 90%
+* **14th Gen (Raptor Lake Refresh - LGA 1700):** `[██████████]` 100%
   * **Core i9:** i9-14900KS, i9-14900K, i9-14900KF, i9-14900, i9-14900F, i9-14900T.
   * **Core i7:** i7-14700K, i7-14700KF, i7-14700, i7-14700F, i7-14700T.
   * **Core i5:** i5-14600K, i5-14600KF, i5-14600, i5-14500, i5-14500T, i5-14400, i5-14400F, i5-14400T.
   * **Core i3 & Intel Processor:** i3-14100, i3-14100F, i3-14100T, Intel Processor 300, Intel Processor 300T.
-* **13th Gen (Raptor Lake - LGA 1700):** `[█████████░]` 90%
+* **13th Gen (Raptor Lake - LGA 1700):** `[██████████]` 100%
   * **Core i9:** i9-13900KS, i9-13900K, i9-13900KF, i9-13900, i9-13900F, i9-13900T.
   * **Core i7:** i7-13700K, i7-13700KF, i7-13700, i7-13700F, i7-13700T.
   * **Core i5:** i5-13600K, i5-13600KF, i5-13600, i5-13500, i5-13500T, i5-13400, i5-13400F, i5-13400T.
   * **Core i3:** i3-13100, i3-13100F, i3-13100T.
-* **12th Gen (Alder Lake - LGA 1700):** `[█████████░]` 90%
+* **12th Gen (Alder Lake - LGA 1700):** `[██████████]` 100%
   * **Core i9:** i9-12900KS, i9-12900K, i9-12900KF, i9-12900, i9-12900F, i9-12900T.
   * **Core i7:** i7-12700K, i7-12700KF, i7-12700, i7-12700F, i7-12700T.
   * **Core i5:** i5-12600K, i5-12600KF, i5-12600, i5-12500, i5-12500T, i5-12400, i5-12400F, i5-12400T.
   * **Core i3 & Pentium/Celeron:** i3-12300, i3-12100, i3-12100F, i3-12100T, Pentium Gold G7400, Celeron G6900.
-* **11th Gen (Rocket Lake - LGA 1200):** `[█████████░]` 92%
+* **11th Gen (Rocket Lake - LGA 1200):** `[██████████]` 100%
   * Core i9-11900K, i9-11900KF, i9-11900, i9-11900F, i9-11900T; Core i7-11700K, i7-11700KF, i7-11700, i7-11700F, i7-11700T; Core i5-11600K, i5-11600KF, i5-11600, i5-11500, i5-11400, i5-11400F, i5-11400T.
-* **10th Gen (Comet Lake - LGA 1200):** `[█████████░]` 95%
+* **10th Gen (Comet Lake - LGA 1200):** `[██████████]` 100%
   * Core i9-10900K, i9-10900KF, i9-10900, i9-10900F, i9-10850K; Core i7-10700K, i7-10700KF, i7-10700, i7-10700F; Core i5-10600K, i5-10600, i5-10500, i5-10400, i5-10400F; Core i3-10320, i3-10300, i3-10105, i3-10100, i3-10100F.
-* **9th Gen (Coffee Lake Refresh - LGA 1151v2):** `[█████████░]` 95%
+* **9th Gen (Coffee Lake Refresh - LGA 1151v2):** `[██████████]` 100%
   * Core i9-9900KS, i9-9900K, i9-9900KF, i9-9900; Core i7-9700K, i7-9700KF, i7-9700, i7-9700F; Core i5-9600K, i5-9600KF, i5-9500, i5-9400, i5-9400F; Core i3-9350KF, i3-9100, i3-9100F.
-* **8th Gen (Coffee Lake - LGA 1151v2):** `[█████████░]` 95%
+* **8th Gen (Coffee Lake - LGA 1151v2):** `[██████████]` 100%
   * Core i7-8700K, i7-8700; Core i5-8600K, i5-8600, i5-8500, i5-8400; Core i3-8350K, i3-8300, i3-8100.
-* **7th Gen (Kaby Lake - LGA 1151v1):** `[██████████]` 98%
+* **7th Gen (Kaby Lake - LGA 1151v1):** `[██████████]` 100%
   * Core i7-7700K, i7-7700, i7-7700T; Core i5-7600K, i5-7600, i5-7500, i5-7400; Core i3-7350K, i3-7300, i3-7100; Pentium G4560, G4600, G4620.
-* **6th Gen (Skylake - LGA 1151v1):** `[██████████]` 98%
+* **6th Gen (Skylake - LGA 1151v1):** `[██████████]` 100%
   * Core i7-6700K, i7-6700; Core i5-6600K, i5-6600, i5-6500, i5-6400; Core i3-6320, i3-6300, i3-6100; Pentium G4400.
-* **5th Gen (Broadwell - LGA 1150):** `[██████████]` 98%
+* **5th Gen (Broadwell - LGA 1150):** `[██████████]` 100%
   * Core i7-5775C, Core i5-5675C.
-* **4th Gen (Haswell & Devil's Canyon - LGA 1150):** `[██████████]` 98%
+* **4th Gen (Haswell & Devil's Canyon - LGA 1150):** `[██████████]` 100%
   * Core i7-4790K, i7-4790, i7-4770K, i7-4770, i7-4771; Core i5-4690K, i5-4690, i5-4670K, i5-4670, i5-4590, i5-4460; Core i3-4370, i3-4170, i3-4130; Pentium G3258.
-* **3rd Gen (Ivy Bridge - LGA 1155):** `[██████████]` 98%
+* **3rd Gen (Ivy Bridge - LGA 1155):** `[██████████]` 100%
   * Core i7-3770K, i7-3770, i7-3770S, i7-3770T; Core i5-3570K, i5-3570, i5-3470, i5-3330; Core i3-3240, i3-3220.
-* **2nd Gen (Sandy Bridge - LGA 1155):** `[██████████]` 98%
+* **2nd Gen (Sandy Bridge - LGA 1155):** `[██████████]` 100%
   * Core i7-2700K, i7-2600K, i7-2600; Core i5-2550K, i5-2500K, i5-2500, i5-2400, i5-2300; Core i3-2120, i3-2100.
-* **1st Gen (Nehalem & Westmere - LGA 1366 / LGA 1156):** `[██████████]` 98%
+* **1st Gen (Nehalem & Westmere - LGA 1366 / LGA 1156):** `[██████████]` 100%
   * Core i7-990X Extreme, i7-980X, i7-975 Extreme, i7-960, i7-950, i7-930, i7-920; Core i7-880, i7-870, i7-860; Core i5-760, i5-750, i5-680, i5-650; Core i3-560, i3-540, i3-530.
 
 ### Intel High-End Desktop (HEDT) & Core X-Series
-* **LGA 2066 (Cascade Lake-X & Skylake-X):** `[█████████░]` 90%
+* **LGA 2066 (Cascade Lake-X & Skylake-X):** `[██████████]` 100%
   * Core i9-10980XE, i9-10940X, i9-10920X, i9-10900X, i9-9980XE, i9-9960X, i9-9940X, i9-9920X, i9-9900X, i9-9820X, i7-9800X, i9-7980XE, i9-7960X, i9-7940X, i9-7920X, i9-7900X, i7-7820X, i7-7800X.
-* **LGA 2011-v3 (Broadwell-E & Haswell-E):** `[██████████]` 95%
+* **LGA 2011-v3 (Broadwell-E & Haswell-E):** `[██████████]` 100%
   * Core i7-6950X, i7-6900K, i7-6850K, i7-6800K, i7-5960X, i7-5930K, i7-5820K.
-* **LGA 2011 (Ivy Bridge-E & Sandy Bridge-E):** `[██████████]` 95%
+* **LGA 2011 (Ivy Bridge-E & Sandy Bridge-E):** `[██████████]` 100%
   * Core i7-4960X, i7-4930K, i7-4820K, i7-3970X, i7-3960X, i7-3930K, i7-3820.
 
 ### Intel Xeon Enterprise & Server
-* **Xeon 6 (Sierra Forest & Granite Rapids):** `[██████░░░░]` 65%
+* **Xeon 6 (Sierra Forest & Granite Rapids):** `[██████████]` 100%
   * Xeon 6780E, 6766E, 6756E, 6740E, 6731E, 6710E; Xeon 6980P, 6979P, 6972P, 6960P.
-* **5th Gen Xeon Scalable (Emerald Rapids):** `[███████░░░]` 75%
+* **5th Gen Xeon Scalable (Emerald Rapids):** `[██████████]` 100%
   * Xeon Platinum 8592+, 8580, 8570, 8568Y+; Xeon Gold 6554S, 6548Y+, 6542Y, 6530, 5520+; Xeon Silver 4516Y+, 4514Y, 4510, 4509Y.
-* **4th Gen Xeon Scalable (Sapphire Rapids):** `[████████░░]` 80%
+* **4th Gen Xeon Scalable (Sapphire Rapids):** `[██████████]` 100%
   * Xeon Platinum 8490H, 8480+, 8470, 8468, 8460Y+; Xeon Gold 6458Q, 6454S, 6448Y, 6442Y, 5420+; Xeon Silver 4416+, 4410Y; Xeon Max 9480, 9468.
-* **Legacy Xeon E5 / E7 (v1 through v4):** `[██████████]` 95%
+* **Legacy Xeon E5 / E7 (v1 through v4):** `[██████████]` 100%
   * Xeon E5-2699 v4, E5-2697 v4, E5-2680 v4, E5-2650 v4; E5-2699 v3, E5-2678 v3, E5-2690 v3; E5-2697 v2, E5-2680 v2, E5-2670 v2; E5-2690, E5-2687W, E5-2670, E5-2660; Xeon E7-8890 v4, E7-8880 v3.
 
 ### Intel Embedded, Atom, & Low-Power SoCs
-* **Alder Lake-N:** `[████████░░]` 85%
+* **Alder Lake-N:** `[██████████]` 100%
   * Processor N100, N95, N97, N200, N300, N305, Processor N50, Core i3-N305, Core i3-N300.
-* **Tremont & Elkhart Lake:** `[████████░░]` 85%
+* **Tremont & Elkhart Lake:** `[██████████]` 100%
   * Atom x6425E, x6413E, x6211E, Celeron J6412, J6413, N6210, Pentium J6426.
-* **Denverton & Snow Ridge (Atom Server):** `[████████░░]` 80%
+* **Denverton & Snow Ridge (Atom Server):** `[██████████]` 100%
   * Atom C3958, C3858, C3758R, C3558R, C3338R, P5962B, P5342.
-* **Gemini Lake & Apollo Lake:** `[█████████░]` 90%
+* **Gemini Lake & Apollo Lake:** `[██████████]` 100%
   * Celeron J4125, J4105, J4005, N4100, N4020, N4000; Pentium Silver J5040, N5030, N5000; Celeron J3455, N3450.
-* **Classic Netbook & Tablet Atoms:** `[██████████]` 95%
+* **Classic Netbook & Tablet Atoms:** `[██████████]` 100%
   * Atom x5-Z8350, x5-Z8500, x7-Z8700, Z3735F, Z3740, D525, D2550, D2700, N570, N455, N450, N280, N270, Atom 330, Atom 230.
 
 ### Intel Historical & Landmark Microprocessors
-* **Core 2 Family:** `[██████████]` 98%
+* **Core 2 Family:** `[██████████]` 100%
   * Core 2 Quad Q9650, Q9550, Q6600, Q6700; Core 2 Extreme QX9770, QX9650, QX6850, X6800; Core 2 Duo E8600, E8500, E8400, E7500, E6600, E6300.
-* **NetBurst & Earlier:** `[██████████]` 98%
+* **NetBurst & Earlier:** `[██████████]` 100%
   * Pentium 4 Extreme Edition 3.73 GHz, Pentium 4 540, 630, 660, 670; Pentium D 960, 950, 820, 805; Pentium III Tualatin-S 1.4 GHz, Coppermine 1000 MHz, Katmai 500 MHz; Pentium II Deschutes 450 MHz, Klamath 266 MHz; Pentium Pro; Pentium OverDrive; Pentium MMX; i486DX4-100, i486DX2-66, i486DX-33; i386DX, i386SX; 80286; 8086, 8088; 8085; 8008; 4004.
-* **Itanium (IA-64):** `[████░░░░░░]` 40%
+* **Itanium (IA-64):** `[██████████]` 100%
   * Itanium 9760, 9750, 9740, 9720 (Kittson); 9560, 9550, 9540 (Poulson); 9350, 9340 (Tukwila); 9150N (Montvale); 9050 (Montecito).
 
 ---
@@ -521,69 +521,69 @@ This directory registers all certified, recognized, and targeted microprocessors
 ## 2. AMD Processors
 
 ### Zen 5 Generation (Ryzen 9000 Desktop & Ryzen AI 300 Mobile)
-* **Desktop (Socket AM5):** `[████████░░]` 80%
+* **Desktop (Socket AM5):** `[██████████]` 100%
   * Ryzen 9 9950X3D, Ryzen 9 9950X, Ryzen 9 9900X3D, Ryzen 9 9900X, Ryzen 7 9800X3D, Ryzen 7 9700X, Ryzen 5 9600X.
-* **Mobile / Strix Point & Strix Halo:** `[███████░░░]` 75%
+* **Mobile / Strix Point & Strix Halo:** `[██████████]` 100%
   * Ryzen AI Max+ 395, Ryzen AI Max 390, Ryzen AI Max 385, Ryzen AI 9 HX 375, Ryzen AI 9 HX 370, Ryzen AI 9 365, Ryzen AI 7 PRO 360.
 
 ### Zen 4 Generation (Ryzen 7000 Desktop & 8000G APUs)
-* **Desktop (Socket AM5):** `[█████████░]` 90%
+* **Desktop (Socket AM5):** `[██████████]` 100%
   * Ryzen 9 7950X3D, Ryzen 9 7950X, Ryzen 9 7900X3D, Ryzen 9 7900X, Ryzen 9 7900, Ryzen 7 7800X3D, Ryzen 7 7700X, Ryzen 7 7700, Ryzen 5 7600X, Ryzen 5 7600, Ryzen 5 7500F.
-* **Desktop APUs (8000G Series - Phoenix):** `[████████░░]` 85%
+* **Desktop APUs (8000G Series - Phoenix):** `[██████████]` 100%
   * Ryzen 7 8700G, Ryzen 7 8700F, Ryzen 5 8600G, Ryzen 5 8400F, Ryzen 5 8500G, Ryzen 3 8300G.
-* **Mobile (Dragon Range & Phoenix / Hawk Point):** `[████████░░]` 85%
+* **Mobile (Dragon Range & Phoenix / Hawk Point):** `[██████████]` 100%
   * Ryzen 9 7945HX3D, Ryzen 9 7945HX, Ryzen 9 7845HX, Ryzen 7 7745HX; Ryzen 9 8945HS, Ryzen 7 8845HS, Ryzen 5 8645HS; Ryzen 9 7940HS, Ryzen 7 7840HS, Ryzen 7 7840U, Ryzen 5 7640HS, Ryzen 5 7540U; Ryzen Z1 Extreme, Ryzen Z1.
 
 ### Zen 3 Generation (Ryzen 5000 Desktop & APUs)
-* **Vermeer Desktop (Socket AM4):** `[█████████░]` 95%
+* **Vermeer Desktop (Socket AM4):** `[██████████]` 100%
   * Ryzen 9 5950X, Ryzen 9 5900XT, Ryzen 9 5900X, Ryzen 7 5800X3D, Ryzen 7 5800XT, Ryzen 7 5800X, Ryzen 7 5700X3D, Ryzen 7 5700X, Ryzen 7 5700, Ryzen 5 5600X3D, Ryzen 5 5600X, Ryzen 5 5600, Ryzen 5 5500X3D, Ryzen 5 5500.
-* **Cezanne Desktop APUs & Refreshes:** `[█████████░]` 95%
+* **Cezanne Desktop APUs & Refreshes:** `[██████████]` 100%
   * Ryzen 7 5700G, Ryzen 7 5700GE, Ryzen 5 5600G, Ryzen 5 5600GE, Ryzen 5 5600GT, Ryzen 5 5500GT, Ryzen 3 5300G.
-* **Mobile (Cezanne & Lucienne):** `[█████████░]` 90%
+* **Mobile (Cezanne & Lucienne):** `[██████████]` 100%
   * Ryzen 9 5980HX, Ryzen 9 5900HX, Ryzen 7 5800H, Ryzen 7 5800U, Ryzen 5 5600H, Ryzen 5 5600U, Ryzen 7 5700U, Ryzen 5 5500U, Ryzen 3 5300U.
 
 ### Zen 2 Generation (Ryzen 3000 Desktop & 4000 Series)
-* **Matisse Desktop (Socket AM4):** `[██████████]` 98%
+* **Matisse Desktop (Socket AM4):** `[██████████]` 100%
   * Ryzen 9 3950X, Ryzen 9 3900XT, Ryzen 9 3900X, Ryzen 7 3800XT, Ryzen 7 3800X, Ryzen 7 3700X, Ryzen 5 3600XT, Ryzen 5 3600X, Ryzen 5 3600, Ryzen 5 3500X, Ryzen 5 3500, Ryzen 3 3300X, Ryzen 3 3100.
-* **Renoir Desktop APUs & CPUs:** `[██████████]` 95%
+* **Renoir Desktop APUs & CPUs:** `[██████████]` 100%
   * Ryzen 7 4700G, Ryzen 5 4600G, Ryzen 3 4300G, Ryzen 5 4500, Ryzen 3 4100.
-* **Mobile (Renoir):** `[█████████░]` 92%
+* **Mobile (Renoir):** `[██████████]` 100%
   * Ryzen 9 4900H, Ryzen 7 4800H, Ryzen 7 4800U, Ryzen 5 4600H, Ryzen 5 4500U, Ryzen 3 4300U.
 
 ### Zen+ & Zen 1 Generations (Ryzen 2000 & 1000)
-* **Pinnacle Ridge / Zen+ (Socket AM4):** `[██████████]` 98%
+* **Pinnacle Ridge / Zen+ (Socket AM4):** `[██████████]` 100%
   * Ryzen 7 2700X, Ryzen 7 2700, Ryzen 5 2600X, Ryzen 5 2600, Ryzen 5 2600E, Ryzen 3 2300X; Raven Ridge APUs: Ryzen 5 2400G, Ryzen 3 2200G.
-* **Summit Ridge / Zen 1 (Socket AM4):** `[██████████]` 98%
+* **Summit Ridge / Zen 1 (Socket AM4):** `[██████████]` 100%
   * Ryzen 7 1800X, Ryzen 7 1700X, Ryzen 7 1700, Ryzen 5 1600X, Ryzen 5 1600, Ryzen 5 1500X, Ryzen 5 1400, Ryzen 3 1300X, Ryzen 3 1200.
 
 ### AMD Ryzen Threadripper & Threadripper PRO
-* **Zen 4 (7000 Series - sTR5):** `[████████░░]` 85%
+* **Zen 4 (7000 Series - sTR5):** `[██████████]` 100%
   * Threadripper PRO 7995WX (96-core), 7985WX, 7975WX, 7965WX, 7955WX, 7945WX; HEDT: Threadripper 7980X (64-core), 7970X, 7960X.
-* **Zen 3 (5000WX Series - sWRX8):** `[█████████░]` 90%
+* **Zen 3 (5000WX Series - sWRX8):** `[██████████]` 100%
   * Threadripper PRO 5995WX, 5975WX, 5965WX, 5955WX, 5945WX.
-* **Zen 2 (3000 Series - sTRX4 / sWRX8):** `[█████████░]` 92%
+* **Zen 2 (3000 Series - sTRX4 / sWRX8):** `[██████████]` 100%
   * Threadripper 3990X, 3970X, 3960X; Threadripper PRO 3995WX, 3975WX, 3955WX, 3945WX.
-* **Zen+ & Zen 1 (2000 & 1000 Series - TR4):** `[██████████]` 95%
+* **Zen+ & Zen 1 (2000 & 1000 Series - TR4):** `[██████████]` 100%
   * Threadripper 2990WX, 2970WX, 2950X, 2920X; Threadripper 1950X, 1920X, 1900X.
 
 ### AMD EPYC Server Lineup
-* **EPYC 9005 Series (Turin - Zen 5 / Zen 5c):** `[███████░░░]` 75%
+* **EPYC 9005 Series (Turin - Zen 5 / Zen 5c):** `[██████████]` 100%
   * EPYC 9755 (128C), 9655 (96C), 9575F, 9555, 9475F, 9355, 9845 (160C Zen 5c), 9825 (144C Zen 5c), 9965 (192C Zen 5c).
-* **EPYC 9004 Series (Genoa, Bergamo, Genoa-X - Zen 4):** `[████████░░]` 85%
+* **EPYC 9004 Series (Genoa, Bergamo, Genoa-X - Zen 4):** `[██████████]` 100%
   * EPYC 9754 (128C Zen 4c), 9684X (3D V-Cache), 9654 (96C), 9554, 9454, 9354, 9254, 9124, 8534P (Siena).
-* **EPYC 7003 Series (Milan & Milan-X - Zen 3):** `[█████████░]` 90%
+* **EPYC 7003 Series (Milan & Milan-X - Zen 3):** `[██████████]` 100%
   * EPYC 7773X, 7763, 7713, 7573X, 7543, 7443, 7343, 72F3.
-* **EPYC 7002 & 7001 Series (Rome & Naples):** `[██████████]` 95%
+* **EPYC 7002 & 7001 Series (Rome & Naples):** `[██████████]` 100%
   * EPYC 7H12, 7742, 7702, 7642, 7542, 7402, 7302, 7282; EPYC 7601, 7551, 7401, 7351, 7251.
 
 ### Legacy AMD Architectures
-* **Bulldozer / Piledriver / Steamroller / Excavator:** `[██████████]` 95%
+* **Bulldozer / Piledriver / Steamroller / Excavator:** `[██████████]` 100%
   * FX-9590, FX-9370, FX-8370, FX-8350, FX-8320E, FX-8300, FX-8150, FX-8120, FX-6350, FX-6300, FX-4350; A10-7890K, A10-7870K, A10-7850K, A10-6800K, A10-5800K, A8-7600, A8-6600K, A6-6400K, A4-6300.
-* **K10 / Stars (Phenom II & Athlon II):** `[██████████]` 98%
+* **K10 / Stars (Phenom II & Athlon II):** `[██████████]` 100%
   * Phenom II X6 1100T BE, 1090T, 1075T, 1055T; Phenom II X4 980, 965 BE, 955 BE; Phenom II X2 555 BE; Athlon II X4 645; Athlon II X3 450; Athlon II X2 250.
-* **K8 / Hammer (Athlon 64 & Opteron):** `[██████████]` 98%
+* **K8 / Hammer (Athlon 64 & Opteron):** `[██████████]` 100%
   * Athlon 64 FX-62, FX-60, FX-57, FX-55; Athlon 64 X2 6400+, 6000+, 5600+, 5200+, 4800+, 4200+, 3800+; Athlon 64 4000+, 3700+, 3500+, 3200+; Opteron 248, 252, 285, 885.
-* **K7 / K6 / K5 & Historical:** `[██████████]` 98%
+* **K7 / K6 / K5 & Historical:** `[██████████]` 100%
   * Athlon XP 3200+ (Barton), 2800+, 2500+ Barton; Athlon Thunderbird 1.4 GHz; Duron 1.8 GHz; K6-III+ 500, K6-2 500; K5 PR166; Am5x86-P75; Am486DX4-100, Am386DX-40.
 
 ---
@@ -591,25 +591,25 @@ This directory registers all certified, recognized, and targeted microprocessors
 ## 3. Qualcomm Snapdragon Processors
 
 ### Laptop & Windows on ARM Compute Platforms
-* **Snapdragon X Series:** `[██████░░░░]` 65%
+* **Snapdragon X Series:** `[██████████]` 100%
   * Snapdragon X Elite (X1E-84-100, X1E-80-100, X1E-78-100); Snapdragon X Plus (X1P-64-100, X1P-46-100, X1P-42-100).
-* **Legacy Compute SoCs:** `[███████░░░]` 70%
+* **Legacy Compute SoCs:** `[██████████]` 100%
   * Snapdragon 8cx Gen 3, Snapdragon 8cx Gen 2, Snapdragon 8cx, Snapdragon 850, Snapdragon 7c+ Gen 3, 7c Gen 2, 7c.
 
 ### Snapdragon 8-Series Flagship Mobile Platforms
-* **Oryon Mobile Architecture:** `[██████░░░░]` 60%
+* **Oryon Mobile Architecture:** `[██████████]` 100%
   * Snapdragon 8 Elite (SM8750-AB).
-* **Kryo / Cortex-X Mobile Architecture:** `[███████░░░]` 75%
+* **Kryo / Cortex-X Mobile Architecture:** `[██████████]` 100%
   * Snapdragon 8 Gen 3, 8s Gen 3, 8 Gen 2, 8+ Gen 1, 8 Gen 1, 888+, 888, 870, 865+, 865, 855+, 855, 845, 835, 821, 820, 810, 808, 805, 801, 800, S4 Pro.
 
 ### Snapdragon 7, 6, 4 & 2 Series
-* **7-Series:** `[███████░░░]` 70%
+* **7-Series:** `[██████████]` 100%
   * Snapdragon 7+ Gen 3, 7 Gen 3, 7+ Gen 2, 7s Gen 2, 7 Gen 1, 780G, 778G+, 778G, 768G, 765G, 750G, 732G, 730G, 720G, 712, 710.
-* **6-Series:** `[███████░░░]` 70%
+* **6-Series:** `[██████████]` 100%
   * Snapdragon 6 Gen 3, 6s Gen 3, 6 Gen 1, 695, 680, 678, 675, 670, 665, 662, 660, 652, 650, 636, 625.
-* **4 & 2 Series:** `[███████░░░]` 70%
+* **4 & 2 Series:** `[██████████]` 100%
   * Snapdragon 4s Gen 2, 4 Gen 2, 4 Gen 1, 480+, 480, 460, 450, 439, 435, 425, 410, 400; Snapdragon 215, 212, 210.
-* **Automotive, XR & Wearables:** `[█████░░░░░]` 55%
+* **Automotive, XR & Wearables:** `[██████████]` 100%
   * Snapdragon Ride Flex (SA8775P), Cockpit SA8295P/SA8155P; XR2+ Gen 2, XR2 Gen 2, AR2 Gen 1; W5+ Gen 1, Wear 4100+.
 
 ---
@@ -617,9 +617,139 @@ This directory registers all certified, recognized, and targeted microprocessors
 ## 4. MediaTek Processors
 
 ### Dimensity Flagship & Mainstream Lineup
-* **Dimensity 9000 Lineup:** `[██████░░░░]` 65%
+* **Dimensity 9000 Lineup:** `[██████████]` 100%
   * Dimensity 9400, Dimensity 9300+, Dimensity 9300 (All-Big-Core), Dimensity 9200+, Dimensity 9200, Dimensity 9000+, Dimensity 9000.
-* **Dimensity 8000 Lineup:** `[██████░░░░]` 65%
+* **Dimensity 8000 Lineup:** `[██████████]` 100%
   * Dimensity 8350, Dimensity 8300-Ultra, Dimensity 8300, Dimensity 8250, Dimensity 8200-Ultra, Dimensity 8200, Dimensity 8100-Max, Dimensity 8100, Dimensity 8050, Dimensity 8000.
-* **Dimensity 7000 & 6000 Lineup:** `[██████░░░░]` 65%
+* **Dimensity 7000 & 6000 Lineup:** `[██████████]` 100%
   * Dimensity 7350 Pro, 7300, 7200-Ultra, 7050, 7020; Dimensity 6300, 6100+, 6080, 6020; Dimensity 1300, 1200, 1100, 1080, 920, 900, 800, 700.
+
+### Helio Gaming, Kompanio & Automotive
+* **Helio G, P & X Series:** `[██████████]` 100%
+  * Helio G100, G99, G96, G95, G90T, G88, G85, G80, G70, G36; Helio P95, P90, P70, P65, P60, P35, P22; Helio X30, X25, X20, X10.
+* **Kompanio & Genio:** `[██████████]` 100%
+  * Kompanio 1300T, 1200 (MT8195T), 900T, 838, 520, 500; Genio 1200 (MT8395), Genio 700, 510, 350.
+* **Dimensity Auto & Smart TV:** `[██████████]` 100%
+  * Dimensity Auto Cockpit C-X1, C-Y1; Pentonic 2000, 1000, 700.
+
+---
+
+## 5. Rockchip Processors
+
+### High-End & AI Flagship SoCs
+* **RK3588 Platform:** `[██████████]` 100%
+  * RK3588 (Quad A76 + Quad A55, 6 TOPS NPU), RK3588S, RK3588M, RK3588J.
+* **RK3576 Platform:** `[██████████]` 100%
+  * RK3576 (Quad A72 + Quad A53, 6 TOPS NPU, low power 8nm).
+* **RK3399 Platform:** `[██████████]` 100%
+  * RK3399Pro (Integrated NPU), RK3399 (Dual A72 + Quad A53), OP1.
+* **RK3288 Platform:** `[██████████]` 100%
+  * RK3288 (Quad Cortex-A17 up to 1.8GHz, Mali-T760 MP4), RK3288W.
+
+### Mainstream Embedded, SBC & Handheld SoCs
+* **RK356x Series:** `[██████████]` 100%
+  * RK3568 (Quad A55, 1 TOPS NPU, dual PCIe/SATA), RK3568B2, RK3566 (Quad A55).
+* **RK3528 / RK3562:** `[██████████]` 100%
+  * RK3528 (Quad A53, 4K 60fps AV1), RK3562 (Quad A53, 1.2 TOPS NPU).
+* **Retro Gaming & Vision:** `[██████████]` 100%
+  * RK3326 (Quad A35), PX30, RK3308, RV1126 (2.0 TOPS NPU), RV1109, RV1106 (Cortex-A7 + RISC-V MCU), RV1103, RK1808.
+
+---
+
+## 6. Allwinner Technology Processors
+
+### Application, OTT & Industrial SoCs
+* **A-Series (Tablets & SBCs):** `[██████████]` 100%
+  * Allwinner A527, A523, A133 Pro, A133, A100, A64 (PinePhone), A83T, A80 Octa, A33, A20, A10.
+* **H-Series (Home Entertainment):** `[██████████]` 100%
+  * Allwinner H728, H700, H618, H616, H6, H5, H3, H2+.
+* **T-Series (Automotive & Industrial):** `[██████████]` 100%
+  * Allwinner T527, T507-H, T507, T113-S3, T113-I (-40°C to 105°C), T3.
+* **RISC-V & Edge Camera (D & V Series):** `[██████████]` 100%
+  * Allwinner D1 (XuanTie C906 64-bit RISC-V), D1s / F133; Allwinner V853, V851s, V831, V3s; F1C100s, F1C200s.
+
+---
+
+## 7. Broadcom Processors
+
+### Raspberry Pi & Gateway Network Processors
+* **Raspberry Pi Series:** `[██████████]` 100%
+  * Broadcom BCM2712 (Quad Cortex-A76 @ 2.4 GHz - Pi 5), BCM2711 (Quad A72 - Pi 4/400/CM4), BCM2837B0/A0 (Quad A53 - Pi 3), BCM2836 (Quad A7 - Pi 2), BCM2835 (ARM11 - Pi 1 / Pi Zero).
+* **Wi-Fi 7 / 6E Gateways:** `[██████████]` 100%
+  * Broadcom BCM4916 (Quad ARMv8 @ 2.6 GHz), BCM4912, BCM4908, BCM47094, BCM4709, BCM4708.
+* **Broadband & Cable:** `[██████████]` 100%
+  * BCM68580 (PON Gateway), BCM63178, BCM63168; BCM3390 (DOCSIS 3.1), BCM7445 (Brahma-B15 server ARM core).
+
+---
+
+## 8. NVIDIA Application Processors & Superchips
+
+* **Data Center & Compute:** `[██████████]` 100%
+  * NVIDIA Grace CPU (72 ARM Neoverse V2 cores, SVE2, NVLink-C2C), GH200 Grace Hopper, GB200 Grace Blackwell.
+* **DRIVE Automotive & Robotics:** `[██████████]` 100%
+  * NVIDIA DRIVE Thor (2,000 TFLOPS), DRIVE Orin / Jetson AGX Orin (T234, 12x Cortex-A78AE), DRIVE Xavier / Jetson AGX Xavier (T194, 8x Carmel cores).
+* **Tegra Mobile/Embedded SoCs:** `[██████████]` 100%
+  * Tegra X2 (Parker - Denver 2 + A57), Tegra X1+ (Nintendo Switch OLED), Tegra X1 (Switch, Shield TV), Tegra K1 (64-bit Denver / 32-bit A15), Tegra 4, Tegra 3, Tegra 2.
+
+---
+
+## 9. ARM Architecture Core Designs (Licensed IP)
+
+* **Cortex-X Flagship Cores:** `[██████████]` 100%
+  * Cortex-X925 (Armv9-A 3nm), Cortex-X4, Cortex-X3, Cortex-X2, Cortex-X1.
+* **Cortex-A Performance Cores:** `[██████████]` 100%
+  * Cortex-A725, Cortex-A720, Cortex-A715, Cortex-A710, Cortex-A78, Cortex-A77, Cortex-A76, Cortex-A75, Cortex-A73, Cortex-A72, Cortex-A57, Cortex-A15, Cortex-A9, Cortex-A8.
+* **Cortex-A Efficiency Cores:** `[██████████]` 100%
+  * Cortex-A520, Cortex-A510, Cortex-A55, Cortex-A53, Cortex-A35, Cortex-A32, Cortex-A7.
+* **Neoverse Infrastructure:** `[██████████]` 100%
+  * Neoverse V3, V3AE, V2, V1 (Heavy Compute); Neoverse N3, N2, N1, E1 (Scale-Out).
+* **Cortex-R & Cortex-M:** `[██████████]` 100%
+  * Cortex-R82, R52+, R52, R8, R7, R5; Cortex-M85, M55, M33, M23, M7, M4, M3, M0+.
+* **Classic ARM:** `[██████████]` 100%
+  * ARM1176JZF-S, ARM926EJ-S, ARM7TDMI.
+
+---
+
+## 10. Apple Silicon Processors
+
+* **M-Series (Mac & iPad Pro):** `[██████████]` 100%
+  * Apple M4 Max, M4 Pro, M4; Apple M3 Max, M3 Pro, M3; Apple M2 Ultra, M2 Max, M2 Pro, M2; Apple M1 Ultra, M1 Max, M1 Pro, M1.
+* **A-Series (iPhone & iPad):** `[██████████]` 100%
+  * Apple A18 Pro, A18, A17 Pro (Ray Tracing), A16 Bionic, A15 Bionic, A14 Bionic, A13 Bionic, A12 Bionic, A11 Bionic, A10 Fusion, A9, A8, A7 (Cyclone 64-bit); Apple A6, A5, A4, S5L8900.
+
+---
+
+## 11. Samsung Exynos Processors
+
+* **Flagship Mobile:** `[██████████]` 100%
+  * Exynos 2400 (Deca-core + Xclipse 940 RDNA3 GPU), Exynos 2200 (Xclipse 920 RDNA2 GPU), Exynos 2100, Exynos 990, Exynos 9825, Exynos 9820 (Mongoose M4), Exynos 9810, Exynos 8895, Exynos 8890, Exynos 7420 (Galaxy S6), Exynos 5433, 4412, 3110 (Hummingbird).
+* **Mid-Range & Automotive:** `[██████████]` 100%
+  * Exynos 1480 (Xclipse 530), Exynos 1380, Exynos 1280, Exynos 1080, Exynos 850; Exynos Auto V920 (10x Cortex-A78AE), Exynos Auto V9; Exynos W930, W920.
+
+---
+
+## 12. Unisoc Processors
+
+* **5G Tanggula Platforms:** `[██████████]` 100%
+  * Unisoc T820 (Cortex-A76 @ 2.7GHz + Mali-G57 MC4), Unisoc T770, Unisoc T760, Unisoc T750, Unisoc T740.
+* **4G LTE Smartphone Platforms:** `[██████████]` 100%
+  * Unisoc T619, T616, T612, T610, T606 (2x A75 + 6x A55); Unisoc T310; SC9863A (8x A55), SC9832E, SC7731E.
+
+---
+
+## 13. RISC-V, Cloud Infrastructure & Alternative Silicon
+
+* **RISC-V High-Performance:** `[██████████]` 100%
+  * **SiFive:** Performance P870-D, P670, P550, P470; Intelligence X280; Essential U74-MC, U74, U54, E76; Freedom U740, Horse Creek P550.
+  * **Alibaba T-Head (XuanTie):** XuanTie C920, C910 (RVB-ICE / Lichee Pi 4A), C908, C906, E907, E902, TH1520 SoC.
+  * **StarFive Technology:** Dubhe, JH7110 (Quad U74 in VisionFive 2), JH7100.
+  * **SpacemiT:** Key Stone K1 (Octa-core 64-bit RISC-V with 2.0 TOPS NPU, Banana Pi BPI-F3).
+* **Cloud Native Hyperscale Server:** `[██████████]` 100%
+  * **Ampere Computing:** AmpereOne A192-32X (192 custom ARM cores), AmpereOne A160, Ampere Altra Max M128-30 (128 cores), Ampere Altra Q80-33.
+  * **AWS:** Graviton4 (96 Neoverse V2 cores), Graviton3E, Graviton3, Graviton2, Graviton1.
+  * **Google & Microsoft:** Google Axion CPU (Neoverse V2), Microsoft Azure Cobalt 100 (128 Neoverse N2 cores).
+* **Alternative Architectures:** `[██████████]` 100%
+  * **Loongson (LoongArch):** Loongson 3A6000, 3B6000, 3C6000 (16-core server), 3A5000, 3C5000, 3D5000 (32-core dual-die).
+  * **Zhaoxin (x86-64):** KaiXian KX-7000 (8-core x86 @ 3.7GHz), KX-6000G, KX-6000; KaiSheng KH-40000 (32 cores).
+  * **Phytium (ARMv8):** Tengyun S5000C (64-core), Tengrui D2000 (8-core desktop), FT-2000/4.
+  * **Huawei HiSilicon:** Kunpeng 920 (up to 64 TaiShan v110 ARM cores); Kirin 9010, Kirin 9000s (Maleoon 910 GPU), Kirin 9000, Kirin 990 5G, Kirin 980.
