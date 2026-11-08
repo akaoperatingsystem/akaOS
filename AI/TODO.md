@@ -1,3 +1,12 @@
+## 2026-11-08 continuation 72: Universal CPU Architecture & Hardware Model Support (FINALIZATION)
+
+- [x] Implement x86 CPUID Leaf 7 extended feature flags (AVX2, AVX-512, AMX, SHA, BMI, ERMS).
+- [x] Implement AArch64 MIDR_EL1 hardware model decoding (Cortex-A/X, Neoverse, Oryon, Apple Silicon, Broadcom).
+- [x] Implement ARM32 CP15 MIDR decoding for Cortex-A7/A8/A9/A15.
+- [x] Implement RISC-V ISA extensions and platform brand formatting.
+- [x] Update PROGRESS.md CPU hardware readiness matrix across all 13 vendor families to 100%.
+- [x] Bump akaOS to 0.3.17, XSCore to 0.2.18; sync badges.
+
 ## 2026-11-08 continuation 72: Universal CPU Architecture & Hardware Model Support
 
 - [x] Implement x86 CPUID Leaf 7 extended feature flags (AVX2, AVX-512, AMX, SHA, BMI, ERMS).

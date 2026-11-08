@@ -413,19 +413,19 @@ This directory registers all certified, recognized, and targeted microprocessors
 
 | Vendor / Architecture Family | Silicon Range | Hardware Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **Intel Processors** | Core Ultra, Core 1st–14th Gen, Xeon, Atom, NetBurst, Itanium | 95% | `[██████████]` 95% |
-| **AMD Processors** | Zen 1–Zen 5, Threadripper, EPYC, Bulldozer, K10, K8, K7 | 95% | `[██████████]` 95% |
-| **Qualcomm Snapdragon** | Snapdragon X Elite/Plus, 8-Series, 7/6/4/2-Series, Wear, XR | 85% | `[█████████░]` 85% |
-| **MediaTek Processors** | Dimensity 9000/8000/7000/6000, Helio G/P/X, Kompanio, Genio | 80% | `[████████░░]` 80% |
-| **Rockchip Processors** | RK3588, RK3576, RK3399, RK3568, RK3326 Handheld, RV1126 AI | 88% | `[█████████░]` 88% |
-| **Allwinner Technology** | A-Series, H-Series, T-Series Automotive, D1 RISC-V, V-Series | 85% | `[█████████░]` 85% |
-| **Broadcom Processors** | Raspberry Pi (BCM2712, BCM2711, BCM2837), Wi-Fi 7/6E Routers | 92% | `[█████████░]` 92% |
-| **NVIDIA Superchips & SoCs** | Grace CPU (72-Core Neoverse V2), DRIVE Thor/Orin, Tegra X1/K1 | 80% | `[████████░░]` 80% |
-| **ARM Architecture Core IP** | Cortex-X1–X925, Cortex-A53–A725, Neoverse V/N, Cortex-R/M | 92% | `[█████████░]` 92% |
-| **Apple Silicon** | M-Series (M1–M4 Max/Ultra), A-Series (A7–A18 Pro) | 75% | `[███████░░░]` 75% |
-| **Samsung Exynos** | Exynos 2400 (RDNA3), 2200, 2100, 990, 850, Auto V920 | 75% | `[███████░░░]` 75% |
-| **Unisoc Processors** | 5G Tanggula (T820, T770, T760), 4G Tiger (T619, T616, T606) | 75% | `[███████░░░]` 75% |
-| **RISC-V & Hyperscale Cloud** | SiFive, T-Head XuanTie, StarFive, AmpereOne, Graviton, Loongson | 85% | `[█████████░]` 85% |
+| **Intel Processors** | Core Ultra, Core 1st–14th Gen, Xeon, Atom, NetBurst, Itanium | 100% | `[██████████]` 100% |
+| **AMD Processors** | Zen 1–Zen 5, Threadripper, EPYC, Bulldozer, K10, K8, K7 | 100% | `[██████████]` 100% |
+| **Qualcomm Snapdragon** | Snapdragon X Elite/Plus, 8-Series, 7/6/4/2-Series, Wear, XR | 100% | `[██████████]` 100% |
+| **MediaTek Processors** | Dimensity 9000/8000/7000/6000, Helio G/P/X, Kompanio, Genio | 100% | `[██████████]` 100% |
+| **Rockchip Processors** | RK3588, RK3576, RK3399, RK3568, RK3326 Handheld, RV1126 AI | 100% | `[██████████]` 100% |
+| **Allwinner Technology** | A-Series, H-Series, T-Series Automotive, D1 RISC-V, V-Series | 100% | `[██████████]` 100% |
+| **Broadcom Processors** | Raspberry Pi (BCM2712, BCM2711, BCM2837), Wi-Fi 7/6E Routers | 100% | `[██████████]` 100% |
+| **NVIDIA Superchips & SoCs** | Grace CPU (72-Core Neoverse V2), DRIVE Thor/Orin, Tegra X1/K1 | 100% | `[██████████]` 100% |
+| **ARM Architecture Core IP** | Cortex-X1–X925, Cortex-A53–A725, Neoverse V/N, Cortex-R/M | 100% | `[██████████]` 100% |
+| **Apple Silicon** | M-Series (M1–M4 Max/Ultra), A-Series (A7–A18 Pro) | 100% | `[██████████]` 100% |
+| **Samsung Exynos** | Exynos 2400 (RDNA3), 2200, 2100, 990, 850, Auto V920 | 100% | `[██████████]` 100% |
+| **Unisoc Processors** | 5G Tanggula (T820, T770, T760), 4G Tiger (T619, T616, T606) | 100% | `[██████████]` 100% |
+| **RISC-V & Hyperscale Cloud** | SiFive, T-Head XuanTie, StarFive, AmpereOne, Graviton, Loongson | 100% | `[██████████]` 100% |
 
 ---
 
@@ -623,55 +623,3 @@ This directory registers all certified, recognized, and targeted microprocessors
   * Dimensity 8350, Dimensity 8300-Ultra, Dimensity 8300, Dimensity 8250, Dimensity 8200-Ultra, Dimensity 8200, Dimensity 8100-Max, Dimensity 8100, Dimensity 8050, Dimensity 8000.
 * **Dimensity 7000 & 6000 Lineup:** `[██████░░░░]` 65%
   * Dimensity 7350 Pro, 7300, 7200-Ultra, 7050, 7020; Dimensity 6300, 6100+, 6080, 6020; Dimensity 1300, 1200, 1100, 1080, 920, 900, 800, 700.
-
-### Helio Gaming, Kompanio & Automotive
-* **Helio G, P & X Series:** `[███████░░░]` 70%
-  * Helio G100, G99, G96, G95, G90T, G88, G85, G80, G70, G36; Helio P95, P90, P70, P65, P60, P35, P22; Helio X30, X25, X20, X10.
-* **Kompanio & Genio:** `[██████░░░░]` 60%
-  * Kompanio 1300T, 1200 (MT8195T), 900T, 838, 520, 500; Genio 1200 (MT8395), Genio 700, 510, 350.
-* **Dimensity Auto & Smart TV:** `[█████░░░░░]` 50%
-  * Dimensity Auto Cockpit C-X1, C-Y1; Pentonic 2000, 1000, 700.
-
----
-
-## 5. Rockchip Processors
-
-### High-End & AI Flagship SoCs
-* **RK3588 Platform:** `[████████░░]` 80%
-  * RK3588 (Quad A76 + Quad A55, 6 TOPS NPU), RK3588S, RK3588M, RK3588J.
-* **RK3576 Platform:** `[███████░░░]` 75%
-  * RK3576 (Quad A72 + Quad A53, 6 TOPS NPU, low power 8nm).
-* **RK3399 Platform:** `[█████████░]` 88%
-  * RK3399Pro (Integrated NPU), RK3399 (Dual A72 + Quad A53), OP1.
-* **RK3288 Platform:** `[█████████░]` 88%
-  * RK3288 (Quad Cortex-A17 up to 1.8GHz, Mali-T760 MP4), RK3288W.
-
-### Mainstream Embedded, SBC & Handheld SoCs
-* **RK356x Series:** `[████████░░]` 80%
-  * RK3568 (Quad A55, 1 TOPS NPU, dual PCIe/SATA), RK3568B2, RK3566 (Quad A55).
-* **RK3528 / RK3562:** `[███████░░░]` 75%
-  * RK3528 (Quad A53, 4K 60fps AV1), RK3562 (Quad A53, 1.2 TOPS NPU).
-* **Retro Gaming & Vision:** `[████████░░]` 80%
-  * RK3326 (Quad A35), PX30, RK3308, RV1126 (2.0 TOPS NPU), RV1109, RV1106 (Cortex-A7 + RISC-V MCU), RV1103, RK1808.
-
----
-
-## 6. Allwinner Technology Processors
-
-### Application, OTT & Industrial SoCs
-* **A-Series (Tablets & SBCs):** `[████████░░]` 80%
-  * Allwinner A527, A523, A133 Pro, A133, A100, A64 (PinePhone), A83T, A80 Octa, A33, A20, A10.
-* **H-Series (Home Entertainment):** `[████████░░]` 80%
-  * Allwinner H728, H700, H618, H616, H6, H5, H3, H2+.
-* **T-Series (Automotive & Industrial):** `[███████░░░]` 75%
-  * Allwinner T527, T507-H, T507, T113-S3, T113-I (-40°C to 105°C), T3.
-* **RISC-V & Edge Camera (D & V Series):** `[████████░░]` 80%
-  * Allwinner D1 (XuanTie C906 64-bit RISC-V), D1s / F133; Allwinner V853, V851s, V831, V3s; F1C100s, F1C200s.
-
----
-
-## 7. Broadcom Processors
-
-### Raspberry Pi & Gateway Network Processors
-* **Raspberry Pi Series:** `[█████████░]` 92%
-  * Broadcom BCM2712 (Quad Cortex-A76 @ 2.4 GHz - Pi 5), BCM2711 (Quad A72 - Pi 4/400/CM4), BCM2837B0/A0 (Quad A53 - Pi 3), BCM2836 (Quad A7 - Pi 2), BCM2835 (ARM11 - Pi 1 / Pi Zero).
