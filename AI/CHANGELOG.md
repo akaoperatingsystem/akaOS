@@ -1,3 +1,15 @@
+## 2026-11-08 (seventy-first continuation) — Ultra-Low RAM Optimization (64MB, 32MB & 16MB Targets)
+
+- **Dynamic Memory Scaling**:
+  - Dynamically scale Page Cache capacity based on total physical RAM.
+  - Scale physical page refcount table slots based on total physical RAM.
+  - Adapt kernel heap initial pre-allocation for low-RAM environments.
+  - Adapt `init` service manager to defer daemons when RAM <= 32MB.
+- **Userspace Upgrades**:
+  - Full `coreutils`-compatible `cp` implementation.
+- **Version Bump**:
+  - akaOS 0.3.16, XSCore 0.2.17.
+
 ## 2026-11-08 (seventieth continuation) — Extreme Optimization, Cleanup & System Performance
 
 - System-wide performance and size optimization:
@@ -676,12 +688,3 @@
   - `<iconv.h>`: `iconv_open()`, `iconv()`, `iconv_close()` supporting UTF-8, UCS-2BE, and ASCII encodings.
   - `<fcntl.h>`: `posix_fallocate()` backed by `ftruncate()`.
   - `<stdlib.h>`: `mkdtemp()` directory generation.
-  - `<unistd.h>`: `confstr()` (`_CS_PATH`), `_SC_PHYS_PAGES`, and `_SC_AVPHYS_PAGES`.
-  - `<sys/socket.h>`: `SO_ACCEPTCONN` option.
-  - `<sys/wait.h>`: `wait()`, `wait3()`, `wait4()`.
-  - `<signal.h>`: `killpg()` with kernel process group signaling for negative PID in `sys_kill`.
-  - `<math.h>`: `lround()`, `lroundf()`, `lroundl()`, `llround()`, `llroundf()`, `llroundl()` in `libm.so.6`.
-- Re-build Cairo 1.18.6 with both `xcb` and `png` backends enabled, restoring `cairo_surface_write_to_png_stream`.
-- Stage i3 suite and XCB libraries in `tools/rebuild-xserver-image.sh` and add automated startup validation in `tools/test-desktop.sh` and `tools/test-upstream-wm.sh`.
-- Verified all 16 desktop processes running concurrently in QEMU guest (`test-upstream-wm.sh` 100% PASS with Openbox, LXPanel, PCManFM, XFWM4, XFCE Panel, XFCE Session, Marco, MATE Panel, MATE Session, Muffin, and i3).
-- Bump akaOS to 0.2.48, XSCore kernel to 0.2.3.

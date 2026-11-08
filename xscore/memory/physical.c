@@ -78,13 +78,13 @@ static void reserve_range(uint64_t start, uint64_t end) {
 
 int xscore_pmm_init_direct(uint64_t memory_bytes, uint64_t reserved_end) {
     pmm_locked = 1;
-    refcount_initialize();
     for (size_t index = 0; index < BITMAP_WORD_COUNT; ++index) {
         allocation_bitmap[index] = UINT64_MAX;
     }
     managed_page_count = memory_bytes / PAGE_SIZE;
     if (managed_page_count > MAX_PAGE_COUNT) managed_page_count = MAX_PAGE_COUNT;
     if (managed_page_count == 0) return 0;
+    refcount_initialize();
     free_page_count = 0;
     next_search_page = LOW_MEMORY_RESERVATION / PAGE_SIZE;
 
@@ -101,7 +101,6 @@ int xscore_pmm_initialize(const struct akaos_boot_info *boot_info,
     if (!boot_info || !stats || boot_info->memory_descriptor_size < sizeof(struct efi_memory_descriptor)) return 0;
 
     pmm_locked = 1;
-    refcount_initialize();
 
     uint64_t highest_address = 0;
     uint64_t conventional_page_count = 0;
@@ -120,6 +119,7 @@ int xscore_pmm_initialize(const struct akaos_boot_info *boot_info,
     if (highest_address > MAX_PHYSICAL_MEMORY) highest_address = MAX_PHYSICAL_MEMORY;
     managed_page_count = highest_address / PAGE_SIZE;
     if (managed_page_count == 0) return 0;
+    refcount_initialize();
 
     for (uint64_t word = 0; word < BITMAP_WORD_COUNT; ++word) allocation_bitmap[word] = UINT64_MAX;
     free_page_count = 0;
@@ -163,21 +163,32 @@ struct page_ref_entry {
 
 static struct page_ref_entry page_ref_table[REFCOUNT_TABLE_SLOTS];
 
+static uint32_t get_effective_refcount_slots(void) {
+    uint64_t pages = managed_page_count;
+    if (pages == 0) return 4096U;
+    if (pages <= 4096U) return 4096U;       /* <= 16 MB RAM: 4096 slots (64 KB) */
+    if (pages <= 8192U) return 8192U;       /* <= 32 MB RAM: 8192 slots (128 KB) */
+    if (pages <= 16384U) return 16384U;     /* <= 64 MB RAM: 16384 slots (256 KB) */
+    return REFCOUNT_TABLE_SLOTS;            /* > 64 MB RAM: 131072 slots */
+}
+
 static void refcount_initialize(void) {
-    for (uint32_t index = 0; index < REFCOUNT_TABLE_SLOTS; ++index) {
+    uint32_t limit = get_effective_refcount_slots();
+    for (uint32_t index = 0; index < limit; ++index) {
         page_ref_table[index].page = UINT64_MAX;
         page_ref_table[index].count = 0;
     }
 }
 
 static struct page_ref_entry *refcount_entry(uint64_t page, int create) {
+    uint32_t slots = get_effective_refcount_slots();
     uint32_t start = (uint32_t)((page * UINT64_C(11400714819323198485)) /
-                                (UINT64_MAX / REFCOUNT_TABLE_SLOTS + 1));
-    start %= REFCOUNT_TABLE_SLOTS;
+                                (UINT64_MAX / slots + 1));
+    start %= slots;
     struct page_ref_entry *reusable = 0;
-    for (uint32_t step = 0; step < REFCOUNT_TABLE_SLOTS; ++step) {
+    for (uint32_t step = 0; step < slots; ++step) {
         struct page_ref_entry *entry =
-            &page_ref_table[(start + step) % REFCOUNT_TABLE_SLOTS];
+            &page_ref_table[(start + step) % slots];
         if (entry->page == page) return entry;
         if (entry->count == 0 && !reusable) reusable = entry;
         if (entry->page == UINT64_MAX) {

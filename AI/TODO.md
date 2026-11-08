@@ -1,3 +1,13 @@
+## 2026-11-08 continuation 71: Ultra-Low RAM Optimization
+
+- [x] Dynamically scale kernel Page Cache capacity (2048 -> 128 entries).
+- [x] Dynamically scale Refcount Table slots (131K -> 4K slots).
+- [x] Adapt initial kernel heap reservation (1MB -> 32KB/64KB).
+- [x] Implement RAM-aware `init` service deferral (DBus daemons).
+- [x] Upgrade `cp` utility for improved capability.
+- [x] Bump akaOS 0.3.16, XSCore 0.2.17; sync badges.
+
+
 ## 2026-11-08 continuation 70: Extreme Optimization, Cleanup & System Performance
 
 - [x] Global compilation & linker size optimization (-Os, -ffunction-sections, -fdata-sections, --gc-sections, -s).

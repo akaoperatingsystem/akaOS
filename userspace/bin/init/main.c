@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <fcntl.h>
 
 static int write_str(int fd, const char *str) {
     size_t len = strlen(str);
@@ -25,20 +26,47 @@ int main(int argc, char **argv) {
     (void)chown("/home/user", 1000, 1000);
     (void)chmod("/home/user", 0755);
 
-    /* Keep the system bus available to every login session.  The daemon does
-     * not read the controlling TTY and its network waits yield through the
-     * native scheduler ABI, so this cannot steal console input. */
-    char system_bus_path[20] = "/bin/dbus-daemon";
-    char system_bus_mode[10] = "--system";
-    char *system_bus_argv[3] = {system_bus_path, system_bus_mode, NULL};
-    if (spawn(system_bus_path, system_bus_argv) < 0) {
-        write_str(STDERR_FILENO, "init: unable to start system D-Bus bus\n");
+    /* Detect available RAM from /proc/meminfo. On <= 32MB boots, defer background
+     * daemons to preserve maximum resident memory for login and shell utilities. */
+    int low_ram_mode = 0;
+    int mem_fd = open("/proc/meminfo", 0 /* O_RDONLY */);
+    if (mem_fd >= 0) {
+        char mbuf[256];
+        ssize_t mn = read(mem_fd, mbuf, sizeof(mbuf) - 1);
+        close(mem_fd);
+        if (mn > 0) {
+            mbuf[mn] = '\0';
+            const char *mp = strstr(mbuf, "MemTotal:");
+            if (mp) {
+                mp += 9;
+                while (*mp == ' ' || *mp == '\t') mp++;
+                unsigned long kb = 0;
+                while (*mp >= '0' && *mp <= '9') {
+                    kb = kb * 10 + (*mp - '0');
+                    mp++;
+                }
+                if (kb > 0 && kb <= 32768) {
+                    low_ram_mode = 1;
+                }
+            }
+        }
     }
 
-    char session_bus_mode[10] = "--session";
-    char *session_bus_argv[3] = {system_bus_path, session_bus_mode, NULL};
-    if (spawn(system_bus_path, session_bus_argv) < 0) {
-        write_str(STDERR_FILENO, "init: unable to start session D-Bus bus\n");
+    char system_bus_path[20] = "/bin/dbus-daemon";
+    if (!low_ram_mode) {
+        char system_bus_mode[10] = "--system";
+        char *system_bus_argv[3] = {system_bus_path, system_bus_mode, NULL};
+        if (spawn(system_bus_path, system_bus_argv) < 0) {
+            write_str(STDERR_FILENO, "init: unable to start system D-Bus bus\n");
+        }
+
+        char session_bus_mode[10] = "--session";
+        char *session_bus_argv[3] = {system_bus_path, session_bus_mode, NULL};
+        if (spawn(system_bus_path, session_bus_argv) < 0) {
+            write_str(STDERR_FILENO, "init: unable to start session D-Bus bus\n");
+        }
+    } else {
+        write_str(STDOUT_FILENO, "init: low-RAM mode active (<= 32MB detected): deferring background daemons\n");
     }
 
     char login_path[16] = "/bin/login";

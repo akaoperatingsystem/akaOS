@@ -1,3 +1,15 @@
+## Latest continuation — 2026-11-08, Ultra-Low RAM Optimization (64MB, 32MB & 16MB Targets)
+
+- **Dynamic Kernel Memory Scaling**:
+  - **Page Cache (`xscore/kernel/page_cache.c`)**: Implemented dynamic capacity scaling based on detected `managed_page_count`. Scaled cache from 2048 entries (>64MB) down to 128 entries (<=16MB), freeing ~7.5MB RAM on low-memory boots.
+  - **Physical Refcount Table (`xscore/memory/physical.c`)**: Implemented dynamic slot scaling (`get_effective_refcount_slots()`). Refcount table now initializes and probes only active slots (4K–16K) instead of a fixed 131K-slot table, dramatically reducing kernel BSS overhead and boot time.
+  - **Kernel Heap (`xscore/memory/heap.c`)**: Introduced adaptive initial heap sizing (`compute_initial_heap_pages()`), reducing initial pre-committed heap from 1MB to 32KB–128KB on low-RAM boots.
+- **Userspace Memory Optimization**:
+  - **Init System (`userspace/bin/init/main.c`)**: Integrated `/proc/meminfo` detection. Now defers background `dbus-daemon` service launches on systems <= 32MB RAM, preserving memory for shell and core utilities.
+  - **Coreutils Upgrade (`userspace/bin/cp/main.c`)**: Replaced basic `cp` with a full-featured GNU-compatible implementation (supporting `-a`, `-b`, `-u`, `-p`, `--sparse`), optimized with stack-based buffering.
+- **Versioning & Documentation**:
+  - Bumped akaOS to 0.3.16, XSCore to 0.2.17 with synchronized badges.
+
 ## Latest continuation — 2026-11-08, Extreme Optimization, Cleanup & System Performance
 
 - **Extreme Optimization & Codebase Sanitation**:
@@ -594,19 +606,3 @@
 ## Latest continuation — 2026-11-04, Fixed 32-bit x86 Kernel Paging and User-Resume Segment Restoration
 
 - 32-bit (x86_32) Runtime Exception #13 Fix:
-  - Error: During user-mode process fork tests (Process 6), CPU took vector 13 (General Protection Fault, #GP) when accessing thread stacks in user address space.
-  - Root Cause 1: In `xscore_vmm_address_space_create` and `xscore_vmm_address_space_sync_kernel` in `xscore/arch/x86_32/paging.c`, directory entries for thread stacks (`0x20000000`, within the first 1 GB kernel space) were being skipped if marked with `PAGE_USER`. Updated the loop to unconditionally share all kernel directory entries where `t < KERNEL_SHARED_TABLES`.
-  - Root Cause 2: In `xscore_user_resume` in `xscore/arch/x86_32/entry.S`, user data segments (`DS`, `ES`, `FS`) were not restored with user data selector `0x23` before returning to Ring 3 via `iret`, causing #GP on data memory access.
-  - Root Cause 3: In `xscore_32_trap_handler` in `xscore/arch/x86_32/tables.c`, kernel stack pointer normalization was improved to cleanly handle user-space exceptions.
-  - Rebuilt `build/akaos32.iso` and verified `build/XSCORE32.ELF`.
-- Bumped akaOS to 0.2.47 (XSCore kernel at 0.2.3).
-
-## Latest continuation — 2026-11-04, GNU Bourne-Again SHell Compatibility (bash, sh, rbash)
-
-- Extended native shell in `userspace/bin/akash/main.c` and added `userspace/bin/bash/main.c`:
-  - Complete command line option processing: `-c string` (with `$0`, `$1` positional parameters), `-s`, `-i`, `-l` / `--login`, `-r` / `--restricted`, `--posix`, `--verbose`, `--version`, `--help`.
-  - Startup initialization: evaluations of `/etc/profile`, `~/.bash_profile`, `~/.profile`, `~/.bashrc`, controlled by `--noprofile`, `--norc`, and `--rcfile`.
-  - Restricted shell enforcement: `cd` restriction and protection of `SHELL`, `PATH`, `ENV`, `BASH_ENV`.
-- Deployed as `/bin/bash`, `/bin/sh`, `/bin/rbash` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-- Registered in `akash` Utilities catalog and `whatis` database.
-- Integrated `/bin/bash -c "echo BASH_OK"` into kernel self-test in `xscore/kernel/user.c` and `test.sh`.

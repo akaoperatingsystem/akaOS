@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.15-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.16-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.16-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.17-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -57,6 +57,18 @@
 | **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX pthread_atfork Canonical Guards | 90% | `[█████████░]` 90% |
 | **Networking Stack** | VirtIO-Net, Linux netdevice/sk_buff bridge, IPv4/ARP/UDP/TCP Sockets | 95% | `[█████████░]` 95% |
 | **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 85% | `[█████████░]` 85% |
+
+---
+
+## Memory Scaling & Low-RAM Compatibility
+
+akaOS features adaptive kernel and userspace memory scaling, dynamically sizing page caches, refcount hash tables, initial heap reservations, and background daemon lifecycles based on detected physical RAM at boot (`E820` / `EFI` / Device Tree memory maps).
+
+| Memory Target | Configuration & Optimization Scope | Verified Operational | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- | :--- |
+| **64MB RAM Target** | 512-Page Cache (2MB), 16K Refcount Slots, 32-Page Initial Heap, Full Desktop / Tiling WM Support | Verified (i386 & x86_64 QEMU) | 100% | `[██████████]` 100% |
+| **32MB RAM Target** | 256-Page Cache (1MB), 8K Refcount Slots, 16-Page Initial Heap, Deferred Background Daemons, Interactive Shell | Verified (i386 & x86_64 QEMU) | 100% | `[██████████]` 100% |
+| **16MB RAM Target** | 128-Page Cache (512KB), 4K Refcount Slots, 8-Page Initial Heap, Zero-Copy Initramfs Exec, Ultra-Lean Shell | Verified (i386 QEMU & v86 Web) | 100% | `[██████████]` 100% |
 
 ---
 

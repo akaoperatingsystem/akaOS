@@ -106,13 +106,26 @@ static int grow_heap(uint64_t minimum_payload) {
     return 1;
 }
 
+static uint64_t compute_initial_heap_pages(void) {
+    uint64_t total = xscore_pmm_total_page_count();
+    if (total != 0 && total <= 4096U) return 8U;      /* <= 16 MB RAM: 8 pages (32 KB initial) */
+    if (total != 0 && total <= 8192U) return 16U;     /* <= 32 MB RAM: 16 pages (64 KB initial) */
+    if (total != 0 && total <= 16384U) return 32U;    /* <= 64 MB RAM: 32 pages (128 KB initial) */
+#if defined(__x86_64__)
+    return 128U;                                      /* > 64 MB RAM: 128 pages (512 KB initial) */
+#else
+    return HEAP_GROWTH_PAGES;
+#endif
+}
+
 int xscore_heap_initialize(void) {
     heap_locked = 1;
     first_block = 0;
     mapped_bytes = 0;
     allocated_bytes = 0;
     allocation_count = 0;
-    return grow_heap(HEAP_INITIAL_PAGES * PAGE_SIZE - sizeof(struct heap_block));
+    uint64_t init_pages = compute_initial_heap_pages();
+    return grow_heap(init_pages * PAGE_SIZE - sizeof(struct heap_block));
 }
 
 void *xscore_heap_allocate(size_t requested_size) {

@@ -1624,7 +1624,7 @@ static int load_elf_image(struct xscore_process *process, const uint8_t *image,
                 auxiliary_metadata.program_header = load_base + segment->vaddr +
                     (header->phoff - segment->offset);
             }
-            if (segment->type == ELF_PT_INTERP) return 0;
+            if (segment->type == ELF_PT_INTERP) { xscore_serial_write("[FAIL] PT_INTERP\n"); return 0; }
             if (segment->type == ELF_PT_DYNAMIC) {
                 if (!dynamic_image || !parse_dynamic_segment32(
                         image, image_size, segment, &dynamic_metadata)) return 0;
@@ -1641,7 +1641,7 @@ static int load_elf_image(struct xscore_process *process, const uint8_t *image,
             uint64_t segment_end = (segment->vaddr + segment->memsz + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
             uint64_t signal_start = load_base ? USER_SIGNAL_TRAMPOLINE_OFFSET :
                                                 USER_SIGNAL_TRAMPOLINE_ADDRESS;
-            if (signal_start >= segment_start && signal_start < segment_end) return 0;
+            if (signal_start >= segment_start && signal_start < segment_end) { xscore_serial_write("[FAIL] signal_start overlap\n"); return 0; }
 
             uint64_t flags = 0;
             if (segment->flags & ELF_PF_W) flags |= XSCORE_PAGE_WRITABLE;
