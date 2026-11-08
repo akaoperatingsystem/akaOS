@@ -684,6 +684,57 @@ ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-lumen-main.o" \
     -o "$BUILD_DIR/LUMEN.ELF"
 
+echo "[BUILD] user aurora desktop"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"\$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/aurora/main.c" -o "$BUILD_DIR/user-aurora-main.o"
+ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-aurora-main.o" \
+    -o "$BUILD_DIR/AURORA.ELF"
+
+echo "[BUILD] user desktop launcher"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"\$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/desktop/main.c" -o "$BUILD_DIR/user-desktop-main.o"
+ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-desktop-main.o" \
+    -o "$BUILD_DIR/DESKTOP.ELF"
+
+echo "[BUILD] user desktop applications (notepad, taskmgr)"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"\$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/notepad/main.c" -o "$BUILD_DIR/user-notepad-main.o"
+ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-notepad-main.o" \
+    -o "$BUILD_DIR/NOTEPAD.ELF"
+
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"\$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/taskmgr/main.c" -o "$BUILD_DIR/user-taskmgr-main.o"
+ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-taskmgr-main.o" \
+    -o "$BUILD_DIR/TASKMGR.ELF"
+
 echo "[BUILD] user desktop-compat"
 clang --target=x86_64-unknown-none-elf \
     -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
@@ -720,6 +771,11 @@ ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
 
 initramfs_files+=(
     "--file=/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec"
+    "--file=/bin/aurora:$BUILD_DIR/AURORA.ELF:exec"
+    "--file=/bin/desktop:$BUILD_DIR/DESKTOP.ELF:exec"
+    "--file=/bin/notepad:$BUILD_DIR/NOTEPAD.ELF:exec"
+    "--file=/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec"
+    "--file=/etc/aurora-apps:$ROOT_DIR/userspace/etc/aurora-apps:0644"
     "--file=/bin/desktop-compat:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
     "--file=/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
     "--file=/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
