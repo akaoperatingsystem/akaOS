@@ -1,3 +1,15 @@
+## 2026-11-08 (seventy-seventh continuation) — Time & Date Utility: date
+
+- Implement native `/bin/date` in `userspace/bin/date/main.c`:
+  - Supports display and setting of the system time (`--set`, `-s`).
+  - Implements full GNU/POSIX formatting directives (`+FORMAT`) based on standard `strftime` logic, including GNU extensions like `-` and `_` padding modifiers.
+  - Supports `--date=STRING` (ISO/RFC strings, relative times like "yesterday", "next Fri", etc.) and `--reference=FILE` for timestamp retrieval.
+  - Supports UTC mode (`-u, --utc`), ISO 8601 (`-I`), and RFC 3339/RFC 5322 output modes.
+  - Staged across build scripts (`build.sh`, `tools/rebuild-xserver-image.sh`, `tools/make_userspace_builders.py`).
+  - Registered `date (1)` in `whatis` manual index database.
+  - Added kernel self-test verification in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.24, XSCore kernel at 0.2.22.
+
 ## 2026-11-08 (seventy-sixth continuation) — Column Division Utility: cut (Full Options & Output Delimiter)
 
 - Upgrade native `/bin/cut` in `userspace/bin/cut/main.c` with complete standard GNU/POSIX option suite:

@@ -677,6 +677,13 @@ int xscore_user_process_self_test(void) {
     if (!p_cut_delim || !xscore_process_wait(p_cut_delim, &cut_delim_status) || cut_delim_status != 0 || !xscore_process_reap(p_cut_delim)) return 0;
     xscore_serial_write("[INFO] Column division utility cut verified\n");
 
+    /* Verify date and time utility date */
+    const char *date_args[] = {"/bin/date", "+%Y-%m-%d", 0};
+    struct xscore_process *p_date = xscore_process_create_path_args("/bin/date", 3, date_args);
+    uint64_t date_status = UINT64_MAX;
+    if (!p_date || !xscore_process_wait(p_date, &date_status) || date_status != 0 || !xscore_process_reap(p_date)) return 0;
+    xscore_serial_write("[INFO] Date and time utility date verified\n");
+
     const char *df_args[] = {"/bin/df", "-h", 0};
     struct xscore_process *p_df = xscore_process_create_path_args("/bin/df", 2, df_args);
     uint64_t df_status = UINT64_MAX;

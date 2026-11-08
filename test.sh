@@ -206,6 +206,7 @@ grep -Fq "[INFO] Stream utilities find/sort/uniq/test/[ and akash scripting engi
 grep -Fq "[INFO] SSH suite and akaos-config daemon integration verified" "$TEST_LOG"
 grep -Fq "[INFO] Scripting & admin utilities sleep/which/env/cut/tr/df/du verified" "$TEST_LOG"
 grep -Fq "[INFO] Column division utility cut verified" "$TEST_LOG"
+grep -Fq "[INFO] Date and time utility date verified" "$TEST_LOG"
 grep -Fq "[INFO] System & process control suite kill/pkill/uptime/free/watch verified" "$TEST_LOG"
 grep -Fq "[INFO] Unix text transformation & diff suite sed/diff/cmp/patch verified" "$TEST_LOG"
 grep -Fq "[INFO] Archiving & compression suite tar/gzip/gunzip verified" "$TEST_LOG"

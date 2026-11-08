@@ -1,3 +1,9 @@
+## 2026-11-08 continuation 77: Time & Date Utility (date)
+
+- [x] Implement and verify complete option suite for `date`:
+      - Full options: `-d`, `-f`, `-I`, `-r`, `-R`, `--rfc-3339`, `-s`, `-u`.
+      - Tested in `xscore/kernel/user.c` (`date +%Y-%m-%d`) and verified in automated QEMU boot test.
+
 ## 2026-11-08 continuation 76: Column Division Utility (cut)
 
 - [x] Implement and verify complete option suite for `cut`:

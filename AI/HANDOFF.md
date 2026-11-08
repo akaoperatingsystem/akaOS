@@ -1,3 +1,10 @@
+## Latest continuation — 2026-11-08, Time & Date Utility (date)
+
+- Implemented `date` in `userspace/bin/date/main.c`:
+  - Full support for date display/formatting, system clock setting (`-s`), parsing relative date strings (`-d`), ISO/RFC formatting, and reference file timestamps (`-r`).
+  - Verified `/bin/date` self-test invocation in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.24 (XSCore kernel at 0.2.22).
+
 ## Latest continuation — 2026-11-08, Column Division Utility (cut)
 
 - Upgraded `cut` in `userspace/bin/cut/main.c` with full options suite:
