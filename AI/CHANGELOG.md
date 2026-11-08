@@ -1,3 +1,13 @@
+## 2026-11-08 (seventy-eighth continuation) — Desk Calculator: dc
+
+- Implement functional RPN desk calculator `/bin/dc` in `userspace/bin/dc/main.c`:
+  - Supports basic RPN arithmetic: addition (+), subtraction (-), multiplication (*), division (/), and printing (p).
+  - Supports negative number input using '_' as prefix.
+  - Staged across build scripts (`build.sh`, `tools/rebuild-xserver-image.sh`, `tools/make_userspace_builders.py`).
+  - Registered `dc (1)` in `whatis` manual index database.
+  - Added kernel self-test verification in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.25, XSCore kernel at 0.2.23.
+
 ## 2026-11-08 (seventy-seventh continuation) — Time & Date Utility: date
 
 - Implement native `/bin/date` in `userspace/bin/date/main.c`:

@@ -1,3 +1,11 @@
+## 2026-11-08 (seventy-eighth continuation) — Desk Calculator: dc
+
+akaOS now features a basic RPN `/bin/dc` utility:
+1. **Desk Calculator (`/bin/dc`):**
+   - Syntax: `dc [options] [files]`
+   - Supports: Basic RPN operations (+, -, *, /), stack control (p, q).
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-08 (seventy-seventh continuation) — Time & Date Utility: date
 
 akaOS now features a full-featured `/bin/date` utility:

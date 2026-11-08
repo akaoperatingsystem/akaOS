@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.24-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.22-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.25-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.23-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -72,6 +72,12 @@ All desktop environments and window managers run as **completely unmodified upst
 
 | Desktop / Window Manager | Upstream Version | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
+| **Aurora Desktop Shell** | Native Modular C/C++ Architecture v3.0 | 100% | `[██████████]` 100% |
+| ↳ **App Launcher Search & Categories** | Instant Index-Based Filtering & Tabs | 100% | `[██████████]` 100% |
+| ↳ **Network Status & Quick Widget** | Real-Time Interface, IP & Daemon Toggle | 100% | `[██████████]` 100% |
+| ↳ **Clock & Pop-up Calendar** | Hardware RTC Sync & Dynamic Monthly Grid | 100% | `[██████████]` 100% |
+| ↳ **Notification Center Sink** | System-Wide IPC & Kernel Alert Prioritization | 100% | `[██████████]` 100% |
+| ↳ **Settings Controller (akaos-config)**| Central Runtime Configuration Mapping | 100% | `[██████████]` 100% |
 | **Openbox WM** | Unmodified Upstream 3.6.1 | 100% | `[██████████]` 100% |
 | **LXDE (Openbox + LXPanel + PCManFM)** | Unmodified Upstream 0.10.1 / 1.3.2 | 100% | `[██████████]` 100% |
 | **XFCE Desktop (Xfwm4 + xfce4-panel + xfce4-session)** | Unmodified Upstream 4.18 | 100% | `[██████████]` 100% |

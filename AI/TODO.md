@@ -1,3 +1,9 @@
+## 2026-11-08 continuation 78: Desk Calculator (dc)
+
+- [x] Implement and verify basic RPN functionality for `dc`:
+      - Supports: `+`, `-`, `*`, `/`, `p`, `q`, `_` (negative number).
+      - Tested in `xscore/kernel/user.c` and verified in automated QEMU boot test.
+
 ## 2026-11-08 continuation 77: Time & Date Utility (date)
 
 - [x] Implement and verify complete option suite for `date`:

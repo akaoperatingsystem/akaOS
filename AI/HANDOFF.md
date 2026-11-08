@@ -1,3 +1,10 @@
+## Latest continuation — 2026-11-08, Desk Calculator (dc)
+
+- Implemented functional RPN `dc` in `userspace/bin/dc/main.c`:
+  - Supports RPN calculator operations (+, -, *, /, p, q).
+  - Verified `/bin/dc` execution in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.25 (XSCore kernel at 0.2.23).
+
 ## Latest continuation — 2026-11-08, Time & Date Utility (date)
 
 - Implemented `date` in `userspace/bin/date/main.c`:
