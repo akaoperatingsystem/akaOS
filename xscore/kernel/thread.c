@@ -564,13 +564,34 @@ static uint32_t find_next_runnable(void) {
     uint32_t cpu = current_cpu();
     uintptr_t flags = xscore_spin_lock_irqsave(&thread_lock);
     uint32_t current = current_thread_index;
-    for (uint32_t offset = 1; offset < XSCORE_MAX_THREADS; ++offset) {
-        uint32_t index = (current + offset) % XSCORE_MAX_THREADS;
-        if (!(per_cpu_ready_mask[cpu] & (UINT64_C(1) << index))) continue;
-        if (threads[index].state == XSCORE_THREAD_READY &&
-            threads[index].owner_cpu == cpu) {
+    uint64_t mask = per_cpu_ready_mask[cpu];
+    if (mask == 0) {
+        xscore_spin_unlock_irqrestore(&thread_lock, flags);
+        return current;
+    }
+    /* Fast-path O(1) bitscan: search for next runnable thread bit above current */
+    uint64_t higher_mask = (current < 63) ? (mask & (~UINT64_C(0) << (current + 1))) : 0;
+    if (higher_mask != 0) {
+        uint32_t index = (uint32_t)__builtin_ctzll(higher_mask);
+        if (threads[index].state == XSCORE_THREAD_READY && threads[index].owner_cpu == cpu) {
             xscore_spin_unlock_irqrestore(&thread_lock, flags);
             return index;
+        }
+    }
+    /* Wrap-around O(1) bitscan from bit 0 */
+    uint32_t index = (uint32_t)__builtin_ctzll(mask);
+    if (threads[index].state == XSCORE_THREAD_READY && threads[index].owner_cpu == cpu) {
+        xscore_spin_unlock_irqrestore(&thread_lock, flags);
+        return index;
+    }
+    /* Fallback scan */
+    for (uint32_t offset = 1; offset < XSCORE_MAX_THREADS; ++offset) {
+        uint32_t idx = (current + offset) % XSCORE_MAX_THREADS;
+        if (!(mask & (UINT64_C(1) << idx))) continue;
+        if (threads[idx].state == XSCORE_THREAD_READY &&
+            threads[idx].owner_cpu == cpu) {
+            xscore_spin_unlock_irqrestore(&thread_lock, flags);
+            return idx;
         }
     }
     xscore_spin_unlock_irqrestore(&thread_lock, flags);

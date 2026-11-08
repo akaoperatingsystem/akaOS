@@ -753,8 +753,9 @@ build_xserver() {
     for unit in main client window events draw resource input setup xcore; do
         local object="$BUILD_DIR/user-$name-$unit.o"
         clang --target=x86_64-unknown-none-elf \
-            -std=c17 -O2 -Wall -Wextra -Werror \
+            -std=c17 -Os -Wall -Wextra -Werror \
             -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+            -ffunction-sections -fdata-sections \
             -mno-red-zone -mcmodel=small \
             -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
             -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$GENERATED_DIR" -I"$source_dir/include" \
@@ -775,8 +776,9 @@ build_bzip2() {
     for unit in blocksort huffman crctable randtable compress decompress bzlib bzip2; do
         local object="$BUILD_DIR/bzip2-$unit.o"
         clang --target=x86_64-unknown-none-elf \
-            -std=c17 -O2 -Wall -Wextra \
+            -std=c17 -Os -Wall -Wextra \
             -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+            -ffunction-sections -fdata-sections \
             -mno-red-zone -mcmodel=small \
             -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$source_dir" \
             -D_FILE_OFFSET_BITS=64 \
@@ -830,15 +832,18 @@ build_user_pie_program() {
     local output="$3"
     local main_object="$BUILD_DIR/user-$name-main.o"
     clang --target=x86_64-unknown-none-elf \
-        -std=c17 -O2 -Wall -Wextra -Werror \
+        -std=c17 -Os \
+        -ffunction-sections -fdata-sections -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
         -c "$source" -o "$main_object"
-    ld.lld -nostdlib -pie -static -z max-page-size=0x1000 \
+    ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
-        "$BUILD_DIR/user-crt0.o" "${USER_LIBC_OBJECTS[@]}" "$main_object" \
+        "$BUILD_DIR/user-crt0.o" "$main_object" \
+        --whole-archive "$BUILD_DIR/user-libc-crt_init.o" --no-whole-archive \
+        "$BUILD_DIR/libc.a" \
         -o "$BUILD_DIR/$output"
 }
 

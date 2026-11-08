@@ -89,7 +89,7 @@ build_xserver() {
     local objects=()
     for unit in main client window events draw resource input setup xcore; do
         local object="$BUILD_DIR/user-$name-$unit.o"
-        clang --target=aarch64-unknown-none-elf             -std=c17 -O2 -Wall -Wextra -Werror             -ffreestanding -fno-builtin -fno-stack-protector -fpie             -DXSCORE_BUILD_TIMESTAMP=""$BUILD_TIMESTAMP""                          -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/build/generated" -I"$source_dir/include"             -c "$source_dir/$unit.c" -o "$object"
+        clang --target=aarch64-unknown-none-elf             -std=c17 -Os -Wall -Wextra -Werror             -ffreestanding -fno-builtin -fno-stack-protector -fpie             -ffunction-sections -fdata-sections             -DXSCORE_BUILD_TIMESTAMP=""$BUILD_TIMESTAMP""                          -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/build/generated" -I"$source_dir/include"             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
     ld.lld -m aarch64elf -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000         -T "$ROOT_DIR/userspace/linker/user.ld"         "$BUILD_DIR/user-crt0.o" "${objects[@]}"         --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive         "$BUILD_DIR/libc.a"         "${COMPILER_BUILTINS[@]}"         -o "$BUILD_DIR/$output"
@@ -104,7 +104,7 @@ build_bzip2() {
     fi
     for unit in blocksort huffman crctable randtable compress decompress bzlib bzip2; do
         local object="$BUILD_DIR/bzip2-$unit.o"
-        clang --target=aarch64-unknown-none-elf             -std=c17 -O2 -Wall -Wextra             -ffreestanding -fno-builtin -fno-stack-protector -fpie              "${bzip_extra_flags[@]}"             -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$source_dir"             -D_FILE_OFFSET_BITS=64             -c "$source_dir/$unit.c" -o "$object"
+        clang --target=aarch64-unknown-none-elf             -std=c17 -Os -Wall -Wextra             -ffreestanding -fno-builtin -fno-stack-protector -fpie             -ffunction-sections -fdata-sections              "${bzip_extra_flags[@]}"             -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$source_dir"             -D_FILE_OFFSET_BITS=64             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
     ld.lld -m aarch64elf -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000         -T "$ROOT_DIR/userspace/linker/user.ld"         "$BUILD_DIR/user-crt0.o" "${objects[@]}"         --whole-archive "$BUILD_DIR/libc-crt_init.o" --no-whole-archive         "$BUILD_DIR/libc.a"         "${COMPILER_BUILTINS[@]}"         -o "$BUILD_DIR/BZIP2.ELF"
@@ -121,7 +121,7 @@ build_user_program() {
     fi
     clang --target=aarch64-unknown-none-elf \
         -std=c17 -Os -Wall -Wextra -Werror \
-        -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+        -ffreestanding -fno-builtin -fno-stack-protector -fpie         -ffunction-sections -fdata-sections \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
          "${user_extra_flags[@]}" \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
@@ -552,6 +552,28 @@ build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFI
 build_user_program cksum "$ROOT_DIR/userspace/bin/cksum/main.c" CKSUM.ELF
 build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
 build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
+build_user_program sway "$ROOT_DIR/userspace/bin/sway/main.c" SWAY.ELF
+build_user_program river "$ROOT_DIR/userspace/bin/river/main.c" RIVER.ELF
+build_user_program niri "$ROOT_DIR/userspace/bin/niri/main.c" NIRI.ELF
+build_user_program wayfire "$ROOT_DIR/userspace/bin/wayfire/main.c" WAYFIRE.ELF
+build_user_program labwc "$ROOT_DIR/userspace/bin/labwc/main.c" LABWC.ELF
+build_user_program weston "$ROOT_DIR/userspace/bin/weston/main.c" WESTON.ELF
+build_user_program qtile "$ROOT_DIR/userspace/bin/qtile/main.c" QTILE.ELF
+build_user_program awesome "$ROOT_DIR/userspace/bin/awesome/main.c" AWESOME.ELF
+build_user_program xmonad "$ROOT_DIR/userspace/bin/xmonad/main.c" XMONAD.ELF
+build_user_program herbstluftwm "$ROOT_DIR/userspace/bin/herbstluftwm/main.c" HERBSTLUFTWM.ELF
+build_user_program spectrwm "$ROOT_DIR/userspace/bin/spectrwm/main.c" SPECTRWM.ELF
+build_user_program fluxbox "$ROOT_DIR/userspace/bin/fluxbox/main.c" FLUXBOX.ELF
+build_user_program icewm "$ROOT_DIR/userspace/bin/icewm/main.c" ICEWM.ELF
+build_user_program jwm "$ROOT_DIR/userspace/bin/jwm/main.c" JWM.ELF
+build_user_program wmaker "$ROOT_DIR/userspace/bin/wmaker/main.c" WMAKER.ELF
+build_user_program fvwm "$ROOT_DIR/userspace/bin/fvwm/main.c" FVWM.ELF
+build_user_program budgie "$ROOT_DIR/userspace/bin/budgie/main.c" BUDGIE.ELF
+build_user_program cosmic "$ROOT_DIR/userspace/bin/cosmic/main.c" COSMIC.ELF
+build_user_program deepin "$ROOT_DIR/userspace/bin/deepin/main.c" DEEPIN.ELF
+build_user_program pantheon "$ROOT_DIR/userspace/bin/pantheon/main.c" PANTHEON.ELF
+build_user_program ukui "$ROOT_DIR/userspace/bin/ukui/main.c" UKUI.ELF
+build_user_program enlightenment "$ROOT_DIR/userspace/bin/enlightenment/main.c" ENLIGHTENMENT.ELF
 build_bzip2
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
@@ -759,6 +781,50 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_aarch64.img"
     --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec" \
     --file "/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec" \
     --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec"     --file "/bin/chpasswd:$BUILD_DIR/CHPASSWD.ELF:exec"     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec"     --file "/bin/chkconfig:$BUILD_DIR/CHKCONFIG.ELF:exec"     --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec"     --file "/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"     --file "/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec"     --file "/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"     --file "/usr/local/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \
+    --file "/bin/sway:$BUILD_DIR/SWAY.ELF:exec" \
+    --file "/usr/local/bin/sway:$BUILD_DIR/SWAY.ELF:exec" \
+    --file "/bin/river:$BUILD_DIR/RIVER.ELF:exec" \
+    --file "/usr/local/bin/river:$BUILD_DIR/RIVER.ELF:exec" \
+    --file "/bin/niri:$BUILD_DIR/NIRI.ELF:exec" \
+    --file "/usr/local/bin/niri:$BUILD_DIR/NIRI.ELF:exec" \
+    --file "/bin/wayfire:$BUILD_DIR/WAYFIRE.ELF:exec" \
+    --file "/usr/local/bin/wayfire:$BUILD_DIR/WAYFIRE.ELF:exec" \
+    --file "/bin/labwc:$BUILD_DIR/LABWC.ELF:exec" \
+    --file "/usr/local/bin/labwc:$BUILD_DIR/LABWC.ELF:exec" \
+    --file "/bin/weston:$BUILD_DIR/WESTON.ELF:exec" \
+    --file "/usr/local/bin/weston:$BUILD_DIR/WESTON.ELF:exec" \
+    --file "/bin/qtile:$BUILD_DIR/QTILE.ELF:exec" \
+    --file "/usr/local/bin/qtile:$BUILD_DIR/QTILE.ELF:exec" \
+    --file "/bin/awesome:$BUILD_DIR/AWESOME.ELF:exec" \
+    --file "/usr/local/bin/awesome:$BUILD_DIR/AWESOME.ELF:exec" \
+    --file "/bin/xmonad:$BUILD_DIR/XMONAD.ELF:exec" \
+    --file "/usr/local/bin/xmonad:$BUILD_DIR/XMONAD.ELF:exec" \
+    --file "/bin/herbstluftwm:$BUILD_DIR/HERBSTLUFTWM.ELF:exec" \
+    --file "/usr/local/bin/herbstluftwm:$BUILD_DIR/HERBSTLUFTWM.ELF:exec" \
+    --file "/bin/spectrwm:$BUILD_DIR/SPECTRWM.ELF:exec" \
+    --file "/usr/local/bin/spectrwm:$BUILD_DIR/SPECTRWM.ELF:exec" \
+    --file "/bin/fluxbox:$BUILD_DIR/FLUXBOX.ELF:exec" \
+    --file "/usr/local/bin/fluxbox:$BUILD_DIR/FLUXBOX.ELF:exec" \
+    --file "/bin/icewm:$BUILD_DIR/ICEWM.ELF:exec" \
+    --file "/usr/local/bin/icewm:$BUILD_DIR/ICEWM.ELF:exec" \
+    --file "/bin/jwm:$BUILD_DIR/JWM.ELF:exec" \
+    --file "/usr/local/bin/jwm:$BUILD_DIR/JWM.ELF:exec" \
+    --file "/bin/wmaker:$BUILD_DIR/WMAKER.ELF:exec" \
+    --file "/usr/local/bin/wmaker:$BUILD_DIR/WMAKER.ELF:exec" \
+    --file "/bin/fvwm:$BUILD_DIR/FVWM.ELF:exec" \
+    --file "/usr/local/bin/fvwm:$BUILD_DIR/FVWM.ELF:exec" \
+    --file "/bin/budgie:$BUILD_DIR/BUDGIE.ELF:exec" \
+    --file "/usr/local/bin/budgie:$BUILD_DIR/BUDGIE.ELF:exec" \
+    --file "/bin/cosmic:$BUILD_DIR/COSMIC.ELF:exec" \
+    --file "/usr/local/bin/cosmic:$BUILD_DIR/COSMIC.ELF:exec" \
+    --file "/bin/deepin:$BUILD_DIR/DEEPIN.ELF:exec" \
+    --file "/usr/local/bin/deepin:$BUILD_DIR/DEEPIN.ELF:exec" \
+    --file "/bin/pantheon:$BUILD_DIR/PANTHEON.ELF:exec" \
+    --file "/usr/local/bin/pantheon:$BUILD_DIR/PANTHEON.ELF:exec" \
+    --file "/bin/ukui:$BUILD_DIR/UKUI.ELF:exec" \
+    --file "/usr/local/bin/ukui:$BUILD_DIR/UKUI.ELF:exec" \
+    --file "/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec" \
+    --file "/usr/local/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec" \
     --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \

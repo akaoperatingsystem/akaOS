@@ -218,47 +218,43 @@ uint64_t xscore_pmm_allocate_page(void) {
     if (pmm_locked) flags = xscore_spin_lock_irqsave(&pmm_lock);
     uint64_t start_word = next_search_page / 64;
     for (uint64_t word = start_word; word < BITMAP_WORD_COUNT; ++word) {
-        if (allocation_bitmap[word] != UINT64_MAX) {
-            for (uint64_t bit = 0; bit < 64; ++bit) {
-                uint64_t page = word * 64 + bit;
-                if (!page_is_used(page)) {
+        uint64_t free_bits = ~allocation_bitmap[word];
+        while (free_bits != 0) {
+            uint64_t bit = (uint64_t)__builtin_ctzll(free_bits);
+            uint64_t page = word * 64 + bit;
 #if defined(__i386__)
-                    if (pmm_is_protected_stack_page(page * PAGE_SIZE)) {
-                        if (pmm_locked) xscore_spin_unlock_irqrestore(&pmm_lock, flags);
-                        return 0;
-                    }
-#endif
-                    mark_page_used(page);
-                    --free_page_count;
-                    next_search_page = page + 1;
-                    struct page_ref_entry *entry = refcount_entry(page, 1);
-                    if (entry) entry->count = 1;
-                    if (pmm_locked) xscore_spin_unlock_irqrestore(&pmm_lock, flags);
-                    return page * PAGE_SIZE;
-                }
+            if (pmm_is_protected_stack_page(page * PAGE_SIZE)) {
+                free_bits &= ~(UINT64_C(1) << bit);
+                continue;
             }
+#endif
+            mark_page_used(page);
+            --free_page_count;
+            next_search_page = page + 1;
+            struct page_ref_entry *entry = refcount_entry(page, 1);
+            if (entry) entry->count = 1;
+            if (pmm_locked) xscore_spin_unlock_irqrestore(&pmm_lock, flags);
+            return page * PAGE_SIZE;
         }
     }
     for (uint64_t word = 0; word < start_word; ++word) {
-        if (allocation_bitmap[word] != UINT64_MAX) {
-            for (uint64_t bit = 0; bit < 64; ++bit) {
-                uint64_t page = word * 64 + bit;
-                if (!page_is_used(page)) {
+        uint64_t free_bits = ~allocation_bitmap[word];
+        while (free_bits != 0) {
+            uint64_t bit = (uint64_t)__builtin_ctzll(free_bits);
+            uint64_t page = word * 64 + bit;
 #if defined(__i386__)
-                    if (pmm_is_protected_stack_page(page * PAGE_SIZE)) {
-                        if (pmm_locked) xscore_spin_unlock_irqrestore(&pmm_lock, flags);
-                        return 0;
-                    }
-#endif
-                    mark_page_used(page);
-                    --free_page_count;
-                    next_search_page = page + 1;
-                    struct page_ref_entry *entry = refcount_entry(page, 1);
-                    if (entry) entry->count = 1;
-                    if (pmm_locked) xscore_spin_unlock_irqrestore(&pmm_lock, flags);
-                    return page * PAGE_SIZE;
-                }
+            if (pmm_is_protected_stack_page(page * PAGE_SIZE)) {
+                free_bits &= ~(UINT64_C(1) << bit);
+                continue;
             }
+#endif
+            mark_page_used(page);
+            --free_page_count;
+            next_search_page = page + 1;
+            struct page_ref_entry *entry = refcount_entry(page, 1);
+            if (entry) entry->count = 1;
+            if (pmm_locked) xscore_spin_unlock_irqrestore(&pmm_lock, flags);
+            return page * PAGE_SIZE;
         }
     }
     if (pmm_locked) xscore_spin_unlock_irqrestore(&pmm_lock, flags);

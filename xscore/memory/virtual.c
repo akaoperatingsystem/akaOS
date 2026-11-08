@@ -377,8 +377,10 @@ uint64_t xscore_vmm_current_root(void) {
 
 int xscore_vmm_activate(uint64_t root_address) {
     if (!root_address || (root_address & (PAGE_SIZE - 1)) != 0) return 0;
-    if ((read_cr3() & PAGE_ADDRESS_MASK) != root_address) write_cr3(root_address);
-    return (read_cr3() & PAGE_ADDRESS_MASK) == root_address;
+    if ((read_cr3() & PAGE_ADDRESS_MASK) != root_address) {
+        write_cr3(root_address);
+    }
+    return 1;
 }
 
 uint64_t xscore_vmm_address_space_create(void) {
