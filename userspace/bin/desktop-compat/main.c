@@ -66,7 +66,33 @@ enum profile_kind {
     PROFILE_LXQT,
     PROFILE_GNOME,
     PROFILE_KDE,
-    PROFILE_OPENBOX
+    PROFILE_OPENBOX,
+    /* Wayland Compositors */
+    PROFILE_SWAY,
+    PROFILE_RIVER,
+    PROFILE_NIRI,
+    PROFILE_WAYFIRE,
+    PROFILE_LABWC,
+    PROFILE_WESTON,
+    /* X11 Tiling Window Managers */
+    PROFILE_QTILE,
+    PROFILE_AWESOME,
+    PROFILE_XMONAD,
+    PROFILE_HERBSTLUFTWM,
+    PROFILE_SPECTRWM,
+    /* Lightweight Window Managers */
+    PROFILE_FLUXBOX,
+    PROFILE_ICEWM,
+    PROFILE_JWM,
+    PROFILE_WMAKER,
+    PROFILE_FVWM,
+    /* Desktop Environments */
+    PROFILE_BUDGIE,
+    PROFILE_COSMIC,
+    PROFILE_DEEPIN,
+    PROFILE_PANTHEON,
+    PROFILE_UKUI,
+    PROFILE_ENLIGHTENMENT
 };
 
 #if defined(__clang__)
@@ -80,6 +106,28 @@ enum profile_kind {
  * kernel; switch-returned string literals remain position-independent. */
 static enum profile_kind profile_for_name(const char *name) {
     if (!name) return PROFILE_LXDE;
+    if (strstr(name, "sway")) return PROFILE_SWAY;
+    if (strstr(name, "river")) return PROFILE_RIVER;
+    if (strstr(name, "niri")) return PROFILE_NIRI;
+    if (strstr(name, "wayfire")) return PROFILE_WAYFIRE;
+    if (strstr(name, "labwc")) return PROFILE_LABWC;
+    if (strstr(name, "weston")) return PROFILE_WESTON;
+    if (strstr(name, "qtile")) return PROFILE_QTILE;
+    if (strstr(name, "awesome")) return PROFILE_AWESOME;
+    if (strstr(name, "xmonad")) return PROFILE_XMONAD;
+    if (strstr(name, "herbstluftwm")) return PROFILE_HERBSTLUFTWM;
+    if (strstr(name, "spectrwm")) return PROFILE_SPECTRWM;
+    if (strstr(name, "fluxbox")) return PROFILE_FLUXBOX;
+    if (strstr(name, "icewm")) return PROFILE_ICEWM;
+    if (strstr(name, "jwm")) return PROFILE_JWM;
+    if (strstr(name, "wmaker") || strstr(name, "WindowMaker")) return PROFILE_WMAKER;
+    if (strstr(name, "fvwm")) return PROFILE_FVWM;
+    if (strstr(name, "budgie")) return PROFILE_BUDGIE;
+    if (strstr(name, "cosmic")) return PROFILE_COSMIC;
+    if (strstr(name, "deepin") || strstr(name, "dde")) return PROFILE_DEEPIN;
+    if (strstr(name, "pantheon")) return PROFILE_PANTHEON;
+    if (strstr(name, "ukui")) return PROFILE_UKUI;
+    if (strstr(name, "enlightenment") || strstr(name, "e26")) return PROFILE_ENLIGHTENMENT;
     if (strstr(name, "lxqt") || strstr(name, "pcmanfm-qt")) return PROFILE_LXQT;
     if (strstr(name, "gnome") || strstr(name, "mutter")) return PROFILE_GNOME;
     if (strstr(name, "plasma") || strstr(name, "kwin")) return PROFILE_KDE;
@@ -89,6 +137,28 @@ static enum profile_kind profile_for_name(const char *name) {
 
 static const char *AKAOS_PROFILE_NOOPT profile_id(enum profile_kind profile) {
     switch (profile) {
+    case PROFILE_SWAY: return "sway";
+    case PROFILE_RIVER: return "river";
+    case PROFILE_NIRI: return "niri";
+    case PROFILE_WAYFIRE: return "wayfire";
+    case PROFILE_LABWC: return "labwc";
+    case PROFILE_WESTON: return "weston";
+    case PROFILE_QTILE: return "qtile";
+    case PROFILE_AWESOME: return "awesome";
+    case PROFILE_XMONAD: return "xmonad";
+    case PROFILE_HERBSTLUFTWM: return "herbstluftwm";
+    case PROFILE_SPECTRWM: return "spectrwm";
+    case PROFILE_FLUXBOX: return "fluxbox";
+    case PROFILE_ICEWM: return "icewm";
+    case PROFILE_JWM: return "jwm";
+    case PROFILE_WMAKER: return "wmaker";
+    case PROFILE_FVWM: return "fvwm";
+    case PROFILE_BUDGIE: return "budgie";
+    case PROFILE_COSMIC: return "cosmic";
+    case PROFILE_DEEPIN: return "deepin";
+    case PROFILE_PANTHEON: return "pantheon";
+    case PROFILE_UKUI: return "ukui";
+    case PROFILE_ENLIGHTENMENT: return "enlightenment";
     case PROFILE_LXQT: return "lxqt";
     case PROFILE_GNOME: return "gnome";
     case PROFILE_KDE: return "kde";
@@ -99,6 +169,28 @@ static const char *AKAOS_PROFILE_NOOPT profile_id(enum profile_kind profile) {
 
 static const char *AKAOS_PROFILE_NOOPT profile_label(enum profile_kind profile) {
     switch (profile) {
+    case PROFILE_SWAY: return "Sway";
+    case PROFILE_RIVER: return "river";
+    case PROFILE_NIRI: return "niri";
+    case PROFILE_WAYFIRE: return "Wayfire";
+    case PROFILE_LABWC: return "labwc";
+    case PROFILE_WESTON: return "Weston";
+    case PROFILE_QTILE: return "Qtile";
+    case PROFILE_AWESOME: return "awesome";
+    case PROFILE_XMONAD: return "xmonad";
+    case PROFILE_HERBSTLUFTWM: return "herbstluftwm";
+    case PROFILE_SPECTRWM: return "spectrwm";
+    case PROFILE_FLUXBOX: return "Fluxbox";
+    case PROFILE_ICEWM: return "IceWM";
+    case PROFILE_JWM: return "JWM";
+    case PROFILE_WMAKER: return "Window Maker";
+    case PROFILE_FVWM: return "FVWM";
+    case PROFILE_BUDGIE: return "Budgie";
+    case PROFILE_COSMIC: return "COSMIC";
+    case PROFILE_DEEPIN: return "Deepin";
+    case PROFILE_PANTHEON: return "Pantheon";
+    case PROFILE_UKUI: return "UKUI";
+    case PROFILE_ENLIGHTENMENT: return "Enlightenment";
     case PROFILE_LXQT: return "LXQt";
     case PROFILE_GNOME: return "GNOME";
     case PROFILE_KDE: return "KDE Plasma";

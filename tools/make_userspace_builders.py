@@ -994,3 +994,20 @@ for k, cfg in configs.items():
         f.write(content)
     os.chmod(cfg["file"], 0o755)
     print(f"Generated {cfg['file']}")
+b u i l d _ u s e r _ p r o g r a m   s w a y   " $ R O O T _ D I R / u s e r s p a c e / b i n / s w a y / m a i n . c "   S W A Y . E L F  
+ b u i l d _ u s e r _ p r o g r a m   r i v e r   " $ R O O T _ D I R / u s e r s p a c e / b i n / r i v e r / m a i n . c "   R I V E R . E L F  
+ b u i l d _ u s e r _ p r o g r a m   n i r i   " $ R O O T _ D I R / u s e r s p a c e / b i n / n i r i / m a i n . c "   N I R I . E L F  
+ b u i l d _ u s e r _ p r o g r a m   w a y f i r e   " $ R O O T _ D I R / u s e r s p a c e / b i n / w a y f i r e / m a i n . c "   W A Y F I R E . E L F  
+ b u i l d _ u s e r _ p r o g r a m   l a b w c   " $ R O O T _ D I R / u s e r s p a c e / b i n / l a b w c / m a i n . c "   L A B W C . E L F  
+ b u i l d _ u s e r _ p r o g r a m   w e s t o n   " $ R O O T _ D I R / u s e r s p a c e / b i n / w e s t o n / m a i n . c "   W E S T O N . E L F  
+ b u i l d _ u s e r _ p r o g r a m   q t i l e   " $ R O O T _ D I R / u s e r s p a c e / b i n / q t i l e / m a i n . c "   Q T I L E . E L F  
+ b u i l d _ u s e r _ p r o g r a m   a w e s o m e   " $ R O O T _ D I R / u s e r s p a c e / b i n / a w e s o m e / m a i n . c "   A W E S O M E . E L F  
+ b u i l d _ u s e r _ p r o g r a m   x m o n a d   " $ R O O T _ D I R / u s e r s p a c e / b i n / x m o n a d / m a i n . c "   X M O N A D . E L F  
+ b u i l d _ u s e r _ p r o g r a m   h e r b s t l u f t w m   " $ R O O T _ D I R / u s e r s p a c e / b i n / h e r b s t l u f t w m / m a i n . c "   H E R B S T L U F T W M . E L F  
+ b u i l d _ u s e r _ p r o g r a m   s p e c t r w m   " $ R O O T _ D I R / u s e r s p a c e / b i n / s p e c t r w m / m a i n . c "   S P E C T R W M . E L F  
+ b u i l d _ u s e r _ p r o g r a m   f l u x b o x   " $ R O O T _ D I R / u s e r s p a c e / b i n / f l u x b o x / m a i n . c "   F L U X B O X . E L F  
+ b u i l d _ u s e r _ p r o g r a m   i c e w m   " $ R O O T _ D I R / u s e r s p a c e / b i n / i c e w m / m a i n . c "   I C E W M . E L F  
+ b u i l d _ u s e r _ p r o g r a m   j w m   " $ R O O T _ D I R / u s e r s p a c e / b i n / j w m / m a i n . c "   J W M . E L F  
+ b u i l d _ u s e r _ p r o g r a m   w m a k e r   " $ R O O T _ D I R / u s e r s p a c e / b i n / w m a k e r / m a i n . c "   W M A K E R . E L F  
+ b u i l d _ u s e r _ p r o g r a m   f v w m   " $ R O O T _ D I R / u s e r s p a c e / b i n / f v w m / m a i n . c "   F V W M . E L F  
+ 

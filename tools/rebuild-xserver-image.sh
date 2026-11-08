@@ -1397,3 +1397,20 @@ ld.lld -nostdlib -static -z max-page-size=0x1000 \
 # ------------------------------------------------------------------------- ISO
 echo "[BUILD] dual-firmware ISO"
 bash "$ROOT_DIR/tools/build-bios.sh" --no-build
+        " - - f i l e = / b i n / s w a y : $ B U I L D _ D I R / S W A Y . E L F : e x e c "   \  
+         " - - f i l e = / b i n / r i v e r : $ B U I L D _ D I R / R I V E R . E L F : e x e c "   \  
+         " - - f i l e = / b i n / n i r i : $ B U I L D _ D I R / N I R I . E L F : e x e c "   \  
+         " - - f i l e = / b i n / w a y f i r e : $ B U I L D _ D I R / W A Y F I R E . E L F : e x e c "   \  
+         " - - f i l e = / b i n / l a b w c : $ B U I L D _ D I R / L A B W C . E L F : e x e c "   \  
+         " - - f i l e = / b i n / w e s t o n : $ B U I L D _ D I R / W E S T O N . E L F : e x e c "   \  
+         " - - f i l e = / b i n / q t i l e : $ B U I L D _ D I R / Q T I L E . E L F : e x e c "   \  
+         " - - f i l e = / b i n / a w e s o m e : $ B U I L D _ D I R / A W E S O M E . E L F : e x e c "   \  
+         " - - f i l e = / b i n / x m o n a d : $ B U I L D _ D I R / X M O N A D . E L F : e x e c "   \  
+         " - - f i l e = / b i n / h e r b s t l u f t w m : $ B U I L D _ D I R / H E R B S T L U F T W M . E L F : e x e c "   \  
+         " - - f i l e = / b i n / s p e c t r w m : $ B U I L D _ D I R / S P E C T R W M . E L F : e x e c "   \  
+         " - - f i l e = / b i n / f l u x b o x : $ B U I L D _ D I R / F L U X B O X . E L F : e x e c "   \  
+         " - - f i l e = / b i n / i c e w m : $ B U I L D _ D I R / I C E W M . E L F : e x e c "   \  
+         " - - f i l e = / b i n / j w m : $ B U I L D _ D I R / J W M . E L F : e x e c "   \  
+         " - - f i l e = / b i n / w m a k e r : $ B U I L D _ D I R / W M A K E R . E L F : e x e c "   \  
+         " - - f i l e = / b i n / f v w m : $ B U I L D _ D I R / F V W M . E L F : e x e c "   \  
+ 
