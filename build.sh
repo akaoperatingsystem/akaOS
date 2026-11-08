@@ -1778,6 +1778,8 @@ build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFI
 build_user_program cksum "$ROOT_DIR/userspace/bin/cksum/main.c" CKSUM.ELF
 build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
 build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
+build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
+build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF

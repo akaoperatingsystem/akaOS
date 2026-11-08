@@ -52,7 +52,7 @@ All desktop environments and window managers run as **completely unmodified upst
 | **LXQt Desktop (lxqt-panel + lxqt-session + Qt6 Wayland)** | Unmodified Upstream 2.4.0 | 100% | `[██████████]` 100% |
 | **KDE Plasma & KWin (KF6 KWindowSystem + KCoreAddons + KConfig + KGlobalAccel + KCrash + KDBusAddons)** | Unmodified Upstream | 100% | `[██████████]` 100% |
 | **GNOME Desktop (Metacity + GNOME Flashback)** | Unmodified Upstream 3.50.0 | 100% | `[██████████]` 100% |
-| **Hyprland Wayland Compositor** | Unmodified Upstream Git 0.57.0 | 5% | `[█░░░░░░░░░]` 5% |
+| **Hyprland Wayland Compositor** | Unmodified Upstream Git 0.57.0 | 100% | `[██████████]` 100% |
 | **Overall System Completion** | Full Native Operating System | 100% | `[██████████]` 100% |
 
 
