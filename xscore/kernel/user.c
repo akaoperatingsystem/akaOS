@@ -797,6 +797,13 @@ int xscore_user_process_self_test(void) {
     uint64_t gunzip_status = UINT64_MAX;
     if (!p_gunzip || !xscore_process_wait(p_gunzip, &gunzip_status) || gunzip_status != 0 || !xscore_process_reap(p_gunzip)) return 0;
 
+    /* Verify HTTP and data transfer utility curl */
+    const char *curl_args[] = {"/bin/curl", "--version", 0};
+    struct xscore_process *p_curl = xscore_process_create_path_args("/bin/curl", 2, curl_args);
+    uint64_t curl_status = UINT64_MAX;
+    if (!p_curl || !xscore_process_wait(p_curl, &curl_status) || curl_status != 0 || !xscore_process_reap(p_curl)) return 0;
+    xscore_serial_write("[INFO] Data transfer utility curl verified\n");
+
     /* Verify Advanced Shell Job Control & Multi-Stage Pipelines in akash */
     const char *akash_job_args[] = {"/bin/akash", "-c", "echo multi | cat | grep multi", 0};
     struct xscore_process *p_akash_job = xscore_process_create_path_args("/bin/akash", 3, akash_job_args);

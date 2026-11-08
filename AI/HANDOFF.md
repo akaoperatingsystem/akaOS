@@ -1,3 +1,10 @@
+## Latest continuation — 2026-11-08, Enhanced Data Transfer Client (curl)
+
+- Upgraded `curl` in `userspace/bin/curl/main.c` with full options suite:
+  - User-agent, cookies, cookie-jar, POST data, forms, headers, silent fail on error (`-f`), headers inclusion/head only, insecure SSL, location redirects (`-L`), max-time, output files, remote-name (`-O`), silent/verbose, basic auth, write-out formatting, and proxy.
+  - Verified `/bin/curl` self-test invocation in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.22 (XSCore kernel at 0.2.21).
+
 ## Latest continuation — 2026-11-08, 100% Universal GPU Driver Hardware Acceleration & Documentation
 
 - **100% Mandate Complete for All GPU Families**:

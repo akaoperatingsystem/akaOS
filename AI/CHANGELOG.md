@@ -1,3 +1,23 @@
+## 2026-11-08 (seventy-fifth continuation) — Data Transfer Client: curl (Enhanced Option Suite)
+
+- Upgrade native `/bin/curl` in `userspace/bin/curl/main.c` with comprehensive command-line option suite:
+  - Supports user-agent override (`-A, --user-agent`).
+  - Supports cookie strings and cookie-jar persistence (`-b, --cookie`, `-c, --cookie-jar`).
+  - Supports HTTP POST data submission (`-d, --data`) and multipart form simulation (`-F, --form`).
+  - Supports custom request headers (`-H, --header`).
+  - Supports HTTP status fail silently mode (`-f, --fail`).
+  - Supports header inspection and response inclusions (`-i, --include`, `-I, --head`).
+  - Supports insecure mode (`-k, --insecure`).
+  - Supports HTTP redirect following (`-L, --location`).
+  - Supports operation timeouts (`-m, --max-time`).
+  - Supports output redirection and remote filename derivation (`-o, --output`, `-O, --remote-name`).
+  - Supports silent and error reporting modes (`-s, --silent`, `-S, --show-error`).
+  - Supports basic HTTP authentication (`-u, --user`).
+  - Supports format templating (`-w, --write-out`) and proxy configuration (`-x, --proxy`).
+  - Supports verbose diagnostics (`-v, --verbose`), `--help`, and `--version`.
+- Integrated automated self-test verification into `xscore/kernel/user.c` and `test.sh`.
+- Bumped akaOS to 0.3.22, XSCore kernel at 0.2.21.
+
 ## 2026-11-08 (seventy-fourth continuation) — 100% Universal GPU Driver Hardware Acceleration
 
 - Achieve 100% native execution readiness and hardware acceleration across the entire GPU hardware matrix.
