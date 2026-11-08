@@ -907,6 +907,60 @@ static int eval_binary_test(const char *left, const char *op, const char *right)
     return 1;
 }
 
+static int is_file_executable(const char *path) {
+    struct akaos_stat st;
+    if (stat(path, &st) == 0) {
+        if (S_ISREG(st.mode) && (st.mode & 0111)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int find_cmd_in_path(const char *cmd, const char *search_path, char *out_path, size_t out_sz) {
+    if (!cmd || !*cmd) return 0;
+    if (strchr(cmd, '/')) {
+        if (is_file_executable(cmd)) {
+            strncpy(out_path, cmd, out_sz - 1);
+            out_path[out_sz - 1] = '\0';
+            return 1;
+        }
+        return 0;
+    }
+    if (!search_path || !*search_path) search_path = "/bin:/usr/bin";
+
+    char sp[512];
+    strncpy(sp, search_path, sizeof(sp) - 1);
+    sp[sizeof(sp) - 1] = '\0';
+
+    char *tok = strtok(sp, ":");
+    while (tok) {
+        char buf[256];
+        snprintf(buf, sizeof(buf), "%s/%s", tok, cmd);
+        if (is_file_executable(buf)) {
+            strncpy(out_path, buf, out_sz - 1);
+            out_path[out_sz - 1] = '\0';
+            return 1;
+        }
+        tok = strtok(NULL, ":");
+    }
+    return 0;
+}
+
+static int is_name_shell_builtin(const char *name) {
+    static const char * const blts[] = {
+        "cd", "exit", "help", "about", "version", "id", "hostname",
+        "shutdown", "jobs", "fg", "bg", "kill", "alias", "unalias",
+        "test", "[", "echo", "export", "bind", "break", "builtin",
+        "caller", "case", "command", "true", "false", "source", ".",
+        NULL
+    };
+    for (int i = 0; blts[i]; ++i) {
+        if (strcmp(name, blts[i]) == 0) return 1;
+    }
+    return 0;
+}
+
 static int execute_builtin(int argc, char *argv[]) {
     if (argc == 0) return 0;
 
@@ -1004,35 +1058,118 @@ static int execute_builtin(int argc, char *argv[]) {
 
     
     if (strcmp(argv[0], "command") == 0) {
-        if (argc < 2) {
-            last_exit_status = 0;
-            return 1;
-        }
-        /* Minimal support for 'command' builtin: 
-           Just shift arguments and re-execute. 
-           Bypassing shell function lookup is already handled by 
-           the modification we will do to execute_single_stage.
-        */
-        // Simply shift arguments for now:
-        // argv[0] = argv[1], argv[1] = argv[2] ...
-        // However, a robust implementation requires shifting properly.
-        // For now, let's keep it simple: just call execute_single_stage recursively?
-        // No, that's not right. 
-        // We need to re-evaluate the command bypassing shell function lookup.
-        // The easiest way is to modify execute_single_stage itself.
-        
-        // So this builtin does nothing, it's just a placeholder to keep the shell happy.
-        // The real work is in execute_single_stage.
-        last_exit_status = 0;
-        return 1;
-    }
+        int opt_p = 0;
+        int opt_v = 0;
+        int opt_V = 0;
 
-    if (strcmp(argv[0], "command") == 0) {
-        if (argc < 2) {
+        int idx = 1;
+        while (idx < argc && argv[idx][0] == '-' && argv[idx][1] != '\0') {
+            if (strcmp(argv[idx], "--") == 0) {
+                idx++;
+                break;
+            }
+            int valid_opts = 1;
+            for (int k = 1; argv[idx][k]; ++k) {
+                if (argv[idx][k] == 'p') opt_p = 1;
+                else if (argv[idx][k] == 'v') opt_v = 1;
+                else if (argv[idx][k] == 'V') opt_V = 1;
+                else {
+                    valid_opts = 0;
+                    break;
+                }
+            }
+            if (!valid_opts) break;
+            idx++;
+        }
+
+        if (idx >= argc) {
             last_exit_status = 0;
             return 1;
         }
-        last_exit_status = 0;
+
+        const char *search_path = opt_p ? "/bin:/usr/bin" : getenv("PATH");
+        if (!search_path) search_path = "/bin:/usr/bin";
+
+        if (opt_v || opt_V) {
+            int not_found = 0;
+            for (int i = idx; i < argc; ++i) {
+                const char *cmd_name = argv[i];
+                if (is_name_shell_builtin(cmd_name)) {
+                    if (opt_V) {
+                        write_str(STDOUT_FILENO, cmd_name);
+                        write_str(STDOUT_FILENO, " is a shell builtin\n");
+                    } else {
+                        write_str(STDOUT_FILENO, cmd_name);
+                        write_str(STDOUT_FILENO, "\n");
+                    }
+                } else if (find_shell_func(cmd_name)) {
+                    if (opt_V) {
+                        write_str(STDOUT_FILENO, cmd_name);
+                        write_str(STDOUT_FILENO, " is a function\n");
+                    } else {
+                        write_str(STDOUT_FILENO, cmd_name);
+                        write_str(STDOUT_FILENO, "\n");
+                    }
+                } else {
+                    char found_path[256];
+                    if (find_cmd_in_path(cmd_name, search_path, found_path, sizeof(found_path))) {
+                        if (opt_V) {
+                            write_str(STDOUT_FILENO, cmd_name);
+                            write_str(STDOUT_FILENO, " is ");
+                            write_str(STDOUT_FILENO, found_path);
+                            write_str(STDOUT_FILENO, "\n");
+                        } else {
+                            write_str(STDOUT_FILENO, found_path);
+                            write_str(STDOUT_FILENO, "\n");
+                        }
+                    } else {
+                        if (opt_V) {
+                            write_str(STDERR_FILENO, "akash: command: ");
+                            write_str(STDERR_FILENO, cmd_name);
+                            write_str(STDERR_FILENO, ": not found\n");
+                        }
+                        not_found = 1;
+                    }
+                }
+            }
+            last_exit_status = not_found ? 1 : 0;
+            return 1;
+        }
+
+        /* Running command: check if target is another builtin */
+        if (is_name_shell_builtin(argv[idx])) {
+            return execute_builtin(argc - idx, &argv[idx]);
+        }
+
+        /* Otherwise execute external program directly without invoking shell functions */
+        int pid = fork();
+        if (pid == 0) {
+            (void)setpgid(0, 0);
+            if (opt_p) {
+                setenv("PATH", "/bin:/usr/bin", 1);
+            }
+            execvp(argv[idx], &argv[idx]);
+            int exec_error = errno;
+            write_str(STDERR_FILENO, argv[idx]);
+            if (exec_error == ENOENT) {
+                write_str(STDERR_FILENO, ": command not found\n");
+                _exit(127);
+            }
+            write_str(STDERR_FILENO, ": ");
+            write_str(STDERR_FILENO, strerror(exec_error));
+            write_str(STDERR_FILENO, "\n");
+            _exit(126);
+        }
+        if (pid < 0) {
+            write_str(STDERR_FILENO, argv[idx]);
+            write_str(STDERR_FILENO, ": command not found\n");
+            last_exit_status = 127;
+            return 1;
+        }
+
+        int status = 0;
+        waitpid(pid, &status, 0);
+        last_exit_status = wait_status_exit_code(status);
         return 1;
     }
 if (strcmp(argv[0], "exit") == 0) {
@@ -1918,9 +2055,6 @@ static int execute_single_stage(struct command_stage *stage) {
         }
         stage->argv[--stage->argc] = NULL;
         bypass_func = 1;
-    }
-
-
     }
 
     int saved_in = dup(STDIN_FILENO);

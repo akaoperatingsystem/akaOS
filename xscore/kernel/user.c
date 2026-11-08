@@ -1011,6 +1011,13 @@ int xscore_user_process_self_test(void) {
     if (!p_comm || !xscore_process_wait(p_comm, &comm_status) || comm_status != 0 || !xscore_process_reap(p_comm)) return 0;
     xscore_serial_write("[INFO] File comparison utility comm verified\n");
 
+    /* Verify command execution utility command */
+    const char *command_args[] = {"/bin/command", "-v", "echo", 0};
+    struct xscore_process *p_command = xscore_process_create_path_args("/bin/command", 3, command_args);
+    uint64_t command_status = UINT64_MAX;
+    if (!p_command || !xscore_process_wait(p_command, &command_status) || command_status != 0 || !xscore_process_reap(p_command)) return 0;
+    xscore_serial_write("[INFO] Command execution utility command verified\n");
+
     /* Verify Network diagnostics & management suite (netstat, route, traceroute, dig, arp) */
     const char *netstat_args[] = {"/bin/netstat", "-a", 0};
     struct xscore_process *p_netstat = xscore_process_create_path_args("/bin/netstat", 2, netstat_args);

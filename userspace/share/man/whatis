@@ -154,3 +154,4 @@ chroot (1) - run a command with a different root directory
 chkconfig (8) - update and query runlevel information for system services
 cksum (1) - print CRC checksum and byte counts
 comm (1) - compare two sorted files line by line
+command (1) - run a command ignoring shell functions
