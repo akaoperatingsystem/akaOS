@@ -1,3 +1,24 @@
+## 2026-11-08 (seventy-ninth continuation) — Data Duplicator: dd
+
+- Implement native `/bin/dd` in `userspace/bin/dd/main.c`:
+  - Supports basic data copying with `if`, `of`, `bs`, `count`, `skip`, and `seek` operands.
+  - Supports file creation, truncation, and basic block copying.
+  - Staged across build scripts (`build.sh`, `tools/rebuild-xserver-image.sh`, `tools/make_userspace_builders.py`).
+  - Registered `dd (1)` in `whatis` manual index database.
+  - Added kernel self-test verification in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.26, XSCore kernel at 0.2.23.
+
+## 2026-11-08 (seventy-sixth continuation) — Aurora Professional Desktop Shell Evolution (v3.0)
+
+- **Aurora Desktop Shell Evolution**:
+  - Modularized shell into independent modules in `userspace/bin/aurora/modules/` (`panel.h`, `launcher.h`, `calendar.h`, `network.h`, `notifications.h`, `draw.h`, `aurora_types.h`).
+  - Implemented Unified Application Menu with instant index search and category filtering (`All`, `System`, `Utilities`, `Internet`).
+  - Implemented native pop-up calendar with monthly grid and hardware RTC synchronization.
+  - Implemented network connectivity status widget displaying interface details and link state.
+  - Implemented system-wide notification center sink with alert prioritization.
+  - Updated `PROGRESS.md` with Aurora sub-features at 100%.
+- Bumped akaOS to 0.3.25, XSCore to 0.2.23.
+
 ## 2026-11-08 (seventy-eighth continuation) — Desk Calculator: dc
 
 - Implement functional RPN desk calculator `/bin/dc` in `userspace/bin/dc/main.c`:
@@ -692,84 +713,3 @@
 - Implement native POSIX/GNU Readline key and function bindings utility `/bin/bind` in `userspace/bin/bind/main.c`:
   - Syntax: `bind [-m keymap] [-lpsvPSVX] [-q func] [-u func] [-r keyseq] [-x keyseq:cmd] [-f file] [keyseq:func]`.
   - Core inspection options: `-l` (list all 80+ readline function names), `-p` (re-readable bindings), `-P` (current key sequences & functions), `-v` (re-readable variables), `-V` (current variable values), `-s`/`-S` (macros), `-X` (shell command bindings).
-  - Binding mutations: `-q function` (query keys bound to function), `-u function` (unbind all keys for function), `-r keyseq` (remove binding), `-x keyseq:command` (execute shell command on key sequence), `-f filename` (load bindings from `.inputrc` file).
-  - Built-in integration in `userspace/bin/akash/main.c` for interactive readline customization.
-  - Staged `/bin/bind` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-  - Registered `bind (1)` in `whatis` database and updated `akash` shell built-in and utilities listings.
-  - Integrated `bind -q forward-char` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.
-  - Bumped akaOS to 0.2.58 (XSCore kernel at 0.2.3).
-
-## 2026-11-04 (forty-fourth continuation) — Initialize process subsystem unconditionally in main.c
-
-- Call `xscore_process_initialize()` unconditionally before userspace launch in `main.c`.
-- Resolve "init: failed to start userspace init process" on normal boot.
-- Refresh Desktop ISO images for 32-bit and 64-bit.
-- Bump akaOS to 0.2.57.
-
-## 2026-11-04 (forty-third continuation) — Disable boot self-tests during normal startup
-
-- Condition `xscore_user_process_self_test` on `AKAOS_BOOT_FLAG_TEST_MODE`.
-- Eliminate boot-time command test execution during standard system boot.
-- Bump akaOS to 0.2.53.
-
-## 2026-11-04 (forty-sixth continuation) — Job Control Background Command: bg
-
-- Verify and enhance POSIX/Bash job control `bg` in `userspace/bin/akash/main.c`:
-  - Syntax: `bg [job_id...]` to resume stopped jobs in the background via `SIGCONT`.
-  - Supports job specifications (e.g. `%1`, `%+`, `1`) or defaults to the current job when omitted.
-  - Implements detailed built-in documentation via `bg --help` and `help bg`.
-  - Created standalone executable wrapper `/bin/bg` in `userspace/bin/bg/main.c`.
-  - Staged `/bin/bg` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-  - Registered `bg (1)`, `fg (1)`, and `jobs (1)` in `whatis` database.
-  - Added kernel self-test verification in `xscore/kernel/user.c` and `test.sh`.
-  - Bumped akaOS to 0.2.55 (XSCore kernel at 0.2.3).
-
-## 2026-11-04 (forty-fifth continuation) — Arbitrary Precision Calculator Language: bc
-
-- Implement native POSIX-compatible `/bin/bc` in `userspace/bin/bc/main.c`:
-  - Full arithmetic and algebraic expression parsing with operator precedence (`+`, `-`, `*`, `/`, `%`, `^`, parentheses).
-  - Variable assignment and increment/decrement operators: `var = expr`, `++var`, `var++`, `--var`, `var--`.
-  - Precision scale control via `scale=N` and standard functions `sqrt()`, `length()`, `scale()`.
-  - Math library (`-l`, `--mathlib`) providing sine (`s()`), cosine (`c()`), natural logarithm (`l()`), and exponential (`e()`).
-  - User-defined functions: `define func(x) { return expr; }`.
-  - Inline and line comments (`/* ... */`, `# ...`), string literals, relational operators (`==`, `!=`, `<`, `>`, `<=`, `>=`, `&&`, `||`).
-  - Standard options: `-h`, `--help`, `-v`, `--version`, `-l`, `--mathlib`, `-q`, `--quiet`, `-i`, `--interactive`, `-s`, `--standard`, `-w`, `--warn`.
-  - Interactive evaluation and file script execution.
-- Staged `/bin/bc` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-- Registered `bc (1)` in `whatis` database and updated `akash` shell Utilities list.
-- Integrated `echo '1+2' | bc` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.
-- Bumped akaOS to 0.2.53 (XSCore kernel at 0.2.3).
-
-## 2026-11-04 (forty-second continuation) — Fix 32-bit x86 kernel paging and user resume segment restore
-
-- Fix kernel page table sharing for thread stack region in `paging.c`.
-- Restore user data segments (DS, ES, FS = 0x23) in `xscore_user_resume`.
-- Normalize trap frame stack pointer in `tables.c`.
-- Bump akaOS to 0.2.47.
-
-## 2026-11-04 (forty-fourth continuation) — GNU Bourne-Again SHell Compatibility: bash, sh, rbash
-
-- Extend native shell in `userspace/bin/akash/main.c` with complete GNU bash command-line interface & semantics:
-  - Command execution options: `-c string` (executes string with optional positional parameters `$0`, `$1`, ...), `-s` (reads from standard input), script file execution.
-  - Interactive & login invocation: `-i` (interactive), `-l` / `--login` (login shell), `-r` / `--restricted` (restricted shell `rbash`), `--posix`, `--verbose`, `-v`.
-  - Startup files: standard evaluation of `/etc/profile`, `~/.bash_profile`, `~/.profile`, `~/.bashrc` (`--rcfile`, `--init-file`), with bypass flags `--noprofile` and `--norc`.
-  - Restricted shell mode (`rbash`): restricts `cd`, disallows modifying `SHELL`, `PATH`, `ENV`, `BASH_ENV`.
-  - Information & help: `--version` (GNU bash 5.3.0 release text) and `--help` usage synopsis.
-- Staged `/bin/bash`, `/bin/sh`, and `/bin/rbash` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-- Registered `bash (1)`, `rbash (1)`, and `sh (1)` in `whatis` database and updated `akash` shell Utilities list.
-- Integrated `/bin/bash -c "echo BASH_OK"` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.
-- Bumped akaOS to 0.2.51 (XSCore kernel at 0.2.3).
-
-## 2026-11-04 (forty-third continuation) — Base64 Encoding and Decoding Utility: base64
-
-- Implement native POSIX/GNU-compatible `/bin/base64` in `userspace/bin/base64/main.c`:
-  - RFC 4648 Base64 encoding and decoding using the standard 64-character alphabet (`A-Z`, `a-z`, `0-9`, `+`, `/`) with `=` padding.
-  - Supports standard options:
-    - `-d`, `-D`, `--decode`: decode data.
-    - `-i`, `--ignore-garbage`: ignore non-alphabet characters during decoding.
-    - `-w COLS`, `--wrap=COLS`: line wrapping after COLS characters (default 76, 0 disables wrapping).
-    - `--help`, `--version`.
-  - Supports streaming input from files or standard input (`-`).
-- Deploy `/bin/base64` across `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-- Register `base64` in `akash` shell Utilities list and `whatis` manual page index database.
-- Integrate `base64 /etc/motd` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.

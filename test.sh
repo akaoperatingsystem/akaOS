@@ -208,6 +208,7 @@ grep -Fq "[INFO] Scripting & admin utilities sleep/which/env/cut/tr/df/du verifi
 grep -Fq "[INFO] Column division utility cut verified" "$TEST_LOG"
 grep -Fq "[INFO] Date and time utility date verified" "$TEST_LOG"
 grep -Fq "[INFO] Desk calculator dc verified" "$TEST_LOG"
+grep -Fq "[INFO] Data duplicator dd verified" "$TEST_LOG"
 grep -Fq "[INFO] System & process control suite kill/pkill/uptime/free/watch verified" "$TEST_LOG"
 grep -Fq "[INFO] Unix text transformation & diff suite sed/diff/cmp/patch verified" "$TEST_LOG"
 grep -Fq "[INFO] Archiving & compression suite tar/gzip/gunzip verified" "$TEST_LOG"

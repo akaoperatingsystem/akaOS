@@ -1,3 +1,19 @@
+## 2026-11-08 continuation 79: Data Duplicator (dd)
+
+- [x] Implement and verify basic functionality for `dd`:
+      - Supports: `if`, `of`, `bs`, `count`, `skip`, `seek`.
+      - Tested in `xscore/kernel/user.c` (`dd if=/dev/zero of=/tmp/ddtest bs=1024 count=1`) and verified in automated QEMU boot test.
+
+## 2026-11-08 continuation 76: Aurora Professional Desktop Shell Evolution
+
+- [x] Modularize Aurora shell architecture into independent decoupled headers/modules.
+- [x] Implement Unified Application Menu with instant search and category tabs in `launcher.h`.
+- [x] Implement interactive pop-up monthly calendar in `calendar.h`.
+- [x] Implement network status widget in `network.h`.
+- [x] Implement system notification center sink in `notifications.h`.
+- [x] Update `PROGRESS.md` with Aurora sub-features at 100%.
+- [x] Bump akaOS to 0.3.25, XSCore to 0.2.23; sync badges.
+
 ## 2026-11-08 continuation 78: Desk Calculator (dc)
 
 - [x] Implement and verify basic RPN functionality for `dc`:

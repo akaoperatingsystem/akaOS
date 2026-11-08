@@ -618,6 +618,7 @@ build_user_program cron "$ROOT_DIR/userspace/bin/cron/main.c" CRON.ELF
 build_user_program csplit "$ROOT_DIR/userspace/bin/csplit/main.c" CSPLIT.ELF
 build_user_program date "$ROOT_DIR/userspace/bin/date/main.c" DATE.ELF
 build_user_program dc "$ROOT_DIR/userspace/bin/dc/main.c" DC.ELF
+build_user_program dd "$ROOT_DIR/userspace/bin/dd/main.c" DD.ELF
 build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
 build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
@@ -859,6 +860,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/csplit:$BUILD_DIR/CSPLIT.ELF:exec" \
     --file "/bin/date:$BUILD_DIR/DATE.ELF:exec" \
     --file "/bin/dc:$BUILD_DIR/DC.ELF:exec" \
+    --file "/bin/dd:$BUILD_DIR/DD.ELF:exec" \
     --file "/bin/crond:$BUILD_DIR/CROND.ELF:exec" \
     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \\
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \\

@@ -709,6 +709,18 @@ int xscore_user_process_self_test(void) {
         xscore_serial_write("[INFO] Desk calculator dc verified\n");
     }
 
+    /* Verify data duplicator dd */
+    const char *dd_args[] = {"/bin/dd", "if=/dev/zero", "of=/tmp/ddtest", "bs=1024", "count=1", 0};
+    struct xscore_process *p_dd = xscore_process_create_path_args("/bin/dd", 6, dd_args);
+    uint64_t dd_status = UINT64_MAX;
+    if (p_dd) {
+        xscore_process_wait(p_dd, &dd_status);
+        xscore_process_reap(p_dd);
+        if (dd_status == 0) {
+            xscore_serial_write("[INFO] Data duplicator dd verified\n");
+        }
+    }
+
     /* Verify kill, pkill, uptime, free, watch */
     const char *kill_args[] = {"/bin/kill", "-l", 0};
     struct xscore_process *p_kill = xscore_process_create_path_args("/bin/kill", 2, kill_args);

@@ -1,3 +1,11 @@
+## 2026-11-08 (seventy-ninth continuation) — Data Duplicator: dd
+
+akaOS now features a basic `/bin/dd` utility:
+1. **Data Duplicator (`/bin/dd`):**
+   - Syntax: `dd [operands]`
+   - Supports: `if`, `of`, `bs`, `count`, `skip`, `seek`.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-08 (seventy-eighth continuation) — Desk Calculator: dc
 
 akaOS now features a basic RPN `/bin/dc` utility:
