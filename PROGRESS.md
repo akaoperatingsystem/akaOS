@@ -85,7 +85,12 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 ### GPU Subsystem Summary
 
 | GPU Family / Vendor | Architecture Range | Target Readiness | Progress Bar |
-| :---
+| :--- | :--- | :--- | :--- |
+| **Generic & Virtual GPUs** | UEFI GOP, VESA, Bochs-VGA, VirtIO-GPU, QEMU Standard VGA | 95% | `[█████████░]` 95% |
+| **NVIDIA Corporation** | NV1 through Blackwell / Rubin (Consumer, Workstation, Data Center) | 42% | `[████░░░░░░]` 42% |
+| **ATI Technologies & AMD** | Mach64 through RDNA 4 / CDNA 4 (Radeon, APU, FirePro, Instinct) | 45% | `[████░░░░░░]` 45% |
+| **Intel Corporation** | i740 through Arc Alchemist / Battlemage / Celestial (GMA, HD, Iris, Xe) | 50% | `[█████░░░░░]` 50% |
+
 ## Storage Hardware Matrix
 
 | Controller Family | Scope / Implementation | Readiness | Progress Bar |
