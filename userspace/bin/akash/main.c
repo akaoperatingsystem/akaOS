@@ -1026,6 +1026,15 @@ static int execute_builtin(int argc, char *argv[]) {
         last_exit_status = 0;
         return 1;
     }
+
+    if (strcmp(argv[0], "command") == 0) {
+        if (argc < 2) {
+            last_exit_status = 0;
+            return 1;
+        }
+        last_exit_status = 0;
+        return 1;
+    }
 if (strcmp(argv[0], "exit") == 0) {
         int code = last_exit_status;
         if (argc > 1) {
@@ -1160,7 +1169,7 @@ if (strcmp(argv[0], "exit") == 0) {
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller, case, command\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller, case, command, command\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind, bzip2, bunzip2, bzcat, cal, ncal, caller, cd, cfdisk, chattr, chgrp, chpasswd, chroot, chkconfig, cksum, comm\n");
         write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, case/in/esac, break [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;
@@ -1904,12 +1913,14 @@ static int execute_single_stage(struct command_stage *stage) {
 
     int bypass_func = 0;
     if (stage->argc > 1 && strcmp(stage->argv[0], "command") == 0) {
-        // Simple argument shifting for 'command'
         for (int i = 0; i < stage->argc - 1; i++) {
             stage->argv[i] = stage->argv[i+1];
         }
         stage->argv[--stage->argc] = NULL;
         bypass_func = 1;
+    }
+
+
     }
 
     int saved_in = dup(STDIN_FILENO);
