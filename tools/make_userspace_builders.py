@@ -615,6 +615,7 @@ build_user_program patch "$ROOT_DIR/userspace/bin/patch/main.c" PATCH.ELF
 build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
 build_user_program cpio "$ROOT_DIR/userspace/bin/cpio/main.c" CPIO.ELF
 build_user_program cron "$ROOT_DIR/userspace/bin/cron/main.c" CRON.ELF
+build_user_program csplit "$ROOT_DIR/userspace/bin/csplit/main.c" CSPLIT.ELF
 build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
 build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
@@ -853,6 +854,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec" \
     --file "/bin/cpio:$BUILD_DIR/CPIO.ELF:exec" \
     --file "/bin/cron:$BUILD_DIR/CRON.ELF:exec" \
+    --file "/bin/csplit:$BUILD_DIR/CSPLIT.ELF:exec" \
     --file "/bin/crond:$BUILD_DIR/CROND.ELF:exec" \
     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \\
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \\
