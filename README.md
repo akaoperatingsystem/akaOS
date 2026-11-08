@@ -15,10 +15,6 @@ akaOS runs entirely on its own kernel, freestanding C library (libc), dynamic lo
 
 Track real-time progress across hardware architectures, graphics drivers, and desktop environments in **[PROGRESS.md](PROGRESS.md)**.
 
-- **CPU Architectures**: 6 ports verified (x86-64, x86-32, AArch64, ARM32, RISC-V64, RISC-V32).
-- **Desktop Environments**: 100% unmodified upstream Openbox and LXDE (Openbox + LXPanel + PCManFM) verified live on the native X11 display server.
-- **GPU Driver Framework**: Display architecture matrix tracking NVIDIA, AMD/ATI, and Intel hardware.
-
 ---
 
 ## Key Features
