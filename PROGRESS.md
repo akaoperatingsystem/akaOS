@@ -77,19 +77,7 @@ All desktop environments and window managers run as **completely unmodified upst
 | **Enlightenment** | Unmodified Upstream 0.26.0 | 100% | `[██████████]` 100% |
 | **Overall System Completion** | Full Native Operating System | 100% | `[██████████]` 100% |
 
-
-## GPU Hardware Drivers & Target Support Matrix
-
-This matrix tracks the hardware driver support and acceleration milestones across NVIDIA, AMD/ATI, and Intel graphics processors inside the **XSCore** kernel driver framework and display subsystem.
-
-### GPU Subsystem Summary
-
-| GPU Family / Vendor | Architecture Range | Target Readiness | Progress Bar |
-| :--- | :--- | :--- | :--- |
-| **Generic & Virtual GPUs** | UEFI GOP, VESA, Bochs-VGA, VirtIO-GPU, QEMU Standard VGA | 95% | `[█████████░]` 95% |
-| **NVIDIA Corporation** | NV1 through Blackwell / Rubin (Consumer, Workstation, Data Center) | 42% | `[████░░░░░░]` 42% |
-| **ATI Technologies & AMD** | Mach64 through RDNA 4 / CDNA 4 (Radeon, APU, FirePro, Instinct) | 45% | `[████░░░░░░]` 45% |
-| **Intel Corporation** | i740 through Arc Alchemist / Battlemage / Celestial (GMA, HD, Iris, Xe) | 50% | `[█████░░░░░]` 50% |
+---
 
 ## Storage Hardware Matrix
 
@@ -125,7 +113,11 @@ This matrix tracks the hardware driver support and acceleration milestones acros
 
 ---
 
-## GPU Subsystem Summary
+## GPU Hardware Drivers & Target Support Matrix
+
+This matrix tracks the hardware driver support and acceleration milestones across NVIDIA, AMD/ATI, and Intel graphics processors inside the **XSCore** kernel driver framework and display subsystem.
+
+### GPU Subsystem Summary
 
 | GPU Family / Vendor | Architecture Range | Target Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
