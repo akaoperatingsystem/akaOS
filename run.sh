@@ -442,7 +442,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires xfce, lxde, openbox, aurora, lxqt, or none" >&2
+                echo "$1 requires aurora, xfce, lxde, openbox, lxqt, kde, gnome, i3, dwm, bspwm, metacity, or none" >&2
                 exit 2
             fi
             menu_desktop="$2"
@@ -623,12 +623,20 @@ if [[ "$arch" == "x86_32" ]]; then
     fi
     if [[ "$firmware" == "uefi" && "$boot_disk_type" == "fat32" ]]; then
         if [[ ! -f "$ROOT_DIR/build/akaos32.img" ]]; then
-            "$ROOT_DIR/build.sh" --arch x86_32 --firmware uefi --disk-type fat32
+            build_args=(--arch x86_32 --firmware uefi --disk-type fat32 --software "$menu_software")
+            if [[ "$menu_desktop" != "none" ]]; then
+                build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
+            fi
+            "$ROOT_DIR/build.sh" "${build_args[@]}"
         fi
         X86_32_ARGS=(-m 128M -drive "format=raw,file=$ROOT_DIR/build/akaos32.img" -boot c -monitor none -serial stdio)
     else
         if [[ ! -f "$ROOT_DIR/build/akaos32.iso" ]]; then
-            "$ROOT_DIR/build.sh" --arch x86_32 --firmware "$firmware" --disk-type iso
+            build_args=(--arch x86_32 --firmware "$firmware" --disk-type iso --software "$menu_software")
+            if [[ "$menu_desktop" != "none" ]]; then
+                build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
+            fi
+            "$ROOT_DIR/build.sh" "${build_args[@]}"
         fi
         X86_32_ARGS=(-m 128M -cdrom "$ROOT_DIR/build/akaos32.iso" -boot d -monitor none -serial stdio)
         boot_disk_type=iso
@@ -760,11 +768,19 @@ if [[ "$boot_disk_type" == "iso" ]]; then
     if [[ ! -f "$ROOT_DIR/build/akaos.iso" ]]; then
         # BIOS/FAT32 transparently boots the ISO fallback; build only the
         # medium this QEMU instance will actually boot.
-        "$ROOT_DIR/build.sh" --arch x86_64 --firmware "$firmware" --disk-type iso
+        build_args=(--arch x86_64 --firmware "$firmware" --disk-type iso --software "$menu_software")
+        if [[ "$menu_desktop" != "none" ]]; then
+            build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
+        fi
+        "$ROOT_DIR/build.sh" "${build_args[@]}"
     fi
 elif [[ "$firmware" == "uefi" ]]; then
     if [[ ! -f "$ROOT_DIR/build/akaos.img" ]]; then
-        "$ROOT_DIR/build.sh" --arch x86_64 --firmware uefi --disk-type fat32
+        build_args=(--arch x86_64 --firmware uefi --disk-type fat32 --software "$menu_software")
+        if [[ "$menu_desktop" != "none" ]]; then
+            build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
+        fi
+        "$ROOT_DIR/build.sh" "${build_args[@]}"
     fi
 fi
 

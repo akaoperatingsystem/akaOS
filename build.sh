@@ -467,7 +467,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires xfce, lxde, openbox, aurora, lxqt, or none" >&2
+                echo "$1 requires aurora, xfce, lxde, openbox, lxqt, kde, gnome, i3, dwm, bspwm, metacity, or none" >&2
                 exit 2
             fi
             target_desktop="$2"
