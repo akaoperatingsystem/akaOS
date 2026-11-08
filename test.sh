@@ -213,6 +213,7 @@ grep -Fq "[INFO] Advanced shell job control & pipelines in akash verified" "$TES
 grep -Fq "[INFO] Manual page keyword lookup utility apropos verified" "$TEST_LOG"
 grep -Fq "[INFO] Spell checker utility aspell verified" "$TEST_LOG"
 grep -Fq "[INFO] Command scheduling suite at/atq/atrm/batch verified" "$TEST_LOG"
+grep -Fq "[INFO] Scheduled command daemon cron verified" "$TEST_LOG"
 grep -Fq "[INFO] Text processing and pattern scanning utility awk verified" "$TEST_LOG"
 grep -Fq "[INFO] Path stripping utility basename verified" "$TEST_LOG"
 grep -Fq "[INFO] Base32 encoding and decoding utility base32 verified" "$TEST_LOG"

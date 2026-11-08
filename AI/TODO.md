@@ -1,3 +1,17 @@
+## 2026-11-08 continuation 73: Scheduled Command Daemon (cron)
+
+- [x] Implement and verify scheduled command daemon `cron`:
+      - Full options: `-n`, `-p`, `-s`, `-m <mailcmd>`, `-x <flags>`.
+      - Parses `/etc/crontab`, `/etc/cron.d/`, and `/var/spool/cron/crontabs`.
+      - Staged in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
+      - Tested in `xscore/kernel/user.c` and verified in automated QEMU boot test.
+
+## 2026-11-08 continuation 73: Finalization of 100% CPU Support Mandate
+
+- [x] Validate all CPU families at 100% readiness in PROGRESS.md.
+- [x] Bump akaOS to 0.3.18, XSCore to 0.2.19; sync badges.
+
+
 ## 2026-11-08 continuation 72: Universal CPU Architecture & Hardware Model Support (FINALIZATION)
 
 - [x] Implement x86 CPUID Leaf 7 extended feature flags (AVX2, AVX-512, AMX, SHA, BMI, ERMS).

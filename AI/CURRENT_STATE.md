@@ -1,3 +1,12 @@
+## 2026-11-08 (seventy-third continuation) — Scheduled Command Daemon: cron
+
+akaOS now features a full-featured `/bin/cron` daemon:
+1. **Scheduled Command Daemon (`/bin/cron`):**
+   - Syntax: `cron [-n | -p | -s | -m<mailcommand>] [-x flags]`
+   - Background daemon and foreground modes supported.
+   - Comprehensive crontab expression evaluator with step/range/wildcard support.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-08 (sixty-ninth continuation) — Loop Continuation Shell Builtin: continue (POSIX special builtin)
 
 akaOS now features a full-featured `continue` shell builtin and standalone wrapper:

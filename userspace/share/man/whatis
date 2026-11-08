@@ -157,3 +157,4 @@ comm (1) - compare two sorted files line by line
 command (1) - run a command ignoring shell functions
 continue (1) - resume the next iteration of an enclosing loop
 cpio (1) - copy files to and from archives
+cron (8) - daemon to execute scheduled commands

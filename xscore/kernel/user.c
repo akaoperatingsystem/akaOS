@@ -849,6 +849,13 @@ int xscore_user_process_self_test(void) {
     if (!p_atrm || !xscore_process_wait(p_atrm, &atrm_status) || atrm_status != 0 || !xscore_process_reap(p_atrm)) return 0;
     xscore_vfs_unlink_at(0, "/var/spool/at/.seq");
 
+    /* Verify cron daemon invocation and options */
+    const char *cron_args[] = {"/bin/cron", "-x", "test", 0};
+    struct xscore_process *p_cron = xscore_process_create_path_args("/bin/cron", 3, cron_args);
+    uint64_t cron_status = UINT64_MAX;
+    if (!p_cron || !xscore_process_wait(p_cron, &cron_status) || cron_status != 0 || !xscore_process_reap(p_cron)) return 0;
+    xscore_serial_write("[INFO] Scheduled command daemon cron verified\n");
+
     const char *awk_args[] = {"/bin/awk", "BEGIN { print 1+2 }", 0};
     struct xscore_process *p_awk = xscore_process_create_path_args("/bin/awk", 2, awk_args);
     uint64_t awk_status = UINT64_MAX;
