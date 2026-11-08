@@ -1,18 +1,34 @@
-# akaOS Development Progress
-
-> **Current akaOS Development Summary:** 
-> - **Kernel Stability:** High (XSCore 0.2.15)
-> - **Desktop Maturity:** High (Multiple 100% verified WMs/DEs)
-> - **Architecture Support:** Multi-arch verified (6 target architectures)
-> - **Build/Test Status:** Passed
-
----
-
+# akaOS Development Progress & Architecture Roadmap
 
 [![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.12-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.15-green.svg)](sdk/include/akaos/version.h)
+[![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
+[![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
+[![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
 
-This document tracks the live implementation progress, hardware readiness, subsystem maturity, and desktop environment compatibility for **akaOS** and the **XSCore** kernel.
+> **Live System Overview:**  
+> - **Operating System**: akaOS v0.3.12 (Freestanding Userspace, POSIX Runtime, Dynamic Linker)
+> - **Kernel Core**: XSCore v0.2.15 (Preemptive Multitasking, 4-Level Paging, SMP, COW Isolation)
+> - **Hardware Portability**: 6 verified architectures (`x86-64`, `x86-32`, `AArch64`, `ARM32`, `RISC-V64`, `RISC-V32`)
+> - **Window Management**: 34 native and ported window managers and full desktop suites verified live
+
+---
+
+## 📑 Table of Contents
+- [Supported CPU Architectures](#supported-cpu-architectures)
+- [System Subsystems & Hardware Drivers](#system-subsystems--hardware-drivers)
+- [Desktop Environments & Window Managers](#desktop-environments--window-managers)
+- [Storage Hardware Matrix](#storage-hardware-matrix)
+- [Power Management & ACPI](#power-management--acpi)
+- [Input Subsystem](#input-subsystem)
+- [Build, CI/CD & Automated Testing](#build-cicd--automated-testing)
+- [GPU Hardware Drivers & Target Support Matrix](#gpu-hardware-drivers--target-support-matrix)
+  - [GPU Subsystem Summary](#gpu-subsystem-summary)
+  - [NVIDIA Corporation GPU Drivers](#1-nvidia-corporation-gpu-drivers)
+  - [ATI Technologies & AMD GPU Drivers](#2-ati-technologies--amd-gpu-drivers)
+  - [Intel Corporation GPU Drivers](#3-intel-corporation-gpu-drivers)
+- [Comprehensive Global CPU & SoC Directory](#comprehensive-global-cpu--soc-model-directory)
+- [Comprehensive Global Network Hardware Directory](#comprehensive-global-network-hardware-directory-ethernet--wi-fi)
 
 ---
 
