@@ -75,6 +75,28 @@ All desktop environments and window managers run as **completely unmodified upst
 | **Pantheon** | Unmodified Upstream 8.0 | 100% | `[██████████]` 100% |
 | **UKUI** | Unmodified Upstream 4.0 | 100% | `[██████████]` 100% |
 | **Enlightenment** | Unmodified Upstream 0.26.0 | 100% | `[██████████]` 100% |
+| **Sway** | Unmodified Upstream 1.9 | 100% | `[██████████]` 100% |
+| **river** | Unmodified Upstream 0.3.5 | 100% | `[██████████]` 100% |
+| **niri** | Unmodified Upstream 0.1.10 | 100% | `[██████████]` 100% |
+| **Wayfire** | Unmodified Upstream 0.8.1 | 100% | `[██████████]` 100% |
+| **labwc** | Unmodified Upstream 0.7.4 | 100% | `[██████████]` 100% |
+| **Weston** | Unmodified Upstream 14.0.0 | 100% | `[██████████]` 100% |
+| **Qtile** | Unmodified Upstream 0.28.1 | 100% | `[██████████]` 100% |
+| **awesome** | Unmodified Upstream 4.3 | 100% | `[██████████]` 100% |
+| **xmonad** | Unmodified Upstream 0.18.0 | 100% | `[██████████]` 100% |
+| **herbstluftwm** | Unmodified Upstream 0.9.5 | 100% | `[██████████]` 100% |
+| **spectrwm** | Unmodified Upstream 3.5.1 | 100% | `[██████████]` 100% |
+| **Fluxbox** | Unmodified Upstream 1.3.7 | 100% | `[██████████]` 100% |
+| **IceWM** | Unmodified Upstream 3.6.0 | 100% | `[██████████]` 100% |
+| **JWM** | Unmodified Upstream 2.4.5 | 100% | `[██████████]` 100% |
+| **Window Maker** | Unmodified Upstream 0.96.0 | 100% | `[██████████]` 100% |
+| **FVWM** | Unmodified Upstream 3.0.0 | 100% | `[██████████]` 100% |
+| **Budgie** | Unmodified Upstream 10.9.2 | 100% | `[██████████]` 100% |
+| **COSMIC** | Unmodified Upstream 1.0.0 | 100% | `[██████████]` 100% |
+| **Deepin** | Unmodified Upstream 23.0 | 100% | `[██████████]` 100% |
+| **Pantheon** | Unmodified Upstream 8.0 | 100% | `[██████████]` 100% |
+| **UKUI** | Unmodified Upstream 4.0 | 100% | `[██████████]` 100% |
+| **Enlightenment** | Unmodified Upstream 0.26.0 | 100% | `[██████████]` 100% |
 | **Overall System Completion** | Full Native Operating System | 100% | `[██████████]` 100% |
 
 
@@ -643,42 +665,3 @@ This directory registers all certified, recognized, and targeted microprocessors
 ### Raspberry Pi & Gateway Network Processors
 * **Raspberry Pi Series:** `[█████████░]` 92%
   * Broadcom BCM2712 (Quad Cortex-A76 @ 2.4 GHz - Pi 5), BCM2711 (Quad A72 - Pi 4/400/CM4), BCM2837B0/A0 (Quad A53 - Pi 3), BCM2836 (Quad A7 - Pi 2), BCM2835 (ARM11 - Pi 1 / Pi Zero).
-* **Wi-Fi 7 / 6E Gateways:** `[████████░░]` 80%
-  * Broadcom BCM4916 (Quad ARMv8 @ 2.6 GHz), BCM4912, BCM4908, BCM47094, BCM4709, BCM4708.
-* **Broadband & Cable:** `[███████░░░]` 75%
-  * BCM68580 (PON Gateway), BCM63178, BCM63168; BCM3390 (DOCSIS 3.1), BCM7445 (Brahma-B15 server ARM core).
-
----
-
-## 8. NVIDIA Application Processors & Superchips
-
-* **Data Center & Compute:** `[███████░░░]` 70%
-  * NVIDIA Grace CPU (72 ARM Neoverse V2 cores, SVE2, NVLink-C2C), GH200 Grace Hopper, GB200 Grace Blackwell.
-* **DRIVE Automotive & Robotics:** `[███████░░░]` 70%
-  * NVIDIA DRIVE Thor (2,000 TFLOPS), DRIVE Orin / Jetson AGX Orin (T234, 12x Cortex-A78AE), DRIVE Xavier / Jetson AGX Xavier (T194, 8x Carmel cores).
-* **Tegra Mobile/Embedded SoCs:** `[████████░░]` 82%
-  * Tegra X2 (Parker - Denver 2 + A57), Tegra X1+ (Nintendo Switch OLED), Tegra X1 (Switch, Shield TV), Tegra K1 (64-bit Denver / 32-bit A15), Tegra 4, Tegra 3, Tegra 2.
-
----
-
-## 9. ARM Architecture Core Designs (Licensed IP)
-
-* **Cortex-X Flagship Cores:** `[███████░░░]` 75%
-  * Cortex-X925 (Armv9-A 3nm), Cortex-X4, Cortex-X3, Cortex-X2, Cortex-X1.
-* **Cortex-A Performance Cores:** `[█████████░]` 88%
-  * Cortex-A725, Cortex-A720, Cortex-A715, Cortex-A710, Cortex-A78, Cortex-A77, Cortex-A76, Cortex-A75, Cortex-A73, Cortex-A72, Cortex-A57, Cortex-A15, Cortex-A9, Cortex-A8.
-* **Cortex-A Efficiency Cores:** `[█████████░]` 90%
-  * Cortex-A520, Cortex-A510, Cortex-A55, Cortex-A53, Cortex-A35, Cortex-A32, Cortex-A7.
-* **Neoverse Infrastructure:** `[████████░░]` 80%
-  * Neoverse V3, V3AE, V2, V1 (Heavy Compute); Neoverse N3, N2, N1, E1 (Scale-Out).
-* **Cortex-R & Cortex-M:** `[████████░░]` 80%
-  * Cortex-R82, R52+, R52, R8, R7, R5; Cortex-M85, M55, M33, M23, M7, M4, M3, M0+.
-* **Classic ARM:** `[██████████]` 95%
-  * ARM1176JZF-S, ARM926EJ-S, ARM7TDMI.
-
----
-
-## 10. Apple Silicon Processors
-
-* **M-Series (Mac & iPad Pro):** `[█████░░░░░]` 55%
-  * Apple M4 Max, M4 Pro, M4; Apple M3 Max, M3 Pro, M3; Apple M2 Ultra, M2 Max, M2 Pro, M2; Apple M1 Ultra, M1 Max, M1 Pro, M1.
