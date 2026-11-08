@@ -1822,6 +1822,7 @@ build_user_program ukui "$ROOT_DIR/userspace/bin/ukui/main.c" UKUI.ELF
 build_user_program enlightenment "$ROOT_DIR/userspace/bin/enlightenment/main.c" ENLIGHTENMENT.ELF
 build_user_program comm "$ROOT_DIR/userspace/bin/comm/main.c" COMM.ELF
 build_user_program command "$ROOT_DIR/userspace/bin/command/main.c" COMMAND.ELF
+build_user_program continue "$ROOT_DIR/userspace/bin/continue/main.c" CONTINUE.ELF
 build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
 build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
 build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
@@ -3454,6 +3455,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec" \
     --file "/bin/comm:$BUILD_DIR/COMM.ELF:exec" \
     --file "/bin/command:$BUILD_DIR/COMMAND.ELF:exec" \
+    --file "/bin/continue:$BUILD_DIR/CONTINUE.ELF:exec" \
     --file "/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
     --file "/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \
     --file "/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \

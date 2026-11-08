@@ -6,30 +6,21 @@
 
 #define COMPONENT_NAME "spectrwm"
 #define COMPONENT_VERSION "3.5.1"
-#define COMPONENT_DESC "A small dynamic tiling window manager for X11"
+#define COMPONENT_DESC "Small dynamic tiling window manager for X11"
 
 static void print_usage(void) {
-    printf("Usage: %s [options]
-"
-           "%s (akaOS native build)
-
-"
-           "Options:
-"
-           "  -h, --help       display this help text and exit
-"
-           "  -v, --version    display version information and exit
-"
-           "  --check          verify runtime readiness and exit
-"
-           "  --once           run single session verification cycle and exit
-",
+    printf("Usage: %s [options]\n"
+           "%s (akaOS native build)\n\n"
+           "Options:\n"
+           "  -h, --help       display this help text and exit\n"
+           "  -v, --version    display version information and exit\n"
+           "  --check          verify runtime readiness and exit\n"
+           "  --once           run single session verification cycle and exit\n",
            COMPONENT_NAME, COMPONENT_DESC);
 }
 
 static void print_version(void) {
-    printf("%s version %s (akaOS native build)
-", COMPONENT_NAME, COMPONENT_VERSION);
+    printf("%s version %s (akaOS native build)\n", COMPONENT_NAME, COMPONENT_VERSION);
 }
 
 int main(int argc, char **argv) {
@@ -48,13 +39,10 @@ int main(int argc, char **argv) {
         }
     }
 
-    printf("[%s] %s
-", COMPONENT_NAME, COMPONENT_DESC);
-    printf("[%s] version %s initialized successfully
-", COMPONENT_NAME, COMPONENT_VERSION);
+    printf("[%s] %s\n", COMPONENT_NAME, COMPONENT_DESC);
+    printf("[%s] version %s initialized successfully\n", COMPONENT_NAME, COMPONENT_VERSION);
     if (once_mode) {
-        printf("[%s] startup verification completed
-", COMPONENT_NAME);
+        printf("[%s] startup verification completed\n", COMPONENT_NAME);
         return 0;
     }
     return 0;
