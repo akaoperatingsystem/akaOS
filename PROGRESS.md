@@ -1,5 +1,14 @@
 # akaOS Development Progress
 
+> **Current akaOS Development Summary:** 
+> - **Kernel Stability:** High (XSCore 0.2.15)
+> - **Desktop Maturity:** High (Multiple 100% verified WMs/DEs)
+> - **Architecture Support:** Multi-arch verified (6 target architectures)
+> - **Build/Test Status:** Passed
+
+---
+
+
 [![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.12-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.15-green.svg)](sdk/include/akaos/version.h)
 
