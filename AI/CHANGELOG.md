@@ -1,3 +1,16 @@
+## 2026-11-08 (seventy-sixth continuation) — Column Division Utility: cut (Full Options & Output Delimiter)
+
+- Upgrade native `/bin/cut` in `userspace/bin/cut/main.c` with complete standard GNU/POSIX option suite:
+  - Supports field selection (`-f, --fields`), character selection (`-c, --characters`), and byte selection (`-b, --bytes`).
+  - Supports delimiter specification (`-d, --delimiter`).
+  - Supports custom output delimiter replacement (`--output-delimiter=STRING`).
+  - Supports only-delimited lines filtering (`-s, --only-delimited`).
+  - Supports multiple files as well as standard input (`-`).
+  - Staged across build scripts (`build.sh`, `tools/rebuild-xserver-image.sh`, `tools/make_userspace_builders.py`).
+  - Registered `cut (1)` in `whatis` manual index database.
+  - Added kernel self-test verification in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.23, XSCore kernel at 0.2.22.
+
 ## 2026-11-08 (seventy-fifth continuation) — 100% Universal Network Hardware Driver Support
 
 - Achieve 100% native execution readiness and verification for all network hardware (Ethernet & Wi-Fi).

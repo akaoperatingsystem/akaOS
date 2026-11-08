@@ -671,6 +671,12 @@ int xscore_user_process_self_test(void) {
     uint64_t cut_status = UINT64_MAX;
     if (!p_cut || !xscore_process_wait(p_cut, &cut_status) || cut_status != 0 || !xscore_process_reap(p_cut)) return 0;
 
+    const char *cut_delim_args[] = {"/bin/cut", "-d:", "-f1,3", "--output-delimiter=;", "/etc/passwd", 0};
+    struct xscore_process *p_cut_delim = xscore_process_create_path_args("/bin/cut", 6, cut_delim_args);
+    uint64_t cut_delim_status = UINT64_MAX;
+    if (!p_cut_delim || !xscore_process_wait(p_cut_delim, &cut_delim_status) || cut_delim_status != 0 || !xscore_process_reap(p_cut_delim)) return 0;
+    xscore_serial_write("[INFO] Column division utility cut verified\n");
+
     const char *df_args[] = {"/bin/df", "-h", 0};
     struct xscore_process *p_df = xscore_process_create_path_args("/bin/df", 2, df_args);
     uint64_t df_status = UINT64_MAX;

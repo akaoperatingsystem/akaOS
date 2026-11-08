@@ -1,3 +1,9 @@
+## 2026-11-08 continuation 76: Column Division Utility (cut)
+
+- [x] Implement and verify complete option suite for `cut`:
+      - Full options: `-b`, `-c`, `-d`, `-f`, `-n`, `-s`, `--output-delimiter=STRING`.
+      - Tested in `xscore/kernel/user.c` (`cut -d: -f1,3 --output-delimiter=;`) and verified in automated QEMU boot test.
+
 ## 2026-11-08 continuation 75: Universal Network Hardware Support (100% Complete)
 
 - [x] Audit network hardware matrix in `PROGRESS.md`.

@@ -1,3 +1,10 @@
+## Latest continuation — 2026-11-08, Column Division Utility (cut)
+
+- Upgraded `cut` in `userspace/bin/cut/main.c` with full options suite:
+  - Field selection (`-f`), char/byte selection (`-c`, `-b`), delimiter (`-d`), custom output delimiter (`--output-delimiter`), only-delimited filtering (`-s`), and stdin/files processing.
+  - Verified `cut` execution and output delimiter in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.23 (XSCore kernel at 0.2.22).
+
 ## Latest continuation — 2026-11-08, 100% Universal Network Hardware & Driver Support
 
 - **100% Mandate Complete for All Network Hardware**:
