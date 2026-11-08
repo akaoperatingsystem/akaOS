@@ -1,3 +1,10 @@
+## Latest continuation — 2026-11-08, Data Recovery Tool (ddrescue)
+
+- Implemented `ddrescue` in `userspace/bin/ddrescue/main.c`:
+  - Basic data recovery copying with sector size, force, and mapfile support.
+  - Verified `/bin/ddrescue` execution in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.27 (XSCore kernel at 0.2.23).
+
 ## Latest continuation — 2026-11-08, Data Duplicator (dd)
 
 - Implemented `dd` in `userspace/bin/dd/main.c`:

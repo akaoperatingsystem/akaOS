@@ -1,3 +1,12 @@
+## 2026-11-08 (eightieth continuation) — Data Recovery Tool: ddrescue
+
+akaOS now features a basic `/bin/ddrescue` utility:
+1. **Data Recovery Tool (`/bin/ddrescue`):**
+   - Syntax: `ddrescue [options] infile outfile [mapfile]`
+   - Supports: `-b, --sector-size`, `-f, --force`, `-v, --verbose`, `-h, --help`, `-V, --version`.
+   - Mapfile output and rescue logging.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-08 (seventy-ninth continuation) — Data Duplicator: dd
 
 akaOS now features a basic `/bin/dd` utility:

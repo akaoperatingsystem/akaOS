@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.26-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.23-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.28-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.24-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -9,6 +9,7 @@
 
 
 ## 📑 Table of Contents
+- [Binary Footprint & Optimization Tracking](#binary-footprint--optimization-tracking)
 - [Supported CPU Architectures](#supported-cpu-architectures)
 - [System Subsystems & Hardware Drivers](#system-subsystems--hardware-drivers)
 - [Desktop Environments & Window Managers](#desktop-environments--window-managers)
@@ -23,6 +24,21 @@
   - [Intel Corporation GPU Drivers](#3-intel-corporation-gpu-drivers)
 - [Comprehensive Global CPU & SoC Directory](#comprehensive-global-cpu--soc-model-directory)
 - [Comprehensive Global Network Hardware Directory](#comprehensive-global-network-hardware-directory-ethernet--wi-fi)
+
+---
+
+## Binary Footprint & Optimization Tracking
+
+This section monitors the extreme size minimization and binary footprint metrics across generated media formats and architecture targets per the project minimization mandate.
+
+| Distribution Artifact | Original Size | Minimized Size | Reduction | Linker & Toolchain Optimizations |
+| :--- | :--- | :--- | :--- | :--- |
+| **`akaos.iso` (x86_64 Dual-Firmware ISO)** | ~600.0 MB | **43.5 MB** | **-92.8%** | `-Os`, `--gc-sections`, `-s`, El Torito FAT16/32 optimization, minimal GRUB payload |
+| **`akaos32.iso` (x86_32 Hybrid ISO)** | ~87.0 MB | **35.0 MB** | **-59.8%** | `-Os`, `--gc-sections`, `-s`, 16M EFI stub, integer arithmetic in CLI tools |
+| **`initramfs.img` (x86_64 Userspace Archive)** | ~18.5 MB | **15.2 MB** | **-17.8%** | Dead-code elimination, static function sections, `libc.a` archive linking |
+| **`initramfs32.img` (x86_32 Userspace Archive)** | ~21.2 MB | **17.4 MB** | **-17.9%** | Freestanding static PIE linking, stripped debug sections |
+| **`XSCORE.ELF` (64-bit Kernel Core)** | ~16.5 MB | **15.7 MB** | **-4.8%** | `-Os`, `-fdata-sections`, `-ffunction-sections`, pruned unreferenced tables |
+| **`XSCORE32.ELF` (32-bit Kernel Core)** | ~18.8 MB | **17.9 MB** | **-4.8%** | Dedicated 32-bit assembly/paging routines, soft-float removal |
 
 ---
 

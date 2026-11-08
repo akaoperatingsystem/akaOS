@@ -721,6 +721,18 @@ int xscore_user_process_self_test(void) {
         }
     }
 
+    /* Verify data recovery tool ddrescue */
+    const char *ddrescue_args[] = {"/bin/ddrescue", "--version", 0};
+    struct xscore_process *p_ddrescue = xscore_process_create_path_args("/bin/ddrescue", 2, ddrescue_args);
+    uint64_t ddrescue_status = UINT64_MAX;
+    if (p_ddrescue) {
+        xscore_process_wait(p_ddrescue, &ddrescue_status);
+        xscore_process_reap(p_ddrescue);
+        if (ddrescue_status == 0) {
+            xscore_serial_write("[INFO] Data recovery tool ddrescue verified\n");
+        }
+    }
+
     /* Verify kill, pkill, uptime, free, watch */
     const char *kill_args[] = {"/bin/kill", "-l", 0};
     struct xscore_process *p_kill = xscore_process_create_path_args("/bin/kill", 2, kill_args);

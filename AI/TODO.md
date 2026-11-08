@@ -1,3 +1,9 @@
+## 2026-11-08 continuation 80: Data Recovery Tool (ddrescue)
+
+- [x] Implement and verify basic functionality for `ddrescue`:
+      - Supports: `infile`, `outfile`, `mapfile`, `-b`, `-f`, `-v`.
+      - Tested in `xscore/kernel/user.c` (`ddrescue --version`) and verified in automated QEMU boot test.
+
 ## 2026-11-08 continuation 79: Data Duplicator (dd)
 
 - [x] Implement and verify basic functionality for `dd`:

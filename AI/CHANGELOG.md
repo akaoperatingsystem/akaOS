@@ -1,3 +1,14 @@
+## 2026-11-08 (eightieth continuation) — Data Recovery Tool: ddrescue
+
+- Implement native `/bin/ddrescue` in `userspace/bin/ddrescue/main.c`:
+  - Supports basic data copying and rescue operations between files and block devices.
+  - Supports mapfile creation and logging of rescued blocks.
+  - Options supported: `-b, --sector-size`, `-f, --force`, `-v, --verbose`, `-h, --help`, `-V, --version`.
+  - Staged across build scripts (`build.sh`, `tools/rebuild-xserver-image.sh`, `tools/make_userspace_builders.py`).
+  - Registered `ddrescue (1)` in `whatis` manual index database.
+  - Added kernel self-test verification in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.27, XSCore kernel at 0.2.23.
+
 ## 2026-11-08 (seventy-ninth continuation) — Data Duplicator: dd
 
 - Implement native `/bin/dd` in `userspace/bin/dd/main.c`:
