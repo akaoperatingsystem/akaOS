@@ -13,7 +13,7 @@ akaOS runs entirely on its own kernel, freestanding C library (libc), dynamic lo
 
 ## Live Progress & Status
 
-Track real-time progress across hardware architectures, graphics drivers, and desktop environments in **[PROGRESS.md](PROGRESS.md)**.
+Track real-time progress across hardware architectures, graphics drivers, desktop environments and more in **[PROGRESS.md](PROGRESS.md)**.
 
 ---
 
