@@ -1776,6 +1776,7 @@ build_user_program chpasswd "$ROOT_DIR/userspace/bin/chpasswd/main.c" CHPASSWD.E
 build_user_program chroot "$ROOT_DIR/userspace/bin/chroot/main.c" CHROOT.ELF
 build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFIG.ELF
 build_user_program cksum "$ROOT_DIR/userspace/bin/cksum/main.c" CKSUM.ELF
+build_user_program comm "$ROOT_DIR/userspace/bin/comm/main.c" COMM.ELF
 build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
 build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
 build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
@@ -3406,6 +3407,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec" \
     --file "/bin/chkconfig:$BUILD_DIR/CHKCONFIG.ELF:exec" \
     --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec" \
+    --file "/bin/comm:$BUILD_DIR/COMM.ELF:exec" \
     --file "/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
     --file "/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \
     --file "/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
@@ -3697,7 +3699,7 @@ if [[ "$need_fat32_image" -eq 1 ]]; then
 
     echo "[DONE] $BUILD_DIR/akaos.img"
     if command -v VBoxManage.exe >/dev/null 2>&1 || [[ -x "/mnt/c/Program Files/Oracle/VirtualBox/VBoxManage.exe" ]]; then
-        local vbox_bin="VBoxManage.exe"
+        vbox_bin="VBoxManage.exe"
         if [[ ! -x "$(command -v VBoxManage.exe 2>/dev/null)" ]]; then
             vbox_bin="/mnt/c/Program Files/Oracle/VirtualBox/VBoxManage.exe"
         fi
