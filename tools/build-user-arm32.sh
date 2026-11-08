@@ -584,6 +584,12 @@ build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF
 build_user_program cmp "$ROOT_DIR/userspace/bin/cmp/main.c" CMP.ELF
 build_user_program patch "$ROOT_DIR/userspace/bin/patch/main.c" PATCH.ELF
 build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
+build_user_program cpio "$ROOT_DIR/userspace/bin/cpio/main.c" CPIO.ELF
+build_user_program cron "$ROOT_DIR/userspace/bin/cron/main.c" CRON.ELF
+build_user_program csplit "$ROOT_DIR/userspace/bin/csplit/main.c" CSPLIT.ELF
+build_user_program date "$ROOT_DIR/userspace/bin/date/main.c" DATE.ELF
+build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
+build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
 build_user_program gunzip "$ROOT_DIR/userspace/bin/gunzip/main.c" GUNZIP.ELF
 build_user_program route "$ROOT_DIR/userspace/bin/route/main.c" ROUTE.ELF
@@ -839,7 +845,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_arm32.img" \
     --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \
     --file "/bin/cmp:$BUILD_DIR/CMP.ELF:exec" \
     --file "/bin/patch:$BUILD_DIR/PATCH.ELF:exec" \
-    --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec" \
+    --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec"     --file "/bin/cpio:$BUILD_DIR/CPIO.ELF:exec"     --file "/bin/cron:$BUILD_DIR/CRON.ELF:exec"     --file "/bin/csplit:$BUILD_DIR/CSPLIT.ELF:exec"     --file "/bin/date:$BUILD_DIR/DATE.ELF:exec"     --file "/bin/crond:$BUILD_DIR/CROND.ELF:exec"     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \
     --file "/bin/gunzip:$BUILD_DIR/GUNZIP.ELF:exec" \
     --file "/bin/route:$BUILD_DIR/ROUTE.ELF:exec" \

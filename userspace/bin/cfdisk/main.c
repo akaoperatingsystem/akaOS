@@ -305,7 +305,9 @@ static void run_tui(void) {
             if (p->is_free) strcpy(type_str, "Pri/Log");
             else if (p->is_logical) strcpy(type_str, "Logical");
 
-            double sz_mb = (double)(p->sector_count * SECTOR_SIZE) / (1024.0 * 1024.0);
+            uint64_t bytes = (uint64_t)p->sector_count * SECTOR_SIZE;
+            uint32_t mb_whole = (uint32_t)(bytes / (1024 * 1024));
+            uint32_t mb_frac = (uint32_t)(((bytes % (1024 * 1024)) * 100) / (1024 * 1024));
 
             if (i == cur_idx) {
                 if (opt_arrow) {
@@ -317,8 +319,8 @@ static void run_tui(void) {
                 printf("    ");
             }
 
-            printf("%-11s %-10s %-10s %-16s                %8.2f",
-                   dev_entry, flag_str, type_str, p->fs_name, sz_mb);
+            printf("%-11s %-10s %-10s %-16s                %5u.%02u",
+                   dev_entry, flag_str, type_str, p->fs_name, mb_whole, mb_frac);
 
             if (i == cur_idx && !opt_arrow) {
                 printf("\033[0m");

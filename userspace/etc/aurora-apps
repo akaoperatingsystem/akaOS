@@ -1,6 +1,9 @@
 # akaOS desktop application registry
-# id|display name|executable|icon
-terminal|Terminal|/bin/terminal|terminal
-notepad|Text Editor|/bin/notepad|notepad
-taskmgr|Task Manager|/bin/taskmgr|taskmgr
-webviewer|Web Viewer|/bin/webviewer|browser
+# id|display name|executable|icon|category
+terminal|Terminal|/bin/terminal|terminal|System
+notepad|Text Editor|/bin/notepad|notepad|Utilities
+taskmgr|Task Manager|/bin/taskmgr|taskmgr|System
+webviewer|Web Viewer|/bin/webviewer|browser|Internet
+akaosconfig|Settings|/bin/akaos-config|akaos-config|System
+sysmon|System Monitor|/bin/sysmon|taskmgr|System
+ted|Text Editor|/bin/ted|notepad|Utilities

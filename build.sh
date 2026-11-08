@@ -584,7 +584,7 @@ if [[ "$arch" == "x86_32" ]]; then
             bios|both) disk_type=iso ;;
         esac
     fi
-    build_args=(--firmware "$firmware" --disk-type "$disk_type" --software "$menu_software" --desktop "$menu_desktop")
+    build_args=(--firmware "$firmware" --disk-type "$disk_type" --software "$menu_software" --desktop "$target_desktop")
     if [[ "$bios_test" -eq 1 ]]; then
         build_args+=(--test)
     fi
@@ -1844,6 +1844,7 @@ build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
 build_user_program cpio "$ROOT_DIR/userspace/bin/cpio/main.c" CPIO.ELF
 build_user_program cron "$ROOT_DIR/userspace/bin/cron/main.c" CRON.ELF
 build_user_program csplit "$ROOT_DIR/userspace/bin/csplit/main.c" CSPLIT.ELF
+build_user_program date "$ROOT_DIR/userspace/bin/date/main.c" DATE.ELF
 build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
 build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
@@ -2234,7 +2235,7 @@ build_runtime_library libgtk-4.so 5
 build_runtime_library libQt6Core.so 6
 build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
-for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF WATCH.ELF SED.ELF DIFF.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
+for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF WATCH.ELF SED.ELF DIFF.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
     # ET_DYN hello-pie legitimately carries relative relocations; the kernel
     # applies those at its fixed native load base. Reject only relocation
     # kinds outside that bounded ABI instead of rejecting the section itself.
@@ -3485,6 +3486,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/cpio:$BUILD_DIR/CPIO.ELF:exec" \
     --file "/bin/cron:$BUILD_DIR/CRON.ELF:exec" \
     --file "/bin/csplit:$BUILD_DIR/CSPLIT.ELF:exec" \
+    --file "/bin/date:$BUILD_DIR/DATE.ELF:exec" \
     --file "/bin/crond:$BUILD_DIR/CROND.ELF:exec" \
     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \
