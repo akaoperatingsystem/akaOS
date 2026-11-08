@@ -1,18 +1,12 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.21-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.22-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.21-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
 
-> **Live System Overview:**  
-> - **Operating System**: akaOS v0.3.12 (Freestanding Userspace, POSIX Runtime, Dynamic Linker)
-> - **Kernel Core**: XSCore v0.2.15 (Preemptive Multitasking, 4-Level Paging, SMP, COW Isolation)
-> - **Hardware Portability**: 6 verified architectures (`x86-64`, `x86-32`, `AArch64`, `ARM32`, `RISC-V64`, `RISC-V32`)
-> - **Window Management**: 34 native and ported window managers and full desktop suites verified live
 
----
 
 ## 📑 Table of Contents
 - [Supported CPU Architectures](#supported-cpu-architectures)
