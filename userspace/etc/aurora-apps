@@ -7,3 +7,7 @@ webviewer|Web Viewer|/bin/webviewer|browser|Internet
 akaosconfig|Settings|/bin/akaos-config|akaos-config|System
 sysmon|System Monitor|/bin/sysmon|taskmgr|System
 ted|Text Editor|/bin/ted|notepad|Utilities
+palette|Theme Switcher|/bin/palette|palette|Utilities
+xsdisplay|Display Settings|/bin/xsdisplay|xsdisplay|System
+akafetch|Hardware Visualizer|/bin/akafetch|terminal|System
+calc|Calculator|/bin/bc|calc|Utilities

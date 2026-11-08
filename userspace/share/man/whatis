@@ -161,3 +161,4 @@ cron (8) - daemon to execute scheduled commands
 crontab (1) - schedule a command to run at a later time
 csplit (1) - split a file into context-determined pieces
 date (1) - display or change the date and time
+dc (1) - desk calculator
