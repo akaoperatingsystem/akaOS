@@ -1,6 +1,8 @@
+/* Universal CPU Hardware Identification and HAL Driver for XSCore */
 #include <xscore/cpu.h>
 #include <xscore/serial.h>
 #include <xscore/smp.h>
+
 void *memset(void *destination, int value, size_t count);
 
 static struct xscore_cpu_info cpu_info;
@@ -97,7 +99,46 @@ void xscore_cpu_initialize(void) {
         if (ecx & (1 << 31)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "hypervisor ");
     }
 
-    /* 3. Extended Leafs: Brand string, Cache, Address Bits */
+    /* 3. Structured Extended Features (Leaf 7) */
+    if (max_leaf >= 7) {
+        x86_cpuid(7, &eax, &ebx, &ecx, &edx);
+        if (ebx & (1 << 0))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "fsgsbase ");
+        if (ebx & (1 << 3))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "bmi1 ");
+        if (ebx & (1 << 4))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "hle ");
+        if (ebx & (1 << 5))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx2 ");
+        if (ebx & (1 << 7))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "smep ");
+        if (ebx & (1 << 8))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "bmi2 ");
+        if (ebx & (1 << 9))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "erms ");
+        if (ebx & (1 << 10)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "invpcid ");
+        if (ebx & (1 << 11)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "rtm ");
+        if (ebx & (1 << 14)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "mpx ");
+        if (ebx & (1 << 16)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512f ");
+        if (ebx & (1 << 17)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512dq ");
+        if (ebx & (1 << 18)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "rdseed ");
+        if (ebx & (1 << 19)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "adx ");
+        if (ebx & (1 << 20)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "smap ");
+        if (ebx & (1 << 21)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512_ifma ");
+        if (ebx & (1 << 23)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "clflushopt ");
+        if (ebx & (1 << 24)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "clwb ");
+        if (ebx & (1 << 29)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "sha_ni ");
+        if (ebx & (1 << 30)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512bw ");
+        if (ebx & (1 << 31)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512vl ");
+
+        if (ecx & (1 << 1))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512_vbmi ");
+        if (ecx & (1 << 6))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512_vbmi2 ");
+        if (ecx & (1 << 8))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "gfni ");
+        if (ecx & (1 << 9))  str_append(cpu_info.flags, sizeof(cpu_info.flags), "vaes ");
+        if (ecx & (1 << 10)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "vpclmulqdq ");
+        if (ecx & (1 << 11)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512_vnni ");
+        if (ecx & (1 << 12)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512_bitalg ");
+        if (ecx & (1 << 14)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "avx512_vpopcntdq ");
+
+        if (edx & (1 << 22)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "amx_bf16 ");
+        if (edx & (1 << 24)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "amx_tile ");
+        if (edx & (1 << 25)) str_append(cpu_info.flags, sizeof(cpu_info.flags), "amx_int8 ");
+    }
+
+    /* 4. Extended Leafs: Brand string, Cache, Address Bits */
     x86_cpuid(0x80000000, &eax, &ebx, &ecx, &edx);
     uint32_t max_ext = eax;
     if (max_ext >= 0x80000004) {
@@ -144,47 +185,105 @@ void xscore_cpu_initialize(void) {
     cpu_info.bogomips_frac = 0;
 
 #elif defined(__aarch64__)
-    str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "ARM");
-    str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARMv8 Processor");
+    uint64_t midr = 0;
+    __asm__ volatile("mrs %0, midr_el1" : "=r"(midr));
+    uint32_t implementer = (midr >> 24) & 0xff;
+    uint32_t part = (midr >> 4) & 0xfff;
+    uint32_t variant = (midr >> 20) & 0xf;
+    uint32_t revision = midr & 0xf;
+
     cpu_info.family = 8;
-    cpu_info.model = 0;
-    cpu_info.stepping = 0;
-    cpu_info.mhz = 1500;
-    cpu_info.bogomips_int = 3000;
-    cpu_info.cache_size_kb = 1024;
+    cpu_info.model = part;
+    cpu_info.stepping = (variant << 4) | revision;
+    cpu_info.mhz = 2000;
+    cpu_info.bogomips_int = 4000;
+    cpu_info.cache_size_kb = 2048;
     cpu_info.cache_line_bytes = 64;
     cpu_info.phys_addr_bits = 40;
     cpu_info.virt_addr_bits = 48;
-    str_append(cpu_info.flags, sizeof(cpu_info.flags), "fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics cpuid");
+
+    if (implementer == 0x41) {
+        str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "ARM");
+        switch (part) {
+        case 0xd03: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A53"); break;
+        case 0xd07: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A57"); break;
+        case 0xd08: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A72"); break;
+        case 0xd09: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A73"); break;
+        case 0xd0a: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A75"); break;
+        case 0xd0b: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A76"); break;
+        case 0xd0c: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Neoverse N1"); break;
+        case 0xd40: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Neoverse V1"); break;
+        case 0xd44: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-X1"); break;
+        case 0xd48: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-X2"); break;
+        case 0xd49: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Neoverse N2"); break;
+        case 0xd4c: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-X3"); break;
+        case 0xd4e: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-X4"); break;
+        case 0xd82: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-X925"); break;
+        default:    str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARMv8-A Processor"); break;
+        }
+    } else if (implementer == 0x51) {
+        str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "Qualcomm");
+        str_append(cpu_info.brand, sizeof(cpu_info.brand), "Qualcomm Snapdragon (Oryon/Kryo)");
+    } else if (implementer == 0x61) {
+        str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "Apple");
+        str_append(cpu_info.brand, sizeof(cpu_info.brand), "Apple Silicon (M-Series / A-Series)");
+    } else if (implementer == 0x42) {
+        str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "Broadcom");
+        str_append(cpu_info.brand, sizeof(cpu_info.brand), "Broadcom BCM2711 / BCM2712 (Raspberry Pi)");
+    } else if (implementer == 0x53) {
+        str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "Samsung");
+        str_append(cpu_info.brand, sizeof(cpu_info.brand), "Samsung Exynos Processor");
+    } else {
+        str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "ARM Compatible");
+        str_append(cpu_info.brand, sizeof(cpu_info.brand), "AArch64 Processor");
+    }
+    str_append(cpu_info.flags, sizeof(cpu_info.flags), "fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm jscvt fcma lrcpc dcpop sha3 sm3 sm4 asimddp sha512 sve sve2 paca pacg bti flagm ssbs");
 
 #elif defined(__arm__)
-    str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "ARM");
-    str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARMv7 Processor [Cortex-A7]");
+    uint32_t midr = 0;
+    __asm__ volatile("mrc p15, 0, %0, c0, c0, 0" : "=r"(midr));
+    uint32_t implementer = (midr >> 24) & 0xff;
+    uint32_t part = (midr >> 4) & 0xfff;
+
     cpu_info.family = 7;
-    cpu_info.model = 0;
-    cpu_info.stepping = 0;
-    cpu_info.mhz = 1000;
-    cpu_info.bogomips_int = 2000;
+    cpu_info.model = part;
+    cpu_info.stepping = midr & 0xf;
+    cpu_info.mhz = 1200;
+    cpu_info.bogomips_int = 2400;
     cpu_info.cache_size_kb = 512;
     cpu_info.cache_line_bytes = 64;
     cpu_info.phys_addr_bits = 32;
     cpu_info.virt_addr_bits = 32;
+
+    if (implementer == 0x41) {
+        str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "ARM");
+        switch (part) {
+        case 0xc07: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A7 (Allwinner/MediaTek)"); break;
+        case 0xc08: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A8 (TI OMAP / Allwinner A10)"); break;
+        case 0xc09: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A9 (Rockchip RK3066/RK3188)"); break;
+        case 0xc0f: str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARM Cortex-A15 (Samsung Exynos 5)"); break;
+        default:    str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARMv7 Processor [Cortex-A7]"); break;
+        }
+    } else {
+        str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "ARM");
+        str_append(cpu_info.brand, sizeof(cpu_info.brand), "ARMv7 Processor");
+    }
     str_append(cpu_info.flags, sizeof(cpu_info.flags), "half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt");
 
 #elif defined(__riscv)
     str_append(cpu_info.vendor, sizeof(cpu_info.vendor), "RISC-V");
 #if __riscv_xlen == 64
-    str_append(cpu_info.brand, sizeof(cpu_info.brand), "SiFive / QEMU RV64GC");
+    str_append(cpu_info.brand, sizeof(cpu_info.brand), "SiFive U74 / T-Head C906 / QEMU RV64GC");
     cpu_info.family = 64;
     cpu_info.phys_addr_bits = 39;
     cpu_info.virt_addr_bits = 39;
-    str_append(cpu_info.flags, sizeof(cpu_info.flags), "rv64imafdc zicntr zicsr");
+    str_append(cpu_info.flags, sizeof(cpu_info.flags), "rv64imafdc zicsr zifencei zicbom zicbop zicboz v b");
 #else
-    str_append(cpu_info.brand, sizeof(cpu_info.brand), "SiFive / QEMU RV32IMAC");
+    str_append(cpu_info.brand, sizeof(cpu_info.brand), "SiFive E31 / QEMU RV32IMAC");
     cpu_info.family = 32;
     cpu_info.phys_addr_bits = 32;
     cpu_info.virt_addr_bits = 32;
-    str_append(cpu_info.flags, sizeof(cpu_info.flags), "rv32imac zicntr zicsr");
+    str_append(cpu_info.flags, sizeof(cpu_info.flags), "rv32imac zicsr zifencei v b");
 #endif
     cpu_info.model = 0;
     cpu_info.stepping = 0;
@@ -278,6 +377,5 @@ size_t xscore_cpu_format_proc_cpuinfo(char *buf, size_t max_size) {
         off = app_u32(buf, max_size, off, cpu_info.virt_addr_bits);
         off = app_str(buf, max_size, off, " bits virtual\npower management:\n");
     }
-
     return off;
 }

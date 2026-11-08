@@ -1,3 +1,13 @@
+## 2026-11-08 (seventy-second continuation) — Universal CPU Architecture & Hardware Model Support
+
+- **Universal CPU Hardware Detection & HAL Enhancements**:
+  - `xscore/kernel/cpu.c`: Implemented structured feature detection for x86 CPUID Leaf 7 (AVX2, AVX-512, AMX, SHA, BMI, ERMS).
+  - `xscore/kernel/cpu.c`: Implemented dynamic `MIDR_EL1` hardware decoding on AArch64 for ARM Cortex, Neoverse, Qualcomm Oryon, Apple Silicon, and Broadcom.
+  - `xscore/kernel/cpu.c`: Implemented CP15 MIDR decoding for ARM32 Cortex-A series.
+  - `xscore/kernel/cpu.c`: Implemented RISC-V standard extension and platform brand formatting.
+  - Updated `PROGRESS.md` CPU readiness matrix across all vendor families.
+- Bumped akaOS to 0.3.17, XSCore to 0.2.18.
+
 ## 2026-11-08 (seventy-first continuation) — Ultra-Low RAM Optimization (64MB, 32MB & 16MB Targets)
 
 - **Dynamic Memory Scaling**:
@@ -682,9 +692,3 @@
   - `xcb-util 0.4.1`, `xcb-util-keysyms 0.4.1`, `xcb-util-wm 0.4.2` (`libxcb-ewmh.so.2`, `libxcb-icccm.so.4`), `xcb-util-renderutil 0.3.10`, `xcb-util-image 0.4.1`, `xcb-util-cursor 0.1.5`, `xcb-util-xrm 1.3`, `startup-notification 0.12`.
 - Build and stage `libev 4.33` and `yajl 2.1.0`.
 - Extend native libc and POSIX headers:
-  - `<err.h>`: `err`, `errx`, `warn`, `warnx`, `verr`, `verrx`, `vwarn`, `vwarnx` and exported `__progname`.
-  - `<paths.h>` standard POSIX / BSD system paths (`_PATH_DEFPATH`, `_PATH_BSHELL`, `_PATH_DEVNULL`, etc.).
-  - `<glob.h>`: `glob()` and `globfree()` supporting `GLOB_TILDE`, pattern matching via `fnmatch()`, sorting, and `GLOB_NOCHECK`.
-  - `<iconv.h>`: `iconv_open()`, `iconv()`, `iconv_close()` supporting UTF-8, UCS-2BE, and ASCII encodings.
-  - `<fcntl.h>`: `posix_fallocate()` backed by `ftruncate()`.
-  - `<stdlib.h>`: `mkdtemp()` directory generation.

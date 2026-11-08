@@ -613,6 +613,7 @@ build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF
 build_user_program cmp "$ROOT_DIR/userspace/bin/cmp/main.c" CMP.ELF
 build_user_program patch "$ROOT_DIR/userspace/bin/patch/main.c" PATCH.ELF
 build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
+build_user_program cpio "$ROOT_DIR/userspace/bin/cpio/main.c" CPIO.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
 build_user_program gunzip "$ROOT_DIR/userspace/bin/gunzip/main.c" GUNZIP.ELF
 build_user_program route "$ROOT_DIR/userspace/bin/route/main.c" ROUTE.ELF
@@ -846,7 +847,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \\
     --file "/bin/cmp:$BUILD_DIR/CMP.ELF:exec" \\
     --file "/bin/patch:$BUILD_DIR/PATCH.ELF:exec" \\
-    --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec" \\
+    --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec" \
+    --file "/bin/cpio:$BUILD_DIR/CPIO.ELF:exec" \\
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \\
     --file "/bin/gunzip:$BUILD_DIR/GUNZIP.ELF:exec" \\
     --file "/bin/route:$BUILD_DIR/ROUTE.ELF:exec" \\

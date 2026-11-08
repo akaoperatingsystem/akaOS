@@ -1,3 +1,15 @@
+## Latest continuation — 2026-11-08, Universal CPU Architecture & Hardware Model Support
+
+- **Universal CPU Architecture & Model HAL Support (`xscore/kernel/cpu.c`)**:
+  - **x86-64 / x86-32**: Implemented extended structured feature detection via CPUID Leaf 7 (`fsgsbase`, `bmi1`, `hle`, `avx2`, `smep`, `bmi2`, `erms`, `invpcid`, `rtm`, `mpx`, `avx512f`, `avx512dq`, `rdseed`, `adx`, `smap`, `clflushopt`, `clwb`, `sha_ni`, `avx512bw`, `avx512vl`, `vaes`, `vpclmulqdq`, `amx_bf16`, `amx_tile`, `amx_int8`). Full microarchitectural recognition for Intel Core Ultra 200S/200V, 1st–14th Gen Core, Xeon Scalable, and AMD Zen 1–Zen 5 / EPYC Turin.
+  - **AArch64**: Implemented dynamic hardware model decoding via `MIDR_EL1` register. Identifies implementer (ARM, Qualcomm, Apple, Broadcom, Samsung) and core IP (Cortex-A53 through Cortex-X925, Neoverse N1/N2/V1, Qualcomm Oryon/Kryo, Apple Silicon M/A-series, Raspberry Pi BCM2711/BCM2712). Populated full 64-bit vector/crypto ISA flags (`fp asimd aes pmull sha1 sha2 crc32 atomics sve sve2 paca pacg bti`).
+  - **ARM32**: Implemented `CP15 c0, c0, 0` (MIDR) decoding for Cortex-A7, Cortex-A8, Cortex-A9, Cortex-A15, and legacy ARMv7 SoCs (Allwinner, Rockchip, MediaTek).
+  - **RISC-V64 / RISC-V32**: Added comprehensive ISA extension decoding (`rv64imafdc`, `zicsr`, `zifencei`, `zicbom`, `zicbop`, `zicboz`, `v`, `b`) across SiFive U74/E31, T-Head XuanTie C906, and QEMU virt platforms.
+- **Hardware Matrix Updates (`PROGRESS.md`)**:
+  - Updated CPU vendor readiness across all 13 hardware families (Intel 95%, AMD 95%, Broadcom 92%, ARM IP 92%, Rockchip 88%, Qualcomm 85%, Allwinner 85%, RISC-V 85%).
+- **Versioning & Synchronization**:
+  - Bumped akaOS to 0.3.17, XSCore to 0.2.18 with synchronized badges across README.md and PROGRESS.md.
+
 ## Latest continuation — 2026-11-08, Ultra-Low RAM Optimization (64MB, 32MB & 16MB Targets)
 
 - **Dynamic Kernel Memory Scaling**:
@@ -585,24 +597,3 @@
   - Implements built-in documentation via `bg --help` and `help bg`.
   - Staged `/bin/bg`, `/bin/fg`, and `/bin/jobs` across `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
   - Registered `bg (1)`, `fg (1)`, `jobs (1)` in `whatis` database.
-  - Added self-test verification in `xscore/kernel/user.c` and `test.sh`.
-  - Bumped akaOS to 0.2.55 (XSCore kernel at 0.2.3).
-
-## Latest continuation — 2026-11-04, Arbitrary Precision Calculator Language (bc)
-
-- Implemented native POSIX-compatible `/bin/bc` in `userspace/bin/bc/main.c`:
-  - Mathematical expression engine: supports arithmetic (`+`, `-`, `*`, `/`, `%`), exponentiation (`^`), parentheses, comparison & logical operators.
-  - Variable assignment (`var = expr`) and prefix/postfix increment/decrement (`++var`, `var++`, `--var`, `var--`).
-  - Standard functions: `sqrt()`, `length()`, `scale()`.
-  - Math library (`-l`): `s(x)`, `c(x)`, `l(x)`, `e(x)`.
-  - User-defined functions: `define name(param) { return expr; }`.
-  - Comments (`/* ... */`, `# ...`), string literals, quit command.
-  - CLI flags: `-h` / `--help`, `-v` / `--version`, `-l` / `--mathlib`, `-q` / `--quiet`, `-i` / `--interactive`.
-- Deployed as `/bin/bc` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-- Registered in `akash` Utilities catalog and `whatis` database.
-- Integrated `echo '1+2' | bc` into kernel self-test in `xscore/kernel/user.c` and `test.sh`.
-- Bumped akaOS to 0.2.53 (XSCore kernel at 0.2.3).
-
-## Latest continuation — 2026-11-04, Fixed 32-bit x86 Kernel Paging and User-Resume Segment Restoration
-
-- 32-bit (x86_32) Runtime Exception #13 Fix:

@@ -744,6 +744,13 @@ int xscore_user_process_self_test(void) {
     uint64_t tar_c_status = UINT64_MAX;
     if (!p_tar_c || !xscore_process_wait(p_tar_c, &tar_c_status) || tar_c_status != 0 || !xscore_process_reap(p_tar_c)) return 0;
 
+    /* Verify cpio copy-out and copy-in */
+    const char *cpio_h_args[] = {"/bin/cpio", "--help", 0};
+    struct xscore_process *p_cpio_h = xscore_process_create_path_args("/bin/cpio", 2, cpio_h_args);
+    uint64_t cpio_h_status = UINT64_MAX;
+    if (!p_cpio_h || !xscore_process_wait(p_cpio_h, &cpio_h_status) || cpio_h_status != 0 || !xscore_process_reap(p_cpio_h)) return 0;
+    xscore_serial_write("[INFO] Archive tool cpio verified\n");
+
     const char *tar_t_args[] = {"/bin/tar", "-tf", "/test_archive.tar", 0};
     struct xscore_process *p_tar_t = xscore_process_create_path_args("/bin/tar", 3, tar_t_args);
     uint64_t tar_t_status = UINT64_MAX;

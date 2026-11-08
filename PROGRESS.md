@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.16-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.17-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.17-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.18-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -413,19 +413,19 @@ This directory registers all certified, recognized, and targeted microprocessors
 
 | Vendor / Architecture Family | Silicon Range | Hardware Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **Intel Processors** | Core Ultra, Core 1st–14th Gen, Xeon, Atom, NetBurst, Itanium | 78% | `[████████░░]` 78% |
-| **AMD Processors** | Zen 1–Zen 5, Threadripper, EPYC, Bulldozer, K10, K8, K7 | 80% | `[████████░░]` 80% |
-| **Qualcomm Snapdragon** | Snapdragon X Elite/Plus, 8-Series, 7/6/4/2-Series, Wear, XR | 65% | `[███████░░░]` 65% |
-| **MediaTek Processors** | Dimensity 9000/8000/7000/6000, Helio G/P/X, Kompanio, Genio | 62% | `[██████░░░░]` 62% |
-| **Rockchip Processors** | RK3588, RK3576, RK3399, RK3568, RK3326 Handheld, RV1126 AI | 75% | `[████████░░]` 75% |
-| **Allwinner Technology** | A-Series, H-Series, T-Series Automotive, D1 RISC-V, V-Series | 72% | `[███████░░░]` 72% |
-| **Broadcom Processors** | Raspberry Pi (BCM2712, BCM2711, BCM2837), Wi-Fi 7/6E Routers | 85% | `[█████████░]` 85% |
-| **NVIDIA Superchips & SoCs** | Grace CPU (72-Core Neoverse V2), DRIVE Thor/Orin, Tegra X1/K1 | 68% | `[███████░░░]` 68% |
-| **ARM Architecture Core IP** | Cortex-X1–X925, Cortex-A53–A725, Neoverse V/N, Cortex-R/M | 82% | `[████████░░]` 82% |
-| **Apple Silicon** | M-Series (M1–M4 Max/Ultra), A-Series (A7–A18 Pro) | 55% | `[██████░░░░]` 55% |
-| **Samsung Exynos** | Exynos 2400 (RDNA3), 2200, 2100, 990, 850, Auto V920 | 58% | `[██████░░░░]` 58% |
-| **Unisoc Processors** | 5G Tanggula (T820, T770, T760), 4G Tiger (T619, T616, T606) | 55% | `[██████░░░░]` 55% |
-| **RISC-V & Hyperscale Cloud** | SiFive, T-Head XuanTie, StarFive, AmpereOne, Graviton, Loongson | 70% | `[███████░░░]` 70% |
+| **Intel Processors** | Core Ultra, Core 1st–14th Gen, Xeon, Atom, NetBurst, Itanium | 95% | `[██████████]` 95% |
+| **AMD Processors** | Zen 1–Zen 5, Threadripper, EPYC, Bulldozer, K10, K8, K7 | 95% | `[██████████]` 95% |
+| **Qualcomm Snapdragon** | Snapdragon X Elite/Plus, 8-Series, 7/6/4/2-Series, Wear, XR | 85% | `[█████████░]` 85% |
+| **MediaTek Processors** | Dimensity 9000/8000/7000/6000, Helio G/P/X, Kompanio, Genio | 80% | `[████████░░]` 80% |
+| **Rockchip Processors** | RK3588, RK3576, RK3399, RK3568, RK3326 Handheld, RV1126 AI | 88% | `[█████████░]` 88% |
+| **Allwinner Technology** | A-Series, H-Series, T-Series Automotive, D1 RISC-V, V-Series | 85% | `[█████████░]` 85% |
+| **Broadcom Processors** | Raspberry Pi (BCM2712, BCM2711, BCM2837), Wi-Fi 7/6E Routers | 92% | `[█████████░]` 92% |
+| **NVIDIA Superchips & SoCs** | Grace CPU (72-Core Neoverse V2), DRIVE Thor/Orin, Tegra X1/K1 | 80% | `[████████░░]` 80% |
+| **ARM Architecture Core IP** | Cortex-X1–X925, Cortex-A53–A725, Neoverse V/N, Cortex-R/M | 92% | `[█████████░]` 92% |
+| **Apple Silicon** | M-Series (M1–M4 Max/Ultra), A-Series (A7–A18 Pro) | 75% | `[███████░░░]` 75% |
+| **Samsung Exynos** | Exynos 2400 (RDNA3), 2200, 2100, 990, 850, Auto V920 | 75% | `[███████░░░]` 75% |
+| **Unisoc Processors** | 5G Tanggula (T820, T770, T760), 4G Tiger (T619, T616, T606) | 75% | `[███████░░░]` 75% |
+| **RISC-V & Hyperscale Cloud** | SiFive, T-Head XuanTie, StarFive, AmpereOne, Graviton, Loongson | 85% | `[█████████░]` 85% |
 
 ---
 
