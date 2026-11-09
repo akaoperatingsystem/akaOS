@@ -186,6 +186,8 @@ ld.lld -m elf_x86_64 -nostdlib -shared -soname libpthread.so \
 # image as well, or the guest keeps running the program of the last build.
 UPSTREAM_SYSROOT="$BUILD_DIR/upstream-sysroot/graphics-x86_64"
 initramfs_files=(
+    "--file=/bin/dir:$BUILD_DIR/DIR.ELF:exec"
+    "--file=/bin/d:$BUILD_DIR/DIR.ELF:exec"
     "--file=/bin/xserver:$BUILD_DIR/XSERVER.ELF:exec"
     "--file=/lib/ld-akaos.so:$BUILD_DIR/LD_AKAOS.ELF:exec"
     "--file=/lib/libc.so.6:$BUILD_DIR/libc.so.6:0444"

@@ -7,6 +7,10 @@
 #define XSCORE_BUF_SECTOR_SIZE 512
 #define XSCORE_BUF_CACHE_SECTORS 64
 
+int xscore_block_present(void);
+uint64_t xscore_block_sector_count(void);
+int xscore_block_read_sector(uint64_t sector, void *buffer);
+int xscore_block_write_sector(uint64_t sector, const void *buffer);
 int xscore_bufcache_initialize(void);
 int xscore_bufcache_read(uint64_t sector, void *buffer);
 int xscore_bufcache_write(uint64_t sector, const void *buffer);

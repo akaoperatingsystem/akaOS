@@ -156,6 +156,8 @@ test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "motd")" -ge 1
 test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "hello")" -ge 1
 test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "cat")" -ge 1
 test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "ls")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "dir")" -ge 1
+test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "d")" -ge 1
 test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "head")" -ge 1
 test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "tail")" -ge 1
 test "$(tr -d '\r' < "$TEST_LOG" | grep -Fxc "wc")" -ge 1
@@ -212,6 +214,7 @@ grep -Fq "[INFO] Disk free space utility df verified" "$TEST_LOG"
 grep -Fq "[INFO] File differences comparison utility diff verified" "$TEST_LOG"
 grep -Fq "[INFO] 3-way file differences comparison utility diff3 verified" "$TEST_LOG"
 grep -Fq "[INFO] DNS lookup utility dig verified" "$TEST_LOG"
+grep -Fq "[INFO] Brief directory listing utilities dir/d verified" "$TEST_LOG"
 grep -Fq "[INFO] Desk calculator dc verified" "$TEST_LOG"
 grep -Fq "[INFO] Data duplicator dd verified" "$TEST_LOG"
 grep -Fq "[INFO] Data recovery tool ddrescue verified" "$TEST_LOG"

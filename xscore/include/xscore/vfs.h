@@ -22,6 +22,7 @@ enum xscore_device_kind {
     XSCORE_DEVICE_AUDIO,
     XSCORE_DEVICE_NET,
     XSCORE_DEVICE_GPU0,
+    XSCORE_DEVICE_NVME0N1,
 };
 
 enum xscore_proc_kind {

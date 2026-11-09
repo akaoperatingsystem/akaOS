@@ -48,6 +48,10 @@ while [[ $# -gt 0 ]]; do
             export AKAOS_DESKTOP="${2:-none}"
             shift 2
             ;;
+        --low-memory-profile)
+            export AKAOS_LOW_MEMORY_PROFILE=1
+            shift
+            ;;
         *)
             shift
             ;;
@@ -78,9 +82,14 @@ python3 "$ROOT_DIR/tools/generate_vga_font.py" "$GENERATED_DIR/font8x16_data.h"
 BUILD_TIMESTAMP="${BUILD_TIMESTAMP:-$(date +%m%d%Y%H%M%S)}"
 export BUILD_TIMESTAMP
 
-# 1. Build 32-bit userspace binaries and initramfs archive
+# 1. Build 32-bit userspace binaries and initramfs archive.
+# Pass the caller's bundle and optional lean image profile to userspace staging.
 if [[ "${AKAOS_TEST_SKIP_USERSPACE:-0}" != 1 ]]; then
-    bash "$ROOT_DIR/tools/build-user-32.sh" --software "${AKAOS_SOFTWARE_BUNDLE:-all}"
+    userspace_args=(--software "${AKAOS_SOFTWARE_BUNDLE:-all}")
+    if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
+        userspace_args+=(--profile minimal)
+    fi
+    bash "$ROOT_DIR/tools/build-user-32.sh" "${userspace_args[@]}"
 fi
 
 echo "[BUILD] akaOS x86_32 XSCore Kernel"

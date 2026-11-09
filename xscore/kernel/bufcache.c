@@ -1,5 +1,6 @@
 #include <xscore/bufcache.h>
 #include <xscore/virtio_blk.h>
+#include <xscore/nvme.h>
 #include <xscore/serial.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -13,6 +14,26 @@ struct xscore_buf_entry {
     uint64_t access_tick;
     uint8_t data[XSCORE_BUF_SECTOR_SIZE];
 };
+
+int xscore_block_present(void) {
+    return xscore_virtio_blk_present() || xscore_nvme_block_present();
+}
+
+uint64_t xscore_block_sector_count(void) {
+    if (xscore_virtio_blk_present()) return xscore_virtio_blk_sector_count();
+    if (xscore_nvme_block_present()) return xscore_nvme_sector_count();
+    return 0;
+}
+
+int xscore_block_read_sector(uint64_t sector, void *buffer) {
+    if (xscore_virtio_blk_present()) return xscore_virtio_blk_read_sector(sector, buffer);
+    return xscore_nvme_read_sector(sector, buffer);
+}
+
+int xscore_block_write_sector(uint64_t sector, const void *buffer) {
+    if (xscore_virtio_blk_present()) return xscore_virtio_blk_write_sector(sector, buffer);
+    return xscore_nvme_write_sector(sector, buffer);
+}
 
 static struct xscore_buf_entry cache[XSCORE_BUF_CACHE_SECTORS];
 static uint64_t global_tick_seq = 0;
@@ -64,7 +85,7 @@ static struct xscore_buf_entry *allocate_entry(uint64_t sector) {
 
     struct xscore_buf_entry *victim = &cache[victim_idx];
     if (victim->flags & BUF_DIRTY) {
-        xscore_virtio_blk_write_sector(victim->sector, victim->data);
+        xscore_block_write_sector(victim->sector, victim->data);
         victim->flags &= ~BUF_DIRTY;
     }
 
@@ -78,7 +99,7 @@ int xscore_bufcache_read(uint64_t sector, void *buffer) {
     if (!cache_initialized) {
         xscore_bufcache_initialize();
     }
-    if (!xscore_virtio_blk_present()) return 0;
+    if (!buffer || !xscore_block_present() || sector >= xscore_block_sector_count()) return 0;
 
     struct xscore_buf_entry *entry = find_entry(sector);
     if (entry) {
@@ -91,7 +112,7 @@ int xscore_bufcache_read(uint64_t sector, void *buffer) {
     }
 
     entry = allocate_entry(sector);
-    if (!xscore_virtio_blk_read_sector(sector, entry->data)) {
+    if (!xscore_block_read_sector(sector, entry->data)) {
         entry->flags = 0;
         return 0;
     }
@@ -107,7 +128,7 @@ int xscore_bufcache_write(uint64_t sector, const void *buffer) {
     if (!cache_initialized) {
         xscore_bufcache_initialize();
     }
-    if (!xscore_virtio_blk_present()) return 0;
+    if (!buffer || !xscore_block_present() || sector >= xscore_block_sector_count()) return 0;
 
     struct xscore_buf_entry *entry = find_entry(sector);
     if (!entry) {
@@ -124,11 +145,11 @@ int xscore_bufcache_write(uint64_t sector, const void *buffer) {
 }
 
 int xscore_bufcache_sync(void) {
-    if (!cache_initialized || !xscore_virtio_blk_present()) return 0;
+    if (!cache_initialized || !xscore_block_present()) return 0;
 
     for (size_t i = 0; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
         if ((cache[i].flags & (BUF_VALID | BUF_DIRTY)) == (BUF_VALID | BUF_DIRTY)) {
-            if (xscore_virtio_blk_write_sector(cache[i].sector, cache[i].data)) {
+            if (xscore_block_write_sector(cache[i].sector, cache[i].data)) {
                 cache[i].flags &= ~BUF_DIRTY;
             }
         }
