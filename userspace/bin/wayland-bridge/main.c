@@ -1073,6 +1073,13 @@ static void unmap_surface(struct bridge_surface *surface) {
 static void surface_destroyed(struct wl_resource *resource) {
     struct bridge_surface *surface = wl_resource_get_user_data(resource);
     if (!surface) return;
+    /* XDG objects may outlive wl_surface, including during client teardown. */
+    if (surface->xdg_surface)
+        wl_resource_set_user_data(surface->xdg_surface, NULL);
+    if (surface->toplevel)
+        wl_resource_set_user_data(surface->toplevel, NULL);
+    if (surface->popup)
+        wl_resource_set_user_data(surface->popup, NULL);
     if (surface->subsurface_resource) {
         wl_resource_set_user_data(surface->subsurface_resource, NULL);
         wl_resource_destroy(surface->subsurface_resource);
@@ -1109,6 +1116,10 @@ static void surface_destroyed(struct wl_resource *resource) {
                 candidate->subsurface_parent = NULL;
                 candidate->is_subsurface = 0;
                 candidate->commit_pending = 0;
+            }
+            if (candidate && candidate->popup_parent == surface) {
+                unmap_surface(candidate);
+                candidate->popup_parent = NULL;
             }
             if (candidate == surface)
                 surface->bridge->surfaces[index] = NULL;
@@ -2742,6 +2753,11 @@ static void wm_base_get_xdg_surface(struct wl_client *client,
                                "xdg_surface requires a bridge surface");
         return;
     }
+    if (surface->xdg_surface || surface->toplevel || surface->popup) {
+        wl_resource_post_error(resource, XDG_WM_BASE_ERROR_ROLE,
+                               "surface already has an xdg object or role");
+        return;
+    }
     struct wl_resource *xdg_resource = wl_resource_create(
         client, &xdg_surface_interface, 1, id);
     if (!xdg_resource) {
@@ -3023,7 +3039,20 @@ static const struct zwlr_layer_surface_v1_interface layer_surface_implementation
 
 static void xdg_surface_destroy(struct wl_client *client,
                                 struct wl_resource *resource) {
+    struct bridge_surface *surface = wl_resource_get_user_data(resource);
+    if (surface && (surface->toplevel || surface->popup)) {
+        wl_resource_post_error(resource, XDG_SURFACE_ERROR_DEFUNCT_ROLE_OBJECT,
+                               "xdg role must be destroyed first");
+        return;
+    }
     resource_destroy(client, resource);
+}
+
+static void toplevel_resource_destroyed(struct wl_resource *resource) {
+    struct bridge_surface *surface = wl_resource_get_user_data(resource);
+    if (!surface) return;
+    foreign_toplevel_unmap(surface);
+    if (surface->toplevel == resource) surface->toplevel = NULL;
 }
 
 static void xdg_surface_get_toplevel(struct wl_client *client,
@@ -3051,7 +3080,7 @@ static void xdg_surface_get_toplevel(struct wl_client *client,
     }
     surface->toplevel = toplevel;
     wl_resource_set_implementation(toplevel, &xdg_toplevel_implementation,
-                                   surface, NULL);
+                                   surface, toplevel_resource_destroyed);
 }
 
 static void restore_popup_focus(struct bridge_surface *surface) {
