@@ -202,6 +202,14 @@ int gettimeofday(struct timeval *value, void *timezone) {
     return 0;
 }
 
+int futimens(int descriptor, const struct timespec times[2]) {
+    (void)descriptor;
+    (void)times;
+    /* Like utimes, unavailable until the VFS has a timestamp update syscall. */
+    errno = ENOSYS;
+    return -1;
+}
+
 int utimes(const char *path, const struct timeval times[2]) {
     (void)path;
     (void)times;
