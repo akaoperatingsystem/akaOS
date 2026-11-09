@@ -179,7 +179,9 @@ struct akaos_compositor_channel {
 
 /* Shared-memory channel helpers.  These are header-only so every supported
  * userspace architecture gets the same acquire/release protocol without a
- * libc dependency.  Callers should hold no other akaOS locks while waiting. */
+ * libc dependency.  Callers should hold no other akaOS locks while waiting.
+ * Clients can write queue metadata without taking these locks. Validate both
+ * captured indices and use only those local values for array accesses. */
 static inline void akaos_compositor_lock(struct akaos_compositor_channel *channel) {
     if (!channel) return;
     while (__atomic_exchange_n(&channel->request_lock, 1U, __ATOMIC_ACQUIRE)) {
@@ -210,6 +212,10 @@ static inline int akaos_compositor_submit(
     akaos_compositor_lock(channel);
     uint32_t head = __atomic_load_n(&channel->request_head, __ATOMIC_RELAXED);
     uint32_t tail = __atomic_load_n(&channel->request_tail, __ATOMIC_ACQUIRE);
+    if (head >= AKAOS_COMPOSITOR_MAX_MESSAGES || tail >= AKAOS_COMPOSITOR_MAX_MESSAGES) {
+        akaos_compositor_unlock(channel);
+        return 0;
+    }
     uint32_t next = (head + 1U) % AKAOS_COMPOSITOR_MAX_MESSAGES;
     if (next == tail) {
         akaos_compositor_unlock(channel);
@@ -229,7 +235,8 @@ static inline int akaos_compositor_receive(
     akaos_compositor_lock(channel);
     uint32_t tail = __atomic_load_n(&channel->request_tail, __ATOMIC_RELAXED);
     uint32_t head = __atomic_load_n(&channel->request_head, __ATOMIC_ACQUIRE);
-    if (tail == head) {
+    if (head >= AKAOS_COMPOSITOR_MAX_MESSAGES || tail >= AKAOS_COMPOSITOR_MAX_MESSAGES ||
+        tail == head) {
         akaos_compositor_unlock(channel);
         return 0;
     }
@@ -266,6 +273,10 @@ static inline int akaos_wayland_input_submit(
                                     __ATOMIC_RELAXED);
     uint32_t tail = __atomic_load_n(&channel->wayland_input_tail,
                                     __ATOMIC_ACQUIRE);
+    if (head >= AKAOS_WAYLAND_INPUT_CAPACITY || tail >= AKAOS_WAYLAND_INPUT_CAPACITY) {
+        __atomic_store_n(&channel->wayland_input_lock, 0U, __ATOMIC_RELEASE);
+        return 0;
+    }
     uint32_t next = (head + 1U) % AKAOS_WAYLAND_INPUT_CAPACITY;
     if (next == tail) {
         __atomic_store_n(&channel->wayland_input_lock, 0U, __ATOMIC_RELEASE);
@@ -299,7 +310,8 @@ static inline int akaos_wayland_input_receive(
                                     __ATOMIC_RELAXED);
     uint32_t head = __atomic_load_n(&channel->wayland_input_head,
                                     __ATOMIC_ACQUIRE);
-    if (tail == head) {
+    if (head >= AKAOS_WAYLAND_INPUT_CAPACITY || tail >= AKAOS_WAYLAND_INPUT_CAPACITY ||
+        tail == head) {
         __atomic_store_n(&channel->wayland_input_lock, 0U, __ATOMIC_RELEASE);
         return 0;
     }
@@ -348,6 +360,10 @@ static inline int akaos_shell_event_submit(struct akaos_compositor_channel *chan
     akaos_shell_event_lock(channel);
     uint32_t head = __atomic_load_n(&channel->shell_event_head, __ATOMIC_RELAXED);
     uint32_t tail = __atomic_load_n(&channel->shell_event_tail, __ATOMIC_ACQUIRE);
+    if (head >= AKAOS_SHELL_EVENT_CAPACITY || tail >= AKAOS_SHELL_EVENT_CAPACITY) {
+        akaos_shell_event_unlock(channel);
+        return 0;
+    }
     uint32_t next = (head + 1U) % AKAOS_SHELL_EVENT_CAPACITY;
     if (next == tail) {
         akaos_shell_event_unlock(channel);
@@ -365,7 +381,8 @@ static inline int akaos_shell_event_receive(struct akaos_compositor_channel *cha
     akaos_shell_event_lock(channel);
     uint32_t tail = __atomic_load_n(&channel->shell_event_tail, __ATOMIC_RELAXED);
     uint32_t head = __atomic_load_n(&channel->shell_event_head, __ATOMIC_ACQUIRE);
-    if (tail == head) {
+    if (head >= AKAOS_SHELL_EVENT_CAPACITY || tail >= AKAOS_SHELL_EVENT_CAPACITY ||
+        tail == head) {
         akaos_shell_event_unlock(channel);
         return 0;
     }
@@ -384,6 +401,10 @@ static inline int akaos_notification_submit(
     while (__atomic_exchange_n(&channel->notification_lock, 1U, __ATOMIC_ACQUIRE)) { }
     uint32_t head = __atomic_load_n(&channel->notification_head, __ATOMIC_RELAXED);
     uint32_t tail = __atomic_load_n(&channel->notification_tail, __ATOMIC_ACQUIRE);
+    if (head >= AKAOS_NOTIFICATION_CAPACITY || tail >= AKAOS_NOTIFICATION_CAPACITY) {
+        __atomic_store_n(&channel->notification_lock, 0U, __ATOMIC_RELEASE);
+        return 0;
+    }
     uint32_t next = (head + 1U) % AKAOS_NOTIFICATION_CAPACITY;
     if (next == tail) {
         __atomic_store_n(&channel->notification_lock, 0U, __ATOMIC_RELEASE);
@@ -402,7 +423,8 @@ static inline int akaos_notification_receive(
     while (__atomic_exchange_n(&channel->notification_lock, 1U, __ATOMIC_ACQUIRE)) { }
     uint32_t tail = __atomic_load_n(&channel->notification_tail, __ATOMIC_RELAXED);
     uint32_t head = __atomic_load_n(&channel->notification_head, __ATOMIC_ACQUIRE);
-    if (tail == head) {
+    if (head >= AKAOS_NOTIFICATION_CAPACITY || tail >= AKAOS_NOTIFICATION_CAPACITY ||
+        tail == head) {
         __atomic_store_n(&channel->notification_lock, 0U, __ATOMIC_RELEASE);
         return 0;
     }
