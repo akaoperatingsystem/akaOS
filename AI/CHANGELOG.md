@@ -1,3 +1,29 @@
+## 2026-11-09 (eighty-fifth continuation) — 3-Way File Differences Comparison Utility: diff3
+
+- Implement native `/bin/diff3` in `userspace/bin/diff3/main.c`:
+  - Compares three files line by line (MYFILE, OLDFILE, YOURFILE).
+  - Supports merge mode (`-m, --merge`) with standard conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`).
+  - Supports outputting all changes bracketing conflicts (`-A, --show-all`).
+  - Supports ed script format (`-e, --ed`) and conflict bracketing (`-E, --show-overlap`).
+  - Supports overlapping changes filtering (`-x, --overlap-only`, `-X`).
+  - Supports non-overlapping changes only (`-3, --easy-only`).
+  - Supports appending 'w' and 'q' to ed scripts (`-i`).
+  - Supports custom labels (`-L, --label=LABEL`).
+  - Supports initial tab indentation (`-T, --initial-tab`) and carriage return stripping (`--strip-trailing-cr`).
+  - Staged across build scripts (`build.sh`, `tools/rebuild-xserver-image.sh`, `tools/make_userspace_builders.py`).
+  - Registered `diff3 (1)` in `whatis` manual index database.
+  - Added automated kernel self-test verification of `diff3 -m` in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.34, XSCore kernel at 0.2.26.
+
+## 2026-11-09 (seventy-eighth continuation) — Universal USB Subsystem & Hardware Driver Implementation
+
+- **Universal USB Subsystem & Hardware Drivers**:
+  - `xscore/kernel/usb.c` & `xscore/include/xscore/usb.h`: Implemented complete USB core stack, xHCI/EHCI/UHCI host controllers, TRB command/event rings, and root hub port enumeration.
+  - Standard class drivers: USB HID keyboard/mouse, USB Mass Storage (BOT), USB CDC network, and USB Serial.
+  - Diagnostics: `/proc/bus/usb/devices` procfs interface and native `/bin/lsusb` userspace utility.
+  - Updated `PROGRESS.md`: Universal USB Subsystem Matrix added at 100% readiness.
+- Bumped akaOS to 0.3.33, XSCore to 0.2.26.
+
 ## 2026-11-09 (eighty-fourth continuation) — File Differences Comparison Utility: diff (Full Options & Formatting Modes)
 
 - Upgrade native `/bin/diff` in `userspace/bin/diff/main.c` with comprehensive standard GNU/POSIX option suite:
@@ -715,87 +741,3 @@
     - `-m`: Monday as first day of week.
     - `-j`: Julian dates (numbered 1-366 from January 1).
     - `-y`: full current year (or specified year) 3-column calendar grid.
-    - `-V` / `--version`: display version information.
-  - Multi-call behavior: `ncal` displays vertical weekdays with horizontal weeks.
-  - Flexible arguments: `cal` (current month/year), `cal <year>` (full year), `cal <month> <year>`, `cal <day> <month> <year>`.
-- Staged `/bin/cal` and `/bin/ncal` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-- Registered `cal (1)` and `ncal (1)` in `whatis` database and updated `akash` shell Utilities list.
-- Integrated `cal 2027` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.
-- Bumped akaOS to 0.2.69 (XSCore kernel at 0.2.3).
-
-## 2026-11-05 (forty-seventh continuation) — Fix 32-bit GDT user segments and syscall entry segment reload
-
-- Fix GDT gate 3 as User Code (0x1B) and gate 4 as User Data (0x23) in `tables.c`.
-- Reload kernel DS/ES (0x10) on `int 0x80` entry and restore user DS/ES (0x23) on return in `entry.S`.
-- Rebuild `akaos32.iso` and refresh Desktop copy.
-- Bump akaOS to 0.2.66.
-
-## 2026-11-04 (fiftieth continuation) — Block-Sorting File Compressor: bzip2, bunzip2, bzcat
-
-- Port and integrate upstream bzip2 1.0.8 suite into akaOS userspace (`userspace/bin/bzip2/`):
-  - Builds `/bin/bzip2` implementing the Burrows-Wheeler block sorting text compression algorithm and Huffman coding.
-  - Multi-call binary acting as `bzip2` (compress), `bunzip2` (decompress), or `bzcat` (decompress to stdout) based on invocation name or flags (`-d`, `-z`, `-c`).
-  - Supports full option suite: `-c` / `--stdout`, `-d` / `--decompress`, `-z` / `--compress`, `-k` / `--keep`, `-f` / `--force`, `-t` / `--test`, `-s` / `--small`, `-q` / `--quiet`, `-v` / `--verbose`, `-1`..`-9` (`--fast`..`--best`), `-L` / `--license`, `-V` / `--version`.
-  - Added `<sys/times.h>` header and `times()` function in `userspace/libc/src/time.c`.
-  - Added `fchown()` in `userspace/libc/src/syscall.c`.
-  - Staged `/bin/bzip2`, `/bin/bunzip2`, and `/bin/bzcat` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-  - Registered `bzip2 (1)`, `bunzip2 (1)`, `bzcat (1)` in `whatis` database and updated `akash` shell Utilities list.
-  - Integrated `bzip2 --help` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.
-  - Bumped akaOS to 0.2.66 (XSCore kernel at 0.2.3).
-
-## 2026-11-04 (forty-sixth continuation) — Fix 32-bit framebuffer page table sharing
-
-- Clone all MMIO page directory entries (directory index >= 768, including framebuffer at 0xE0000000) into every user address space in `xscore/arch/x86_32/paging.c`.
-- Fix 32-bit ACPI memory traversal in `xscore/kernel/acpi.c`.
-- Regenerate `build/akaos32.iso` and copy to Desktop.
-- Bump akaOS to 0.2.61.
-
-## 2026-11-04 (forty-ninth continuation) — Shell Builtin Runner: builtin
-
-- Implement native POSIX/Bash builtin execution command `builtin` in `userspace/bin/akash/main.c`:
-  - Syntax: `builtin [shell-builtin [args...]]`
-  - Runs shell builtins directly, bypassing function lookup or external binary resolution.
-  - Returns exit status of executed builtin, or 1 with error diagnostic if target is not a builtin.
-  - Supports `help builtin` and `help [b]uiltin` documentation.
-  - Created standalone executable wrapper `/bin/builtin` in `userspace/bin/builtin/main.c`.
-  - Staged `/bin/builtin` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-  - Registered `builtin (1)` in `whatis` database and updated `akash` Built-in command listing.
-  - Integrated `builtin echo BUILTIN_OK` into kernel milestone self-test in `xscore/kernel/user.c` and `test.sh`.
-  - Bumped akaOS to 0.2.63 (XSCore kernel at 0.2.3).
-
-## 2026-11-04 (forty-eighth continuation) — Shell Loop Break Command: break
-
-- Implement native POSIX/Bash loop termination command `break` in `userspace/bin/akash/main.c`:
-  - Syntax: `break [n]` where `n >= 1` exits the nth enclosing loop (for, while, until, select).
-  - Handles invalid `n < 1` with exit code 1 and error diagnostic.
-  - Propagates break counter across nested statement blocks and conditionals (`if/then/else`).
-  - Added built-in command documentation via `help break`.
-  - Created standalone executable wrapper `/bin/break` in `userspace/bin/break/main.c`.
-  - Staged `/bin/break` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-  - Registered `break (1)` in `whatis` database and updated `akash` Built-in / Scripting command listings.
-  - Integrated loop break self-test in `xscore/kernel/user.c` and `test.sh`.
-  - Bumped akaOS to 0.2.61 (XSCore kernel at 0.2.3).
-
-## 2026-11-04 (forty-fifth continuation) — Fix akash 32-bit build and regenerate clean initramfs32
-
-- Fix null character literal in `userspace/bin/akash/main.c`.
-- Full clean rebuild of `initramfs32.img` and `akaos32.iso`.
-- Bump akaOS to 0.2.58.
-
-## 2026-11-04 (forty-first continuation) — Unmodified Upstream LXQt Desktop Stack (Panel & Session) 100% Operational
-
-- Integrate and verify unmodified upstream LXQt 2.4.0 desktop environment (`lxqt-panel`, `lxqt-session`, `lxqt-leave`, `startlxqt`):
-  - Staged complete Qt6 runtime stack: `libQt6Core`, `libQt6DBus`, `libQt6Gui`, `libQt6Widgets`, `libQt6Concurrent`, `libQt6Svg`, `libQt6Xml`, `libQt6WaylandClient`, `libQt6WlShellIntegration`.
-  - Staged complete LXQt and KDE Frameworks 6 runtime: `libQt6Xdg`, `libQt6XdgIconLoader`, `liblxqt`, `liblxqt-globalkeys`, `liblxqt-globalkeys-ui`, `libdbusmenu-lxqt`, `libsysstat-qt6`, `libKF6WindowSystem`, `libLayerShellQtInterface`.
-  - Staged Qt6 Wayland platform plugin (`libqwayland.so`) across dual search prefixes (`/usr/lib/qt6/plugins/platforms` and `/usr/local/plugins/platforms`).
-  - Staged LXQt panel plugins (`libcustomcommand.so`, `libdirectorymenu.so`, `libdom.so`, `libsysstat.so`).
-  - Updated `tools/rebuild-xserver-image.sh` to stage unversioned DSO sonames alongside versioned libraries via symlink dereferencing.
-  - Spawned native Wayland bridge (`wayland-bridge`) providing the `/run/user/0/wayland-0` socket connected to the `lumen` compositor.
-  - Verified concurrent execution of all 18 processes in QEMU guest (`test-upstream-wm.sh` 100% PASS with Openbox, LXPanel, PCManFM, XFWM4, XFCE Panel, XFCE Session, Marco, MATE Panel, MATE Session, Muffin, i3, LXQt Panel, and LXQt Session).
-- Bump akaOS to 0.2.59, XSCore kernel at 0.2.3.
-
-## 2026-11-04 (forty-seventh continuation) — Readline Key and Function Bindings Command: bind
-
-- Implement native POSIX/GNU Readline key and function bindings utility `/bin/bind` in `userspace/bin/bind/main.c`:
-  - Syntax: `bind [-m keymap] [-lpsvPSVX] [-q func] [-u func] [-r keyseq] [-x keyseq:cmd] [-f file] [keyseq:func]`.
-  - Core inspection options: `-l` (list all 80+ readline function names), `-p` (re-readable bindings), `-P` (current key sequences & functions), `-v` (re-readable variables), `-V` (current variable values), `-s`/`-S` (macros), `-X` (shell command bindings).

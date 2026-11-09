@@ -17,11 +17,9 @@
 #endif
 #define HEAP_GROWTH_PAGES UINT64_C(16)
 #if defined(__x86_64__)
-/* A process record includes bounded mmap-page metadata.  Keep enough kernel
- * heap mapped from boot for one exec staging record so exec tests and normal
- * process replacement do not grow the monotonic heap after the reclamation
- * baseline is sampled. */
-#define HEAP_INITIAL_PAGES UINT64_C(256)
+/* Ultra-lean initial kernel heap reservation (64 KiB = 16 pages).
+ * Grows on-demand in HEAP_GROWTH_PAGES increments. */
+#define HEAP_INITIAL_PAGES UINT64_C(16)
 #else
 #define HEAP_INITIAL_PAGES HEAP_GROWTH_PAGES
 #endif

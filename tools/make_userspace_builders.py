@@ -610,6 +610,7 @@ build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
 build_user_program watch "$ROOT_DIR/userspace/bin/watch/main.c" WATCH.ELF
 build_user_program sed "$ROOT_DIR/userspace/bin/sed/main.c" SED.ELF
 build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF
+build_user_program diff3 "$ROOT_DIR/userspace/bin/diff3/main.c" DIFF3.ELF
 build_user_program cmp "$ROOT_DIR/userspace/bin/cmp/main.c" CMP.ELF
 build_user_program patch "$ROOT_DIR/userspace/bin/patch/main.c" PATCH.ELF
 build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
@@ -622,6 +623,7 @@ build_user_program dc "$ROOT_DIR/userspace/bin/dc/main.c" DC.ELF
 build_user_program dd "$ROOT_DIR/userspace/bin/dd/main.c" DD.ELF
 build_user_program ddrescue "$ROOT_DIR/userspace/bin/ddrescue/main.c" DDRESCUE.ELF
 build_user_program ddrescuelog "$ROOT_DIR/userspace/bin/ddrescuelog/main.c" DDRESCUELOG.ELF
+build_user_program lsusb "$ROOT_DIR/userspace/bin/lsusb/main.c" LSUSB.ELF
 build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
 build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
@@ -854,7 +856,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \\
     --file "/bin/watch:$BUILD_DIR/WATCH.ELF:exec" \\
     --file "/bin/sed:$BUILD_DIR/SED.ELF:exec" \\
-    --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \\
+    --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \
+    --file "/bin/diff3:$BUILD_DIR/DIFF3.ELF:exec" \\
     --file "/bin/cmp:$BUILD_DIR/CMP.ELF:exec" \\
     --file "/bin/patch:$BUILD_DIR/PATCH.ELF:exec" \\
     --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec" \
@@ -868,6 +871,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/dd:$BUILD_DIR/DD.ELF:exec" \
     --file "/bin/ddrescue:$BUILD_DIR/DDRESCUE.ELF:exec" \
     --file "/bin/ddrescuelog:$BUILD_DIR/DDRESCUELOG.ELF:exec" \
+    --file "/bin/lsusb:$BUILD_DIR/LSUSB.ELF:exec" \
     --file "/bin/crond:$BUILD_DIR/CROND.ELF:exec" \
     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \\
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \\

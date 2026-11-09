@@ -1,3 +1,11 @@
+## 2026-11-09 (eighty-fifth continuation) — 3-Way File Differences Comparison Utility: diff3
+
+akaOS now features a native `/bin/diff3` utility:
+1. **3-Way File Differences Comparison Utility (`/bin/diff3`):**
+   - Syntax: `diff3 [options] MYFILE OLDFILE YOURFILE`
+   - Full option suite: `-a`, `-A`, `-e`, `-E`, `-x`, `-X`, `-3`, `-m`, `-i`, `-T`, `-L`, `--strip-trailing-cr`.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-09 (eighty-fourth continuation) — File Differences Comparison Utility: diff (Full Options & Formatting Modes)
 
 akaOS now features a full-featured `/bin/diff` utility:

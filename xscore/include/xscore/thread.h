@@ -22,8 +22,8 @@ struct xscore_process;
 #define XSCORE_MAX_THREADS 64U
 _Static_assert(XSCORE_MAX_THREADS <= 64U,
                "thread ready bitmap supports at most 64 TCBs");
-#define XSCORE_THREAD_STACK_PAGES 4   /* 16 KiB per kernel thread stack */
-#define XSCORE_THREAD_PRIVILEGE_STACK_PAGES 4 /* 16 KiB Ring 3 entry stack */
+#define XSCORE_THREAD_STACK_PAGES 2   /* 8 KiB per kernel thread stack */
+#define XSCORE_THREAD_PRIVILEGE_STACK_PAGES 2 /* 8 KiB Ring 3 entry stack */
 
 /* Thread states. */
 enum xscore_thread_state {

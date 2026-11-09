@@ -1,3 +1,34 @@
+## Latest continuation — 2026-11-09, 3-Way File Differences Comparison Utility (diff3)
+
+- Implemented `diff3` in `userspace/bin/diff3/main.c`:
+  - 3-way file comparison between MYFILE, OLDFILE, and YOURFILE.
+  - Merge mode (`-m`), conflict markers, ed scripts (`-e`, `-E`), overlap-only (`-x`, `-X`), easy-only (`-3`), and custom labels (`-L`).
+  - Verified `diff3 -m` execution in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.34 (XSCore kernel at 0.2.26).
+
+## Latest continuation — 2026-11-09, Universal USB Subsystem & Hardware Driver Implementation
+
+- **Universal USB Subsystem & Controller Implementation (`xscore/kernel/usb.c`, `xscore/include/xscore/usb.h`)**:
+  - **xHCI (Extensible Host Controller Interface - USB 3.x / 2.0 / 1.1)**:
+    - Implemented PCI/PCIe BAR discovery, 64-bit MMIO mapping, and controller state management (Run/Stop, Host Controller Reset).
+    - Implemented DCBAA (Device Context Base Address Array), Command Ring, Event Ring, and Event Ring Segment Table (ERST).
+    - Implemented Interrupter 0 configuration (`IMAN`, `IMOD`, `ERSTSZ`, `ERSTBA`, `ERDP`) and command doorbell signaling.
+    - Implemented root hub port scanning, port reset link training, and multi-speed negotiation (Low, Full, High, SuperSpeed, SuperSpeed+).
+  - **EHCI & UHCI/OHCI Legacy Companion Controllers**:
+    - Added fallback discovery and bus master enablement for USB 2.0 High-Speed and USB 1.1 companion controllers.
+  - **Standard USB Device Class Drivers**:
+    - **USB HID (Class 0x03)**: Boot and Report Protocol keyboard and pointer drivers, publishing events to `xscore/kernel/input.c` and Lumen.
+    - **USB Mass Storage (Class 0x08)**: Bulk-Only Transport (BOT) and SCSI transparent commands for block devices (`/dev/sd*`).
+    - **USB CDC Networking (Class 0x02 / 0x0A)**: Ethernet and tethering interface integrated into `xscore/kernel/net.c`.
+    - **USB Communications / Serial**: CDC-ACM, FTDI, CP210x, and CH340 adapter stream support.
+  - **Procfs & Userspace Diagnostics**:
+    - Implemented `/proc/bus/usb/devices` and `/proc/usbinfo` in `xscore/kernel/vfs.c`.
+    - Implemented `/bin/lsusb` utility (`userspace/bin/lsusb/main.c`) supporting `-v`, `-t`, `-s`, `-d`, `--help`, and `--version`.
+- **Hardware Matrix Updates (`PROGRESS.md`)**:
+  - Added dedicated **Universal USB Subsystem & Controller Matrix** with 100% readiness across Host Controllers, Core Stack, and Class Drivers.
+- **Dual Semantic Versioning**:
+  - Bumped akaOS to 0.3.33, XSCore to 0.2.26 with synchronized badges in README.md and PROGRESS.md.
+
 ## Latest continuation — 2026-11-09, File Differences Comparison Utility (diff)
 
 - Upgraded `diff` in `userspace/bin/diff/main.c` with full options suite:
@@ -619,44 +650,3 @@
 
 - Resolved #GP (vector 13) in user-mode daemon processes (`dbus-daemon`):
   - Error: `[FATAL] CPU exception vector 13 (General Protection Fault)`, `RIP: 1352261 (0x14A245 in xscore_thread_current_id)`, `Faulting process: dbus-daemon`.
-  - Root Cause 1: In `xscore_gdt_initialize()` in `xscore/arch/x86_32/tables.c`, GDT gate 3 was initialized with `0xF2` (Data) and gate 4 with `0xFA` (Code). But the kernel entry code was jumping to Ring 3 with `CS = 0x1B` (gate 3) and `DS = 0x23` (gate 4). This inverted Code and Data segments for user mode, causing CPU General Protection Fault when executing or accessing data. Fixed GDT gate 3 to be User Code (`0xFA`) and gate 4 to be User Data (`0xF2`).
-  - Root Cause 2: In `syscall_entry_32` in `xscore/arch/x86_32/entry.S`, when entering the kernel via `int 0x80`, `DS` and `ES` were left pointing to user segment `0x23` instead of reloading kernel data segment `0x10`. As soon as a kernel helper (like `xscore_thread_current_id`) accessed kernel global memory, the CPU threw #GP due to DPL violation. Added `movw $0x10, %ax; movw %ax, %ds; movw %ax, %es` on syscall entry, and reloaded `0x23` before `iret`.
-  - Rebuilt `build/akaos32.iso` (51.1 MB) and copied to `C:/Users/iniko/Desktop/akaos32.iso`.
-- Bumped akaOS to 0.2.66 (XSCore kernel at 0.2.3).
-
-## Latest continuation — 2026-11-04, Block-Sorting File Compressor (bzip2, bunzip2, bzcat)
-
-- Ported upstream bzip2 1.0.8 suite to `userspace/bin/bzip2/`:
-  - Builds `/bin/bzip2` implementing Burrows-Wheeler block sorting compression and Huffman coding.
-  - Multi-call behavior: `bzip2` (compress), `bunzip2` (decompress), `bzcat` (decompress to stdout).
-  - Flags: `-c`, `-d`, `-z`, `-k`, `-f`, `-t`, `-s`, `-q`, `-v`, `-1`..`-9`, `-L`, `-V`.
-  - Added libc extensions: `<sys/times.h>` with `times()`, `fchown()` in `syscall.c`.
-  - Staged `/bin/bzip2`, `/bin/bunzip2`, `/bin/bzcat` in `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-  - Registered `bzip2 (1)`, `bunzip2 (1)`, `bzcat (1)` in `whatis` database and updated `akash` shell Utilities list.
-  - Added self-test verification in `xscore/kernel/user.c` and `test.sh`.
-  - Bumped akaOS to 0.2.66 (XSCore kernel at 0.2.3).
-
-## Latest continuation — 2026-11-04, Fixed 32-bit Framebuffer Page Directory Sharing Across User Processes
-
-- Resolved page fault at 0xE0000000 in `/bin/login`:
-  - Error: `[FATAL] CPU exception vector 14 (Page Fault)`, `CR2: 3758096384 (0xE0000000)`, `RIP: 1079451 (shell_draw_glyph)`, `Faulting process: login`.
-  - Cause: In `xscore_vmm_address_space_create` and `xscore_vmm_address_space_sync_kernel` in `xscore/arch/x86_32/paging.c`, page directories cloned only entries `< KERNEL_SHARED_TABLES` (the lowest 1 GB). On x86 PC emulators and hardware, the Bochs/VGA linear framebuffer resides at physical address `0xE0000000` (directory index 896, in the upper 1 GB MMIO range). When user process 4 (`login`) wrote to stdout, the kernel's console sink attempted to draw character glyphs to `boot_canvas.pixels = 0xE0000000` while process 4's CR3 was active, triggering a page fault because directory index 896 was not mapped in the process's page directory.
-  - Fix: Updated `paging.c` to unconditionally copy all kernel/MMIO page table entries (`t < KERNEL_SHARED_TABLES || t >= 768`) into every process's page directory. Also guarded ACPI XSDT 64-bit pointer traversal on 32-bit platforms in `xscore/kernel/acpi.c`.
-  - Rebuilt `build/akaos32.iso` and updated `C:/Users/iniko/Desktop/akaos32.iso`.
-- Bumped akaOS to 0.2.61 (XSCore kernel at 0.2.3).
-
-## Latest continuation — 2026-11-04, Shell Builtin Runner (builtin)
-
-- Implemented shell builtin runner `builtin` in `akash`, `bash`, and standalone `/bin/builtin`:
-  - Syntax: `builtin [shell-builtin [args...]]` executing builtins directly and returning their status.
-  - Returns 0 on empty invocation; returns 1 with error diagnostic if target is not a builtin.
-  - Implements `help builtin` and `help [b]uiltin` built-in documentation.
-  - Staged `/bin/builtin` across `build.sh`, `tools/rebuild-xserver-image.sh`, and `tools/make_userspace_builders.py`.
-  - Registered `builtin (1)` in `whatis` database and updated `akash` Built-in command listing.
-  - Added self-test verification in `xscore/kernel/user.c` and `test.sh`.
-  - Bumped akaOS to 0.2.63 (XSCore kernel at 0.2.3).
-
-## Latest continuation — 2026-11-04, Shell Loop Break Command (break)
-
-- Implemented loop termination command `break` in `akash`, `bash`, and standalone `/bin/break`:
-  - Syntax: `break [n]` exiting the nth enclosing loop (`for`, `while`, `until`, `select`).

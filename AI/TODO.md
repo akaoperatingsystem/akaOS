@@ -1,3 +1,18 @@
+## 2026-11-09 continuation 85: 3-Way File Differences Comparison Utility (diff3)
+
+- [x] Implement and verify complete functionality for `diff3`:
+      - Options: `-a`, `-A`, `-e`, `-E`, `-x`, `-X`, `-3`, `-m`, `-i`, `-T`, `-L`, `--strip-trailing-cr`.
+      - Tested in `xscore/kernel/user.c` (`diff3 -m`) and verified in automated test suite.
+
+## 2026-11-09 continuation 78: Universal USB Subsystem & Hardware Driver Implementation
+
+- [x] Design and implement `xscore/include/xscore/usb.h` with USB specs, descriptors, and xHCI structures.
+- [x] Implement `xscore/kernel/usb.c` with xHCI controller init, TRBs, rings, root hub ports, and class drivers.
+- [x] Implement `/proc/bus/usb/devices` and `/proc/usbinfo` dynamic procfs nodes in `xscore/kernel/vfs.c`.
+- [x] Implement `/bin/lsusb` utility in `userspace/bin/lsusb/main.c` and stage in build scripts.
+- [x] Add Universal USB Subsystem Matrix to `PROGRESS.md` at 100% completion.
+- [x] Bump akaOS to 0.3.33, XSCore to 0.2.26; sync badges across README.md and PROGRESS.md.
+
 ## 2026-11-09 continuation 84: File Differences Comparison Utility (diff)
 
 - [x] Implement and verify complete option suite for `diff`:

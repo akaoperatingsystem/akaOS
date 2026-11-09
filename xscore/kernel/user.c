@@ -806,6 +806,13 @@ int xscore_user_process_self_test(void) {
     if (!p_diff_s || !xscore_process_wait(p_diff_s, &diff_s_status) || diff_s_status != 0 || !xscore_process_reap(p_diff_s)) return 0;
     xscore_serial_write("[INFO] File differences comparison utility diff verified\n");
 
+    /* Verify 3-way file differences comparison utility diff3 */
+    const char *diff3_args[] = {"/bin/diff3", "-m", "/etc/motd", "/etc/motd", "/etc/motd", 0};
+    struct xscore_process *p_diff3 = xscore_process_create_path_args("/bin/diff3", 5, diff3_args);
+    uint64_t diff3_status = UINT64_MAX;
+    if (!p_diff3 || !xscore_process_wait(p_diff3, &diff3_status) || diff3_status != 0 || !xscore_process_reap(p_diff3)) return 0;
+    xscore_serial_write("[INFO] 3-way file differences comparison utility diff3 verified\n");
+
     const char *cmp_args[] = {"/bin/cmp", "-s", "/etc/motd", "/etc/motd", 0};
     struct xscore_process *p_cmp = xscore_process_create_path_args("/bin/cmp", 4, cmp_args);
     uint64_t cmp_status = UINT64_MAX;

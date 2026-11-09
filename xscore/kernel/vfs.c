@@ -13,6 +13,7 @@
 #include <xscore/cpu.h>
 #include <xscore/gpu.h>
 #include <xscore/pci.h>
+#include <xscore/usb.h>
 #include <xscore/sound.h>
 #include <xscore/acpi.h>
 #include <xscore/time.h>
@@ -97,6 +98,8 @@ static uint32_t proc_net_dev_node;
 static uint32_t proc_cpuinfo_node;
 static uint32_t proc_gpuinfo_node;
 static uint32_t proc_pci_node;
+static uint32_t proc_usbinfo_node;
+static uint32_t proc_bus_usb_dev_node;
 static uint32_t proc_asound_node;
 static uint32_t proc_asound_cards_node;
 static uint32_t proc_acpi_node;
@@ -1123,6 +1126,10 @@ int xscore_vfs_install_procfs(void) {
         !xscore_vfs_add_file("/proc/cpuinfo", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/gpuinfo", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/pci", empty, 0, 0444) ||
+        !xscore_vfs_add_file("/proc/usbinfo", empty, 0, 0444) ||
+        !xscore_vfs_add_directory("/proc/bus", 0555) ||
+        !xscore_vfs_add_directory("/proc/bus/usb", 0555) ||
+        !xscore_vfs_add_file("/proc/bus/usb/devices", empty, 0, 0444) ||
         !xscore_vfs_add_directory("/proc/asound", 0555) ||
         !xscore_vfs_add_file("/proc/asound/cards", empty, 0, 0444) ||
         !xscore_vfs_add_directory("/proc/acpi", 0555) ||
@@ -1148,6 +1155,8 @@ int xscore_vfs_install_procfs(void) {
     (void)xscore_vfs_resolve_path_at(0, "/proc/cpuinfo", &proc_cpuinfo_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/gpuinfo", &proc_gpuinfo_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/pci", &proc_pci_node);
+    (void)xscore_vfs_resolve_path_at(0, "/proc/usbinfo", &proc_usbinfo_node);
+    (void)xscore_vfs_resolve_path_at(0, "/proc/bus/usb/devices", &proc_bus_usb_dev_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/asound", &proc_asound_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/asound/cards", &proc_asound_cards_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/acpi", &proc_acpi_node);
@@ -1996,6 +2005,12 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
             if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
             static uint8_t generated[4096];
             size_t size = xscore_pci_format_proc_pci((char *)generated, sizeof(generated));
+            return xscore_fd_open_generated(table, generated, size);
+        }
+        if (target == proc_usbinfo_node || target == proc_bus_usb_dev_node) {
+            if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
+            static uint8_t generated[4096];
+            size_t size = xscore_usb_format_proc_devices((char *)generated, sizeof(generated));
             return xscore_fd_open_generated(table, generated, size);
         }
         if (target == proc_asound_cards_node) {

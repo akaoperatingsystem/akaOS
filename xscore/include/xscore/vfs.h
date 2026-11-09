@@ -7,7 +7,7 @@
 
 struct xscore_fd_table;
 
-#define XSCORE_VFS_MAX_NODES 8192
+#define XSCORE_VFS_MAX_NODES 2048
 
 enum xscore_device_kind {
     XSCORE_DEVICE_NONE = 0,

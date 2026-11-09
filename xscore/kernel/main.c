@@ -21,6 +21,7 @@
 #include <xscore/cpu.h>
 #include <xscore/gpu.h>
 #include <xscore/sound.h>
+#include <xscore/usb.h>
 #include <xscore/nvme.h>
 #include <xscore/virtio_blk.h>
 #include <xscore/bufcache.h>
@@ -1226,6 +1227,7 @@ __attribute__((noreturn)) static void xscore_boot_on_kernel_stack(uint64_t boot_
     xscore_cpu_initialize();
     xscore_gpu_initialize();
     xscore_sound_initialize();
+    xscore_usb_initialize();
     /* NVMe initialization after PCI and memory are online */
     xscore_nvme_initialize();
     if (!xscore_virtio_blk_initialize()) {

@@ -115,6 +115,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/nvme.c"
     "$ROOT_DIR/xscore/kernel/audio_drivers.c"
     "$ROOT_DIR/xscore/kernel/acpi.c"
+    "$ROOT_DIR/xscore/kernel/usb.c"
     "$ROOT_DIR/xscore/kernel/virtio_blk.c"
     "$ROOT_DIR/xscore/kernel/audio.c"
     "$ROOT_DIR/xscore/kernel/audio_linux.c"

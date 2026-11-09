@@ -22,11 +22,12 @@ static xscore_spinlock_t page_cache_lock = XSCORE_SPINLOCK_INIT;
 
 static uint32_t compute_dynamic_cache_capacity(void) {
     uint64_t total_pages = xscore_pmm_total_page_count();
-    if (total_pages == 0) return 256U;
-    if (total_pages <= 4096U) return 128U;   /* <= 16 MB RAM: 128 pages (512 KB) */
-    if (total_pages <= 8192U) return 256U;   /* <= 32 MB RAM: 256 pages (1 MB) */
-    if (total_pages <= 16384U) return 512U;  /* <= 64 MB RAM: 512 pages (2 MB) */
-    return PAGE_CACHE_MAX_CAPACITY;          /* > 64 MB RAM: 2048 pages (8 MB) */
+    if (total_pages == 0) return 64U;
+    if (total_pages <= 4096U) return 32U;    /* <= 16 MB RAM: 32 pages (128 KB) */
+    if (total_pages <= 8192U) return 64U;    /* <= 32 MB RAM: 64 pages (256 KB) */
+    if (total_pages <= 16384U) return 128U;  /* <= 64 MB RAM: 128 pages (512 KB) */
+    if (total_pages <= 32768U) return 256U;  /* <= 128 MB RAM: 256 pages (1 MB) */
+    return 512U;                             /* > 128 MB RAM: 512 pages (2 MB) */
 }
 
 int xscore_page_cache_initialize(void) {
