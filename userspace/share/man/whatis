@@ -165,3 +165,5 @@ dc (1) - desk calculator
 dd (1) - data duplicator - convert and copy a file
 ddrescue (1) - data recovery tool
 ddrescuelog (1) - tool for ddrescue logfiles
+declare (1) - declare variables and give them attributes
+typeset (1) - declare variables and give them attributes

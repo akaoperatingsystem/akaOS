@@ -15,6 +15,10 @@
 #include <sys/wait.h>
 #include <sys/reboot.h>
 #include <unistd.h>
+#include <ctype.h>
+
+static int write_str(int fd, const char *str);
+static long long parse_num_val(const char *str);
 
 #define MAX_STAGES 8
 #define MAX_ARGS 64
@@ -1038,7 +1042,7 @@ static int is_name_shell_builtin(const char *name) {
         "cd", "exit", "help", "about", "version", "id", "hostname",
         "shutdown", "jobs", "fg", "bg", "kill", "alias", "unalias",
         "test", "[", "echo", "export", "bind", "break", "builtin",
-        "caller", "case", "command", "true", "false", "source", ".",
+        "caller", "case", "command", "continue", "declare", "typeset", "true", "false", "source", ".",
         NULL
     };
     for (int i = 0; blts[i]; ++i) {
@@ -1073,10 +1077,163 @@ static int execute_builtin(int argc, char *argv[]) {
                     last_exit_status = 1;
                     return 1;
                 }
-                set_shell_var(argv[1], eq + 1);
+                set_shell_var_attributes(argv[1], eq + 1, VAR_ATTR_EXPORT, 0);
+            } else {
+                set_shell_var_attributes(argv[1], NULL, VAR_ATTR_EXPORT, 0);
             }
         }
         last_exit_status = 0;
+        return 1;
+    }
+
+    if (strcmp(argv[0], "declare") == 0 || strcmp(argv[0], "typeset") == 0) {
+        uint32_t set_flags = 0;
+        uint32_t clear_flags = 0;
+        int opt_print = 0;
+        int opt_funcs_only = 0;
+        int opt_funcs_names = 0;
+        int idx = 1;
+
+        while (idx < argc && (argv[idx][0] == '-' || argv[idx][0] == '+') && argv[idx][1] != '\0') {
+            int is_plus = (argv[idx][0] == '+');
+            for (size_t c = 1; argv[idx][c]; ++c) {
+                char opt = argv[idx][c];
+                uint32_t flag = 0;
+                switch (opt) {
+                    case 'a': flag = VAR_ATTR_ARRAY; break;
+                    case 'A': flag = VAR_ATTR_ASSOC; break;
+                    case 'i': flag = VAR_ATTR_INTEGER; break;
+                    case 'l': flag = VAR_ATTR_LOWER; break;
+                    case 'u': flag = VAR_ATTR_UPPER; break;
+                    case 'r': flag = VAR_ATTR_READONLY; break;
+                    case 'x': flag = VAR_ATTR_EXPORT; break;
+                    case 'n': flag = VAR_ATTR_NAMEREF; break;
+                    case 't': flag = VAR_ATTR_TRACE; break;
+                    case 'p': opt_print = 1; break;
+                    case 'f': opt_funcs_only = 1; break;
+                    case 'F': opt_funcs_only = 1; opt_funcs_names = 1; break;
+                    case 'g': case 'I': break;
+                    default:
+                        write_str(STDERR_FILENO, "akash: declare: -");
+                        char oc[2] = {opt, '\0'};
+                        write_str(STDERR_FILENO, oc);
+                        write_str(STDERR_FILENO, ": invalid option\n");
+                        last_exit_status = 2;
+                        return 1;
+                }
+                if (flag) {
+                    if (is_plus) {
+                        if (flag == VAR_ATTR_READONLY || flag == VAR_ATTR_ARRAY || flag == VAR_ATTR_ASSOC) {
+                            write_str(STDERR_FILENO, "akash: declare: cannot remove attribute\n");
+                            last_exit_status = 1;
+                            return 1;
+                        }
+                        clear_flags |= flag;
+                    } else {
+                        set_flags |= flag;
+                    }
+                }
+            }
+            idx++;
+        }
+
+        if (opt_funcs_only) {
+            if (idx >= argc) {
+                for (int i = 0; i < num_shell_funcs; ++i) {
+                    if (opt_funcs_names) {
+                        write_str(STDOUT_FILENO, "declare -f ");
+                        write_str(STDOUT_FILENO, shell_funcs[i].name);
+                        write_str(STDOUT_FILENO, "\n");
+                    } else {
+                        write_str(STDOUT_FILENO, shell_funcs[i].name);
+                        write_str(STDOUT_FILENO, " () {\n");
+                        write_str(STDOUT_FILENO, shell_funcs[i].body ? shell_funcs[i].body : "");
+                        write_str(STDOUT_FILENO, "\n}\n");
+                    }
+                }
+                last_exit_status = 0;
+                return 1;
+            } else {
+                int had_err = 0;
+                for (int i = idx; i < argc; ++i) {
+                    struct shell_func *fn = find_shell_func(argv[i]);
+                    if (fn) {
+                        if (opt_funcs_names) {
+                            write_str(STDOUT_FILENO, "declare -f ");
+                            write_str(STDOUT_FILENO, fn->name);
+                            write_str(STDOUT_FILENO, "\n");
+                        } else {
+                            write_str(STDOUT_FILENO, fn->name);
+                            write_str(STDOUT_FILENO, " () {\n");
+                            write_str(STDOUT_FILENO, fn->body ? fn->body : "");
+                            write_str(STDOUT_FILENO, "\n}\n");
+                        }
+                    } else {
+                        had_err = 1;
+                    }
+                }
+                last_exit_status = had_err ? 1 : 0;
+                return 1;
+            }
+        }
+
+        if (idx >= argc) {
+            for (int i = 0; i < num_shell_vars; ++i) {
+                if (set_flags && !(shell_vars[i].flags & set_flags)) continue;
+                write_str(STDOUT_FILENO, "declare ");
+                if (shell_vars[i].flags & VAR_ATTR_READONLY) write_str(STDOUT_FILENO, "-r ");
+                if (shell_vars[i].flags & VAR_ATTR_INTEGER) write_str(STDOUT_FILENO, "-i ");
+                if (shell_vars[i].flags & VAR_ATTR_EXPORT) write_str(STDOUT_FILENO, "-x ");
+                if (shell_vars[i].flags & VAR_ATTR_LOWER) write_str(STDOUT_FILENO, "-l ");
+                if (shell_vars[i].flags & VAR_ATTR_UPPER) write_str(STDOUT_FILENO, "-u ");
+                write_str(STDOUT_FILENO, shell_vars[i].name);
+                write_str(STDOUT_FILENO, "=\"");
+                write_str(STDOUT_FILENO, shell_vars[i].val);
+                write_str(STDOUT_FILENO, "\"\n");
+            }
+            last_exit_status = 0;
+            return 1;
+        }
+
+        int had_err = 0;
+        for (int i = idx; i < argc; ++i) {
+            char namebuf[64];
+            char *eq = strchr(argv[i], '=');
+            const char *val = NULL;
+            if (eq) {
+                size_t nlen = (size_t)(eq - argv[i]);
+                if (nlen >= sizeof(namebuf)) nlen = sizeof(namebuf) - 1;
+                strncpy(namebuf, argv[i], nlen);
+                namebuf[nlen] = '\0';
+                val = eq + 1;
+            } else {
+                strncpy(namebuf, argv[i], sizeof(namebuf) - 1);
+                namebuf[sizeof(namebuf) - 1] = '\0';
+            }
+
+            if (opt_print) {
+                struct shell_var *v = find_shell_var_entry(namebuf);
+                if (v) {
+                    write_str(STDOUT_FILENO, "declare ");
+                    if (v->flags & VAR_ATTR_READONLY) write_str(STDOUT_FILENO, "-r ");
+                    if (v->flags & VAR_ATTR_INTEGER) write_str(STDOUT_FILENO, "-i ");
+                    if (v->flags & VAR_ATTR_EXPORT) write_str(STDOUT_FILENO, "-x ");
+                    if (v->flags & VAR_ATTR_LOWER) write_str(STDOUT_FILENO, "-l ");
+                    if (v->flags & VAR_ATTR_UPPER) write_str(STDOUT_FILENO, "-u ");
+                    write_str(STDOUT_FILENO, v->name);
+                    write_str(STDOUT_FILENO, "=\"");
+                    write_str(STDOUT_FILENO, v->val);
+                    write_str(STDOUT_FILENO, "\"\n");
+                } else {
+                    had_err = 1;
+                }
+            } else {
+                if (set_shell_var_attributes(namebuf, val, set_flags, clear_flags) != 0) {
+                    had_err = 1;
+                }
+            }
+        }
+        last_exit_status = had_err ? 1 : 0;
         return 1;
     }
 
@@ -1382,6 +1539,29 @@ if (strcmp(argv[0], "exit") == 0) {
             last_exit_status = 0;
             return 1;
         }
+        if (argc > 1 && (strcmp(argv[1], "declare") == 0 || strcmp(argv[1], "typeset") == 0)) {
+            write_str(STDOUT_FILENO, "declare: declare [-aAfFgiIlnrtux] [-p] [name[=value] ...]\n"
+                                     "    Set variable values and attributes.\n\n"
+                                     "    Declare variables and give them attributes. If no NAMEs are given,\n"
+                                     "    display the attributes and values of all variables.\n\n"
+                                     "    Options:\n"
+                                     "      -a        to make NAMEs indexed arrays (if supported)\n"
+                                     "      -A        to make NAMEs associative arrays (if supported)\n"
+                                     "      -i        to make NAMEs have the `integer' attribute\n"
+                                     "      -l        to convert the value to lower case on assignment\n"
+                                     "      -u        to convert the value to upper case on assignment\n"
+                                     "      -r        to make NAMEs readonly\n"
+                                     "      -x        to make NAMEs export\n"
+                                     "      -n        make NAME a reference to the variable named by its value\n"
+                                     "      -f        to refer to function names only\n"
+                                     "      -F        to display function names without definitions\n"
+                                     "      -p        display attributes and values of each NAME\n\n"
+                                     "    Exit Status:\n"
+                                     "    Returns 0 unless an invalid option is supplied or a variable\n"
+                                     "    assignment error occurs.\n");
+            last_exit_status = 0;
+            return 1;
+        }
         if (argc > 1 && strcmp(argv[1], "bg") == 0) {
             write_str(STDOUT_FILENO, "bg: bg [job_id...]\n");
             write_str(STDOUT_FILENO, "    Send a job to background\n\n");
@@ -1403,7 +1583,7 @@ if (strcmp(argv[0], "exit") == 0) {
             return 1;
         }
         write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller, case, command, continue\n");
+        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller, case, command, continue, declare, typeset\n");
         write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind, bzip2, bunzip2, bzcat, cal, ncal, caller, cd, cfdisk, chattr, chgrp, chpasswd, chroot, chkconfig, cksum, comm\n");
         write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, case/in/esac, break [n], continue [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
         last_exit_status = 0;

@@ -207,6 +207,7 @@ grep -Fq "[INFO] SSH suite and akaos-config daemon integration verified" "$TEST_
 grep -Fq "[INFO] Scripting & admin utilities sleep/which/env/cut/tr/df/du verified" "$TEST_LOG"
 grep -Fq "[INFO] Column division utility cut verified" "$TEST_LOG"
 grep -Fq "[INFO] Date and time utility date verified" "$TEST_LOG"
+grep -Fq "[INFO] Variable attribute declaration command declare verified" "$TEST_LOG"
 grep -Fq "[INFO] Desk calculator dc verified" "$TEST_LOG"
 grep -Fq "[INFO] Data duplicator dd verified" "$TEST_LOG"
 grep -Fq "[INFO] Data recovery tool ddrescue verified" "$TEST_LOG"

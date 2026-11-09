@@ -993,6 +993,13 @@ int xscore_user_process_self_test(void) {
     uint64_t builtin_status = UINT64_MAX;
     if (!p_builtin || !xscore_process_wait(p_builtin, &builtin_status) || builtin_status != 0 || !xscore_process_reap(p_builtin)) return 0;
 
+    /* Verify variable declaration and attribute command declare */
+    const char *declare_args[] = {"/bin/akash", "-c", "declare -i num=42; declare -l str=HELLO; test $num -eq 42 && test $str = hello", 0};
+    struct xscore_process *p_declare = xscore_process_create_path_args("/bin/akash", 3, declare_args);
+    uint64_t declare_status = UINT64_MAX;
+    if (!p_declare || !xscore_process_wait(p_declare, &declare_status) || declare_status != 0 || !xscore_process_reap(p_declare)) return 0;
+    xscore_serial_write("[INFO] Variable attribute declaration command declare verified\n");
+
     /* Verify bzip2 compressor and bzcat decompressor */
     const char *bzip2_args[] = {"/bin/bzip2", "--help", 0};
     struct xscore_process *p_bzip2 = xscore_process_create_path_args("/bin/bzip2", 2, bzip2_args);

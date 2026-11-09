@@ -1,3 +1,10 @@
+## Latest continuation — 2026-11-09, Variable Attribute Declaration Builtin (declare / typeset)
+
+- Implemented `declare` and `typeset` in `userspace/bin/akash/main.c` and standalone wrapper in `userspace/bin/declare/main.c`:
+  - Full attribute management: `-r` (readonly), `-i` (integer), `-l` (lowercase), `-u` (uppercase), `-x` (export), `-n` (nameref), `-a`/`-A` (arrays), `-f`/`-F` (functions), `-p` (print attributes/values).
+  - Verified `declare -i` and `declare -l` execution in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.30 (XSCore kernel at 0.2.25).
+
 ## Latest continuation — 2026-11-09, Data Recovery Log Tool (ddrescuelog)
 
 - Implemented `ddrescuelog` in `userspace/bin/ddrescuelog/main.c`:

@@ -1,3 +1,11 @@
+## 2026-11-09 (eighty-second continuation) — Variable Attribute Declaration Builtin: declare / typeset
+
+akaOS now features a full-featured `declare` and `typeset` builtin:
+1. **Variable Attribute Declaration Builtin (`declare` / `typeset`):**
+   - Syntax: `declare [-aAfFgiIlnrtux] [-p] [name[=value] ...]`
+   - Attributes: readonly, integer, lowercase, uppercase, export, nameref, function inspect.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-09 (eighty-first continuation) — Data Recovery Log Tool: ddrescuelog
 
 akaOS now features a basic `/bin/ddrescuelog` utility:

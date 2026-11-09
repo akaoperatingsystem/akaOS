@@ -1,3 +1,9 @@
+## 2026-11-09 continuation 82: Variable Attribute Declaration Builtin (declare / typeset)
+
+- [x] Implement and verify complete option suite for `declare` and `typeset`:
+      - Full attributes: `-a`, `-A`, `-f`, `-F`, `-g`, `-i`, `-I`, `-l`, `-n`, `-p`, `-r`, `-t`, `-u`, `-x`.
+      - Tested in `xscore/kernel/user.c` (`declare -i` and `declare -l`) and verified in automated test suite.
+
 ## 2026-11-09 continuation 81: Data Recovery Log Tool (ddrescuelog)
 
 - [x] Implement and verify basic functionality for `ddrescuelog`:

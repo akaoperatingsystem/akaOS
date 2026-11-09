@@ -1,3 +1,23 @@
+## 2026-11-09 (eighty-second continuation) — Variable Attribute Declaration Builtin: declare / typeset
+
+- Implement native POSIX/BASH-compliant `declare` and `typeset` shell builtins in `userspace/bin/akash/main.c`:
+  - Supports setting variable attributes:
+    - `-r`: Make variable readonly (prevents further assignment or unset).
+    - `-i`: Integer attribute (evaluates and stores integer values).
+    - `-l`: Lowercase attribute (converts values to lowercase on assignment).
+    - `-u`: Uppercase attribute (converts values to uppercase on assignment).
+    - `-x`: Export attribute (exports variable to environment).
+    - `-n`: Nameref attribute (creates name reference).
+    - `-a` / `-A`: Array / associative array attributes.
+    - `-f` / `-F`: Restrict display to shell functions or function names without definitions.
+    - `-p`: Display attributes and values of variables.
+  - Supports `+` operator to turn off attributes (except readonly and arrays).
+  - Added standalone `/bin/declare` and `/bin/typeset` wrappers in `userspace/bin/declare/main.c`.
+  - Staged across build scripts (`build.sh`, `tools/rebuild-xserver-image.sh`, `tools/make_userspace_builders.py`).
+  - Registered `declare (1)` and `typeset (1)` in `whatis` manual index database and updated `akash` builtin help command catalog.
+  - Added kernel self-test verification in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.30, XSCore kernel at 0.2.25.
+
 ## 2026-11-09 (eighty-first continuation) — Data Recovery Log Tool: ddrescuelog
 
 - Implement native `/bin/ddrescuelog` in `userspace/bin/ddrescuelog/main.c`:
