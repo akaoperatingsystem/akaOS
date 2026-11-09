@@ -408,6 +408,7 @@ static void execute_statement(const char *stmt) {
 static void process_stream(FILE *f) {
     char line[MAX_LINE];
     char function_def_buf[MAX_LINE];
+    size_t function_def_len = 0;
     int inside_func = 0;
     char cur_func_name[32] = "";
     char cur_func_param[32] = "";
@@ -445,6 +446,7 @@ static void process_stream(FILE *f) {
         if (strncmp(p, "define", 6) == 0 && (p[6] == ' ' || p[6] == '\t')) {
             inside_func = 1;
             function_def_buf[0] = '\0';
+            function_def_len = 0;
             p += 6;
             while (*p == ' ' || *p == '\t') p++;
             char *open_p = strchr(p, '(');
@@ -466,7 +468,13 @@ static void process_stream(FILE *f) {
         }
 
         if (inside_func) {
-            strcat(function_def_buf, p);
+            size_t len = strlen(p);
+            if (len >= sizeof(function_def_buf) - function_def_len) {
+                fprintf(stderr, "bc: function definition too long\n");
+                return;
+            }
+            memcpy(function_def_buf + function_def_len, p, len + 1);
+            function_def_len += len;
             if (strchr(p, '}')) {
                 inside_func = 0;
                 if (num_funcs < MAX_FUNCS) {
