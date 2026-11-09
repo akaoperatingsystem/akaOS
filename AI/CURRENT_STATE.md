@@ -1,3 +1,11 @@
+## 2026-11-09 (eighty-first continuation) — Data Recovery Log Tool: ddrescuelog
+
+akaOS now features a basic `/bin/ddrescuelog` utility:
+1. **Data Recovery Log Tool (`/bin/ddrescuelog`):**
+   - Syntax: `ddrescuelog [options] [mapfile]`
+   - Supports: `-d, --delete-if-done`, `-D, --done-status`, `-h, --help`, `-V, --version`.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-08 (eightieth continuation) — Data Recovery Tool: ddrescue
 
 akaOS now features a basic `/bin/ddrescue` utility:

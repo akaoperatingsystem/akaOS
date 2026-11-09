@@ -733,6 +733,18 @@ int xscore_user_process_self_test(void) {
         }
     }
 
+    /* Verify ddrescue log tool ddrescuelog */
+    const char *ddrescuelog_args[] = {"/bin/ddrescuelog", "--version", 0};
+    struct xscore_process *p_ddrescuelog = xscore_process_create_path_args("/bin/ddrescuelog", 2, ddrescuelog_args);
+    uint64_t ddrescuelog_status = UINT64_MAX;
+    if (p_ddrescuelog) {
+        xscore_process_wait(p_ddrescuelog, &ddrescuelog_status);
+        xscore_process_reap(p_ddrescuelog);
+        if (ddrescuelog_status == 0) {
+            xscore_serial_write("[INFO] Data recovery log tool ddrescuelog verified\n");
+        }
+    }
+
     /* Verify kill, pkill, uptime, free, watch */
     const char *kill_args[] = {"/bin/kill", "-l", 0};
     struct xscore_process *p_kill = xscore_process_create_path_args("/bin/kill", 2, kill_args);

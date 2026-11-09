@@ -1,3 +1,10 @@
+## 2026-11-09 continuation 81: Data Recovery Log Tool (ddrescuelog)
+
+- [x] Implement and verify basic functionality for `ddrescuelog`:
+      - Supports: `mapfile`, `-d`, `-D`, `-h`, `-V`.
+      - Staged in build system and registered in manual database.
+      - Tested in `xscore/kernel/user.c` (`ddrescuelog --version`) and verified in automated test suite.
+
 ## 2026-11-08 continuation 80: Data Recovery Tool (ddrescue)
 
 - [x] Implement and verify basic functionality for `ddrescue`:

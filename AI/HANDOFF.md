@@ -1,3 +1,10 @@
+## Latest continuation — 2026-11-09, Data Recovery Log Tool (ddrescuelog)
+
+- Implemented `ddrescuelog` in `userspace/bin/ddrescuelog/main.c`:
+  - Basic mapfile inspection and status checks (`-d`, `-D`, `-V`).
+  - Staged across build systems and verified in kernel user self-test and `test.sh`.
+  - Bumped akaOS to 0.3.29 (XSCore kernel at 0.2.24).
+
 ## Latest continuation — 2026-11-08, Data Recovery Tool (ddrescue)
 
 - Implemented `ddrescue` in `userspace/bin/ddrescue/main.c`:

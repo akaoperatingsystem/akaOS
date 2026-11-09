@@ -620,6 +620,7 @@ build_user_program date "$ROOT_DIR/userspace/bin/date/main.c" DATE.ELF
 build_user_program dc "$ROOT_DIR/userspace/bin/dc/main.c" DC.ELF
 build_user_program dd "$ROOT_DIR/userspace/bin/dd/main.c" DD.ELF
 build_user_program ddrescue "$ROOT_DIR/userspace/bin/ddrescue/main.c" DDRESCUE.ELF
+build_user_program ddrescuelog "$ROOT_DIR/userspace/bin/ddrescuelog/main.c" DDRESCUELOG.ELF
 build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
 build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
@@ -863,6 +864,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/dc:$BUILD_DIR/DC.ELF:exec" \
     --file "/bin/dd:$BUILD_DIR/DD.ELF:exec" \
     --file "/bin/ddrescue:$BUILD_DIR/DDRESCUE.ELF:exec" \
+    --file "/bin/ddrescuelog:$BUILD_DIR/DDRESCUELOG.ELF:exec" \
     --file "/bin/crond:$BUILD_DIR/CROND.ELF:exec" \
     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \\
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \\

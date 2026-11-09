@@ -1,3 +1,13 @@
+## 2026-11-09 (eighty-first continuation) — Data Recovery Log Tool: ddrescuelog
+
+- Implement native `/bin/ddrescuelog` in `userspace/bin/ddrescuelog/main.c`:
+  - Tool to manipulate ddrescue logfiles (mapfiles), inspect status, and test rescue completion.
+  - Supports command line options: `-d, --delete-if-done`, `-D, --done-status`, `-h, --help`, `-V, --version`.
+  - Staged across build scripts (`build.sh`, `tools/rebuild-xserver-image.sh`, `tools/make_userspace_builders.py`).
+  - Registered `ddrescuelog (1)` in `whatis` manual index database.
+  - Added kernel self-test verification in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.29, XSCore kernel at 0.2.24.
+
 ## 2026-11-08 (eightieth continuation) — Data Recovery Tool: ddrescue
 
 - Implement native `/bin/ddrescue` in `userspace/bin/ddrescue/main.c`:
