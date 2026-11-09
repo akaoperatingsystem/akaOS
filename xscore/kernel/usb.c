@@ -13,6 +13,13 @@
  */
 
 #include <xscore/usb.h>
+static size_t xscore_usb_strlen(const char *s) {
+    size_t len = 0;
+    while (s && s[len]) ++len;
+    return len;
+}
+#define strlen xscore_usb_strlen
+
 #include <xscore/pci.h>
 #include <xscore/serial.h>
 #include <xscore/vmm.h>
@@ -24,7 +31,6 @@
 
 void *memset(void *dst, int val, size_t count);
 void *memcpy(void *dst, const void *src, size_t count);
-size_t strlen(const char *s);
 
 static void k_strncpy(char *dst, const char *src, size_t max) {
     if (!dst || max == 0) return;

@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.35-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.26-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.36-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.27-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -29,7 +29,7 @@
 
 ## Binary Footprint & Optimization Tracking
 
-This section monitors the extreme size minimization and binary footprint metrics across generated media formats and architecture targets per the project minimization mandate.
+This section records measured artifact sizes. Kernel BSS and loader-reserved pages are structural metrics, not measurements of total boot-time active RAM. Low-memory QEMU status and unverified targets are explicitly identified below.
 
 | Distribution Artifact | Original Size | Minimized Size | Reduction | Linker & Toolchain Optimizations |
 | :--- | :--- | :--- | :--- | :--- |
@@ -39,6 +39,21 @@ This section monitors the extreme size minimization and binary footprint metrics
 | **`initramfs32.img` (x86_32 Userspace Archive)** | ~21.2 MB | **17.4 MB** | **-17.9%** | Freestanding static PIE linking, stripped debug sections |
 | **`XSCORE.ELF` (64-bit Kernel Core)** | ~16.5 MB | **15.7 MB** | **-4.8%** | `-Os`, `-fdata-sections`, `-ffunction-sections`, pruned unreferenced tables |
 | **`XSCORE32.ELF` (32-bit Kernel Core)** | ~18.8 MB | **17.9 MB** | **-4.8%** | Dedicated 32-bit assembly/paging routines, soft-float removal |
+
+### Memory Footprint & Low-RAM Scalability
+
+The following are measured structural budgets and test results, not a claim that total RAM usage is below 10 MiB. UEFI/BIOS, framebuffer, kernel image and initramfs are excluded from these kernel BSS estimates. Low-RAM boot validation is currently incomplete.
+
+| Metric | Target | Current measured/status | Readiness |
+| :--- | :--- | :--- | :--- |
+| x86-64 kernel BSS | < 4 MiB | 5.86 MiB (XSCORE.ELF, ELF section headers after current pool tuning) | 60% |
+| Kernel heap reservation at boot | 32–64 KiB | 128 KiB in current boot log; source config is 64 KiB, image needs rebuild/verification | 70% |
+| Page cache capacity | 32–128 pages on low RAM | 32 pages at <=16 MiB; 64 at <=32 MiB; 128 at <=64 MiB (source-configured) | 75% |
+| User initial stack | 1 page | 1 page mapped initially; growth policy not verified on constrained guests | 70% |
+| Total active RAM at boot | < 10 MiB | Not measured; 64 MiB guest reaches kernel/thread/initramfs milestones then faults during device/storage initialization | 25% |
+| Low-RAM QEMU validation | 16 / 32 / 64 MiB | 64 MiB: BIOS kernel reaches initramfs, then double fault; 16 / 32 MiB: not verified | 15% |
+
+> BSS is not the same as committed physical RAM: portions of static BSS may be reserved/zeroed by the loader. Do not interpret the ELF section size alone as measured runtime usage. The latest 64 MiB BIOS test used the required 4 MiB VirtIO test disk; it reached the kernel heap and thread tests, mounted the initramfs and data disk, then raised exception vector 8 before userspace. Further investigation is required before claiming support at this memory size.
 
 ---
 
@@ -136,7 +151,7 @@ All desktop environments and window managers run as **completely unmodified upst
 
 | Controller Family | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **NVMe Controllers** | Generic NVMe 1.x / 2.0 (PCIe) | 100% | `[██████████]` 100% |
+| **NVMe Controllers** | Generic NVMe 1.x / 2.0 (PCIe: Reset, Admin Queues, I/O Queues, PRP Lists, Namespace LBA Formatting, VFS Block Integration) | 100% | `[██████████]` 100% |
 | **AHCI & SATA** | Generic AHCI, VirtIO-Block | 95% | `[█████████░]` 95% |
 | **eMMC / SDHCI** | eMMC 5.1 / SD 3.0 Controllers | 60% | `[██████░░░░]` 60% |
 

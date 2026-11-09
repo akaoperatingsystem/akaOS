@@ -481,6 +481,7 @@ build_user_cpp_program cxxabi-test "$ROOT_DIR/userspace/bin/cxxabi-test/main.cpp
 build_user_pie_program hello-pie "$ROOT_DIR/userspace/bin/hello/main.c" HELLO_PIE.ELF
 build_user_program cat "$ROOT_DIR/userspace/bin/cat/main.c" CAT.ELF
 build_user_program ls "$ROOT_DIR/userspace/bin/ls/main.c" LS.ELF
+build_user_program dir "$ROOT_DIR/userspace/bin/dir/main.c" DIR.ELF
 build_user_program grep "$ROOT_DIR/userspace/bin/grep/main.c" GREP.ELF
 build_user_program head "$ROOT_DIR/userspace/bin/head/main.c" HEAD.ELF
 build_user_program tail "$ROOT_DIR/userspace/bin/tail/main.c" TAIL.ELF
@@ -710,6 +711,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/hello-pi:$BUILD_DIR/HELLO_PIE.ELF:exec" \\
     --file "/bin/cat:$BUILD_DIR/CAT.ELF:exec" \\
     --file "/bin/ls:$BUILD_DIR/LS.ELF:exec" \\
+    --file "/bin/dir:$BUILD_DIR/DIR.ELF:exec" \\
+    --file "/bin/d:$BUILD_DIR/DIR.ELF:exec" \\
     --file "/bin/grep:$BUILD_DIR/GREP.ELF:exec" \\
     --file "/bin/head:$BUILD_DIR/HEAD.ELF:exec" \\
     --file "/bin/tail:$BUILD_DIR/TAIL.ELF:exec" \\

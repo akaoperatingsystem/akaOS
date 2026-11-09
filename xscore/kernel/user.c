@@ -661,6 +661,16 @@ int xscore_user_process_self_test(void) {
     uint64_t which_status = UINT64_MAX;
     if (!p_which || !xscore_process_wait(p_which, &which_status) || which_status != 0 || !xscore_process_reap(p_which)) return 0;
 
+    const char *dir_args[] = {"/bin/dir", "/etc", 0};
+    struct xscore_process *p_dir = xscore_process_create_path_args("/bin/dir", 2, dir_args);
+    uint64_t dir_status = UINT64_MAX;
+    if (!p_dir || !xscore_process_wait(p_dir, &dir_status) || dir_status != 0 || !xscore_process_reap(p_dir)) return 0;
+    const char *d_args[] = {"/bin/d", "/etc", 0};
+    struct xscore_process *p_d = xscore_process_create_path_args("/bin/d", 2, d_args);
+    uint64_t d_status = UINT64_MAX;
+    if (!p_d || !xscore_process_wait(p_d, &d_status) || d_status != 0 || !xscore_process_reap(p_d)) return 0;
+    xscore_serial_write("[INFO] Brief directory listing utilities dir/d verified\n");
+
     const char *env_args[] = {"/bin/env", "FOO=BAR", 0};
     struct xscore_process *p_env = xscore_process_create_path_args("/bin/env", 2, env_args);
     uint64_t env_status = UINT64_MAX;

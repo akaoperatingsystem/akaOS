@@ -1273,6 +1273,7 @@ enum xscore_device_kind xscore_vfs_device_kind_at(uint32_t cwd_node,
         {"/dev/audio", XSCORE_DEVICE_AUDIO},
         {"/dev/dsp", XSCORE_DEVICE_AUDIO},
         {"/dev/gpu0", XSCORE_DEVICE_GPU0},
+        {"/dev/nvme0n1", XSCORE_DEVICE_NVME0N1},
         {"/dev/net", XSCORE_DEVICE_NET},
     };
     for (size_t index = 0; index < sizeof(devices) / sizeof(devices[0]);
