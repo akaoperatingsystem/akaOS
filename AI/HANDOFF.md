@@ -1,3 +1,11 @@
+## Latest continuation — 2026-11-09, Flexible DNS Lookup Utility (dig)
+
+- Upgraded `dig` in `userspace/bin/dig/main.c` with full BIND9 option suite:
+  - Syntax: `dig [@server] [-b address] [-c class] [-f filename] [-p port#] [-t type] [-x addr] [-4] [-6] [name] [type] [class] [queryopt...]`
+  - Options: `@server`, `-x` reverse lookup, `-f` batch file, `-t`, `-c`, `-p`, `+short`, `+stats`, `+noall`, `+cmd`.
+  - Verified `dig +short @10.0.2.3 localhost A` in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.35 (XSCore kernel at 0.2.26).
+
 ## Latest continuation — 2026-11-09, 3-Way File Differences Comparison Utility (diff3)
 
 - Implemented `diff3` in `userspace/bin/diff3/main.c`:

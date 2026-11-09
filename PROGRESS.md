@@ -1,6 +1,6 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.34-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.35-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.26-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)

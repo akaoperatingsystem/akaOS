@@ -211,6 +211,7 @@ grep -Fq "[INFO] Variable attribute declaration command declare verified" "$TEST
 grep -Fq "[INFO] Disk free space utility df verified" "$TEST_LOG"
 grep -Fq "[INFO] File differences comparison utility diff verified" "$TEST_LOG"
 grep -Fq "[INFO] 3-way file differences comparison utility diff3 verified" "$TEST_LOG"
+grep -Fq "[INFO] DNS lookup utility dig verified" "$TEST_LOG"
 grep -Fq "[INFO] Desk calculator dc verified" "$TEST_LOG"
 grep -Fq "[INFO] Data duplicator dd verified" "$TEST_LOG"
 grep -Fq "[INFO] Data recovery tool ddrescue verified" "$TEST_LOG"

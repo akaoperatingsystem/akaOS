@@ -1,3 +1,18 @@
+## 2026-11-09 (eighty-sixth continuation) — Flexible DNS Lookup Utility: dig (Full BIND9 Options)
+
+- Upgrade native `/bin/dig` in `userspace/bin/dig/main.c` with comprehensive standard BIND9 option suite:
+  - Supports query target servers via `@server`.
+  - Supports reverse DNS lookups (`-x <addr>`) via in-addr.arpa mapping and PTR queries.
+  - Supports batch lookups from file (`-f <filename>`).
+  - Supports query types (`-t <type>`) including A, AAAA, MX, NS, PTR, SOA, TXT, SRV, AXFR, and ANY.
+  - Supports query classes (`-c <class>`) including IN, CH, HS, and ANY.
+  - Supports custom port numbers (`-p <port>`).
+  - Supports query output formatting options: `+short`, `+[no]all`, `+[no]stats`, `+[no]cmd`.
+  - Supports source IP address specification (`-b <address>`).
+  - Supports transport specification (`-4`, `-6`).
+  - Added automated kernel self-test verification of `dig +short @10.0.2.3 localhost A` in `xscore/kernel/user.c` and test assertion in `test.sh`.
+  - Bumped akaOS to 0.3.35, XSCore kernel at 0.2.26.
+
 ## 2026-11-09 (eighty-fifth continuation) — 3-Way File Differences Comparison Utility: diff3
 
 - Implement native `/bin/diff3` in `userspace/bin/diff3/main.c`:

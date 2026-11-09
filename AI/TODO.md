@@ -1,3 +1,9 @@
+## 2026-11-09 continuation 86: Flexible DNS Lookup Utility (dig)
+
+- [x] Implement and verify complete BIND9 option suite for `dig`:
+      - Options: `@server`, `-x`, `-f`, `-t`, `-c`, `-p`, `-b`, `-4`, `-6`, `+short`, `+[no]all`, `+[no]stats`, `+[no]cmd`.
+      - Tested in `xscore/kernel/user.c` (`dig +short @10.0.2.3 localhost A`) and verified in automated test suite.
+
 ## 2026-11-09 continuation 85: 3-Way File Differences Comparison Utility (diff3)
 
 - [x] Implement and verify complete functionality for `diff3`:

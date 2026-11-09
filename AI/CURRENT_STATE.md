@@ -1,3 +1,11 @@
+## 2026-11-09 (eighty-sixth continuation) — Flexible DNS Lookup Utility: dig (Full BIND9 Options)
+
+akaOS now features a full-featured `/bin/dig` utility:
+1. **DNS Lookup Utility (`/bin/dig`):**
+   - Syntax: `dig [@server] [-b address] [-c class] [-f filename] [-p port#] [-t type] [-x addr] [name] [type] [class] [queryopt...]`
+   - Full option suite: `@server`, `-x`, `-f`, `-t`, `-c`, `-p`, `-b`, `-4`, `-6`, `+short`, `+[no]all`, `+[no]stats`, `+[no]cmd`.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-09 (eighty-fifth continuation) — 3-Way File Differences Comparison Utility: diff3
 
 akaOS now features a native `/bin/diff3` utility:

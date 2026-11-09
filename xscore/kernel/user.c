@@ -1163,6 +1163,12 @@ int xscore_user_process_self_test(void) {
     uint64_t dig_status = UINT64_MAX;
     if (!p_dig || !xscore_process_wait(p_dig, &dig_status) || dig_status != 0 || !xscore_process_reap(p_dig)) return 0;
 
+    const char *dig_query_args[] = {"/bin/dig", "+short", "@10.0.2.3", "localhost", "A", 0};
+    struct xscore_process *p_dig_q = xscore_process_create_path_args("/bin/dig", 5, dig_query_args);
+    uint64_t dig_q_status = UINT64_MAX;
+    if (!p_dig_q || !xscore_process_wait(p_dig_q, &dig_q_status) || dig_q_status != 0 || !xscore_process_reap(p_dig_q)) return 0;
+    xscore_serial_write("[INFO] DNS lookup utility dig verified\n");
+
     const char *arp_args[] = {"/bin/arp", "-a", 0};
     struct xscore_process *p_arp = xscore_process_create_path_args("/bin/arp", 2, arp_args);
     uint64_t arp_status = UINT64_MAX;
