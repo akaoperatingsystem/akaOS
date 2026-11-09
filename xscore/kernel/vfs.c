@@ -1764,6 +1764,13 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
     if (vfs_locked) lock_flags = xscore_spin_lock_irqsave(&vfs_lock);
     int err = xscore_vfs_resolve_path_at(cwd_node, path, &target);
 
+    /* Check exclusivity under the tree lock, before any mutation or open. */
+    if (err == 0 && (flags & (AKAOS_O_CREAT | AKAOS_O_EXCL)) ==
+                    (AKAOS_O_CREAT | AKAOS_O_EXCL)) {
+        vfs_lock_release(lock_flags);
+        return -AKAOS_EEXIST;
+    }
+
     if (err != 0) {
         if (flags & AKAOS_O_CREAT) {
             char parent_buf[128];

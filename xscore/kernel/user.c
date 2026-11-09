@@ -8,6 +8,7 @@
 #include <xscore/user.h>
 #include <xscore/vfs.h>
 #include <xscore/vmm.h>
+#include <akaos/errno.h>
 #include <akaos/fs.h>
 #include <akaos/signal.h>
 #include <stdint.h>
@@ -575,7 +576,7 @@ int xscore_user_process_self_test(void) {
     const char *large_path = "/large_test.dat";
     struct xscore_fd_table test_table;
     xscore_fd_table_initialize(&test_table);
-    int64_t fd_large = xscore_vfs_open_at(&test_table, 0, large_path, AKAOS_O_WRONLY | AKAOS_O_CREAT | AKAOS_O_TRUNC, 0644);
+    int64_t fd_large = xscore_vfs_open_at(&test_table, 0, large_path, AKAOS_O_WRONLY | AKAOS_O_CREAT | AKAOS_O_EXCL, 0644);
     if (fd_large < 0) return 0;
     uint8_t write_chunk[1024];
     for (int b = 0; b < 10; ++b) {
@@ -583,6 +584,17 @@ int xscore_user_process_self_test(void) {
         xscore_fd_write(&test_table, (int)fd_large, write_chunk, 1024);
     }
     xscore_fd_close(&test_table, (int)fd_large);
+
+    /* Exclusive creation must preserve existing data, even with O_TRUNC. */
+    for (int truncate = 0; truncate < 2; ++truncate) {
+        uint64_t exclusive_flags = AKAOS_O_WRONLY | AKAOS_O_CREAT | AKAOS_O_EXCL;
+        if (truncate) exclusive_flags |= AKAOS_O_TRUNC;
+        if (xscore_vfs_open_at(&test_table, 0, large_path,
+                               exclusive_flags, 0600) != -AKAOS_EEXIST) return 0;
+    }
+    struct akaos_stat exclusive_st;
+    if (xscore_vfs_stat_at(0, large_path, &exclusive_st) != 0 ||
+        exclusive_st.size != 10240 || (exclusive_st.mode & 0777) != 0644) return 0;
 
     /* Test chmod and chown */
     if (xscore_vfs_chmod_at(0, large_path, 0755) != 0) return 0;
