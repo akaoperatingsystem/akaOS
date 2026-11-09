@@ -1,3 +1,11 @@
+## 2026-11-09 (eighty-fourth continuation) — File Differences Comparison Utility: diff (Full Options & Formatting Modes)
+
+akaOS now features a full-featured `/bin/diff` utility:
+1. **File Differences Comparison Utility (`/bin/diff`):**
+   - Syntax: `diff [options] FILES`
+   - Full option suite: `-a`, `-b`, `-B`, `-c`, `-C`, `-e`, `-i`, `-n`, `-N`, `-q`, `-r`, `-s`, `-t`, `-T`, `-u`, `-U`, `-w`, `-W`, `-y`, `--left-column`, `--suppress-common-lines`, `--strip-trailing-cr`.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-09 (eighty-third continuation) — File System Space Usage Utility: df (Full Options)
 
 akaOS now features a full-featured `/bin/df` utility:

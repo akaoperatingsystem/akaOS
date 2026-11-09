@@ -1,3 +1,9 @@
+## 2026-11-09 continuation 84: File Differences Comparison Utility (diff)
+
+- [x] Implement and verify complete option suite for `diff`:
+      - Full options: `-a`, `-b`, `-B`, `-c`, `-C`, `-e`, `-i`, `-n`, `-N`, `-q`, `-r`, `-s`, `-t`, `-T`, `-u`, `-U`, `-w`, `-W`, `-y`.
+      - Tested in `xscore/kernel/user.c` (`diff -s -y`) and verified in automated test suite.
+
 ## 2026-11-09 continuation 83: File System Space Usage Utility (df)
 
 - [x] Implement and verify complete option suite for `df`:

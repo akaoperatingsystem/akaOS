@@ -1,3 +1,11 @@
+## Latest continuation — 2026-11-09, File Differences Comparison Utility (diff)
+
+- Upgraded `diff` in `userspace/bin/diff/main.c` with full options suite:
+  - Formats: unified context (`-u, -U`), copied context (`-c, -C`), side-by-side (`-y`), ed script (`-e`), RCS (`-n`), and brief (`-q`).
+  - Features: recursive directories (`-r`), new-file (`-N`), report identical (`-s`), ignore space/case/blank lines (`-b`, `-w`, `-i`, `-B`), width (`-W`), and tab handling (`-t`, `-T`).
+  - Verified `diff -s -y` execution in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.32 (XSCore kernel at 0.2.25).
+
 ## Latest continuation — 2026-11-09, File System Space Usage Utility (df)
 
 - Upgraded `df` in `userspace/bin/df/main.c` with complete option suite:

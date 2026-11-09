@@ -751,6 +751,18 @@ int xscore_user_process_self_test(void) {
         }
     }
 
+    /* Verify USB list utility lsusb */
+    const char *lsusb_args[] = {"/bin/lsusb", "--version", 0};
+    struct xscore_process *p_lsusb = xscore_process_create_path_args("/bin/lsusb", 2, lsusb_args);
+    uint64_t lsusb_status = UINT64_MAX;
+    if (p_lsusb) {
+        xscore_process_wait(p_lsusb, &lsusb_status);
+        xscore_process_reap(p_lsusb);
+        if (lsusb_status == 0) {
+            xscore_serial_write("[INFO] USB list utility lsusb verified\n");
+        }
+    }
+
     /* Verify kill, pkill, uptime, free, watch */
     const char *kill_args[] = {"/bin/kill", "-l", 0};
     struct xscore_process *p_kill = xscore_process_create_path_args("/bin/kill", 2, kill_args);
@@ -787,6 +799,12 @@ int xscore_user_process_self_test(void) {
     struct xscore_process *p_diff = xscore_process_create_path_args("/bin/diff", 4, diff_args);
     uint64_t diff_status = UINT64_MAX;
     if (!p_diff || !xscore_process_wait(p_diff, &diff_status) || diff_status != 0 || !xscore_process_reap(p_diff)) return 0;
+
+    const char *diff_s_args[] = {"/bin/diff", "-s", "-y", "/etc/motd", "/etc/motd", 0};
+    struct xscore_process *p_diff_s = xscore_process_create_path_args("/bin/diff", 5, diff_s_args);
+    uint64_t diff_s_status = UINT64_MAX;
+    if (!p_diff_s || !xscore_process_wait(p_diff_s, &diff_s_status) || diff_s_status != 0 || !xscore_process_reap(p_diff_s)) return 0;
+    xscore_serial_write("[INFO] File differences comparison utility diff verified\n");
 
     const char *cmp_args[] = {"/bin/cmp", "-s", "/etc/motd", "/etc/motd", 0};
     struct xscore_process *p_cmp = xscore_process_create_path_args("/bin/cmp", 4, cmp_args);

@@ -1,3 +1,32 @@
+## 2026-11-09 (eighty-fourth continuation) — File Differences Comparison Utility: diff (Full Options & Formatting Modes)
+
+- Upgrade native `/bin/diff` in `userspace/bin/diff/main.c` with comprehensive standard GNU/POSIX option suite:
+  - Supports multiple output formats:
+    - Unified diff format (`-u, -U NUM, --unified[=NUM]`, default 3 lines context).
+    - Copied context format (`-c, -C NUM, --context[=NUM]`).
+    - Side-by-side two-column diff format (`-y, --side-by-side`) with width control (`-W, --width=NUM`), `--left-column`, and `--suppress-common-lines`.
+    - Ed script format (`-e, --ed`).
+    - RCS format (`-n, --rcs`).
+    - Brief summary format (`-q, --brief`).
+  - Supports directory comparison:
+    - Directory vs Directory comparison.
+    - File vs Directory and Directory vs File resolution.
+    - Recursive directory comparison (`-r, --recursive`).
+    - Exclusion matching (`-x PAT`).
+    - Absent file handling (`-N, --new-file`).
+  - Supports whitespace and text filtering:
+    - Treat all files as text (`-a, --text`).
+    - Ignore case differences (`-i, --ignore-case`).
+    - Ignore whitespace changes (`-b, --ignore-space-change`).
+    - Ignore all whitespace (`-w, --ignore-all-space`).
+    - Ignore blank lines (`-B, --ignore-blank-lines`).
+    - Strip carriage returns (`--strip-trailing-cr`).
+    - Expand tabs (`-t, --expand-tabs`) and initial tab alignment (`-T, --initial-tab`).
+    - Custom header labels (`--label`).
+    - Report identical files (`-s, --report-identical-files`).
+- Added automated self-test verification of `diff -s -y` in `xscore/kernel/user.c` and test assertion in `test.sh`.
+- Bumped akaOS to 0.3.32, XSCore kernel at 0.2.25.
+
 ## 2026-11-09 (eighty-third continuation) — File System Space Usage Utility: df (Full Options)
 
 - Upgrade native `/bin/df` in `userspace/bin/df/main.c` with complete standard GNU/POSIX option suite:
