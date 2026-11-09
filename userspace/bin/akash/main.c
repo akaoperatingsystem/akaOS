@@ -134,9 +134,20 @@ static void shell_sigint_handler(int signal_number) {
 static int execute_buffer(const char *buf);
 
 /* Shell custom variables table */
+#define VAR_ATTR_EXPORT    (1 << 0)
+#define VAR_ATTR_READONLY  (1 << 1)
+#define VAR_ATTR_INTEGER   (1 << 2)
+#define VAR_ATTR_LOWER     (1 << 3)
+#define VAR_ATTR_UPPER     (1 << 4)
+#define VAR_ATTR_ARRAY     (1 << 5)
+#define VAR_ATTR_ASSOC     (1 << 6)
+#define VAR_ATTR_NAMEREF   (1 << 7)
+#define VAR_ATTR_TRACE     (1 << 8)
+
 struct shell_var {
     char name[32];
     char val[128];
+    uint32_t flags;
 };
 static struct shell_var shell_vars[MAX_SHELL_VARS];
 static int num_shell_vars = 0;
@@ -280,21 +291,95 @@ static const char *get_shell_var(const char *name) {
     return NULL;
 }
 
-static void set_shell_var(const char *name, const char *val) {
+static struct shell_var *find_shell_var_entry(const char *name) {
     for (int i = 0; i < num_shell_vars; ++i) {
         if (strcmp(shell_vars[i].name, name) == 0) {
-            strncpy(shell_vars[i].val, val, sizeof(shell_vars[i].val) - 1);
-            shell_vars[i].val[sizeof(shell_vars[i].val) - 1] = '\0';
-            return;
+            return &shell_vars[i];
         }
     }
-    if (num_shell_vars < MAX_SHELL_VARS) {
-        strncpy(shell_vars[num_shell_vars].name, name, sizeof(shell_vars[num_shell_vars].name) - 1);
-        shell_vars[num_shell_vars].name[sizeof(shell_vars[num_shell_vars].name) - 1] = '\0';
-        strncpy(shell_vars[num_shell_vars].val, val, sizeof(shell_vars[num_shell_vars].val) - 1);
-        shell_vars[num_shell_vars].val[sizeof(shell_vars[num_shell_vars].val) - 1] = '\0';
-        num_shell_vars++;
+    return NULL;
+}
+
+static int set_shell_var_attributes(const char *name, const char *val, uint32_t set_flags, uint32_t clear_flags) {
+    /* Handle nameref */
+    struct shell_var *entry = find_shell_var_entry(name);
+    if (entry && (entry->flags & VAR_ATTR_NAMEREF) && !(set_flags & VAR_ATTR_NAMEREF) && !(clear_flags & VAR_ATTR_NAMEREF)) {
+        if (entry->val[0] != '\0') {
+            return set_shell_var_attributes(entry->val, val, set_flags, clear_flags);
+        }
     }
+
+    if (entry) {
+        if (entry->flags & VAR_ATTR_READONLY) {
+            if ((clear_flags & VAR_ATTR_READONLY) || val != NULL) {
+                write_str(STDERR_FILENO, "akash: ");
+                write_str(STDERR_FILENO, name);
+                write_str(STDERR_FILENO, ": readonly variable\n");
+                return -1;
+            }
+        }
+        entry->flags |= set_flags;
+        entry->flags &= ~clear_flags;
+
+        if (val) {
+            char processed[128];
+            strncpy(processed, val, sizeof(processed) - 1);
+            processed[sizeof(processed) - 1] = '\0';
+
+            if (entry->flags & VAR_ATTR_INTEGER) {
+                long long num = parse_num_val(processed);
+                snprintf(processed, sizeof(processed), "%lld", num);
+            } else if (entry->flags & VAR_ATTR_LOWER) {
+                for (char *p = processed; *p; ++p) *p = (char)tolower((unsigned char)*p);
+            } else if (entry->flags & VAR_ATTR_UPPER) {
+                for (char *p = processed; *p; ++p) *p = (char)toupper((unsigned char)*p);
+            }
+
+            strncpy(entry->val, processed, sizeof(entry->val) - 1);
+            entry->val[sizeof(entry->val) - 1] = '\0';
+
+            if (entry->flags & VAR_ATTR_EXPORT) {
+                setenv(name, entry->val, 1);
+            }
+        }
+        return 0;
+    }
+
+    if (num_shell_vars < MAX_SHELL_VARS) {
+        entry = &shell_vars[num_shell_vars++];
+        strncpy(entry->name, name, sizeof(entry->name) - 1);
+        entry->name[sizeof(entry->name) - 1] = '\0';
+        entry->flags = set_flags & ~clear_flags;
+        entry->val[0] = '\0';
+
+        if (val) {
+            char processed[128];
+            strncpy(processed, val, sizeof(processed) - 1);
+            processed[sizeof(processed) - 1] = '\0';
+
+            if (entry->flags & VAR_ATTR_INTEGER) {
+                long long num = parse_num_val(processed);
+                snprintf(processed, sizeof(processed), "%lld", num);
+            } else if (entry->flags & VAR_ATTR_LOWER) {
+                for (char *p = processed; *p; ++p) *p = (char)tolower((unsigned char)*p);
+            } else if (entry->flags & VAR_ATTR_UPPER) {
+                for (char *p = processed; *p; ++p) *p = (char)toupper((unsigned char)*p);
+            }
+
+            strncpy(entry->val, processed, sizeof(entry->val) - 1);
+            entry->val[sizeof(entry->val) - 1] = '\0';
+
+            if (entry->flags & VAR_ATTR_EXPORT) {
+                setenv(name, entry->val, 1);
+            }
+        }
+        return 0;
+    }
+    return -1;
+}
+
+static void set_shell_var(const char *name, const char *val) {
+    (void)set_shell_var_attributes(name, val, 0, 0);
 }
 
 static int add_shell_job(int pid, int state, const char *cmd) {

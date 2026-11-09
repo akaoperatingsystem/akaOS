@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
 [![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.29-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.24-green.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.25-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -33,7 +33,7 @@ This section monitors the extreme size minimization and binary footprint metrics
 
 | Distribution Artifact | Original Size | Minimized Size | Reduction | Linker & Toolchain Optimizations |
 | :--- | :--- | :--- | :--- | :--- |
-| **`akaos.iso` (x86_64 Dual-Firmware ISO)** | ~600.0 MB | **43.5 MB** | **-92.8%** | `-Os`, `--gc-sections`, `-s`, El Torito FAT16/32 optimization, minimal GRUB payload |
+| **`akaos.iso` (x86_64 Dual-Firmware ISO)** | ~600.0 MB | **42.7 MB** | **-92.9%** | `-Os`, `--gc-sections`, `-s`, El Torito FAT16/32 optimization, minimal GRUB payload |
 | **`akaos32.iso` (x86_32 Hybrid ISO)** | ~87.0 MB | **35.0 MB** | **-59.8%** | `-Os`, `--gc-sections`, `-s`, 16M EFI stub, integer arithmetic in CLI tools |
 | **`initramfs.img` (x86_64 Userspace Archive)** | ~18.5 MB | **15.2 MB** | **-17.8%** | Dead-code elimination, static function sections, `libc.a` archive linking |
 | **`initramfs32.img` (x86_32 Userspace Archive)** | ~21.2 MB | **17.4 MB** | **-17.9%** | Freestanding static PIE linking, stripped debug sections |
