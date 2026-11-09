@@ -644,7 +644,7 @@ static int is_ident_char(char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c == '_');
 }
 
-static void expand_variables(const char *src, char *dst, size_t max_len) {
+static void expand_word(const char *src, char *dst, size_t max_len, int keep_quotes) {
     size_t d = 0;
     size_t s = 0;
     int in_single_quote = 0;
@@ -653,12 +653,14 @@ static void expand_variables(const char *src, char *dst, size_t max_len) {
     while (src[s] && d < max_len - 1) {
         if (src[s] == '\'' && !in_double_quote) {
             in_single_quote = !in_single_quote;
-            dst[d++] = src[s++];
+            if (keep_quotes) dst[d++] = src[s];
+            ++s;
             continue;
         }
         if (src[s] == '"' && !in_single_quote) {
             in_double_quote = !in_double_quote;
-            dst[d++] = src[s++];
+            if (keep_quotes) dst[d++] = src[s];
+            ++s;
             continue;
         }
         if (src[s] == '$' && !in_single_quote) {
@@ -761,6 +763,10 @@ static void expand_variables(const char *src, char *dst, size_t max_len) {
     dst[d] = '\0';
 }
 
+static void expand_variables(const char *src, char *dst, size_t max_len) {
+    expand_word(src, dst, max_len, 1);
+}
+
 struct command_stage {
     char *argv[MAX_ARGS];
     unsigned char quoted[MAX_ARGS];
@@ -769,68 +775,70 @@ struct command_stage {
     char *input_file;
     char *output_file;
     int append_output;
+    int background;
+    char word_storage[2048];
 };
 
 /* Keep wildcard path storage out of the userspace stack. */
 static char shell_glob_storage[MAX_STAGES][MAX_ARGS][GLOB_PATH_MAX];
 
+/* Identify syntax in source words before inserting any parameter bytes. */
 static void parse_stage(char *str, struct command_stage *stage) {
     stage->argc = 0;
     stage->input_file = NULL;
     stage->output_file = NULL;
     stage->append_output = 0;
-
+    stage->background = 0;
+    size_t used = 0;
     char *p = str;
-    while (*p && stage->argc < MAX_ARGS - 1) {
+    while (*p && stage->argc < MAX_ARGS - 1 && used < sizeof(stage->word_storage) - 1) {
         while (*p == ' ' || *p == '\t') ++p;
-        if (*p == '\0') break;
-
-        /* Redirections: >>, >, < */
-        if (p[0] == '>' && p[1] == '>') {
-            p += 2;
-            while (*p == ' ' || *p == '\t') ++p;
-            char *target = p;
-            while (*p && *p != ' ' && *p != '\t') ++p;
-            if (*p) { *p = '\0'; ++p; }
-            stage->output_file = target;
-            stage->append_output = 1;
-            continue;
-        } else if (p[0] == '>') {
-            p += 1;
-            while (*p == ' ' || *p == '\t') ++p;
-            char *target = p;
-            while (*p && *p != ' ' && *p != '\t') ++p;
-            if (*p) { *p = '\0'; ++p; }
-            stage->output_file = target;
-            stage->append_output = 0;
-            continue;
-        } else if (p[0] == '<') {
-            p += 1;
-            while (*p == ' ' || *p == '\t') ++p;
-            char *target = p;
-            while (*p && *p != ' ' && *p != '\t') ++p;
-            if (*p) { *p = '\0'; ++p; }
-            stage->input_file = target;
+        if (!*p) break;
+        if (*p == '&') {
+            stage->background = 1;
+            ++p;
             continue;
         }
-
-        /* Argument */
-        if (*p == '"' || *p == '\'') {
-            char quote_char = *p++;
-            stage->argv[stage->argc] = p;
-            stage->quoted[stage->argc++] = 1;
-            while (*p && *p != quote_char) ++p;
-            if (*p == quote_char) {
-                *p = '\0';
-                ++p;
+        int redirect = 0;
+        if (*p == '<' || *p == '>') {
+            redirect = *p++;
+            if (redirect == '>') {
+                stage->append_output = (*p == '>');
+                if (*p == '>') ++p;
             }
+            while (*p == ' ' || *p == '\t') ++p;
+        }
+        char *start = p;
+        int quote = 0, quoted = 0;
+        while (*p) {
+            if ((*p == '\'' || *p == '"') && (!quote || quote == *p)) {
+                quote = quote ? 0 : *p;
+                quoted = 1;
+            } else if (!quote && (*p == ' ' || *p == '\t' || *p == '<' || *p == '>' || *p == '&')) {
+                break;
+            }
+            ++p;
+        }
+        char saved = *p;
+        *p = '\0';
+        char *word = stage->word_storage + used;
+        expand_word(start, word, sizeof(stage->word_storage) - used, 0);
+        *p = saved;
+        used += strlen(word) + 1;
+        if (redirect == '<') stage->input_file = word;
+        else if (redirect == '>') stage->output_file = word;
+        else if (quoted) {
+            stage->argv[stage->argc] = word;
+            stage->quoted[stage->argc++] = 1;
         } else {
-            stage->argv[stage->argc] = p;
-            stage->quoted[stage->argc++] = 0;
-            while (*p && *p != ' ' && *p != '\t' && *p != '<' && *p != '>') ++p;
-            if (*p && (*p == ' ' || *p == '\t')) {
-                *p = '\0';
-                ++p;
+            /* Unquoted expansion can split fields, but cannot create syntax. */
+            while (*word && stage->argc < MAX_ARGS - 1) {
+                while (*word == ' ' || *word == '\t' || *word == '\n') ++word;
+                if (!*word) break;
+                stage->argv[stage->argc] = word;
+                stage->quoted[stage->argc++] = 0;
+                while (*word && *word != ' ' && *word != '\t' && *word != '\n') ++word;
+                if (*word) *word++ = '\0';
             }
         }
     }
@@ -2336,11 +2344,7 @@ if (strcmp(argv[0], "break") == 0) {
 static int execute_single_stage(struct command_stage *stage) {
     if (stage->argc == 0) return 0;
 
-        int background = 0;
-    if (stage->argc > 0 && strcmp(stage->argv[stage->argc - 1], "&") == 0) {
-        background = 1;
-        stage->argv[--stage->argc] = NULL;
-    }
+    int background = stage->background;
 
     int bypass_func = 0;
     if (stage->argc > 1 && strcmp(stage->argv[0], "command") == 0) {
@@ -2504,12 +2508,7 @@ static int execute_pipeline(struct command_stage stages[], int num_stages) {
         return execute_single_stage(&stages[0]);
     }
 
-    int background = 0;
-    struct command_stage *last = &stages[num_stages - 1];
-    if (last->argc > 0 && strcmp(last->argv[last->argc - 1], "&") == 0) {
-        background = 1;
-        last->argv[--last->argc] = NULL;
-    }
+    int background = stages[num_stages - 1].background;
 
     int pipes[MAX_STAGES - 1][2];
     for (int i = 0; i < num_stages - 1; ++i) {
@@ -2665,7 +2664,13 @@ static int execute_pipeline_string(char *line) {
     char *cursor = line;
     while (*cursor && num_stages < MAX_STAGES) {
         char *stage_start = cursor;
-        while (*cursor && *cursor != '|') ++cursor;
+        int quote = 0;
+        while (*cursor) {
+            if ((*cursor == '\'' || *cursor == '"') && (!quote || quote == *cursor))
+                quote = quote ? 0 : *cursor;
+            else if (!quote && *cursor == '|') break;
+            ++cursor;
+        }
         if (*cursor == '|') {
             *cursor = '\0';
             ++cursor;
@@ -2699,18 +2704,15 @@ static int execute_command_line(const char *cmd_line) {
     char dealiased[2048];
     expand_aliases(cmd_line, dealiased, sizeof(dealiased));
 
-    char expanded[2048];
-    expand_variables(dealiased, expanded, sizeof(expanded));
-
     int should_run = 1;
     char sub_cmd[512];
     int sub_len = 0;
     int in_quote = 0;
 
-    const char *p = expanded;
+    const char *p = dealiased;
     while (*p) {
-        if (*p == '"') {
-            in_quote = !in_quote;
+        if ((*p == '\'' || *p == '"') && (!in_quote || in_quote == *p)) {
+            in_quote = in_quote ? 0 : *p;
             if (sub_len < (int)sizeof(sub_cmd) - 1) sub_cmd[sub_len++] = *p;
             p++;
             continue;
@@ -2901,8 +2903,8 @@ static void tokenize_statements(const char *text, struct statement_list *list) {
             continue;
         }
 
-        if (c == '"') {
-            in_quote = !in_quote;
+        if ((c == '\'' || c == '"') && (!in_quote || in_quote == c)) {
+            in_quote = in_quote ? 0 : c;
             if (cur_len < (int)sizeof(current) - 1) current[cur_len++] = c;
             continue;
         }
