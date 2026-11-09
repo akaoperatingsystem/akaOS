@@ -38,7 +38,8 @@ Thumbs.db
 *.key
 *.pem
 
-# Scratchpad / Internal Notes
+# AI Scratchpad / Private Internal Documentation
+/AI/
 /.freebuff/
 
 # Host Environment & Accidental Artifacts
