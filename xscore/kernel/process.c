@@ -4736,6 +4736,23 @@ int xscore_process_dispatch_user_signal(void *trap_frame) {
     return 1;
 }
 
+#if defined(__x86_64__) || defined(__i386__) || defined(__arm__)
+/* Validate before committing any part of the user-controlled return frame.
+ * Probe below SP so a stack pointer at the end of a mapping remains valid. */
+static int process_sigreturn_addresses_valid(uint64_t pc, uint64_t sp) {
+#if defined(__x86_64__)
+    /* Reject noncanonical addresses before the page-table lookup. */
+    if (pc >= (UINT64_C(1) << 47) || sp >= (UINT64_C(1) << 47)) return 0;
+#endif
+    if (!sp || !xscore_user_range_prepare(pc, 1, 0) ||
+        !xscore_user_range_prepare(sp - 1, 1, 1)) return 0;
+    uint64_t flags = 0;
+    return xscore_vmm_is_mapped(pc, &flags) &&
+           (flags & XSCORE_PAGE_USER) != 0 &&
+           (flags & XSCORE_PAGE_NO_EXECUTE) == 0;
+}
+#endif
+
 int64_t xscore_process_sigreturn(void) {
     struct xscore_process *process = xscore_process_current();
     if (!process || !process->fork_context) return -AKAOS_EINVAL;
@@ -4748,6 +4765,12 @@ int64_t xscore_process_sigreturn(void) {
     if (!xscore_copy_from_user(&sf, sp, sizeof(sf)) || sf.magic != XSCORE_SIGFRAME_MAGIC) {
         return -AKAOS_EINVAL;
     }
+    if (!process_sigreturn_addresses_valid(sf.rip, sf.rsp)) return -AKAOS_EINVAL;
+    /* GDT user code/data selectors; arithmetic, debug and user flags only.
+     * Force IF and bit 1; exclude IOPL, NT, VM, VIF, VIP and reserved bits. */
+    sf.cs = 0x23;
+    sf.ss = 0x1b;
+    sf.rflags = (sf.rflags & UINT64_C(0x250dd5)) | UINT64_C(0x202);
     ctx[0]  = sf.r15;
     ctx[1]  = sf.r14;
     ctx[2]  = sf.r13;
@@ -4787,7 +4810,12 @@ int64_t xscore_process_sigreturn(void) {
     } else if (xscore_copy_from_user(&sf, (uint64_t)sp, sizeof(sf)) && sf.magic == XSCORE_SIGFRAME_MAGIC) {
         found = 1;
     }
-    if (!found) return -AKAOS_EINVAL;
+    if (!found || !process_sigreturn_addresses_valid(sf.eip, sf.user_esp))
+        return -AKAOS_EINVAL;
+    /* The i386 GDT uses different user selectors from x86-64. */
+    sf.cs = 0x1b;
+    sf.user_ss = 0x23;
+    sf.eflags = (sf.eflags & UINT32_C(0x250dd5)) | UINT32_C(0x202);
 
     ctx[0]  = sf.ebx;
     ctx[1]  = sf.ecx;
@@ -4836,6 +4864,12 @@ int64_t xscore_process_sigreturn(void) {
     if (!xscore_copy_from_user(&sf, (uint64_t)sp, sizeof(sf)) || sf.magic != XSCORE_SIGFRAME_MAGIC) {
         return -AKAOS_EINVAL;
     }
+    /* Preserve NZCVQ, GE, IT and Thumb state, force USR mode with
+     * interrupts enabled, and clear Jazelle/endian/privileged control bits. */
+    sf.cpsr = (sf.cpsr & UINT32_C(0xfe0ffc20)) | UINT32_C(0x10);
+    uint32_t pc_alignment = (sf.cpsr & UINT32_C(0x20)) ? 1U : 3U;
+    if ((sf.pc & pc_alignment) != 0 ||
+        !process_sigreturn_addresses_valid(sf.pc, sf.sp)) return -AKAOS_EINVAL;
     for (int i = 0; i < 13; ++i) ctx[i + 1] = sf.r[i];
     ctx[14] = sf.pc;
     ctx[0]  = sf.cpsr;
