@@ -1,3 +1,10 @@
+## Latest continuation — 2026-11-09, File System Space Usage Utility (df)
+
+- Upgraded `df` in `userspace/bin/df/main.c` with complete option suite:
+  - All options supported: `-a`, `-h`, `-H`, `-i`, `-k`, `-l`, `-m`, `-P`, `-T`, `-t`, `-x`, `--sync`, `--no-sync`, and specific file argument resolution.
+  - Verified `df -P -T` execution in `xscore/kernel/user.c` and `test.sh`.
+  - Bumped akaOS to 0.3.31 (XSCore kernel at 0.2.25).
+
 ## Latest continuation — 2026-11-09, Variable Attribute Declaration Builtin (declare / typeset)
 
 - Implemented `declare` and `typeset` in `userspace/bin/akash/main.c` and standalone wrapper in `userspace/bin/declare/main.c`:

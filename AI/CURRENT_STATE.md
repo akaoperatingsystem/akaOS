@@ -1,3 +1,11 @@
+## 2026-11-09 (eighty-third continuation) — File System Space Usage Utility: df (Full Options)
+
+akaOS now features a full-featured `/bin/df` utility:
+1. **File System Space Usage Utility (`/bin/df`):**
+   - Syntax: `df [option]... [FILE]...`
+   - Full option suite: `-a`, `-h`, `-H`, `-i`, `-k`, `-l`, `-m`, `-P`, `-T`, `-t`, `-x`, `--sync`, `--no-sync`.
+   - Staged across build systems, manual index database, and kernel self-test suite.
+
 ## 2026-11-09 (eighty-second continuation) — Variable Attribute Declaration Builtin: declare / typeset
 
 akaOS now features a full-featured `declare` and `typeset` builtin:

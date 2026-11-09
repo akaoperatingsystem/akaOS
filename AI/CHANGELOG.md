@@ -1,3 +1,19 @@
+## 2026-11-09 (eighty-third continuation) — File System Space Usage Utility: df (Full Options)
+
+- Upgrade native `/bin/df` in `userspace/bin/df/main.c` with complete standard GNU/POSIX option suite:
+  - Supports inclusion of pseudo and 0-block file systems (`-a, --all`).
+  - Supports human-readable formats (`-h, --human-readable` base 1024, `-H, --si` base 1000).
+  - Supports inode usage information display (`-i, --inodes`).
+  - Supports block size overrides (`-k, --kilobytes`, `-m, --megabytes`).
+  - Supports filtering by local file systems (`-l, --local`).
+  - Supports POSIX portability format (`-P, --portability`).
+  - Supports printing file system types (`-T, --print-type`).
+  - Supports file system type inclusion (`-t, --type=TYPE`) and exclusion (`-x, --exclude-type=TYPE`).
+  - Supports `--sync` and `--no-sync` execution flags.
+  - Supports specific FILE path queries.
+- Added self-test verification of `df -P -T` in `xscore/kernel/user.c` and test assertion in `test.sh`.
+- Bumped akaOS to 0.3.31, XSCore kernel at 0.2.25.
+
 ## 2026-11-09 (eighty-second continuation) — Variable Attribute Declaration Builtin: declare / typeset
 
 - Implement native POSIX/BASH-compliant `declare` and `typeset` shell builtins in `userspace/bin/akash/main.c`:

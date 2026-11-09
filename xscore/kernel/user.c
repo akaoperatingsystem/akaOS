@@ -689,6 +689,12 @@ int xscore_user_process_self_test(void) {
     uint64_t df_status = UINT64_MAX;
     if (!p_df || !xscore_process_wait(p_df, &df_status) || df_status != 0 || !xscore_process_reap(p_df)) return 0;
 
+    const char *df_posix_args[] = {"/bin/df", "-P", "-T", 0};
+    struct xscore_process *p_df_p = xscore_process_create_path_args("/bin/df", 3, df_posix_args);
+    uint64_t df_p_status = UINT64_MAX;
+    if (!p_df_p || !xscore_process_wait(p_df_p, &df_p_status) || df_p_status != 0 || !xscore_process_reap(p_df_p)) return 0;
+    xscore_serial_write("[INFO] Disk free space utility df verified\n");
+
     const char *du_args[] = {"/bin/du", "-s", "/etc", 0};
     struct xscore_process *p_du = xscore_process_create_path_args("/bin/du", 3, du_args);
     uint64_t du_status = UINT64_MAX;

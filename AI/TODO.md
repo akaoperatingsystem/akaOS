@@ -1,3 +1,9 @@
+## 2026-11-09 continuation 83: File System Space Usage Utility (df)
+
+- [x] Implement and verify complete option suite for `df`:
+      - Full options: `-a`, `-h`, `-H`, `-i`, `-k`, `-l`, `-m`, `-P`, `-T`, `-t`, `-x`, `--sync`, `--no-sync`.
+      - Tested in `xscore/kernel/user.c` (`df -P -T`) and verified in automated test suite.
+
 ## 2026-11-09 continuation 82: Variable Attribute Declaration Builtin (declare / typeset)
 
 - [x] Implement and verify complete option suite for `declare` and `typeset`:
