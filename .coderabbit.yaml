@@ -1,0 +1,8 @@
+# .coderabbit.yaml
+reviews:
+  auto_review:
+    enabled: true
+    # Allows CodeRabbit to review PRs created by the bot/integration user
+    ignore_bots: false
+    # Optional: Disable the "Review skipped" comment if you want a cleaner PR timeline
+    review_status: true
