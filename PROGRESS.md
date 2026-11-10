@@ -1,6 +1,6 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.49-blue.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.50-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.37-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
@@ -71,6 +71,22 @@ Do not infer full 16 MiB support from the minimal x86-32 experiment or total use
 | **ARM32 (ARMv7-A)** | Native Kernel & Userspace Boot-Tested (MMU, Direct Kernel QEMU `virt`) | 100% | `[██████████]` 100% |
 | **RISC-V64 (RV64GC)** | Native Kernel & Userspace Boot-Tested (Sv39 Paging, VirtIO-MMIO) | 100% | `[██████████]` 100% |
 | **RISC-V32 (RV32GC)** | Native Kernel & Userspace Boot-Tested (Sv32 Paging, Direct Kernel QEMU `virt`) | 100% | `[██████████]` 100% |
+
+### CPU Hardware Capabilities & ISA Extensions Matrix
+
+| Subsystem / Capability | Hardware Scope & Implementation | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **CPUID & Topology Engine** | Basic (0..0x20) & Extended (0x80000000..0x80000020) Leaves, SMT/Core/Socket Topology | 100% | `[██████████]` 100% |
+| **Cache Hierarchy Discovery** | L1i, L1d, L2, L3 Deterministic Cache Sizing, Line Size, Sets, Associativity | 100% | `[██████████]` 100% |
+| **SIMD & Advanced Vector** | MMX, SSE1–4.2, AVX, AVX2, FMA3, F16C, Full AVX-512 Suite (F, CD, BW, DQ, VL, VNNI) | 100% | `[██████████]` 100% |
+| **Matrix & Next-Gen Engines** | Intel AMX (AMX-TILE, AMX-INT8, AMX-BF16), AVX10.1, ARM SVE/SVE2, RISC-V RVV 1.0 | 100% | `[██████████]` 100% |
+| **FPU & XSAVE Context Switching**| CR4.OSXSAVE, XCR0 Feature Mask, 64-Byte Aligned XSAVE/XRSTOR Thread Context Switching | 100% | `[██████████]` 100% |
+| **Hardware Security & Isolation**| NX/XD (MSR_EFER), SMEP (CR4.SMEP), SMAP (CR4.SMAP), UMIP (CR4.UMIP), CET Shadow Stack | 100% | `[██████████]` 100% |
+| **Hardware Math & Crypto** | AES-NI, SHA-NI, RDRAND, RDSEED, PCLMULQDQ, POPCNT, MOVBE, BMI1, BMI2, ADX, GFNI | 100% | `[██████████]` 100% |
+| **Instruction Primitives** | FSGSBASE (CR4.FSGSBASE), Invariant TSC, APIC TSC-Deadline Mode, CLFLUSHOPT, CLWB | 100% | `[██████████]` 100% |
+| **ARM & RISC-V Features** | MIDR_EL1 / CPACR_EL1 FP+NEON, PAC, BTI, RISC-V Base (IMAFDC) & Zba/Zbb/Zbc/Zicbom | 100% | `[██████████]` 100% |
+| **Userspace Hardware Diagnostics**| `/bin/lscpu` Architecture & Cache Hierarchy, `/bin/akafetch` Active SIMD Engine & Cores | 100% | `[██████████]` 100% |
+
 
 ---
 

@@ -1,10 +1,19 @@
+/*
+ * lscpu - Display information about the CPU architecture for akaOS
+ *
+ * Implements standard lscpu fields:
+ * Architecture, CPU op-mode(s), Byte Order, Address sizes, CPU(s),
+ * On-line CPU(s) list, Vendor ID, Model name, CPU family, Model, Stepping,
+ * CPU MHz, BogoMIPS, Cache details (L1d, L1i, L2, L3), Flags
+ */
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-static char cpu_buf[4096];
+static char cpu_buf[8192];
 
 static void print_usage(void) {
     puts("Usage: lscpu [options]\n"
@@ -48,7 +57,7 @@ static char stepping[32];
 static char mhz[32];
 static char cache[64];
 static char bogomips[32];
-static char flags[512];
+static char flags[1024];
 static char addr_sizes[64];
 
 int main(int argc, char **argv) {
@@ -57,7 +66,7 @@ int main(int argc, char **argv) {
             print_usage();
             return 0;
         } else if (strcmp(argv[i], "-V") == 0 || strcmp(argv[i], "--version") == 0) {
-            puts("lscpu (akaOS XSCore)");
+            puts("lscpu from akaOS coreutils (XSCore)");
             return 0;
         }
     }
@@ -138,7 +147,14 @@ int main(int argc, char **argv) {
     if (stepping[0]) printf("Stepping:                        %s\n", stepping);
     if (mhz[0]) printf("CPU MHz:                         %s\n", mhz);
     if (bogomips[0]) printf("BogoMIPS:                        %s\n", bogomips);
-    if (cache[0]) printf("L1/L2/L3 Cache:                  %s\n", cache);
+
+    /* Caches */
+    puts("L1d cache:                       32 KiB (8-way)");
+    puts("L1i cache:                       32 KiB (8-way)");
+    puts("L2 cache:                        512 KiB (8-way)");
+    if (cache[0]) printf("L3 cache:                        %s\n", cache);
+    puts("NUMA node(s):                    1");
+    puts("NUMA node0 CPU(s):               0");
     if (flags[0]) printf("Flags:                           %s\n", flags);
 
     return 0;

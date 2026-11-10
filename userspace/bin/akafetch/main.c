@@ -26,7 +26,7 @@ static void get_proc_field(const char *path, const char *key, char *out, size_t 
     int fd = open(path, O_RDONLY);
     if (fd < 0) return;
 
-    char buf[2048];
+    char buf[4096];
     ssize_t bytes = read(fd, buf, sizeof(buf) - 1);
     close(fd);
     if (bytes <= 0) return;
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
     char cpu_model[128];
     char gpu_model[128];
     char mem_total[64];
-    char uptime_str[64];
+    char flags_str[1024];
     char hostname[64];
 
     get_proc_field("/proc/cpuinfo", "model name", cpu_model, sizeof(cpu_model));
@@ -70,6 +70,30 @@ int main(int argc, char **argv) {
     }
     if (cpu_model[0] == '\0') {
         strcpy(cpu_model, "Generic x86-64 / Compatible Microprocessor");
+    }
+
+    get_proc_field("/proc/cpuinfo", "flags", flags_str, sizeof(flags_str));
+
+    /* Detect Active SIMD Vector Engine */
+    const char *simd_engine = "Base FPU";
+    if (strstr(flags_str, "amx_tile")) {
+        simd_engine = "AMX + AVX-512";
+    } else if (strstr(flags_str, "avx512f")) {
+        simd_engine = "AVX-512";
+    } else if (strstr(flags_str, "avx2")) {
+        simd_engine = "AVX2";
+    } else if (strstr(flags_str, "avx")) {
+        simd_engine = "AVX";
+    } else if (strstr(flags_str, "sse4_2")) {
+        simd_engine = "SSE4.2";
+    } else if (strstr(flags_str, "sve2")) {
+        simd_engine = "SVE2";
+    } else if (strstr(flags_str, "sve")) {
+        simd_engine = "SVE";
+    } else if (strstr(flags_str, "asimd") || strstr(flags_str, "neon")) {
+        simd_engine = "NEON";
+    } else if (strstr(flags_str, "rv64imafdc") || strstr(flags_str, " v ")) {
+        simd_engine = "RVV (Vector 1.0)";
     }
 
     get_proc_field("/proc/gpuinfo", "Chipset", gpu_model, sizeof(gpu_model));
@@ -86,11 +110,6 @@ int main(int argc, char **argv) {
     get_proc_field("/proc/meminfo", "MemTotal", mem_total, sizeof(mem_total));
     if (mem_total[0] == '\0') {
         strcpy(mem_total, "256 MB");
-    }
-
-    get_proc_field("/proc/uptime", "uptime", uptime_str, sizeof(uptime_str));
-    if (uptime_str[0] == '\0') {
-        strcpy(uptime_str, "Active");
     }
 
     int host_fd = open("/etc/hostname", O_RDONLY);
@@ -117,6 +136,7 @@ int main(int argc, char **argv) {
     printf(COLOR_CYAN " ########  ######## " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "Shell:" COLOR_RESET "     akash\n");
     printf(COLOR_CYAN " ##    ##  ##    ## " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "Display:" COLOR_RESET "   Lumen Compositor (X11 :0)\n");
     printf(COLOR_CYAN " ##    ##  ##    ## " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "CPU:" COLOR_RESET "       %s\n", cpu_model);
+    printf(COLOR_CYAN " ##    ##  ##    ## " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "SIMD / ISA:" COLOR_RESET " %s\n", simd_engine);
     printf(COLOR_CYAN "                    " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "GPU:" COLOR_RESET "       %s\n", gpu_model);
     printf(COLOR_CYAN "   ####      ####   " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "Memory:" COLOR_RESET "    %s\n", mem_total);
     printf("\n");

@@ -49,7 +49,8 @@ static uint32_t preemption_pending[SMP_MAX_CPUS];
 static uint64_t per_cpu_ready_mask[SMP_MAX_CPUS];
 static xscore_spinlock_t thread_lock = XSCORE_SPINLOCK_INIT;
 #if defined(__x86_64__) || defined(__i386__)
-static uint8_t initial_fpu_state[512] __attribute__((aligned(16)));
+static uint8_t initial_fpu_state[4096] __attribute__((aligned(64)));
+static int x86_xsave_enabled = 0;
 #endif
 #if defined(__i386__)
 static int i386_x87_state_enabled;
@@ -58,7 +59,7 @@ static int i386_x87_state_enabled;
 static void initialize_fpu_state(uint8_t *state) {
 #if defined(__x86_64__)
     if (!state) return;
-    for (uint32_t i = 0; i < sizeof(initial_fpu_state); ++i) {
+    for (uint32_t i = 0; i < (x86_xsave_enabled ? sizeof(initial_fpu_state) : 512U); ++i) {
         state[i] = initial_fpu_state[i];
     }
 #elif defined(__i386__)
@@ -388,7 +389,14 @@ void xscore_thread_request_reschedule(void) {
 int xscore_thread_initialize(void) {
 #if defined(__x86_64__)
     enable_x86_fpu_state();
-    __asm__ volatile("fninit; fxsave %0" : "=m"(initial_fpu_state));
+    uint64_t cr4_val = 0;
+    __asm__ volatile("mov %%cr4, %0" : "=r"(cr4_val));
+    x86_xsave_enabled = (cr4_val & (1ULL << 18)) != 0;
+    if (x86_xsave_enabled) {
+        __asm__ volatile("fninit; xsave %0" : "=m"(initial_fpu_state[0]) : "a"(0xFFFFFFFFU), "d"(0xFFFFFFFFU) : "memory");
+    } else {
+        __asm__ volatile("fninit; fxsave %0" : "=m"(initial_fpu_state));
+    }
 #elif defined(__i386__)
     i386_x87_state_enabled = i386_cpu_has_x87();
     if (i386_x87_state_enabled) {
@@ -638,12 +646,21 @@ static void switch_to(uint32_t next_index) {
     xscore_tss_set_rsp0(next->privilege_stack_top);
     xscore_sched_record_switch();
 #if defined(__x86_64__)
-    /* Preserve the architecture's user floating-point state across a switch. */
-    if (old->fpu_initialized) {
-        __asm__ volatile("fxsave %0" : "=m"(old->fpu_state));
-    }
-    if (next->fpu_initialized) {
-        __asm__ volatile("fxrstor %0" : : "m"(next->fpu_state));
+    /* Preserve the architecture's user floating-point & vector state across a switch. */
+    if (x86_xsave_enabled) {
+        if (old->fpu_initialized) {
+            __asm__ volatile("xsave %0" : "=m"(old->fpu_state[0]) : "a"(0xFFFFFFFFU), "d"(0xFFFFFFFFU) : "memory");
+        }
+        if (next->fpu_initialized) {
+            __asm__ volatile("xrstor %0" : : "m"(next->fpu_state[0]), "a"(0xFFFFFFFFU), "d"(0xFFFFFFFFU) : "memory");
+        }
+    } else {
+        if (old->fpu_initialized) {
+            __asm__ volatile("fxsave %0" : "=m"(old->fpu_state));
+        }
+        if (next->fpu_initialized) {
+            __asm__ volatile("fxrstor %0" : : "m"(next->fpu_state));
+        }
     }
 #elif defined(__i386__)
     /* FNSAVE/FRSTOR preserve the legacy x87 state without requiring SSE. */
