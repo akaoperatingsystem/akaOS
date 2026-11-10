@@ -50,6 +50,8 @@ static uint64_t per_cpu_ready_mask[SMP_MAX_CPUS];
 static xscore_spinlock_t thread_lock = XSCORE_SPINLOCK_INIT;
 #if defined(__x86_64__) || defined(__i386__)
 static uint8_t initial_fpu_state[4096] __attribute__((aligned(64)));
+#endif
+#if defined(__x86_64__)
 static int x86_xsave_enabled = 0;
 #endif
 #if defined(__i386__)
