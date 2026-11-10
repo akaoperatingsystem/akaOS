@@ -37,6 +37,7 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 image = Path(sys.argv[2])
+image_filename = str(image).replace(",", ",,")
 # Every run writes its own log, because a log left over from an earlier run
 # would still carry its failure and end the run before the guest boots.
 log = root / "build" / f"test-upstream-wm-{os.getpid()}.log"
@@ -49,7 +50,10 @@ with storage.open("wb") as handle:
 
 command = [
     "qemu-system-x86_64", "-machine", "q35", "-cpu", "max", "-m", "1024M",
-    "-cdrom", str(image), "-boot", "d", "-vga", "std",
+    # Treat media bytes as raw data and escape commas in QEMU option values.
+    "-drive", "media=cdrom,index=2,format=raw,readonly=on,file.driver=file,"
+    f"file.filename={image_filename}",
+    "-boot", "d", "-vga", "std",
     "-drive", f"if=none,format=raw,file={storage},id=akaos-storage",
     "-device", "virtio-blk-pci,drive=akaos-storage",
     "-serial", f"file:{log}", "-monitor", "stdio", "-display", "none",
