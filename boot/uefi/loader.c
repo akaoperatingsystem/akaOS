@@ -356,9 +356,9 @@ static void detect_boot_mode(EFI_FILE_PROTOCOL *root, EFI_HANDLE image_handle) {
     EFI_LOADED_IMAGE_PROTOCOL *loaded_image = 0;
     EFI_STATUS status = g_system_table->boot_services->handle_protocol(
         image_handle, (EFI_GUID *)&loaded_image_guid, (void **)&loaded_image);
-    if (!EFI_ERROR(status) && loaded_image && loaded_image->LoadOptions && loaded_image->LoadOptionsSize > 0) {
-        const CHAR16 *opts = (const CHAR16 *)loaded_image->LoadOptions;
-        UINTN opt_chars = loaded_image->LoadOptionsSize / sizeof(CHAR16);
+    if (!EFI_ERROR(status) && loaded_image && loaded_image->load_options && loaded_image->load_options_size > 0) {
+        const CHAR16 *opts = (const CHAR16 *)loaded_image->load_options;
+        UINTN opt_chars = loaded_image->load_options_size / sizeof(CHAR16);
         if (wcs_contains_ascii_ci(opts, opt_chars, "verbose") ||
             wcs_contains_ascii_ci(opts, opt_chars, "text") ||
             wcs_contains_ascii_ci(opts, opt_chars, "console")) {
