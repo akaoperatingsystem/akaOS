@@ -1802,6 +1802,8 @@ int xscore_vfs_stat_at(uint32_t cwd_node, const char *path,
 int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
                            const char *path, uint64_t flags, uint32_t mode) {
     if (!table || !path || !*path) return -AKAOS_EINVAL;
+    /* Validate before lookup, creation, or truncation. */
+    if ((flags & UINT64_C(3)) > AKAOS_O_RDWR) return -AKAOS_EINVAL;
     int changed = 0;
     uint32_t target;
     uintptr_t lock_flags = 0;

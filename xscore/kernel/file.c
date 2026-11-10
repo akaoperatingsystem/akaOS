@@ -520,6 +520,8 @@ int64_t xscore_fd_open_directory(struct xscore_fd_table *table,
 int64_t xscore_fd_open_vnode(struct xscore_fd_table *table,
                              uint32_t node_id, uint64_t open_flags) {
     if (!table) return -AKAOS_EBADF;
+    uint64_t access = open_flags & UINT64_C(3);
+    if (access > AKAOS_O_RDWR) return -AKAOS_EINVAL;
     if (!xscore_vfs_node_acquire(node_id)) return -AKAOS_ENOENT;
     uintptr_t pool_flags = file_pool_acquire();
     struct xscore_file *file = 0;
@@ -535,11 +537,11 @@ int64_t xscore_fd_open_vnode(struct xscore_fd_table *table,
         return -AKAOS_ENFILE;
     }
     file->flags = FILE_VNODE;
-    if ((open_flags & 3) == AKAOS_O_WRONLY) {
+    if (access == AKAOS_O_WRONLY) {
         file->flags |= FILE_WRITABLE;
-    } else if ((open_flags & 3) == AKAOS_O_RDWR) {
+    } else if (access == AKAOS_O_RDWR) {
         file->flags |= (FILE_READABLE | FILE_WRITABLE);
-    } else {
+    } else if (access == AKAOS_O_RDONLY) {
         file->flags |= FILE_READABLE;
     }
     if (open_flags & AKAOS_O_APPEND) {
