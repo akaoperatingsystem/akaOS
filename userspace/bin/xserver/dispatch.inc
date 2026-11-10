@@ -1248,7 +1248,7 @@ static void request_put_image(struct x_server *server, struct x_client *client,
     }
     (void)left_pad;
     x_drawable_image(server, drawable, destination_x, destination_y, width, height,
-                     depth, (uint16_t)format, pixels);
+                     depth, (uint16_t)format, pixels, bytes);
     int index = resolve_window(server, drawable);
     x_server_damage(server, index, destination_x, destination_y, (int16_t)width,
                     (int16_t)height);
