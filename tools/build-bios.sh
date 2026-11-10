@@ -119,9 +119,14 @@ kernel_args=""
 if [[ "$test_mode" -eq 1 ]]; then kernel_args+=" AKAOS.TEST"; fi
 if [[ "$verbose_mode" -eq 1 ]]; then kernel_args+=" VERBOSE"; fi
 
+local_default_entry=0
+if [[ "$verbose_mode" -eq 1 ]]; then
+    local_default_entry=1
+fi
+
 {
-    printf 'set timeout=0\n'
-    printf 'set default=0\n'
+    printf 'set timeout=3\n'
+    printf 'set default=%s\n' "$local_default_entry"
     printf 'set gfxmode=1024x768x32\n'
     printf 'set gfxpayload=keep\n'
     # `vbe.mod` exists only in the i386-pc GRUB module set.  The same config
@@ -129,8 +134,12 @@ if [[ "$verbose_mode" -eq 1 ]]; then kernel_args+=" VERBOSE"; fi
     printf 'insmod all_video\n'
     printf 'insmod gfxterm\n'
     printf 'terminal_output gfxterm\n'
-    printf "menuentry 'akaOS BIOS' {\n"
-    printf '    multiboot2 /boot/XSCORE.ELF%s\n' "$kernel_args"
+    printf "menuentry 'akaOS (Graphical Splash)' {\n"
+    printf '    multiboot2 /boot/XSCORE.ELF splash%s\n' "$kernel_args"
+    printf '    boot\n'
+    printf '}\n'
+    printf "menuentry 'akaOS (Verbose Console / Text-Only)' {\n"
+    printf '    multiboot2 /boot/XSCORE.ELF verbose%s\n' "$kernel_args"
     printf '    boot\n'
     printf '}\n'
 } > "$BIOS_ROOT/boot/grub/grub.cfg"

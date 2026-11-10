@@ -40,6 +40,13 @@ while [[ $# -gt 0 ]]; do
             verbose_mode=1
             shift
             ;;
+        --boot-mode|--boot-display)
+            boot_mode="${2:-splash}"
+            if [[ "$boot_mode" == "text" || "$boot_mode" == "verbose" ]]; then
+                verbose_mode=1
+            fi
+            shift 2
+            ;;
         --software|--software-bundle)
             export AKAOS_SOFTWARE_BUNDLE="${2:-all}"
             shift 2
@@ -254,16 +261,25 @@ if [[ "$build_iso" -eq 1 ]]; then
     mkdir -p "$ISO_ROOT/boot/grub"
     cp "$BUILD_DIR/XSCORE32.ELF" "$ISO_ROOT/boot/XSCORE32.ELF"
 
+    local_default_32=0
+    if [[ "$verbose_mode" -eq 1 ]]; then
+        local_default_32=1
+    fi
+
     cat <<EOF > "$ISO_ROOT/boot/grub/grub.cfg"
-set timeout=0
-set default=0
+set timeout=3
+set default=$local_default_32
 set gfxmode=1024x768x32
 set gfxpayload=keep
-menuentry "akaOS x86_32 XSCore" {
-    multiboot2 /boot/XSCORE32.ELF$kernel_args AKAOS.BIOS
+menuentry "akaOS x86_32 (Graphical Splash)" {
+    multiboot2 /boot/XSCORE32.ELF splash$kernel_args AKAOS.BIOS
     boot
 }
-menuentry "akaOS x86_32 XSCore (Multiboot 1)" {
+menuentry "akaOS x86_32 (Verbose Console / Text-Only)" {
+    multiboot2 /boot/XSCORE32.ELF verbose$kernel_args AKAOS.BIOS
+    boot
+}
+menuentry "akaOS x86_32 (Multiboot 1 Legacy)" {
     multiboot /boot/XSCORE32.ELF$kernel_args AKAOS.BIOS
     boot
 }

@@ -314,22 +314,63 @@ static void detect_test_mode(EFI_FILE_PROTOCOL *root) {
     }
 }
 
-static void detect_verbose_flag(EFI_FILE_PROTOCOL *root) {
-    EFI_FILE_PROTOCOL *marker = 0;
-    // Quiet is the default. Explicit markers enable the early framebuffer log.
-    EFI_STATUS status = root->open(root, &marker, L"\\VERBOSE", EFI_FILE_MODE_READ, 0);
-    if (!EFI_ERROR(status)) {
-        g_boot_info.flags |= AKAOS_BOOT_FLAG_VERBOSE;
-        marker->close(marker);
-        serial_write("[INFO] Verbose boot flag detected\n");
-        return;
+static int wcs_contains_ascii_ci(const CHAR16 *wstr, UINTN length, const char *sub) {
+    if (!wstr || !sub || !*sub) return 0;
+    UINTN sub_len = 0;
+    while (sub[sub_len]) ++sub_len;
+    if (length < sub_len) return 0;
+    for (UINTN i = 0; i <= length - sub_len; ++i) {
+        UINTN j = 0;
+        for (; j < sub_len; ++j) {
+            CHAR16 c = wstr[i + j];
+            char s = sub[j];
+            if (c >= 'A' && c <= 'Z') c += ('a' - 'A');
+            if (s >= 'A' && s <= 'Z') s += ('a' - 'A');
+            if ((char)c != s) break;
+        }
+        if (j == sub_len) return 1;
     }
-    // Also accept AKAOS.VERBOSE for clarity
-    status = root->open(root, &marker, L"\\AKAOS.VERBOSE", EFI_FILE_MODE_READ, 0);
-    if (!EFI_ERROR(status)) {
+    return 0;
+}
+
+static void detect_boot_mode(EFI_FILE_PROTOCOL *root, EFI_HANDLE image_handle) {
+    EFI_FILE_PROTOCOL *marker = 0;
+    // 1. Check filesystem markers on the EFI partition
+    if (!EFI_ERROR(root->open(root, &marker, L"\\VERBOSE", EFI_FILE_MODE_READ, 0)) ||
+        !EFI_ERROR(root->open(root, &marker, L"\\AKAOS.VERBOSE", EFI_FILE_MODE_READ, 0)) ||
+        !EFI_ERROR(root->open(root, &marker, L"\\TEXT", EFI_FILE_MODE_READ, 0)) ||
+        !EFI_ERROR(root->open(root, &marker, L"\\CONSOLE", EFI_FILE_MODE_READ, 0))) {
         g_boot_info.flags |= AKAOS_BOOT_FLAG_VERBOSE;
         marker->close(marker);
-        serial_write("[INFO] Verbose boot flag detected\n");
+        serial_write("[INFO] Verbose text console boot flag detected via marker\n");
+    }
+    if (!EFI_ERROR(root->open(root, &marker, L"\\SPLASH", EFI_FILE_MODE_READ, 0)) ||
+        !EFI_ERROR(root->open(root, &marker, L"\\QUIET", EFI_FILE_MODE_READ, 0))) {
+        g_boot_info.flags &= ~AKAOS_BOOT_FLAG_VERBOSE;
+        g_boot_info.flags |= AKAOS_BOOT_FLAG_SPLASH;
+        marker->close(marker);
+        serial_write("[INFO] Graphical splash boot flag detected via marker\n");
+    }
+
+    // 2. Check EFI LoadedImage protocol command-line options
+    EFI_LOADED_IMAGE_PROTOCOL *loaded_image = 0;
+    EFI_STATUS status = g_system_table->boot_services->handle_protocol(
+        image_handle, (EFI_GUID *)&loaded_image_guid, (void **)&loaded_image);
+    if (!EFI_ERROR(status) && loaded_image && loaded_image->LoadOptions && loaded_image->LoadOptionsSize > 0) {
+        const CHAR16 *opts = (const CHAR16 *)loaded_image->LoadOptions;
+        UINTN opt_chars = loaded_image->LoadOptionsSize / sizeof(CHAR16);
+        if (wcs_contains_ascii_ci(opts, opt_chars, "verbose") ||
+            wcs_contains_ascii_ci(opts, opt_chars, "text") ||
+            wcs_contains_ascii_ci(opts, opt_chars, "console")) {
+            g_boot_info.flags |= AKAOS_BOOT_FLAG_VERBOSE;
+            g_boot_info.flags &= ~AKAOS_BOOT_FLAG_SPLASH;
+            serial_write("[INFO] Verbose text console boot requested via LoadOptions\n");
+        } else if (wcs_contains_ascii_ci(opts, opt_chars, "splash") ||
+                   wcs_contains_ascii_ci(opts, opt_chars, "quiet")) {
+            g_boot_info.flags &= ~AKAOS_BOOT_FLAG_VERBOSE;
+            g_boot_info.flags |= AKAOS_BOOT_FLAG_SPLASH;
+            serial_write("[INFO] Graphical splash boot requested via LoadOptions\n");
+        }
     }
 }
 
@@ -368,7 +409,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_tab
         return status;
     }
     detect_test_mode(root);
-    detect_verbose_flag(root);
+    detect_boot_mode(root, image_handle);
     detect_acpi_table();
 
     /* Capture graphics metadata only. The loader never renders the splash;

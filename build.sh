@@ -115,6 +115,10 @@ Desktop & Session Configuration:
   --packages LIST              Comma-separated list of individual packages to bundle (manual mode)
 
 Kernel & Build Flags:
+  --boot-mode, --boot-display NAME
+                               Boot display mode:
+                                 splash  : Graphical splash screen with progress indicator (default)
+                                 text    : Text-only verbose scrolling console (kernel diagnostics)
   --test                       Enable automated self-test mode in generated boot media
   --verbose                    Enable verbose kernel hardware and boot diagnostics
   --mem-profile full|minimal  Select normal or constrained-memory kernel/console profile
@@ -143,6 +147,7 @@ configure_build_interactively() {
     local menu_desktop=none
     local menu_session=console
     local menu_software=all
+    local menu_boot_mode=splash
     local menu_test=off
     local menu_verbose=off
     local action selection summary report
@@ -159,6 +164,7 @@ configure_build_interactively() {
             "desktop" "Desktop: $menu_desktop" \
             "session" "Startup mode: $menu_session" \
             "software" "Software package: $menu_software" \
+            "boot_mode" "Boot display: $menu_boot_mode" \
             "test" "Test mode: $menu_test" \
             "verbose" "Verbose logging: $menu_verbose" \
             "deps" "Check host dependencies" \
@@ -168,6 +174,18 @@ configure_build_interactively() {
         fi
 
         case "$action" in
+            boot_mode)
+                if selection="$(akaos_ui_menu \
+                    "Boot Display & Diagnostic Mode" \
+                    "Select the default boot display mode:" "$menu_boot_mode" \
+                    "splash" "Graphical Splash Screen (Clean logo & progress indicator)" \
+                    "text" "Text-Only Verbose Console (Line-by-line scrolling kernel diagnostics)")"; then
+                    menu_boot_mode="$selection"
+                    if [[ "$menu_boot_mode" == "text" ]]; then
+                        menu_verbose=on
+                    fi
+                fi
+                ;;
             software)
                 if selection="$(akaos_ui_menu \
                     "Software Packages" "Select software bundle to include in akaOS:" "$menu_software" \
@@ -391,6 +409,7 @@ Verbose       : $menu_verbose$heavy_warning"
                         --desktop "$menu_desktop"
                         --session-mode "$menu_session"
                         --software "$menu_software"
+                        --boot-mode "$menu_boot_mode"
                     )
                     if [[ "$menu_test" == "on" ]]; then
                         INTERACTIVE_BUILD_ARGS+=(--test)
@@ -482,6 +501,24 @@ while [[ $# -gt 0 ]]; do
                 exit 2
             fi
             menu_software="$2"
+            shift 2
+            ;;
+        --boot-mode|--boot-display)
+            if [[ $# -lt 2 ]]; then
+                echo "$1 requires splash or text" >&2
+                exit 2
+            fi
+            boot_mode="$2"
+            if [[ "$boot_mode" == "text" || "$boot_mode" == "verbose" ]]; then
+                boot_mode=text
+                bios_verbose=1
+            elif [[ "$boot_mode" == "splash" || "$boot_mode" == "quiet" ]]; then
+                boot_mode=splash
+                bios_verbose=0
+            else
+                echo "Unsupported boot mode '$boot_mode' (expected splash or text)" >&2
+                exit 2
+            fi
             shift 2
             ;;
         --low-memory-profile)
@@ -605,7 +642,7 @@ if [[ "$arch" == "x86_32" ]]; then
             bios|both) disk_type=iso ;;
         esac
     fi
-    build_args=(--firmware "$firmware" --disk-type "$disk_type" --software "$menu_software" --desktop "$target_desktop")
+    build_args=(--firmware "$firmware" --disk-type "$disk_type" --software "$menu_software" --desktop "$target_desktop" --boot-mode "$boot_mode")
     if [[ "$low_memory_profile" -eq 1 ]]; then
         build_args+=(--low-memory-profile)
         export AKAOS_LOW_MEMORY_PROFILE=1 XSCORE_LOW_MEMORY=1
@@ -1706,6 +1743,7 @@ build_user_pie_program hello-pie "$ROOT_DIR/userspace/bin/hello/main.c" HELLO_PI
 build_user_program cat "$ROOT_DIR/userspace/bin/cat/main.c" CAT.ELF
 build_user_program ls "$ROOT_DIR/userspace/bin/ls/main.c" LS.ELF
 build_user_program dir "$ROOT_DIR/userspace/bin/dir/main.c" DIR.ELF
+build_user_program dircolors "$ROOT_DIR/userspace/bin/dircolors/main.c" DIRCOLORS.ELF
 build_user_program grep "$ROOT_DIR/userspace/bin/grep/main.c" GREP.ELF
 build_user_program head "$ROOT_DIR/userspace/bin/head/main.c" HEAD.ELF
 build_user_program tail "$ROOT_DIR/userspace/bin/tail/main.c" TAIL.ELF
@@ -2268,7 +2306,7 @@ build_runtime_library libgtk-4.so 5
 build_runtime_library libQt6Core.so 6
 build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
-for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
+for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
     # ET_DYN hello-pie legitimately carries relative relocations; the kernel
     # applies those at its fixed native load base. Reject only relocation
     # kinds outside that bounded ABI instead of rejecting the section itself.
@@ -3385,6 +3423,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/ls:$BUILD_DIR/LS.ELF:exec" \
     --file "/bin/dir:$BUILD_DIR/DIR.ELF:exec" \
     --file "/bin/d:$BUILD_DIR/DIR.ELF:exec" \
+    --file "/bin/dircolors:$BUILD_DIR/DIRCOLORS.ELF:exec" \
     --file "/bin/grep:$BUILD_DIR/GREP.ELF:exec" \
     --file "/bin/head:$BUILD_DIR/HEAD.ELF:exec" \
     --file "/bin/tail:$BUILD_DIR/TAIL.ELF:exec" \
@@ -3841,8 +3880,9 @@ if [[ "$need_iso_image" -eq 1 ]]; then
     if [[ "$bios_test" -eq 1 ]]; then
         bios_args+=(--test)
     fi
-    if [[ "$bios_verbose" -eq 1 ]]; then
+    if [[ "$bios_verbose" -eq 1 || "$boot_mode" == "text" ]]; then
         bios_args+=(--verbose)
     fi
+    bios_args+=(--boot-mode "$boot_mode")
     bash "$ROOT_DIR/tools/build-bios.sh" "${bios_args[@]}"
 fi

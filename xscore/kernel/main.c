@@ -87,8 +87,16 @@ static void serial_write_unlocked(const char *text) {
     xscore_spin_unlock_irqrestore(&serial_lock, irq_flags);
 }
 
+static void shell_console_sink(char c);
+
 static void serial_write(const char *text) {
     serial_write_unlocked(text);
+    if (verbose_mode && early_console_ready && !splash_active && text) {
+        const char *p = text;
+        while (*p) {
+            shell_console_sink(*p++);
+        }
+    }
 }
 
 void xscore_serial_write(const char *text) {
@@ -488,12 +496,14 @@ static void framebuffer_clear(void) {
 static void early_console_init(const struct akaos_boot_info *boot_info) {
     boot_canvas_valid = canvas_from_boot_info(boot_info, &boot_canvas);
     if (!boot_canvas_valid) return;
+    framebuffer_clear();
+    shell_grid_init();
+    shell_cursor_col = 0;
+    shell_cursor_row = 0;
+    shell_input_row = 0;
+    shell_input_rows = 0;
     early_console_ready = 1;
     splash_active = 0;
-    early_margin = 16;
-    early_cursor_x = early_margin;
-    early_cursor_y = early_margin;
-    framebuffer_clear();
 }
 
 static void early_console_scroll_if_needed(void) {
@@ -839,9 +849,13 @@ static void shell_console_sink(char c) {
 }
 
 __attribute__((noreturn)) static void xscore_shell_run(void) {
-    splash_active = 0;
     xscore_file_set_console_sink(shell_console_sink);
-    shell_reset_screen();
+    if (splash_active) {
+        splash_active = 0;
+        shell_reset_screen();
+    } else {
+        splash_active = 0;
+    }
     xscore_tty_initialize();
     serial_write("[INFO] akaOS shell active\n");
 
@@ -1485,8 +1499,12 @@ __attribute__((noreturn)) void xscore_entry(const struct akaos_boot_info *boot_i
     // ---- Stage 1 complete: Early text logs were on framebuffer (if verbose) or serial only (if quiet) ----
     // Stage 2: Clean graphical splash — like Windows boot logo + Plymouth
     // Clear everything Stage 1 drew and show only logo + spinner. This decouples logging from UI.
-    boot_status("Transitioning to graphical splash...");
-    splash_init();
+    if (!verbose_mode) {
+        boot_status("Transitioning to graphical splash...");
+        splash_init();
+    } else {
+        serial_write("[INFO] Verbose text console mode active: live kernel diagnostics on screen\n");
+    }
     // From now on, logging remains serial-only. Splash updates are explicit.
 
     boot_status("Applying section permissions...");

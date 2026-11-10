@@ -45,6 +45,9 @@ Software Package Bundle:
                                  none    : None (Barebones kernel bootstrap only)
 
 Display & Interface Options:
+  --boot-mode NAME             Boot display mode: splash or text (default: splash)
+  --splash                     Engage graphical splash screen boot mode
+  --verbose-boot, --text       Engage text-only verbose console boot mode
   --display-mode NAME          auto, gui, or headless
   --gui                        Directly open a QEMU graphical display window
   --headless, --console        Run purely over serial console in the terminal
@@ -88,6 +91,7 @@ configure_run_interactively() {
     local menu_disk=fat32
     local menu_desktop=none
     local menu_session=console
+    local menu_boot_mode=splash
     local menu_display=auto
     local menu_vga=virtio
     local menu_smp="${AKAOS_SMP_CORES:-$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
@@ -105,6 +109,7 @@ configure_run_interactively() {
             "disk" "File / Disk Type: [$menu_disk]" \
             "desktop" "Desktop Env     : [$menu_desktop]" \
             "session" "Startup Mode    : [$menu_session]" \
+            "boot_mode" "Boot Display    : [$menu_boot_mode]" \
             "software" "Software Suite  : [$menu_software]" \
             "display" "Display Window  : [$menu_display]" \
             "vga" "Graphics Device : [$menu_vga]" \
@@ -117,6 +122,15 @@ configure_run_interactively() {
         fi
 
         case "$action" in
+            boot_mode)
+                if selection="$(akaos_ui_menu \
+                    "Boot Display & Diagnostic Mode" \
+                    "Select the boot display mode:" "$menu_boot_mode" \
+                    "splash" "Graphical Splash Screen (Clean logo & progress indicator)" \
+                    "text" "Text-Only Verbose Console (Line-by-line scrolling kernel diagnostics)")"; then
+                    menu_boot_mode="$selection"
+                fi
+                ;;
             software)
                 if selection="$(akaos_ui_menu \
                     "Software Packages" "Select software bundle for QEMU:" "$menu_software" \
@@ -351,6 +365,7 @@ Boot Firmware       : $menu_firmware
 File / Disk Type    : $menu_disk
 Desktop Environment : $menu_desktop
 Startup Mode        : $menu_session
+Boot Display Mode   : $menu_boot_mode
 Display Window      : $menu_display
 Graphics Device     : $menu_vga
 Virtual CPU Cores   : $menu_smp vCPUs
@@ -362,6 +377,7 @@ Virtual RAM Memory  : $menu_mem"
                         --disk-type "$menu_disk"
                         --desktop "$menu_desktop"
                         --session-mode "$menu_session"
+                        --boot-mode "$menu_boot_mode"
                         --software "$menu_software"
                         --device "$menu_vga"
                         --smp "$menu_smp"
@@ -401,6 +417,7 @@ disk_type=auto
 disk_type_set=0
 menu_desktop=none
 menu_session=console
+boot_mode=splash
 menu_software=all
 menu_custom_packages=""
 display_mode=auto
@@ -472,6 +489,22 @@ while [[ $# -gt 0 ]]; do
             fi
             display_mode="$2"
             shift 2
+            ;;
+        --boot-mode)
+            if [[ $# -lt 2 ]]; then
+                echo "--boot-mode requires splash or text" >&2
+                exit 2
+            fi
+            boot_mode="$2"
+            shift 2
+            ;;
+        --splash)
+            boot_mode=splash
+            shift
+            ;;
+        --verbose-boot|--text)
+            boot_mode=text
+            shift
             ;;
         --headless|--console)
             display_mode=headless
@@ -623,7 +656,7 @@ if [[ "$arch" == "x86_32" ]]; then
     fi
     if [[ "$firmware" == "uefi" && "$boot_disk_type" == "fat32" ]]; then
         if [[ ! -f "$ROOT_DIR/build/akaos32.img" ]]; then
-            build_args=(--arch x86_32 --firmware uefi --disk-type fat32 --software "$menu_software")
+            build_args=(--arch x86_32 --firmware uefi --disk-type fat32 --software "$menu_software" --boot-mode "$boot_mode")
             if [[ "$menu_desktop" != "none" ]]; then
                 build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
             fi
@@ -632,7 +665,7 @@ if [[ "$arch" == "x86_32" ]]; then
         X86_32_ARGS=(-m 128M -drive "format=raw,file=$ROOT_DIR/build/akaos32.img" -boot c -monitor none -serial stdio)
     else
         if [[ ! -f "$ROOT_DIR/build/akaos32.iso" ]]; then
-            build_args=(--arch x86_32 --firmware "$firmware" --disk-type iso --software "$menu_software")
+            build_args=(--arch x86_32 --firmware "$firmware" --disk-type iso --software "$menu_software" --boot-mode "$boot_mode")
             if [[ "$menu_desktop" != "none" ]]; then
                 build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
             fi
@@ -768,7 +801,7 @@ if [[ "$boot_disk_type" == "iso" ]]; then
     if [[ ! -f "$ROOT_DIR/build/akaos.iso" ]]; then
         # BIOS/FAT32 transparently boots the ISO fallback; build only the
         # medium this QEMU instance will actually boot.
-        build_args=(--arch x86_64 --firmware "$firmware" --disk-type iso --software "$menu_software")
+        build_args=(--arch x86_64 --firmware "$firmware" --disk-type iso --software "$menu_software" --boot-mode "$boot_mode")
         if [[ "$menu_desktop" != "none" ]]; then
             build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
         fi
@@ -776,7 +809,7 @@ if [[ "$boot_disk_type" == "iso" ]]; then
     fi
 elif [[ "$firmware" == "uefi" ]]; then
     if [[ ! -f "$ROOT_DIR/build/akaos.img" ]]; then
-        build_args=(--arch x86_64 --firmware uefi --disk-type fat32 --software "$menu_software")
+        build_args=(--arch x86_64 --firmware uefi --disk-type fat32 --software "$menu_software" --boot-mode "$boot_mode")
         if [[ "$menu_desktop" != "none" ]]; then
             build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
         fi
@@ -811,6 +844,17 @@ case "$gpu_device" in
     ramfb) QEMU_COMMON_ARGS+=(-device ramfb) ;;
     *) QEMU_COMMON_ARGS+=(-vga std) ;;
 esac
+
+if [[ "$boot_firmware" == "uefi" && "$boot_disk_type" != "iso" && -f "$ROOT_DIR/build/akaos.img" ]]; then
+    if [[ "$boot_mode" == "text" || "$boot_mode" == "verbose" ]]; then
+        : > "$ROOT_DIR/build/VERBOSE"
+        mcopy -o -i "$ROOT_DIR/build/akaos.img@@1M" "$ROOT_DIR/build/VERBOSE" ::/VERBOSE 2>/dev/null || mcopy -o -i "$ROOT_DIR/build/akaos.img" "$ROOT_DIR/build/VERBOSE" ::/VERBOSE 2>/dev/null || true
+    elif [[ "$boot_mode" == "splash" ]]; then
+        mdel -i "$ROOT_DIR/build/akaos.img@@1M" ::/VERBOSE 2>/dev/null || mdel -i "$ROOT_DIR/build/akaos.img" ::/VERBOSE 2>/dev/null || true
+        : > "$ROOT_DIR/build/SPLASH"
+        mcopy -o -i "$ROOT_DIR/build/akaos.img@@1M" "$ROOT_DIR/build/SPLASH" ::/SPLASH 2>/dev/null || mcopy -o -i "$ROOT_DIR/build/akaos.img" "$ROOT_DIR/build/SPLASH" ::/SPLASH 2>/dev/null || true
+    fi
+fi
 
 if [[ "$boot_firmware" == "uefi" ]]; then
     OVMF_CODE="$(find_ovmf_code)"

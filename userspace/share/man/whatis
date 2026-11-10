@@ -28,6 +28,7 @@ cat (1) - concatenate files and print on standard output
 ls (1) - list directory contents and file attributes
 dir (1) - briefly list directory contents
 d (1) - briefly list directory contents
+dircolors (1) - color setup for ls
 cp (1) - copy files and directories
 mv (1) - move or rename files and directories
 rm (1) - remove files or directories

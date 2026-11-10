@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.45-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.31-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.48-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.32-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -86,6 +86,7 @@ Do not infer full 16 MiB support from the minimal x86-32 experiment or total use
 | **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX pthread_atfork Canonical Guards | 90% | `[█████████░]` 90% |
 | **Networking Stack** | VirtIO-Net, Linux netdevice/sk_buff bridge, IPv4/ARP/UDP/TCP Sockets | 95% | `[█████████░]` 95% |
 | **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 85% | `[█████████░]` 85% |
+| **Boot Display Subsystem** | Dual Boot Modes: Graphical Splash (Logo & Spinner) vs. Text-Only Verbose Console (Live Diagnostics), GRUB Selection, CLI & TUI Options | 100% | `[██████████]` 100% |
 
 ---
 

@@ -88,8 +88,20 @@ static void consume_cmdline(const struct multiboot_tag *tag) {
         bios_boot_info.flags |= AKAOS_BOOT_FLAG_TEST_MODE;
     }
     if (text_contains(text, length, "VERBOSE") ||
-        text_contains(text, length, "verbose")) {
+        text_contains(text, length, "verbose") ||
+        text_contains(text, length, "CONSOLE") ||
+        text_contains(text, length, "console") ||
+        text_contains(text, length, "TEXT") ||
+        text_contains(text, length, "text")) {
         bios_boot_info.flags |= AKAOS_BOOT_FLAG_VERBOSE;
+        bios_boot_info.flags &= ~AKAOS_BOOT_FLAG_SPLASH;
+    }
+    if (text_contains(text, length, "SPLASH") ||
+        text_contains(text, length, "splash") ||
+        text_contains(text, length, "QUIET") ||
+        text_contains(text, length, "quiet")) {
+        bios_boot_info.flags &= ~AKAOS_BOOT_FLAG_VERBOSE;
+        bios_boot_info.flags |= AKAOS_BOOT_FLAG_SPLASH;
     }
     if (text_contains(text, length, "AKAOS.UEFI")) {
         multiboot_uefi_handoff = 1;

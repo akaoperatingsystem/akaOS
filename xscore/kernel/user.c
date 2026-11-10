@@ -683,6 +683,24 @@ int xscore_user_process_self_test(void) {
     if (!p_d || !xscore_process_wait(p_d, &d_status) || d_status != 0 || !xscore_process_reap(p_d)) return 0;
     xscore_serial_write("[INFO] Brief directory listing utilities dir/d verified\n");
 
+    const char *dircolors_help_args[] = {"/bin/dircolors", "--help", 0};
+    struct xscore_process *p_dircolors_help = xscore_process_create_path_args("/bin/dircolors", 2, dircolors_help_args);
+    uint64_t dircolors_help_status = UINT64_MAX;
+    if (!p_dircolors_help || !xscore_process_wait(p_dircolors_help, &dircolors_help_status) || dircolors_help_status != 0 || !xscore_process_reap(p_dircolors_help)) return 0;
+    const char *dircolors_db_args[] = {"/bin/dircolors", "--print-database", 0};
+    struct xscore_process *p_dircolors_db = xscore_process_create_path_args("/bin/dircolors", 2, dircolors_db_args);
+    uint64_t dircolors_db_status = UINT64_MAX;
+    if (!p_dircolors_db || !xscore_process_wait(p_dircolors_db, &dircolors_db_status) || dircolors_db_status != 0 || !xscore_process_reap(p_dircolors_db)) return 0;
+    const char *dircolors_bourne_args[] = {"/bin/dircolors", "--bourne-shell", 0};
+    struct xscore_process *p_dircolors_bourne = xscore_process_create_path_args("/bin/dircolors", 2, dircolors_bourne_args);
+    uint64_t dircolors_bourne_status = UINT64_MAX;
+    if (!p_dircolors_bourne || !xscore_process_wait(p_dircolors_bourne, &dircolors_bourne_status) || dircolors_bourne_status != 0 || !xscore_process_reap(p_dircolors_bourne)) return 0;
+    const char *dircolors_csh_args[] = {"/bin/dircolors", "--csh", 0};
+    struct xscore_process *p_dircolors_csh = xscore_process_create_path_args("/bin/dircolors", 2, dircolors_csh_args);
+    uint64_t dircolors_csh_status = UINT64_MAX;
+    if (!p_dircolors_csh || !xscore_process_wait(p_dircolors_csh, &dircolors_csh_status) || dircolors_csh_status != 0 || !xscore_process_reap(p_dircolors_csh)) return 0;
+    xscore_serial_write("[INFO] ls color configuration utility dircolors verified\n");
+
     const char *env_args[] = {"/bin/env", "FOO=BAR", 0};
     struct xscore_process *p_env = xscore_process_create_path_args("/bin/env", 2, env_args);
     uint64_t env_status = UINT64_MAX;

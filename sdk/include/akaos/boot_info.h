@@ -8,6 +8,7 @@
 #define AKAOS_BOOT_FLAG_TEST_MODE (UINT64_C(1) << 0)
 #define AKAOS_BOOT_FLAG_VERBOSE   (UINT64_C(1) << 1)
 #define AKAOS_BOOT_FLAG_BIOS      (UINT64_C(1) << 2)
+#define AKAOS_BOOT_FLAG_SPLASH    (UINT64_C(1) << 3)
 
 enum akaos_pixel_format {
     AKAOS_PIXEL_RGBX8888 = 0,
