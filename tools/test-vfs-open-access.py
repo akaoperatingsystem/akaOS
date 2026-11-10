@@ -54,7 +54,11 @@ static uint32_t xscore_process_effective_gid(struct xscore_process *p) { (void)p
 static uintptr_t xscore_spin_lock_irqsave(int *lock) { (void)lock; assert(!held); held = 1; return 0; }
 static void vfs_lock_release(uintptr_t flags) { (void)flags; assert(held); held = 0; }
 /* Storage allocation and persistence are outside this host regression. */
-static void free_vnode_blocks(struct xscore_vnode *node) { (void)node; }
+static int freed_blocks;
+static void free_vnode_blocks(struct xscore_vnode *node) {
+    ++freed_blocks;
+    memset(node->block_pages, 0, sizeof(node->block_pages));
+}
 static int convert_to_dynamic(struct xscore_vnode *node) { (void)node; assert(0); return 0; }
 static int xscore_vfs_persistence_sync(void) { assert(0); return 0; }
 '''
@@ -127,6 +131,54 @@ int main(void) {
             } else assert(acquired == 0);
             assert(!held && nodes[1].size == 42);
         }
+    }
+    /* Truncation must authorize writes before changing either backing type. */
+    static const uint8_t contents[] = "private contents";
+    for (unsigned user = 0; user < 4; ++user) {
+        uid = user == 0 ? 0 : (user == 1 ? 2000 : 1000);
+        gid = user == 2 ? 2000 : uid;
+        for (unsigned dynamic = 0; dynamic < 2; ++dynamic) {
+            for (unsigned mode = 0; mode <= 0777; ++mode) {
+                for (uint64_t access = 0; access < 3; ++access) {
+                    nodes[1].mode = AKAOS_MODE_REGULAR | mode;
+                    nodes[1].is_dynamic = dynamic;
+                    nodes[1].data = dynamic ? NULL : contents;
+                    nodes[1].size = sizeof(contents);
+                    nodes[1].block_pages[0] = dynamic ? 123 : 0;
+                    struct xscore_vnode before = nodes[1];
+                    memset(file_pool, 0, sizeof(file_pool)); acquired = 0;
+                    freed_blocks = 0;
+                    unsigned shift = user == 1 ? 6 : (user == 2 ? 3 : 0);
+                    unsigned requested = access == AKAOS_O_RDWR ? 6 : 2;
+                    int allowed = user == 0 || ((mode >> shift) & requested) == requested;
+                    int expected = access == AKAOS_O_RDONLY ? -AKAOS_EINVAL :
+                        !allowed ? -AKAOS_EACCES :
+                        (!dynamic && !(mode & AKAOS_MODE_WRITE)) ? -AKAOS_EROFS : 0;
+                    assert(xscore_vfs_open_at(&table, 0, "/secret",
+                                             access | AKAOS_O_TRUNC, 0) == expected);
+                    assert(!held);
+                    if (expected) {
+                        assert(memcmp(&before, &nodes[1], sizeof(before)) == 0);
+                        assert(!freed_blocks && !acquired && !file_pool[0].flags);
+                    } else {
+                        assert(nodes[1].is_dynamic && !nodes[1].size);
+                        assert(!nodes[1].block_pages[0] && freed_blocks == 1);
+                        assert(acquired == 1 && (file_pool[0].flags & FILE_WRITABLE));
+                        if (!dynamic) assert(!nodes[1].data);
+                    }
+                }
+            }
+        }
+    }
+    /* Invalid truncation must not create a file, even for root. */
+    for (unsigned user = 0; user < 2; ++user) {
+        uid = gid = user ? 1000 : 0;
+        struct xscore_vnode before[XSCORE_VFS_MAX_NODES];
+        memcpy(before, nodes, sizeof(nodes));
+        assert(xscore_vfs_open_at(&table, 0, "/missing",
+                                 AKAOS_O_RDONLY | AKAOS_O_CREAT | AKAOS_O_TRUNC,
+                                 0600) == -AKAOS_EINVAL);
+        assert(memcmp(before, nodes, sizeof(nodes)) == 0 && node_count == 2 && !held);
     }
     nodes[1].mode = AKAOS_MODE_REGULAR; /* No read or write permission. */
     const uint64_t extras[] = {0, AKAOS_O_CREAT, AKAOS_O_TRUNC,
