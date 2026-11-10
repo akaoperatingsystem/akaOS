@@ -38,6 +38,7 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 image = Path(sys.argv[2])
+image_filename = str(image).replace(",", ",,")
 log = root / "build" / "test-upstream-x11.log"
 qemu_error_log = root / "build" / "test-upstream-x11.qemu.log"
 storage = root / "build" / f"upstream-x11-test-storage-{os.getpid()}.img"
@@ -48,7 +49,10 @@ with storage.open("wb") as handle:
 qemu_memory = os.environ.get("AKAOS_TEST_MEMORY", "768M")
 qemu_command = [
     "qemu-system-x86_64", "-machine", "q35", "-cpu", "max", "-m", qemu_memory,
-    "-cdrom", str(image), "-boot", "d", "-vga", "std",
+    # Treat media bytes as raw data and escape commas in QEMU option values.
+    "-drive", "media=cdrom,index=2,format=raw,readonly=on,file.driver=file,"
+    f"file.filename={image_filename}",
+    "-boot", "d", "-vga", "std",
     "-drive", f"if=none,format=raw,file={storage},id=akaos-storage",
     "-device", "virtio-blk-pci,drive=akaos-storage",
     "-serial", f"file:{log}", "-monitor", "stdio", "-display", "none",

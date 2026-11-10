@@ -41,9 +41,13 @@ log_file.unlink(missing_ok=True)
 screenshot.unlink(missing_ok=True)
 taskbar_screenshot.unlink(missing_ok=True)
 
+iso = str(Path(os.environ.get("AKAOS_LXQT_TEST_ISO", root / "build" / "akaos.iso")))
+# Treat media bytes as raw data and escape commas in QEMU option values.
+iso = iso.replace(",", ",,")
 kernel = os.environ.get("AKAOS_LXQT_TEST_KERNEL")
 boot_media = (["-kernel", kernel] if kernel else [
-    "-cdrom", str(Path(os.environ.get("AKAOS_LXQT_TEST_ISO", root / "build" / "akaos.iso"))),
+    "-drive", "media=cdrom,index=2,format=raw,readonly=on,file.driver=file,"
+    f"file.filename={iso}",
     "-boot", "d",
 ])
 qemu = subprocess.Popen(
