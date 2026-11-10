@@ -966,8 +966,7 @@ int xscore_vfs_initialize(void) {
     nodes[0].is_dynamic = 0;
     nodes[0].references = 0;
     nodes[0].unlinked = 0;
-    nodes[0].mode = AKAOS_MODE_DIRECTORY | AKAOS_MODE_READ | AKAOS_MODE_WRITE |
-                    AKAOS_MODE_EXECUTE | 0755;
+    nodes[0].mode = AKAOS_MODE_DIRECTORY | 0755;
     node_count = 1;
     vfs_initialized = 1;
     return 1;
