@@ -67,6 +67,9 @@ int xscore_vfs_add_file(const char *path, const uint8_t *data, size_t size,
                         uint32_t mode);
 int xscore_vfs_add_character_device(const char *path, uint32_t mode);
 int xscore_vfs_install_devfs(void);
+/* Internal PTY lifetime/authorization helpers; prepare returns a held vnode. */
+int xscore_vfs_prepare_pts(uint32_t number, uint32_t *node_id);
+int xscore_vfs_pts_access(uint32_t node_id, uint32_t access);
 int xscore_vfs_install_procfs(void);
 enum xscore_proc_kind xscore_vfs_proc_kind_at(uint32_t cwd_node,
                                               const char *path);
@@ -76,7 +79,7 @@ enum xscore_proc_kind xscore_vfs_proc_kind_pid_at(uint32_t cwd_node,
 enum xscore_device_kind xscore_vfs_device_kind_at(uint32_t cwd_node,
                                                    const char *path);
 int xscore_vfs_device_number_at(uint32_t cwd_node, const char *path,
-                                uint32_t *number);
+                                uint32_t *number, uint32_t *node_id);
 int xscore_vfs_lookup_file(const char *path, const uint8_t **data,
                            size_t *size);
 int xscore_vfs_lookup_file_at(uint32_t cwd_node, const char *path,

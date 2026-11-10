@@ -81,6 +81,7 @@ struct xscore_pty {
     uint32_t master_descriptions;
     uint32_t slave_descriptions;
     uint32_t number;
+    uint32_t slave_node;
     struct akaos_termios termios;
     struct akaos_winsize winsize;
     uint8_t canonical[256];
@@ -228,6 +229,7 @@ static void file_release(struct xscore_file *file) {
                 }
                 if (file->pty->master_descriptions == 0 &&
                     file->pty->slave_descriptions == 0) {
+                    xscore_vfs_node_release(file->pty->slave_node);
                     file->pty->in_use = 0;
                 }
             }
@@ -974,6 +976,7 @@ void xscore_fd_transfer_release(struct xscore_file *transfer) {
 
 int64_t xscore_fd_open_ptmx(struct xscore_fd_table *table) {
     if (!table) return -AKAOS_EBADF;
+    uintptr_t pool_flags = file_pool_acquire();
     struct xscore_pty *pty = 0;
     for (uint32_t index = 0; index < XSCORE_PTY_MAX; ++index) {
         if (!pty_pool[index].in_use) {
@@ -990,20 +993,21 @@ int64_t xscore_fd_open_ptmx(struct xscore_fd_table *table) {
             break;
         }
     }
-    if (!pty) return -AKAOS_EAGAIN;
-    char path[] = "/dev/pts/0";
-    path[9] = (char)('0' + pty->number);
-    struct akaos_stat status;
-    if (xscore_vfs_stat_at(0, path, &status) != 0 &&
-        !xscore_vfs_add_character_device(path, 0620)) {
-        pty->in_use = 0;
-        return -AKAOS_ENFILE;
+    if (!pty) {
+        file_pool_release(pool_flags);
+        return -AKAOS_EAGAIN;
     }
-    uintptr_t pool_flags = file_pool_acquire();
+    int error = xscore_vfs_prepare_pts(pty->number, &pty->slave_node);
+    if (error != 0) {
+        pty->in_use = 0;
+        file_pool_release(pool_flags);
+        return error;
+    }
     struct xscore_file *file = file_allocate();
     if (!file) {
-        file_pool_release(pool_flags);
+        xscore_vfs_node_release(pty->slave_node);
         pty->in_use = 0;
+        file_pool_release(pool_flags);
         return -AKAOS_ENFILE;
     }
     file->flags = FILE_READABLE | FILE_WRITABLE | FILE_PTY_MASTER;
@@ -1018,6 +1022,7 @@ int64_t xscore_fd_open_ptmx(struct xscore_fd_table *table) {
     if (descriptor < 0) {
         file->flags = 0;
         file->pty = 0;
+        xscore_vfs_node_release(pty->slave_node);
         pty->in_use = 0;
     }
     file_pool_release(pool_flags);
@@ -1025,10 +1030,23 @@ int64_t xscore_fd_open_ptmx(struct xscore_fd_table *table) {
 }
 
 int64_t xscore_fd_open_pts(struct xscore_fd_table *table, uint32_t number,
-                           int readable, int writable) {
-    if (!table || number >= XSCORE_PTY_MAX || !pty_pool[number].in_use ||
+                           uint32_t slave_node, int readable, int writable) {
+    if (!table || number >= XSCORE_PTY_MAX ||
         (!readable && !writable)) return -AKAOS_ENODEV;
+    /* Keep authorization and descriptor installation on one allocation. */
     uintptr_t pool_flags = file_pool_acquire();
+    if (!pty_pool[number].in_use ||
+        pty_pool[number].slave_node != slave_node) {
+        file_pool_release(pool_flags);
+        return -AKAOS_ENODEV;
+    }
+    int error = xscore_vfs_pts_access(pty_pool[number].slave_node,
+                                     (readable ? 4U : 0U) |
+                                     (writable ? 2U : 0U));
+    if (error != 0) {
+        file_pool_release(pool_flags);
+        return error;
+    }
     struct xscore_file *file = file_allocate();
     if (!file) {
         file_pool_release(pool_flags);

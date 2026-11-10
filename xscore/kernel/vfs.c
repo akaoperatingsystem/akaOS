@@ -1078,6 +1078,49 @@ int xscore_vfs_add_character_device(const char *path, uint32_t mode) {
     return 1;
 }
 
+/* Internal PTY allocation: reset stale ownership/mode on every reuse and
+ * pin the vnode until the last master/slave description closes. */
+int xscore_vfs_prepare_pts(uint32_t number, uint32_t *node_id) {
+    if (number > 9U || !node_id) return -AKAOS_EINVAL;
+    char path[] = "/dev/pts/0";
+    path[9] = (char)('0' + number);
+    uintptr_t lock_flags = 0;
+    if (vfs_locked) lock_flags = xscore_spin_lock_irqsave(&vfs_lock);
+    uint32_t target;
+    int error = xscore_vfs_resolve_path_at(0, path, &target);
+    if (error == -AKAOS_ENOENT) {
+        error = xscore_vfs_add_character_device(path, 0620)
+                    ? xscore_vfs_resolve_path_at(0, path, &target)
+                    : -AKAOS_ENFILE;
+    }
+    if (error == 0) {
+        if (target >= XSCORE_VFS_MAX_NODES ||
+            nodes[target].type != XSCORE_VNODE_CHARACTER) {
+            error = -AKAOS_ENODEV;
+        } else {
+            struct xscore_vnode *node = &nodes[target];
+            current_credentials(&node->uid, &node->gid);
+            node->mode = AKAOS_MODE_CHARACTER | 0620;
+            ++node->references;
+            *node_id = target;
+        }
+    }
+    vfs_lock_release(lock_flags);
+    return error;
+}
+
+int xscore_vfs_pts_access(uint32_t node_id, uint32_t access) {
+    uintptr_t lock_flags = 0;
+    if (vfs_locked) lock_flags = xscore_spin_lock_irqsave(&vfs_lock);
+    int error = -AKAOS_ENODEV;
+    if (node_id < XSCORE_VFS_MAX_NODES &&
+        nodes[node_id].type == XSCORE_VNODE_CHARACTER &&
+        !nodes[node_id].unlinked)
+        error = node_allows(&nodes[node_id], access) ? 0 : -AKAOS_EACCES;
+    vfs_lock_release(lock_flags);
+    return error;
+}
+
 int xscore_vfs_install_devfs(void) {
     if (!xscore_vfs_add_directory("/dev", 0755)) return 0;
     if (!xscore_vfs_add_directory("/dev/input", 0755)) return 0;
@@ -1294,10 +1337,11 @@ enum xscore_device_kind xscore_vfs_device_kind_at(uint32_t cwd_node,
 }
 
 int xscore_vfs_device_number_at(uint32_t cwd_node, const char *path,
-                                uint32_t *number) {
+                                uint32_t *number, uint32_t *node_id) {
     uint32_t target = 0;
     char absolute[XSCORE_VFS_PATH_MAX + 1];
-    if (!number || xscore_vfs_resolve_path_at(cwd_node, path, &target) != 0 ||
+    if (!number || !node_id ||
+        xscore_vfs_resolve_path_at(cwd_node, path, &target) != 0 ||
         !xscore_vfs_build_node_path(target, absolute, sizeof(absolute))) return 0;
     const char prefix[] = "/dev/pts/";
     size_t index = 0;
@@ -1310,6 +1354,7 @@ int xscore_vfs_device_number_at(uint32_t cwd_node, const char *path,
     }
     if (absolute[index] != '\0') return 0;
     *number = value;
+    *node_id = target;
     return 1;
 }
 
