@@ -78,7 +78,7 @@ dbdir={db_dir}
 """)
 
     # 2. Build test packages using tools/aka-makepkg.py
-    makepkg = os.path.abspath("tools/aka-makepkg.py")
+    makepkg = sys.executable + " " + os.path.abspath("tools/aka-makepkg.py")
 
     # Package A: "libshared" (v1.0-1) - a dependency package
     lib_payload = os.path.join(WORKSPACE, "build_lib")
@@ -113,6 +113,13 @@ dbdir={db_dir}
     res = run_cmd(f"{makepkg} index --repo-dir {repo_packages_dir} --arch x86_64 --out {index_path}")
     assert res.returncode == 0, f"Failed to generate index: {res.stderr}"
 
+    def trust_index():
+        # Provision locally; the HTTP server is never the source of this pin.
+        with open(index_path, "rb") as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+        with open(conf_path, "a") as f:
+            f.write(f"metadata_sha256={digest}\n")
+
     # 3. Start mock HTTP mirror
     httpd = start_http_server(os.path.join(WORKSPACE, "mirror"))
     time.sleep(0.5)
@@ -126,6 +133,18 @@ dbdir={db_dir}
     env["PKG_CONF"] = conf_path
     env["PKG_ROOT"] = test_root
 
+    # Missing trust configuration must fail without publishing metadata.
+    res = run_cmd(f"{pkg_bin} update", env=env)
+    assert res.returncode != 0
+    assert not os.path.exists(os.path.join(db_dir, "packages.db"))
+    for bad_pin in ("a" * 63, "g" * 64, "a" * 65):
+        with open(conf_path, "a") as f:
+            f.write(f"metadata_sha256={bad_pin}\n")
+        res = run_cmd(f"{pkg_bin} update", env=env)
+        assert res.returncode != 0
+        assert not os.path.exists(os.path.join(db_dir, "packages.db"))
+    trust_index()
+
     # TEST 1: pkg update
     print("\n[TEST 1] Testing 'pkg update'...")
     res = run_cmd(f"{pkg_bin} update", env=env)
@@ -133,6 +152,62 @@ dbdir={db_dir}
     assert res.returncode == 0, f"pkg update failed: {res.stderr}"
     assert os.path.isfile(os.path.join(db_dir, "packages.db")), "packages.db not created"
     print(" -> PASS: Repository metadata updated successfully")
+
+    with open(index_path, "rb") as f:
+        trusted_index = f.read()
+    database = os.path.join(db_dir, "packages.db")
+    # Replace the archive and its matching digest together, as an on-path
+    # attacker could do. Only the independently configured pin stops this.
+    archive = os.path.join(repo_packages_dir, "myapp-1.0-1-x86_64.akp")
+    with open(archive, "rb") as f:
+        trusted_archive = f.read()
+    malicious_archive = trusted_archive + b"attacker replacement"
+    with open(archive, "wb") as f:
+        f.write(malicious_archive)
+    forged_index = trusted_index.replace(
+        hashlib.sha256(trusted_archive).hexdigest().encode(),
+        hashlib.sha256(malicious_archive).hexdigest().encode(),
+    )
+    assert forged_index != trusted_index
+    with open(index_path, "wb") as f:
+        f.write(forged_index)
+    res = run_cmd(f"{pkg_bin} update", env=env)
+    assert res.returncode != 0 and "authentication failed" in res.stderr
+    with open(database, "rb") as f:
+        assert f.read() == trusted_index
+    shutil.copyfile(index_path, database)
+    res = run_cmd(f"{pkg_bin} install myapp", env=env)
+    assert res.returncode != 0 and "authentication failed" in res.stderr
+    res = run_cmd(f"{pkg_bin} upgrade", env=env)
+    assert res.returncode != 0 and "authentication failed" in res.stderr
+    with open(archive, "wb") as f:
+        f.write(trusted_archive)
+    assert not os.path.exists(os.path.join(WORKSPACE, "postinst_ran.txt"))
+    with open(index_path, "wb") as f:
+        f.write(trusted_index)
+    with open(database, "wb") as f:
+        f.write(trusted_index)
+
+    for bad_digest in ("", "a" * 63, "g" * 64):
+        lines = trusted_index.decode().splitlines()
+        invalid = "\n".join(
+            "SHA256: " + bad_digest if line.startswith("SHA256:") else line
+            for line in lines
+        ).encode()
+        with open(index_path, "wb") as f:
+            f.write(invalid)
+        trust_index()
+        res = run_cmd(f"{pkg_bin} update", env=env)
+        assert res.returncode == 0
+        res = run_cmd(f"{pkg_bin} install myapp", env=env)
+        assert res.returncode != 0 and "missing or invalid SHA-256" in res.stderr
+        assert not os.path.exists(os.path.join(test_root, "usr", "bin", "myapp"))
+        assert not os.path.exists(os.path.join(WORKSPACE, "postinst_ran.txt"))
+    with open(index_path, "wb") as f:
+        f.write(trusted_index)
+    trust_index()
+    res = run_cmd(f"{pkg_bin} update", env=env)
+    assert res.returncode == 0
 
     # TEST 2: pkg search & pkg info
     print("\n[TEST 2] Testing 'pkg search' and 'pkg info'...")
@@ -174,6 +249,8 @@ dbdir={db_dir}
     res = run_cmd(f"{makepkg} index --repo-dir {repo_packages_dir} --arch x86_64 --out {index_path}")
     assert res.returncode == 0
 
+    trust_index()
+
     # Update metadata
     res = run_cmd(f"{pkg_bin} update", env=env)
     assert res.returncode == 0
@@ -212,6 +289,7 @@ dbdir={db_dir}
     assert res.returncode == 0
     res = run_cmd(f"{makepkg} index --repo-dir {repo_packages_dir} --arch x86_64 --out {index_path}")
     assert res.returncode == 0
+    trust_index()
     res = run_cmd(f"{pkg_bin} update", env=env)
     assert res.returncode == 0
     res = run_cmd(f"{pkg_bin} install myapp", env=env)
