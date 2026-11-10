@@ -1152,11 +1152,11 @@ static int protocol_self_test(void) {
     uint32_t *pixels = (uint32_t *)((uint8_t *)surface + surface->pixel_offset);
 
     /* Initialize test IPC channel */
-    int ipc_fd = shm_open(AKAOS_COMPOSITOR_IPC_PATH, O_CREAT | O_RDWR, 0666);
-    if (ipc_fd < 0 && errno == EEXIST) {
-        (void)shm_unlink(AKAOS_COMPOSITOR_IPC_PATH);
-        ipc_fd = shm_open(AKAOS_COMPOSITOR_IPC_PATH, O_CREAT | O_RDWR, 0666);
-    }
+    /* Input and focus share this object with lifecycle requests. Only the
+     * trusted root desktop may map it. Never reuse an existing object: its
+     * creator could retain a writable mapping even after permission changes. */
+    int ipc_fd = shm_open(AKAOS_COMPOSITOR_IPC_PATH,
+                          O_CREAT | O_EXCL | O_RDWR, 0600);
     if (ipc_fd < 0) return 21;
     if (ftruncate(ipc_fd, sizeof(struct akaos_compositor_channel)) != 0) {
         close(ipc_fd);
@@ -1292,11 +1292,11 @@ int main(int argc, char **argv) {
     }
 
     /* Initialize shared IPC channel */
-    int ipc_fd = shm_open(AKAOS_COMPOSITOR_IPC_PATH, O_CREAT | O_RDWR, 0666);
-    if (ipc_fd < 0 && errno == EEXIST) {
-        (void)shm_unlink(AKAOS_COMPOSITOR_IPC_PATH);
-        ipc_fd = shm_open(AKAOS_COMPOSITOR_IPC_PATH, O_CREAT | O_RDWR, 0666);
-    }
+    /* Input and focus share this object with lifecycle requests. Only the
+     * trusted root desktop may map it. Never reuse an existing object: its
+     * creator could retain a writable mapping even after permission changes. */
+    int ipc_fd = shm_open(AKAOS_COMPOSITOR_IPC_PATH,
+                          O_CREAT | O_EXCL | O_RDWR, 0600);
     if (ipc_fd < 0 || ftruncate(ipc_fd, sizeof(struct akaos_compositor_channel)) != 0) {
         if (ipc_fd >= 0) close(ipc_fd);
         printf("lumen: failed to initialize IPC channel (errno=%d)\n", errno);
