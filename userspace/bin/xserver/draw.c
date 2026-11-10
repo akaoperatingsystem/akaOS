@@ -103,7 +103,8 @@ void x_drawable_copy(struct x_server *server, xid_t source, int16_t src_x,
 
 void x_drawable_image(struct x_server *server, xid_t drawable, int16_t x,
                       int16_t y, uint16_t width, uint16_t height,
-                      uint16_t depth, uint16_t format, const void *pixels) {
+                      uint16_t depth, uint16_t format, const void *pixels,
+                      size_t pixels_length) {
     uint16_t drawable_width = 0U;
     uint16_t drawable_height = 0U;
     int is_window = 0;
@@ -123,7 +124,10 @@ void x_drawable_image(struct x_server *server, xid_t drawable, int16_t x,
                     continue;
                 }
                 uint32_t value;
-                memcpy(&value, source + ((size_t)row * width + column) * 4U, 4U);
+                size_t offset = ((size_t)row * width + column) * 4U;
+                if (offset > pixels_length ||
+                    pixels_length - offset < sizeof(value)) return;
+                memcpy(&value, source + offset, sizeof(value));
                 target[(size_t)ty * drawable_width + tx] = value;
             }
         }
@@ -142,7 +146,7 @@ void x_drawable_image(struct x_server *server, xid_t drawable, int16_t x,
                 }
                 size_t offset = (size_t)row * stride + (column / 8U);
                 uint32_t value = 0U;
-                if (offset < (stride * (size_t)height)) {
+                if (offset < pixels_length) {
                     value = source[offset];
                 }
                 target[(size_t)ty * drawable_width + tx] = value ? 0xffffffffU : 0U;
@@ -162,7 +166,7 @@ void x_drawable_image(struct x_server *server, xid_t drawable, int16_t x,
             }
             size_t offset = (size_t)row * stride + (column / 8U);
             uint32_t bit = 0U;
-            if (offset < (stride * (size_t)height)) {
+            if (offset < pixels_length) {
                 bit = (source[offset] >> (column % 8U)) & 1U;
             }
             target[(size_t)ty * drawable_width + tx] = bit ? (depth == 1U ? 1U : 0xffffffffU) : 0U;

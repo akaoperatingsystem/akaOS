@@ -453,7 +453,8 @@ void x_drawable_copy(struct x_server *server, xid_t source, int16_t src_x,
                      int16_t dst_y, uint16_t width, uint16_t height);
 void x_drawable_image(struct x_server *server, xid_t drawable, int16_t x,
                       int16_t y, uint16_t width, uint16_t height,
-                      uint16_t depth, uint16_t format, const void *pixels);
+                      uint16_t depth, uint16_t format, const void *pixels,
+                      size_t pixels_length);
 void x_drawable_rectangle(struct x_server *server, xid_t drawable, int16_t x,
                           int16_t y, uint16_t width, uint16_t height,
                           uint32_t pixel);
