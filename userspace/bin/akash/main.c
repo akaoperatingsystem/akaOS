@@ -2988,7 +2988,12 @@ static int execute_statements(struct statement_list *list, int start, int end) {
             }
             size_t nlen = 0;
             while (sp[nlen] && sp[nlen] != ' ' && sp[nlen] != '\t' && sp[nlen] != '(' && sp[nlen] != '{') {
-                if (nlen < sizeof(func_name) - 1) func_name[nlen] = sp[nlen];
+                if (nlen >= sizeof(func_name) - 1) {
+                    write_str(STDERR_FILENO, "akash: syntax error: function name too long\n");
+                    last_exit_status = 2;
+                    return 1;
+                }
+                func_name[nlen] = sp[nlen];
                 nlen++;
             }
             func_name[nlen] = '\0';
