@@ -2506,6 +2506,13 @@ static void handle_client(int client, int unix_transport) {
         close(client);
         return;
     }
+    /* Session activation inherits this broker's credentials. Authenticate
+     * admission against the kernel identity before either protocol can run;
+     * EXTERNAL alone only verifies the client's claimed identity. */
+    if (dbus_session_bus && peer_credentials.uid != geteuid()) {
+        close(client);
+        return;
+    }
     if (dbus_trace_enabled())
         fprintf(stderr, "[dbus] UNIX client accepted\n");
     unsigned char first[AKAOS_DBUS_MAX_MESSAGE];
