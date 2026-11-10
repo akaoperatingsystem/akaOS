@@ -80,12 +80,15 @@ Always validate changes before submitting pull requests:
 
 ## 4. Debugging with GDB
 
-To boot QEMU paused with an active GDB stub listening on `localhost:1234`:
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:e2ce6bafc8c23613f0d8dec573281af8026ad4f8809575eba5c2ddc94583e888 -->
+
+To boot QEMU paused with a GDB stub on a Unix socket in a private temporary directory:
 ```sh
 ./debug.sh
 ```
 
-In a separate terminal, attach your debugger:
-```sh
-gdb -ex "target remote localhost:1234" -ex "symbol-file build/XSCORE.ELF"
-```
+In a separate terminal, run the attach command printed by the launcher (requires GDB 9 or newer). Only the launching host user can access the socket; it is removed when QEMU exits. No debugger TCP port is opened.
+
+<!-- /coderabbit-ai-generated:v1 -->

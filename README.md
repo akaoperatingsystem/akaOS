@@ -133,7 +133,13 @@ You can build and launch target configurations directly:
 #### Key Options for `run.sh`
 - `--gui`: Launch with graphical display output (QEMU GTK/SDL window).
 - `--headless`: Run purely over serial console in the terminal.
-- `./debug.sh`: Boot paused with a GDB server listening on `localhost:1234`.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:5207c3c0abb4ef4237a4fb7972952ccc05acbc6e20b7a45678d8e2c6823762e8 -->
+
+- `./debug.sh`: Boot paused with a GDB server on a Unix socket in a private temporary directory. Use the printed attach command (GDB 9 or newer).
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 ---
 
