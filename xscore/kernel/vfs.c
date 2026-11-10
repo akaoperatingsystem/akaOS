@@ -1804,6 +1804,9 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
     if (!table || !path || !*path) return -AKAOS_EINVAL;
     /* Validate before lookup, creation, or truncation. */
     if ((flags & UINT64_C(3)) > AKAOS_O_RDWR) return -AKAOS_EINVAL;
+    /* Truncation requires a writable open, including for static backing. */
+    if ((flags & AKAOS_O_TRUNC) && (flags & 3) == AKAOS_O_RDONLY)
+        return -AKAOS_EINVAL;
     int changed = 0;
     uint32_t target;
     uintptr_t lock_flags = 0;
