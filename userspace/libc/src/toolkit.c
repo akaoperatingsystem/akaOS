@@ -2,6 +2,7 @@
 #include <akaos/toolkit.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <poll.h>
@@ -23,6 +24,15 @@ int akaos_toolkit_connect(struct akaos_compositor_channel **channel_out) {
     *channel_out = 0;
     int fd = shm_open(AKAOS_COMPOSITOR_IPC_PATH, O_RDWR, 0);
     if (fd < 0) return -2;
+    /* Authenticate the object using kernel metadata, not compositor_pid in
+     * client-writable memory. The current desktop is a trusted root session. */
+    struct stat status;
+    if (fstat(fd, &status) != 0 || status.st_uid != 0 ||
+        (status.st_mode & 0077) != 0 ||
+        status.st_size != (off_t)sizeof(struct akaos_compositor_channel)) {
+        close(fd);
+        return -4;
+    }
     void *mapping = mmap(NULL, sizeof(struct akaos_compositor_channel),
                          PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
