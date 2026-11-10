@@ -166,19 +166,45 @@ static int archive_entry(int tar_fd, const char *entry_path) {
     return 0;
 }
 
-static void ensure_parent_dirs(const char *file_path) {
-    char tmp[256];
-    strncpy(tmp, file_path, sizeof(tmp) - 1);
-    tmp[sizeof(tmp) - 1] = '\0';
-    char *p = tmp;
-    while (*p == '/') p++;
-    while (*p) {
-        if (*p == '/') {
-            *p = '\0';
-            mkdir(tmp, 0755);
-            *p = '/';
+/* Resolve each parent beneath the extraction root without following links.
+ * Reject all parent components, including ones that would stay inside the root.
+ */
+static int extraction_parent(int root, char *path, char **leaf) {
+    if (!*path || *path == '/') { errno = EINVAL; return -1; }
+    for (char *p = path; *p;) {
+        char *end = strchr(p, '/');
+        size_t len = end ? (size_t)(end - p) : strlen(p);
+        if (len == 2 && p[0] == '.' && p[1] == '.') {
+            errno = EINVAL;
+            return -1;
         }
-        p++;
+        p += len;
+        if (*p) ++p;
+    }
+
+    int parent = openat(root, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+    if (parent < 0) return -1;
+    char *p = path;
+    for (;;) {
+        char *slash = strchr(p, '/');
+        if (!slash) { *leaf = *p ? p : "."; return parent; }
+        *slash = '\0';
+        if (*p && strcmp(p, ".") != 0) {
+            int next = openat(parent, p, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+            if (next < 0 && errno == ENOENT) {
+                if (mkdirat(parent, p, 0755) == 0 || errno == EEXIST)
+                    next = openat(parent, p, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+            }
+            if (next < 0) {
+                int error = errno;
+                close(parent);
+                errno = error;
+                return -1;
+            }
+            close(parent);
+            parent = next;
+        }
+        p = slash + 1;
     }
 }
 
@@ -322,6 +348,14 @@ int main(int argc, char **argv) {
         return 2;
     }
 
+    int root = -1, result = 0;
+    if (opt_extract && !opt_list) {
+        root = open(".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+        if (root < 0) {
+            if (tar_fd != STDIN_FILENO) close(tar_fd);
+            return 2;
+        }
+    }
     int zero_blocks = 0;
     while (1) {
         ssize_t n = read(tar_fd, tar_block, TAR_BLOCK_SIZE);
@@ -340,8 +374,8 @@ int main(int argc, char **argv) {
         zero_blocks = 0;
 
         struct ustar_header *hdr = (struct ustar_header *)tar_block;
-        char name[128];
-        strncpy(name, hdr->name, sizeof(name) - 1);
+        char name[sizeof(hdr->name) + 1];
+        memcpy(name, hdr->name, sizeof(hdr->name));
         name[sizeof(name) - 1] = '\0';
         uint64_t file_size = parse_octal(hdr->size, sizeof(hdr->size));
         char typeflag = hdr->typeflag ? hdr->typeflag : '0';
@@ -361,11 +395,28 @@ int main(int argc, char **argv) {
         } else if (opt_extract) {
             if (opt_verbose) printf("%s\n", name);
 
-            if (typeflag == '5') {
-                mkdir(name, 0755);
+            char path[sizeof(name)], *leaf = NULL;
+            memcpy(path, name, sizeof(path));
+            int parent = extraction_parent(root, path, &leaf);
+            int out_fd = -1, error = 0;
+            if (parent < 0) {
+                error = 1;
+            } else if (typeflag == '5') {
+                if (mkdirat(parent, leaf, 0755) < 0) {
+                    int dir = openat(parent, leaf, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+                    if (dir < 0) error = 1;
+                    else close(dir);
+                }
             } else {
-                ensure_parent_dirs(name);
-                int out_fd = open(name, O_WRONLY | O_CREAT | O_TRUNC);
+                out_fd = openat(parent, leaf, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0644);
+                if (out_fd < 0) error = 1;
+            }
+            if (parent >= 0) close(parent);
+            if (error) {
+                fprintf(stderr, "tar: cannot extract %s\n", name);
+                result = 1;
+            }
+            if (typeflag != '5') {
                 if (out_fd >= 0) {
                     uint64_t rem = file_size;
                     while (rem > 0) {
@@ -391,6 +442,7 @@ int main(int argc, char **argv) {
         }
     }
 
+    if (root >= 0) close(root);
     if (tar_fd != STDIN_FILENO) close(tar_fd);
-    return 0;
+    return result;
 }
