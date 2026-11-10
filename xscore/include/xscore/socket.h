@@ -69,6 +69,7 @@ struct xscore_socket {
     uint16_t remote_port;
 
     uint32_t seq;
+    uint32_t tcp_acked_seq;
     uint32_t ack;
     uint32_t read_shutdown;
     uint32_t write_shutdown;

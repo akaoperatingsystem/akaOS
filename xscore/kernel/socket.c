@@ -319,12 +319,16 @@ int64_t xscore_socket_connect(int sock_id, uint32_t ip, uint16_t port) {
         return 0;
     }
 
-    /* TCP Connect: send SYN and await SYN+ACK */
+    /* Publish the consumed SYN sequence before receive dispatch can run. */
+    uintptr_t tcp_flags = xscore_spin_lock_irqsave(&socket_pool_lock);
     sock->seq = 1000;
+    sock->tcp_acked_seq = sock->seq;
     sock->ack = 0;
     sock->state = SOCKET_STATE_SYN_SENT;
 
     send_tcp_packet(sock, AKAOS_TCP_FLAG_SYN, 0, 0);
+    ++sock->seq;
+    xscore_spin_unlock_irqrestore(&socket_pool_lock, tcp_flags);
 
     /* Poll network for SYN-ACK */
     for (int spin = 0; spin < 200; ++spin) {
@@ -559,7 +563,9 @@ int64_t xscore_socket_accept(int sock_id, uint32_t *remote_ip, uint16_t *remote_
         if (sock_id >= 0 && sock_id < XSCORE_SOCKET_MAX &&
             socket_pool[sock_id].in_use &&
             socket_pool[sock_id].state == SOCKET_STATE_LISTEN &&
-            socket_pool[sock_id].pending_socket_id >= 0) {
+            socket_pool[sock_id].pending_socket_id >= 0 &&
+            socket_pool[socket_pool[sock_id].pending_socket_id].state ==
+                SOCKET_STATE_ESTABLISHED) {
             sock = &socket_pool[sock_id];
             child_id = sock->pending_socket_id;
             sock->pending_socket_id = -1;
@@ -687,9 +693,16 @@ int64_t xscore_socket_send(int sock_id, const void *buf, size_t len) {
         size_t remaining = len - sent;
         size_t chunk = remaining > XSCORE_TCP_MAX_PAYLOAD
             ? XSCORE_TCP_MAX_PAYLOAD : remaining;
+        uintptr_t tcp_flags = xscore_spin_lock_irqsave(&socket_pool_lock);
+        if (!sock->in_use || sock->state != SOCKET_STATE_ESTABLISHED ||
+            sock->write_shutdown) {
+            xscore_spin_unlock_irqrestore(&socket_pool_lock, tcp_flags);
+            return sent ? (int64_t)sent : -AKAOS_ENOTCONN;
+        }
         send_tcp_packet(sock, AKAOS_TCP_FLAG_ACK | AKAOS_TCP_FLAG_PSH,
                         payload + sent, chunk);
         sock->seq += (uint32_t)chunk;
+        xscore_spin_unlock_irqrestore(&socket_pool_lock, tcp_flags);
         sent += chunk;
     }
     return (int64_t)sent;
@@ -1029,7 +1042,8 @@ int xscore_socket_poll_readable(int sock_id) {
     uintptr_t flags = xscore_spin_lock_irqsave(&socket_pool_lock);
     struct xscore_socket *sock = &socket_pool[sock_id];
     if (sock->state == SOCKET_STATE_LISTEN) {
-        int readable = sock->pending_socket_id >= 0;
+        int readable = sock->pending_socket_id >= 0 &&
+            socket_pool[sock->pending_socket_id].state == SOCKET_STATE_ESTABLISHED;
         xscore_spin_unlock_irqrestore(&socket_pool_lock, flags);
         return readable;
     }
@@ -1146,96 +1160,118 @@ void xscore_socket_demux_udp(const void *packet, uint32_t len, uint32_t src_ip, 
     }
 }
 
-void xscore_socket_demux_tcp(const void *packet, uint32_t len, uint32_t src_ip, uint32_t dst_ip) {
-    (void)dst_ip;
+/* The small TCP backend accepts only the next in-order segment.  Keep all
+ * endpoint and state checks ahead of receive-buffer or lifecycle changes. */
+static void socket_demux_tcp_locked(const void *packet, uint32_t len,
+                                    uint32_t src_ip, uint32_t dst_ip) {
     if (!packet || len < sizeof(struct akaos_tcp_hdr)) return;
-    const struct akaos_tcp_hdr *tcp = (const struct akaos_tcp_hdr *)packet;
+    const struct akaos_tcp_hdr *tcp = packet;
     uint16_t dst_port = htons16(tcp->dst_port);
     uint16_t src_port = htons16(tcp->src_port);
     uint32_t seq = htonl32(tcp->seq);
     uint32_t ack = htonl32(tcp->ack);
     uint8_t flags = tcp->flags;
-    uint8_t hlen = (uint8_t)(((tcp->data_offset_reserved >> 4) & 0x0f) * 4);
-    if (hlen > len) return;
+    uint32_t hlen = (tcp->data_offset_reserved >> 4) * 4U;
+    if (hlen < sizeof(*tcp) || hlen > len) return;
     uint32_t payload_len = len - hlen;
     const uint8_t *payload = (const uint8_t *)packet + hlen;
 
+    /* Connections take precedence over listeners, including retransmits. */
     for (int i = 0; i < XSCORE_SOCKET_MAX; ++i) {
-        if (!socket_pool[i].in_use || socket_pool[i].type != AKAOS_SOCK_STREAM) continue;
         struct xscore_socket *s = &socket_pool[i];
+        if (!s->in_use || s->domain != AKAOS_AF_INET ||
+            s->type != AKAOS_SOCK_STREAM || s->protocol != AKAOS_IPPROTO_TCP ||
+            s->state == SOCKET_STATE_LISTEN ||
+            s->local_ip != dst_ip || s->remote_ip != src_ip ||
+            s->local_port != dst_port || s->remote_port != src_port) continue;
 
-        /* Case 1: Listening socket receiving SYN */
-        if (s->state == SOCKET_STATE_LISTEN && s->local_port == dst_port && (flags & AKAOS_TCP_FLAG_SYN)) {
-            /* Create or use child socket */
-            int child = -1;
-            for (int c = 0; c < XSCORE_SOCKET_MAX; ++c) {
-                if (!socket_pool[c].in_use) { child = c; break; }
-            }
-            if (child >= 0) {
-                struct xscore_socket *cs = &socket_pool[child];
-                memset(cs, 0, sizeof(*cs));
-                cs->in_use = 1;
-                cs->domain = AKAOS_AF_INET;
-                cs->type = AKAOS_SOCK_STREAM;
-                cs->protocol = AKAOS_IPPROTO_TCP;
-                cs->local_ip = dst_ip;
-                cs->local_port = dst_port;
-                cs->remote_ip = src_ip;
-                cs->remote_port = src_port;
-                cs->seq = 5000;
-                cs->ack = seq + 1;
-                cs->state = SOCKET_STATE_SYN_RECV;
-                cs->pending_socket_id = -1;
-
-                send_tcp_packet(cs, AKAOS_TCP_FLAG_SYN | AKAOS_TCP_FLAG_ACK, 0, 0);
-                cs->seq++;
-                s->pending_socket_id = child;
-            }
+        if (s->state == SOCKET_STATE_SYN_SENT) {
+            if ((flags & (AKAOS_TCP_FLAG_SYN | AKAOS_TCP_FLAG_ACK |
+                          AKAOS_TCP_FLAG_RST | AKAOS_TCP_FLAG_FIN)) !=
+                (AKAOS_TCP_FLAG_SYN | AKAOS_TCP_FLAG_ACK) ||
+                ack != s->seq || payload_len != 0U) return;
+            s->ack = seq + 1U;
+            s->tcp_acked_seq = ack;
+            s->state = SOCKET_STATE_ESTABLISHED;
+            send_tcp_packet(s, AKAOS_TCP_FLAG_ACK, 0, 0);
             return;
         }
-
-        /* Match established/connecting socket */
-        if (s->local_port == dst_port && s->remote_port == src_port) {
-            if (s->state == SOCKET_STATE_SYN_SENT && (flags & (AKAOS_TCP_FLAG_SYN | AKAOS_TCP_FLAG_ACK))) {
-                s->ack = seq + 1;
-                s->seq = ack;
-                s->state = SOCKET_STATE_ESTABLISHED;
-                send_tcp_packet(s, AKAOS_TCP_FLAG_ACK, 0, 0);
-                return;
-            }
-
-            if (s->state == SOCKET_STATE_SYN_RECV && (flags & AKAOS_TCP_FLAG_ACK)) {
-                s->state = SOCKET_STATE_ESTABLISHED;
-                return;
-            }
-
-            if (s->state == SOCKET_STATE_ESTABLISHED || s->state == SOCKET_STATE_SYN_RECV) {
-                if (flags & AKAOS_TCP_FLAG_RST) {
-                    s->state = SOCKET_STATE_CLOSED;
-                    return;
-                }
-
-                if (payload_len > 0) {
-                    for (uint32_t b = 0; b < payload_len; ++b) {
-                        if (s->rx_count < XSCORE_SOCKET_BUF_SIZE) {
-                            s->rx_buf[s->rx_head] = payload[b];
-                            s->rx_head = (s->rx_head + 1) % XSCORE_SOCKET_BUF_SIZE;
-                            s->rx_count++;
-                        }
-                    }
-                    s->ack = seq + payload_len;
-                    send_tcp_packet(s, AKAOS_TCP_FLAG_ACK, 0, 0);
-                }
-
-                if (flags & AKAOS_TCP_FLAG_FIN) {
-                    s->ack = seq + payload_len + 1;
-                    send_tcp_packet(s, AKAOS_TCP_FLAG_ACK, 0, 0);
-                    s->state = SOCKET_STATE_CLOSE_WAIT;
-                }
-                return;
-            }
+        if (s->state != SOCKET_STATE_SYN_RECV &&
+            s->state != SOCKET_STATE_ESTABLISHED) return;
+        if (seq != s->ack) return;
+        if (flags & AKAOS_TCP_FLAG_RST) {
+            if (flags & (AKAOS_TCP_FLAG_SYN | AKAOS_TCP_FLAG_FIN)) return;
+            s->state = SOCKET_STATE_CLOSED;
+            return;
         }
+        if (!(flags & AKAOS_TCP_FLAG_ACK) || (flags & AKAOS_TCP_FLAG_SYN)) return;
+        /* Unsigned distances handle sequence wrap as long as outstanding
+         * data is less than half the sequence space. */
+        if ((uint32_t)(ack - s->tcp_acked_seq) >
+            (uint32_t)(s->seq - s->tcp_acked_seq)) return;
+        if (s->state == SOCKET_STATE_SYN_RECV && ack != s->seq) return;
+        if (payload_len > XSCORE_SOCKET_BUF_SIZE - s->rx_count) return;
+
+        s->tcp_acked_seq = ack;
+        s->state = SOCKET_STATE_ESTABLISHED;
+        for (uint32_t b = 0; b < payload_len; ++b) {
+            s->rx_buf[s->rx_head] = payload[b];
+            s->rx_head = (s->rx_head + 1U) % XSCORE_SOCKET_BUF_SIZE;
+            ++s->rx_count;
+        }
+        s->ack += payload_len;
+        if (flags & AKAOS_TCP_FLAG_FIN) {
+            ++s->ack;
+            s->state = SOCKET_STATE_CLOSE_WAIT;
+        }
+        if (payload_len || (flags & AKAOS_TCP_FLAG_FIN))
+            send_tcp_packet(s, AKAOS_TCP_FLAG_ACK, 0, 0);
+        return;
     }
+
+    if ((flags & (AKAOS_TCP_FLAG_SYN | AKAOS_TCP_FLAG_ACK |
+                  AKAOS_TCP_FLAG_RST | AKAOS_TCP_FLAG_FIN)) != AKAOS_TCP_FLAG_SYN ||
+        payload_len != 0U) return;
+    for (int i = 0; i < XSCORE_SOCKET_MAX; ++i) {
+        struct xscore_socket *s = &socket_pool[i];
+        if (!s->in_use || s->domain != AKAOS_AF_INET ||
+            s->type != AKAOS_SOCK_STREAM || s->protocol != AKAOS_IPPROTO_TCP ||
+            s->state != SOCKET_STATE_LISTEN || s->local_port != dst_port ||
+            s->local_ip != dst_ip) continue;
+        if (s->pending_socket_id >= 0) return;
+        for (int c = 0; c < XSCORE_SOCKET_MAX; ++c) {
+            if (socket_pool[c].in_use) continue;
+            struct xscore_socket *cs = &socket_pool[c];
+            memset(cs, 0, sizeof(*cs));
+            cs->in_use = 1;
+            cs->domain = AKAOS_AF_INET;
+            cs->type = AKAOS_SOCK_STREAM;
+            cs->protocol = AKAOS_IPPROTO_TCP;
+            cs->local_ip = dst_ip;
+            cs->local_port = dst_port;
+            cs->remote_ip = src_ip;
+            cs->remote_port = src_port;
+            cs->seq = 5000;
+            cs->tcp_acked_seq = cs->seq;
+            cs->ack = seq + 1U;
+            cs->state = SOCKET_STATE_SYN_RECV;
+            cs->pending_socket_id = -1;
+            cs->peer_socket_id = -1;
+            xscore_spinlock_init(&cs->rx_consumer_lock);
+            send_tcp_packet(cs, AKAOS_TCP_FLAG_SYN | AKAOS_TCP_FLAG_ACK, 0, 0);
+            ++cs->seq;
+            s->pending_socket_id = c;
+            return;
+        }
+        return;
+    }
+}
+
+void xscore_socket_demux_tcp(const void *packet, uint32_t len,
+                             uint32_t src_ip, uint32_t dst_ip) {
+    uintptr_t flags = xscore_spin_lock_irqsave(&socket_pool_lock);
+    socket_demux_tcp_locked(packet, len, src_ip, dst_ip);
+    xscore_spin_unlock_irqrestore(&socket_pool_lock, flags);
 }
 
 static void sock_append_str(char *buf, size_t cap, size_t *used, const char *s) {
