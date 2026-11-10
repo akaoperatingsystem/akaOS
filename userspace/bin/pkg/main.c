@@ -15,7 +15,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-#define PKG_VERSION "1.1.0"
+#define PKG_VERSION "1.1.1"
 #define DEFAULT_CONF_PATH "/etc/pkg.conf"
 #define DEFAULT_MIRROR "http://mirror.zyqu.pl/akaos"
 #define DEFAULT_CACHEDIR "/var/cache/pkg"
@@ -62,6 +62,7 @@ struct pkg_info {
 
 struct config {
     char mirror[256];
+    char metadata_sha256[65];
     char arch[32];
     char cachedir[128];
     char dbdir[128];
@@ -231,6 +232,15 @@ static int file_sha256(const char *file_path, char out_hex[65]) {
     return 0;
 }
 
+/* Digests used as trust anchors must come from local configuration, never HTTP. */
+static int valid_sha256(const char *hex) {
+    if (strlen(hex) != 64) return 0;
+    for (int i = 0; i < 64; i++) {
+        if (!isxdigit((unsigned char)hex[i])) return 0;
+    }
+    return 1;
+}
+
 /* --- State --- */
 
 static struct config cfg;
@@ -382,6 +392,10 @@ static void load_config(void) {
             size_t mlen = strlen(val);
             while (mlen > 0 && val[mlen - 1] == '/') val[--mlen] = '\0';
             strncpy(cfg.mirror, val, sizeof(cfg.mirror) - 1);
+        } else if (strcmp(key, "metadata_sha256") == 0) {
+            /* Reject oversized pins instead of accepting a truncated digest. */
+            cfg.metadata_sha256[0] = '\0';
+            if (strlen(val) == 64) memcpy(cfg.metadata_sha256, val, 65);
         } else if (strcmp(key, "arch") == 0) {
             strncpy(cfg.arch, val, sizeof(cfg.arch) - 1);
         } else if (strcmp(key, "cachedir") == 0) {
@@ -397,7 +411,7 @@ static void load_config(void) {
 
 static int http_download(const char *url, const char *dest_file, int verbose) {
     if (strncmp(url, "https://", 8) == 0) {
-        fprintf(stderr, "pkg: error: HTTPS is not yet supported. Please configure plain HTTP: %s\n", url);
+        fprintf(stderr, "pkg: error: HTTPS transport is not supported: %s\n", url);
         return -1;
     }
 
@@ -572,6 +586,20 @@ static int http_download(const char *url, const char *dest_file, int verbose) {
     return 0;
 }
 
+static int verify_metadata(const char *path) {
+    char actual[65];
+    if (!valid_sha256(cfg.metadata_sha256)) {
+        fprintf(stderr, "pkg: error: configure metadata_sha256 from an independently trusted source\n");
+        return -1;
+    }
+    if (file_sha256(path, actual) != 0 ||
+        strcasecmp(actual, cfg.metadata_sha256) != 0) {
+        fprintf(stderr, "pkg: error: repository metadata authentication failed\n");
+        return -1;
+    }
+    return 0;
+}
+
 /* --- Database Parsing --- */
 
 static void load_installed_database(void) {
@@ -634,13 +662,14 @@ static struct pkg_info *find_installed_pkg(const char *name) {
     return NULL;
 }
 
-static void load_repo_database(void) {
+static int load_repo_database(void) {
     repo_pkg_count = 0;
     char path[256];
     snprintf(path, sizeof(path), "%s/packages.db", cfg.dbdir);
 
+    if (verify_metadata(path) != 0) return -1;
     FILE *f = fopen(path, "r");
-    if (!f) return;
+    if (!f) return -1;
 
     char line[MAX_LINE];
     struct pkg_info current;
@@ -691,6 +720,7 @@ static void load_repo_database(void) {
     }
 
     fclose(f);
+    return 0;
 }
 
 static struct pkg_info *find_repo_pkg(const char *name) {
@@ -945,12 +975,27 @@ static int cmd_update(void) {
     ensure_dir_exists(cfg.dbdir);
     snprintf(dest, sizeof(dest), "%s/packages.db", cfg.dbdir);
 
-    if (http_download(url, dest, 0) != 0) {
+    if (!valid_sha256(cfg.metadata_sha256)) {
+        fprintf(stderr, "pkg: error: configure metadata_sha256 from an independently trusted source\n");
+        return 1;
+    }
+    char candidate[272];
+    snprintf(candidate, sizeof(candidate), "%s.new", dest);
+    if (http_download(url, candidate, 0) != 0) {
         fprintf(stderr, "[pkg] Failed to update repository database from %s\n", url);
         return 1;
     }
 
-    load_repo_database();
+    if (verify_metadata(candidate) != 0) {
+        unlink(candidate);
+        return 1;
+    }
+    if (rename(candidate, dest) != 0) {
+        fprintf(stderr, "pkg: error: cannot publish authenticated metadata\n");
+        unlink(candidate);
+        return 1;
+    }
+    if (load_repo_database() != 0) return 1;
     printf("[pkg] Metadata synchronized successfully. (%d packages available)\n", repo_pkg_count);
     return 0;
 }
@@ -962,6 +1007,10 @@ static int install_single_package(const char *pkg_name) {
         return 1;
     }
 
+    if (!valid_sha256(pkg->sha256)) {
+        fprintf(stderr, "[pkg] error: missing or invalid SHA-256 for %s\n", pkg_name);
+        return 1;
+    }
     struct pkg_info *inst = find_installed_pkg(pkg_name);
     if (inst) {
         if (compare_versions(inst->version, pkg->version) >= 0) {
@@ -1002,7 +1051,7 @@ static int install_single_package(const char *pkg_name) {
         }
     }
 
-    /* Verify SHA-256 checksum if provided by repository */
+    /* Verify the mandatory digest from authenticated repository metadata. */
     if (pkg->sha256[0] != '\0') {
         char actual_sha[65];
         if (file_sha256(cached_file, actual_sha) != 0) {
@@ -1042,7 +1091,7 @@ static int install_single_package(const char *pkg_name) {
 }
 
 static int cmd_install(const char *target_pkg) {
-    load_repo_database();
+    if (load_repo_database() != 0) return 1;
     load_installed_database();
 
     if (repo_pkg_count == 0) {
@@ -1074,7 +1123,7 @@ static int cmd_install(const char *target_pkg) {
 }
 
 static int cmd_upgrade(void) {
-    load_repo_database();
+    if (load_repo_database() != 0) return 1;
     load_installed_database();
 
     if (installed_pkg_count == 0) {
@@ -1184,7 +1233,7 @@ static int cmd_list(void) {
 }
 
 static int cmd_search(const char *keyword) {
-    load_repo_database();
+    if (load_repo_database() != 0) return 1;
     if (repo_pkg_count == 0) {
         printf("[pkg] No packages in database. Run 'pkg update' first.\n");
         return 0;
@@ -1211,7 +1260,7 @@ static int cmd_search(const char *keyword) {
 }
 
 static int cmd_info(const char *pkg_name) {
-    load_repo_database();
+    if (load_repo_database() != 0) return 1;
     load_installed_database();
 
     struct pkg_info *repo = find_repo_pkg(pkg_name);
