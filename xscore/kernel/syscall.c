@@ -1876,7 +1876,7 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
             !xscore_user_range_prepare(argument1, (size_t)argument2, 1)) {
             return (uint64_t)-AKAOS_EFAULT;
         }
-        uint32_t pty_number = 0, slave_node = 0;
+        uint32_t pty_number = 0;
         if (!xscore_fd_pts_number(table, (int)argument0, &pty_number) ||
             pty_number > 9) return (uint64_t)-AKAOS_ENOTTY;
         char path[] = "/dev/pts/0";
