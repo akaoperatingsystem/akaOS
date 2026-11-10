@@ -1013,6 +1013,16 @@ int xscore_user_process_self_test(void) {
     uint64_t base_suf_status = UINT64_MAX;
     if (!p_base_suf || !xscore_process_wait(p_base_suf, &base_suf_status) || base_suf_status != 0 || !xscore_process_reap(p_base_suf)) return 0;
 
+    const char *dirname_args[] = {"/bin/dirname", "/usr/bin/trail", 0};
+    struct xscore_process *p_dirname = xscore_process_create_path_args("/bin/dirname", 2, dirname_args);
+    uint64_t dirname_status = UINT64_MAX;
+    if (!p_dirname || !xscore_process_wait(p_dirname, &dirname_status) || dirname_status != 0 || !xscore_process_reap(p_dirname)) return 0;
+    const char *dirname_slash_args[] = {"/bin/dirname", "/usr/bin/", 0};
+    struct xscore_process *p_dirname_slash = xscore_process_create_path_args("/bin/dirname", 2, dirname_slash_args);
+    uint64_t dirname_slash_status = UINT64_MAX;
+    if (!p_dirname_slash || !xscore_process_wait(p_dirname_slash, &dirname_slash_status) || dirname_slash_status != 0 || !xscore_process_reap(p_dirname_slash)) return 0;
+    xscore_serial_write("[INFO] Path component extraction utility dirname verified\n");
+
     const char *base32_args[] = {"/bin/base32", "/etc/motd", 0};
     struct xscore_process *p_b32 = xscore_process_create_path_args("/bin/base32", 2, base32_args);
     uint64_t b32_status = UINT64_MAX;

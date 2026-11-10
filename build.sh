@@ -1232,6 +1232,13 @@ build_upstream_cairo_program() {
         -I"$BUILD_DIR/upstream-sysroot/pixman-0.46.4-x86_64/usr/local/include/pixman-1" \
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
         -c "$source" -o "$object"
+    local -a cairo_glib_libs=()
+    if [[ -f "$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0" ]]; then
+        cairo_glib_libs+=("$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0")
+    fi
+    if [[ -f "$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0" ]]; then
+        cairo_glib_libs+=("$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0")
+    fi
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
         -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
@@ -1240,8 +1247,7 @@ build_upstream_cairo_program() {
         "${gobject_libraries[@]}" \
         "$UPSTREAM_CAIRO_BUILD/src/libcairo.so.2.11806.6" \
         "$UPSTREAM_PIXMAN_BUILD/pixman/libpixman-1.so.0.46.4" \
-        "$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0" \
-        "$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0" \
+        "${cairo_glib_libs[@]}" \
         "${font_libraries[@]}" \
         "$BUILD_DIR/libm.so.6" "$BUILD_DIR/libc.so.6" \
         -o "$output"
@@ -1825,6 +1831,7 @@ build_user_program aspell "$ROOT_DIR/userspace/bin/aspell/main.c" ASPELL.ELF
 build_user_program at "$ROOT_DIR/userspace/bin/at/main.c" AT.ELF
 build_user_program awk "$ROOT_DIR/userspace/bin/awk/main.c" AWK.ELF
 build_user_program basename "$ROOT_DIR/userspace/bin/basename/main.c" BASENAME.ELF
+build_user_program dirname "$ROOT_DIR/userspace/bin/dirname/main.c" DIRNAME.ELF
 build_user_program base32 "$ROOT_DIR/userspace/bin/base32/main.c" BASE32.ELF
 build_user_program base64 "$ROOT_DIR/userspace/bin/base64/main.c" BASE64.ELF
 build_user_program bc "$ROOT_DIR/userspace/bin/bc/main.c" BC.ELF
@@ -2306,7 +2313,7 @@ build_runtime_library libgtk-4.so 5
 build_runtime_library libQt6Core.so 6
 build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
-for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
+for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
     # ET_DYN hello-pie legitimately carries relative relocations; the kernel
     # applies those at its fixed native load base. Reject only relocation
     # kinds outside that bounded ABI instead of rejecting the section itself.
@@ -3522,6 +3529,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/awk:$BUILD_DIR/AWK.ELF:exec" \
     --file "/bin/gawk:$BUILD_DIR/AWK.ELF:exec" \
     --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec" \
+    --file "/bin/dirname:$BUILD_DIR/DIRNAME.ELF:exec" \
     --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec" \
     --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec" \
     --file "/bin/bc:$BUILD_DIR/BC.ELF:exec" \

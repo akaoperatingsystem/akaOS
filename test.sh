@@ -232,6 +232,7 @@ grep -Fq "[INFO] Command scheduling suite at/atq/atrm/batch verified" "$TEST_LOG
 grep -Fq "[INFO] Scheduled command daemon cron verified" "$TEST_LOG"
 grep -Fq "[INFO] Text processing and pattern scanning utility awk verified" "$TEST_LOG"
 grep -Fq "[INFO] Path stripping utility basename verified" "$TEST_LOG"
+grep -Fq "[INFO] Path component extraction utility dirname verified" "$TEST_LOG"
 grep -Fq "[INFO] Base32 encoding and decoding utility base32 verified" "$TEST_LOG"
 grep -Fq "[INFO] Base64 encoding and decoding utility base64 verified" "$TEST_LOG"
 grep -Fq "[INFO] GNU Bourne-Again SHell bash verified" "$TEST_LOG"
