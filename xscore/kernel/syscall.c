@@ -31,6 +31,16 @@
 void *memcpy(void *destination, const void *source, size_t count);
 void *memset(void *destination, int value, size_t count);
 
+static int authorize_device_open(uint32_t cwd_node, const char *path,
+                                 uint64_t flags) {
+    uint64_t access = flags & UINT64_C(3);
+    if (access > AKAOS_O_RDWR) return -AKAOS_EINVAL;
+    uint32_t requested = 0U;
+    if (access != AKAOS_O_WRONLY) requested |= 4U;
+    if (access != AKAOS_O_RDONLY) requested |= 2U;
+    return xscore_vfs_access_at(cwd_node, path, requested);
+}
+
 static int64_t open_character_device(struct xscore_fd_table *table,
                                      enum xscore_device_kind kind,
                                      uint64_t flags) {
@@ -949,6 +959,10 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
         path[argument1] = 0;
         enum xscore_device_kind device =
             xscore_vfs_device_kind_at(cwd_node, path);
+        if (device != XSCORE_DEVICE_NONE) {
+            int error = authorize_device_open(cwd_node, path, argument2);
+            if (error != 0) return (uint64_t)(int64_t)error;
+        }
         if (device == XSCORE_DEVICE_TTY1 || device == XSCORE_DEVICE_NULL ||
             device == XSCORE_DEVICE_ZERO || device == XSCORE_DEVICE_RANDOM) {
             return (uint64_t)open_character_device(table, device, argument2);
@@ -1049,6 +1063,10 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
 
         enum xscore_device_kind device =
             xscore_vfs_device_kind_at(open_cwd, path);
+        if (device != XSCORE_DEVICE_NONE) {
+            int error = authorize_device_open(open_cwd, path, args.flags);
+            if (error != 0) return (uint64_t)(int64_t)error;
+        }
         if (device == XSCORE_DEVICE_TTY1 || device == XSCORE_DEVICE_NULL ||
             device == XSCORE_DEVICE_ZERO || device == XSCORE_DEVICE_RANDOM) {
             return (uint64_t)open_character_device(table, device, args.flags);
