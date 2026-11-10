@@ -35,6 +35,7 @@ done
 test_mode=0
 verbose_mode=0
 build_kernel=1
+boot_mode=splash
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --test)
@@ -44,6 +45,17 @@ while [[ $# -gt 0 ]]; do
         --verbose)
             verbose_mode=1
             shift
+            ;;
+        --boot-mode)
+            if [[ $# -ge 2 ]]; then
+                boot_mode="$2"
+                if [[ "$boot_mode" == "text" || "$boot_mode" == "verbose" ]]; then
+                    verbose_mode=1
+                fi
+                shift 2
+            else
+                shift
+            fi
             ;;
         --no-build)
             build_kernel=0
