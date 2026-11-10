@@ -76,6 +76,27 @@ with tempfile.TemporaryDirectory(prefix='akash-restricted-') as temp:
                                 capture_output=True, text=True, timeout=5)
         return result
 
+    # Function definitions must preserve 63-byte names and reject longer ones
+    # before registration or execution of their bodies (including in scripts).
+    for form in ('{name}() {{', 'function {name} {{', 'function {name}() {{'):
+        for length in (1, 62, 63, 64, 65, 128, 240):
+            name = 'f' * length
+            command = form.format(name=name) + ' echo BODY; }; ' + name
+            for script_mode in (False, True):
+                if script_mode:
+                    script = temp / 'functions.sh'
+                    script.write_text(command + '\n')
+                    result = subprocess.run([str(binary), str(script)], env=env,
+                                            capture_output=True, text=True, timeout=5)
+                else:
+                    result = run(command, False)
+                if length <= 63:
+                    assert result.returncode == 0 and result.stdout == 'BODY\n', result
+                    assert not result.stderr, result
+                else:
+                    assert result.returncode == 2 and not result.stdout, result
+                    assert result.stderr == 'akash: syntax error: function name too long\n', result
+
     for path in (str(outside / 'probe'), './outside/probe', 'outside/probe',
                  '../' + temp.name + '/outside/probe'):
         for command in (f'{path} ESCAPED', f'command {path} ESCAPED',
