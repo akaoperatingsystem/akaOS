@@ -62,6 +62,15 @@ static int loop_continue_count = 0;
 
 /* Shell invocation mode flags */
 static int opt_restricted_shell = 0;
+/* All user-selected external executables pass through this boundary. */
+static int shell_execvp(const char *file, char *const argv[]) {
+    if (opt_restricted_shell && strchr(file, '/')) {
+        errno = EACCES;
+        return -1;
+    }
+    return execvp(file, argv);
+}
+
 static int opt_login_shell = 0;
 static int opt_interactive_shell = -1; /* -1 = auto-detect */
 static int opt_posix_mode = 0;
@@ -305,6 +314,15 @@ static struct shell_var *find_shell_var_entry(const char *name) {
 }
 
 static int set_shell_var_attributes(const char *name, const char *val, uint32_t set_flags, uint32_t clear_flags) {
+    /* Check both the requested name and any recursively resolved nameref. */
+    if (opt_restricted_shell &&
+        (strcmp(name, "SHELL") == 0 || strcmp(name, "PATH") == 0 ||
+         strcmp(name, "ENV") == 0 || strcmp(name, "BASH_ENV") == 0)) {
+        write_str(STDERR_FILENO, "akash: ");
+        write_str(STDERR_FILENO, name);
+        write_str(STDERR_FILENO, ": readonly variable in restricted mode\n");
+        return -1;
+    }
     /* Handle nameref */
     struct shell_var *entry = find_shell_var_entry(name);
     if (entry && (entry->flags & VAR_ATTR_NAMEREF) && !(set_flags & VAR_ATTR_NAMEREF) && !(clear_flags & VAR_ATTR_NAMEREF)) {
@@ -1066,8 +1084,7 @@ static int execute_builtin(int argc, char *argv[]) {
     if (argc == 1 && strchr(argv[0], '=')) {
         char *eq = strchr(argv[0], '=');
         *eq = '\0';
-        set_shell_var(argv[0], eq + 1);
-        last_exit_status = 0;
+        last_exit_status = set_shell_var_attributes(argv[0], eq + 1, 0, 0) != 0;
         return 1;
     }
 
@@ -1076,21 +1093,13 @@ static int execute_builtin(int argc, char *argv[]) {
             char *eq = strchr(argv[1], '=');
             if (eq) {
                 *eq = '\0';
-                if (opt_restricted_shell &&
-                    (strcmp(argv[1], "SHELL") == 0 || strcmp(argv[1], "PATH") == 0 ||
-                     strcmp(argv[1], "ENV") == 0 || strcmp(argv[1], "BASH_ENV") == 0)) {
-                    write_str(STDERR_FILENO, "export: ");
-                    write_str(STDERR_FILENO, argv[1]);
-                    write_str(STDERR_FILENO, ": readonly variable in restricted mode\n");
-                    last_exit_status = 1;
-                    return 1;
-                }
-                set_shell_var_attributes(argv[1], eq + 1, VAR_ATTR_EXPORT, 0);
+                last_exit_status = set_shell_var_attributes(argv[1], eq + 1, VAR_ATTR_EXPORT, 0) != 0;
             } else {
-                set_shell_var_attributes(argv[1], NULL, VAR_ATTR_EXPORT, 0);
+                last_exit_status = set_shell_var_attributes(argv[1], NULL, VAR_ATTR_EXPORT, 0) != 0;
             }
+        } else {
+            last_exit_status = 0;
         }
-        last_exit_status = 0;
         return 1;
     }
 
@@ -1338,6 +1347,12 @@ static int execute_builtin(int argc, char *argv[]) {
             return 1;
         }
 
+        if (opt_restricted_shell && opt_p) {
+            write_str(STDERR_FILENO, "akash: command: -p: restricted\n");
+            last_exit_status = 1;
+            return 1;
+        }
+
         const char *search_path = opt_p ? "/bin:/usr/bin" : getenv("PATH");
         if (!search_path) search_path = "/bin:/usr/bin";
 
@@ -1399,7 +1414,7 @@ static int execute_builtin(int argc, char *argv[]) {
             if (opt_p) {
                 setenv("PATH", "/bin:/usr/bin", 1);
             }
-            execvp(argv[idx], &argv[idx]);
+            shell_execvp(argv[idx], &argv[idx]);
             int exec_error = errno;
             write_str(STDERR_FILENO, argv[idx]);
             if (exec_error == ENOENT) {
@@ -2446,7 +2461,7 @@ static int execute_single_stage(struct command_stage *stage) {
         if (!background) {
             (void)tcsetpgrp(STDIN_FILENO, getpid());
         }
-        execvp(stage->argv[0], stage->argv);
+        shell_execvp(stage->argv[0], stage->argv);
         int exec_error = errno;
         write_str(STDERR_FILENO, stage->argv[0]);
         if (exec_error == ENOENT) {
@@ -2576,7 +2591,7 @@ static int execute_pipeline(struct command_stage stages[], int num_stages) {
             close(saved_in);
             close(saved_out);
             (void)setpgid(0, pipeline_pgid);
-            execvp(stages[i].argv[0], stages[i].argv);
+            shell_execvp(stages[i].argv[0], stages[i].argv);
             int exec_error = errno;
             write_str(STDERR_FILENO, stages[i].argv[0]);
             if (exec_error == ENOENT) {
