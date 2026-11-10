@@ -73,7 +73,7 @@ void xscore_fd_transfer_release(struct xscore_file *transfer);
 int xscore_fd_is_tty(struct xscore_fd_table *table, int descriptor);
 int64_t xscore_fd_open_ptmx(struct xscore_fd_table *table);
 int64_t xscore_fd_open_pts(struct xscore_fd_table *table, uint32_t number,
-                           int readable, int writable);
+                           uint32_t slave_node, int readable, int writable);
 int xscore_fd_pts_number(struct xscore_fd_table *table, int descriptor,
                          uint32_t *number);
 int64_t xscore_fd_ioctl(struct xscore_fd_table *table, int descriptor,

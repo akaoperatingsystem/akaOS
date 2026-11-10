@@ -993,14 +993,15 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
                 access != AKAOS_O_RDONLY);
         }
         if (device == XSCORE_DEVICE_PTS) {
-            uint32_t pty_number = 0;
-            if (!xscore_vfs_device_number_at(cwd_node, path, &pty_number)) {
+            uint32_t pty_number = 0, slave_node = 0;
+            if (!xscore_vfs_device_number_at(cwd_node, path,
+                                              &pty_number, &slave_node)) {
                 return (uint64_t)-AKAOS_ENODEV;
             }
             uint64_t access = argument2 & UINT64_C(3);
             if (access > AKAOS_O_RDWR) return (uint64_t)-AKAOS_EINVAL;
             return (uint64_t)xscore_fd_open_pts(
-                table, pty_number, access != AKAOS_O_WRONLY,
+                table, pty_number, slave_node, access != AKAOS_O_WRONLY,
                 access != AKAOS_O_RDONLY);
         }
         return (uint64_t)xscore_vfs_open_at(table, cwd_node, path, argument2, 0644);
@@ -1084,13 +1085,14 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
                 access != AKAOS_O_RDONLY);
         }
         if (device == XSCORE_DEVICE_PTS) {
-            uint32_t pty_number = 0U;
-            if (!xscore_vfs_device_number_at(open_cwd, path, &pty_number))
+            uint32_t pty_number = 0U, slave_node = 0U;
+            if (!xscore_vfs_device_number_at(open_cwd, path,
+                                              &pty_number, &slave_node))
                 return (uint64_t)-AKAOS_ENODEV;
             uint64_t access = args.flags & UINT32_C(3);
             if (access > AKAOS_O_RDWR) return (uint64_t)-AKAOS_EINVAL;
             return (uint64_t)xscore_fd_open_pts(
-                table, pty_number, access != AKAOS_O_WRONLY,
+                table, pty_number, slave_node, access != AKAOS_O_WRONLY,
                 access != AKAOS_O_RDONLY);
         }
         return (uint64_t)xscore_vfs_open_at(table, open_cwd, path,
@@ -1856,7 +1858,7 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
             !xscore_user_range_prepare(argument1, (size_t)argument2, 1)) {
             return (uint64_t)-AKAOS_EFAULT;
         }
-        uint32_t pty_number = 0;
+        uint32_t pty_number = 0, slave_node = 0;
         if (!xscore_fd_pts_number(table, (int)argument0, &pty_number) ||
             pty_number > 9) return (uint64_t)-AKAOS_ENOTTY;
         char path[] = "/dev/pts/0";
