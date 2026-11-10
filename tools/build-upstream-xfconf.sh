@@ -23,7 +23,7 @@ STAGE_PREFIX="$STAGE/usr/local"
 CC_WRAPPER="$ROOT_DIR/tools/akaos-cc-x86_64.sh"
 HOST_TOOLS="$HOME/.cache/akaos/host-glib-tools"
 
-for command_name in curl sha256sum tar clang pkg-config make python3; do
+for command_name in curl sha256sum tar clang pkg-config make python3 dpkg-deb mktemp; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
         echo "Missing upstream xfconf build tool: $command_name" >&2
         exit 2
@@ -51,11 +51,20 @@ done
 
 # Ensure host-side glib tools (gdbus-codegen and glib-genmarshal) are available in PATH
 if [[ ! -x "$HOST_TOOLS/usr/bin/glib-genmarshal" || ! -x "$HOST_TOOLS/usr/bin/gdbus-codegen" ]]; then
-    mkdir -p "$HOST_TOOLS"
-    if [[ ! -f "/tmp/glib-dev-bin-deb12.deb" ]]; then
-        curl -fsSL "https://deb.debian.org/debian/pool/main/g/glib2.0/libglib2.0-dev-bin_2.74.6-2+deb12u9_amd64.deb" -o "/tmp/glib-dev-bin-deb12.deb"
-    fi
-    dpkg-deb -x /tmp/glib-dev-bin-deb12.deb "$HOST_TOOLS"
+    (
+        host_tools_tmp="$(mktemp -d)"
+        trap 'rm -rf -- "$host_tools_tmp"' EXIT
+        host_tools_archive="$host_tools_tmp/glib-dev-bin.deb"
+        curl -fsSL "https://deb.debian.org/debian/pool/main/g/glib2.0/libglib2.0-dev-bin_2.74.6-2+deb12u9_amd64.deb" -o "$host_tools_archive"
+        # SHA-256 from Debian bookworm's Packages index for this exact package.
+        host_tools_sha="$(sha256sum "$host_tools_archive" | awk '{print $1}')"
+        if [[ "$host_tools_sha" != "02dc46a3ab08d194e370a0d7ff0d7d92700478658948040a56290e97a030a5c5" ]]; then
+            echo "Checksum mismatch for $host_tools_archive" >&2
+            exit 1
+        fi
+        mkdir -p "$HOST_TOOLS"
+        dpkg-deb -x "$host_tools_archive" "$HOST_TOOLS"
+    )
 fi
 export PATH="$HOST_TOOLS/usr/bin:$PATH"
 
