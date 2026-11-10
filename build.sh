@@ -3744,6 +3744,8 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/bios.c"
     "$ROOT_DIR/xscore/kernel/acpi.c"
     "$ROOT_DIR/xscore/kernel/usb.c"
+    "$ROOT_DIR/xscore/kernel/ahci.c"
+    "$ROOT_DIR/xscore/kernel/storage.c"
     "$ROOT_DIR/xscore/arch/x86_64/tables.c"
     "$ROOT_DIR/xscore/arch/x86_64/stack.c"
     "$ROOT_DIR/xscore/arch/x86_64/apic.c"

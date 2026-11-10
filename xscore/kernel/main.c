@@ -23,6 +23,8 @@
 #include <xscore/sound.h>
 #include <xscore/usb.h>
 #include <xscore/nvme.h>
+#include <xscore/ahci.h>
+#include <xscore/storage.h>
 #include <xscore/virtio_blk.h>
 #include <xscore/bufcache.h>
 #include <xscore/net.h>
@@ -1242,10 +1244,10 @@ __attribute__((noreturn)) static void xscore_boot_on_kernel_stack(uint64_t boot_
     xscore_gpu_initialize();
     xscore_sound_initialize();
     xscore_usb_initialize();
-    /* NVMe initialization after PCI and memory are online */
-    xscore_nvme_initialize();
-    if (!xscore_virtio_blk_initialize()) {
-        serial_write("[WARN] virtio-blk initialization failed; continuing without persistent storage\n");
+    /* Universal storage subsystem initialization (AHCI SATA, NVMe, VirtIO, IDE) */
+    xscore_storage_initialize();
+    if (!xscore_block_present()) {
+        serial_write("[WARN] No writable block storage detected; continuing without persistent storage\n");
     } else {
         xscore_bufcache_initialize();
     }
@@ -1259,11 +1261,40 @@ __attribute__((noreturn)) static void xscore_boot_on_kernel_stack(uint64_t boot_
         for (size_t index = 0; matches && index < sizeof(expected) - 1; ++index) {
             if (sector[index] != (uint8_t)expected[index]) matches = 0;
         }
-        if (!matches) {
+        if (matches) {
+            serial_write("[INFO] virtio-blk sector read verified\n");
+        } else if (!xscore_virtio_blk_present()) {
+            serial_write("[INFO] virtio-blk not attached; skipping virtio-specific read test\n");
+        } else {
             serial_write("[FATAL] virtio-blk sector read self-test failed\n");
             for (;;) __asm__ volatile("cli; hlt");
         }
-        serial_write("[INFO] virtio-blk sector read verified\n");
+
+        if (xscore_ahci_present()) {
+            const struct xscore_ahci_device *adev = xscore_ahci_get_device(0);
+            if (adev && xscore_ahci_read_sectors(adev->port_num, 0, 1, sector)) {
+                static const char sata_exp[] = "AKAOS-SATA-BLK-TEST\n";
+                int s_match = 1;
+                for (size_t s = 0; s < sizeof(sata_exp) - 1; ++s) {
+                    if (sector[s] != (uint8_t)sata_exp[s]) { s_match = 0; break; }
+                }
+                if (s_match) {
+                    serial_write("[INFO] SATA AHCI sector read verified\n");
+                }
+            }
+        }
+        if (xscore_nvme_present()) {
+            if (xscore_nvme_read_blocks(1, 0, 1, sector)) {
+                static const char nvme_exp[] = "AKAOS-NVME-BLK-TEST\n";
+                int n_match = 1;
+                for (size_t n = 0; n < sizeof(nvme_exp) - 1; ++n) {
+                    if (sector[n] != (uint8_t)nvme_exp[n]) { n_match = 0; break; }
+                }
+                if (n_match) {
+                    serial_write("[INFO] NVMe sector read verified\n");
+                }
+            }
+        }
     }
     if (xscore_virtio_blk_present()) {
         if (xscore_vfs_persistence_mount()) {

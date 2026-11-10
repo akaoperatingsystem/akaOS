@@ -51,6 +51,8 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/audio_drivers.c"
     "$ROOT_DIR/xscore/kernel/acpi.c"
     "$ROOT_DIR/xscore/kernel/usb.c"
+    "$ROOT_DIR/xscore/kernel/ahci.c"
+    "$ROOT_DIR/xscore/kernel/storage.c"
     "$ROOT_DIR/xscore/kernel/audio.c"
     "$ROOT_DIR/xscore/kernel/net.c"
     "$ROOT_DIR/xscore/kernel/socket.c"

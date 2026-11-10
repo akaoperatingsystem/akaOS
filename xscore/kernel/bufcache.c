@@ -1,6 +1,7 @@
 #include <xscore/bufcache.h>
 #include <xscore/virtio_blk.h>
 #include <xscore/nvme.h>
+#include <xscore/ahci.h>
 #include <xscore/serial.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -16,23 +17,41 @@ struct xscore_buf_entry {
 };
 
 int xscore_block_present(void) {
-    return xscore_virtio_blk_present() || xscore_nvme_block_present();
+    return xscore_virtio_blk_present() || xscore_nvme_block_present() || xscore_ahci_present();
 }
 
 uint64_t xscore_block_sector_count(void) {
     if (xscore_virtio_blk_present()) return xscore_virtio_blk_sector_count();
     if (xscore_nvme_block_present()) return xscore_nvme_sector_count();
+    if (xscore_ahci_present()) {
+        const struct xscore_ahci_device *dev = xscore_ahci_get_device(0);
+        if (dev) return dev->sector_count;
+    }
     return 0;
 }
 
 int xscore_block_read_sector(uint64_t sector, void *buffer) {
     if (xscore_virtio_blk_present()) return xscore_virtio_blk_read_sector(sector, buffer);
-    return xscore_nvme_read_sector(sector, buffer);
+    if (xscore_nvme_block_present()) return xscore_nvme_read_sector(sector, buffer);
+    if (xscore_ahci_present()) {
+        const struct xscore_ahci_device *dev = xscore_ahci_get_device(0);
+        if (dev) return xscore_ahci_read_sectors(dev->port_num, sector, 1, buffer);
+    }
+    return 0;
 }
 
 int xscore_block_write_sector(uint64_t sector, const void *buffer) {
     if (xscore_virtio_blk_present()) return xscore_virtio_blk_write_sector(sector, buffer);
-    return xscore_nvme_write_sector(sector, buffer);
+    if (xscore_nvme_block_present()) return xscore_nvme_write_sector(sector, buffer);
+    if (xscore_ahci_present()) {
+        const struct xscore_ahci_device *dev = xscore_ahci_get_device(0);
+        if (dev) {
+            int ok = xscore_ahci_write_sectors(dev->port_num, sector, 1, buffer);
+            if (ok) ok = xscore_ahci_flush(dev->port_num);
+            return ok;
+        }
+    }
+    return 0;
 }
 
 static struct xscore_buf_entry cache[XSCORE_BUF_CACHE_SECTORS];

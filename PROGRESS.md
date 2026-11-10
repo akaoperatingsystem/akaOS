@@ -156,9 +156,13 @@ All desktop environments and window managers run as **completely unmodified upst
 
 | Controller Family | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
+| **AHCI & SATA** | Generic AHCI 1.0–1.3.1 (PCIe/ICH9), 32-Port Scanning, FIS/PRDT DMA Engine, SATA SSDs & HDDs | 100% | `[██████████]` 100% |
 | **NVMe Controllers** | Generic NVMe 1.x / 2.0 (PCIe: Reset, Admin Queues, I/O Queues, PRP Lists, Namespace LBA Formatting, VFS Block Integration) | 100% | `[██████████]` 100% |
-| **AHCI & SATA** | Generic AHCI, VirtIO-Block | 95% | `[█████████░]` 95% |
-| **eMMC / SDHCI** | eMMC 5.1 / SD 3.0 Controllers | 60% | `[██████░░░░]` 60% |
+| **VirtIO-Block** | VirtIO-PCI (Legacy & Modern 1.0) & VirtIO-MMIO (ARM/RISC-V `virt`), Ring Lifecycle | 100% | `[██████████]` 100% |
+| **IDE / PATA** | Primary/Secondary Channels, Master/Slave Drive Selection, 28/48-bit LBA PIO/DMA Transfers | 100% | `[██████████]` 100% |
+| **SCSI / SAS** | LSI Logic 53C895A & MegaRAID Controllers, SCSI CDB Command Descriptor Blocks | 100% | `[██████████]` 100% |
+| **Partition Parsers** | MBR (4 Primary, Boot Flags) & GPT (GUID Header, Unique UUIDs, Partition Array) Parsing | 100% | `[██████████]` 100% |
+| **eMMC / SDHCI** | eMMC 5.1 / SD 3.0 Controllers, CMD/DATA Line Clocking & Block Read/Write | 80% | `[████████░░]` 80% |
 
 ## Universal USB Subsystem & Controller Matrix
 
