@@ -289,8 +289,8 @@ struct xscore_thread {
     uint64_t address_space_root;         /* CR3 used while this thread runs       */
     struct xscore_fd_table *file_descriptors; /* owning process descriptor table */
     struct xscore_user_transition user_transition;
-    /* x86 FXSAVE-compatible state; unused by non-x86 ports. */
-    uint8_t fpu_state[512] __attribute__((aligned(16)));
+    /* x86 FXSAVE/XSAVE-compatible state; unused by non-x86 ports. */
+    uint8_t fpu_state[4096] __attribute__((aligned(64)));
     uint8_t fpu_initialized;
     void (*entry)(void *argument);       /* thread function                       */
     void *argument;                      /* argument passed to entry             */
