@@ -9,8 +9,13 @@
  * IST stacks: 8 KiB (2 pages) each for double-fault and NMI.
  * Each stack has a guard page (unmapped) below it.
  */
-#define XSCORE_BOOT_STACK_PAGES   2   /* 8 KiB dedicated boot stack */
-#define XSCORE_IST_STACK_PAGES    1   /* 4 KiB per IST stack */
+#if defined(XSCORE_LOW_MEMORY)
+#define XSCORE_BOOT_STACK_PAGES   8
+#define XSCORE_IST_STACK_PAGES    2
+#else
+#define XSCORE_BOOT_STACK_PAGES   8   /* 32 KiB boot/self-test stack */
+#define XSCORE_IST_STACK_PAGES    2   /* 8 KiB per IST stack */
+#endif
 #define XSCORE_STACK_GUARD_PAGES  1
 
 /*

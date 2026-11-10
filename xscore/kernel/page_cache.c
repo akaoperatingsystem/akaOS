@@ -5,7 +5,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if defined(XSCORE_LOW_MEMORY)
+#define PAGE_CACHE_MAX_CAPACITY 128U
+#else
 #define PAGE_CACHE_MAX_CAPACITY 2048U
+#endif
 
 struct page_cache_entry {
     const uint8_t *image;

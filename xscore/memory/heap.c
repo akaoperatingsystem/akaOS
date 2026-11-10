@@ -17,8 +17,8 @@
 #endif
 #define HEAP_GROWTH_PAGES UINT64_C(16)
 #if defined(__x86_64__)
-/* Ultra-lean initial kernel heap reservation (64 KiB = 16 pages).
- * Grows on-demand in HEAP_GROWTH_PAGES increments. */
+/* Keep 64 KiB initially; grow on demand. The low-memory build uses the same
+ * small starting point; do not pre-commit additional pages at boot. */
 #define HEAP_INITIAL_PAGES UINT64_C(16)
 #else
 #define HEAP_INITIAL_PAGES HEAP_GROWTH_PAGES

@@ -652,7 +652,12 @@ build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
 
 echo "[BUILD] akaOS x86_32 initramfs archive"
+initramfs_profile_args=()
+if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
+    initramfs_profile_args+=(--profile minimal)
+fi
 python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
+    "${initramfs_profile_args[@]}" \
     --dir "/bin" \
     --dir "/etc" \
     --dir "/usr" \

@@ -152,20 +152,9 @@ def main():
     try:
         base_entries = read_archive(args.base) if args.base else []
         excluded_count = 0
-        if args.exclude_prefix:
-            prefixes = tuple(prefix.rstrip("/") for prefix in args.exclude_prefix)
-            kept_base_entries = []
-            for entry in base_entries:
-                path = entry["path"]
-                if any(path == prefix or path.startswith(prefix + "/")
-                       for prefix in prefixes):
-                    excluded_count += 1
-                else:
-                    kept_base_entries.append(entry)
-            base_entries = kept_base_entries
         if args.profile == "minimal":
-            # Preserve a console recovery path. Directories are retained so VFS
-            # parents exist, while only core login/shell/runtime files remain.
+            # Keep only a recoverable console/login environment; the full image
+            # remains the default and is not changed by this opt-in profile.
             keep_files = {
                 "/bin/init", "/bin/login", "/bin/akash", "/bin/bash", "/bin/sh", "/bin/rbash",
                 "/bin/echo", "/bin/ls", "/bin/cat", "/bin/ps", "/bin/free", "/bin/uname",
@@ -181,6 +170,17 @@ def main():
             base_entries = [e for e in base_entries if e["type"] == ENTRY_TYPE_DIR or e["path"] in keep_files]
             overlay_entries = [e for e in overlay_entries if e["type"] == ENTRY_TYPE_DIR or e["path"] in keep_files]
             excluded_count += before - len(base_entries) - len(overlay_entries)
+        if args.exclude_prefix:
+            prefixes = tuple(prefix.rstrip("/") for prefix in args.exclude_prefix)
+            kept_base_entries = []
+            for entry in base_entries:
+                path = entry["path"]
+                if any(path == prefix or path.startswith(prefix + "/")
+                       for prefix in prefixes):
+                    excluded_count += 1
+                else:
+                    kept_base_entries.append(entry)
+            base_entries = kept_base_entries
         if args.exclude_long_vfs_names:
             kept_base_entries = []
             for entry in base_entries:
@@ -196,25 +196,6 @@ def main():
                 else:
                     kept_overlay_entries.append(entry)
             overlay_entries = kept_overlay_entries
-        if args.profile == "minimal":
-            keep_files = {
-                "/bin/init", "/bin/login", "/bin/akash", "/bin/bash", "/bin/sh", "/bin/rbash",
-                "/bin/echo", "/bin/ls", "/bin/cat", "/bin/ps", "/bin/free", "/bin/uname",
-                "/bin/whoami", "/bin/clear", "/bin/which", "/bin/env", "/bin/sleep",
-                "/bin/pwd", "/bin/touch", "/bin/mkdir", "/bin/rm", "/bin/cp", "/bin/mv",
-                "/bin/true", "/bin/false", "/bin/test", "/bin/[", "/bin/hello", "/bin/akafetch",
-                "/lib/ld-akaos.so", "/lib/libc.so.6", "/lib/libc.so", "/lib/libm.so.6",
-                "/etc/passwd", "/etc/group", "/etc/shadow", "/etc/sudoers", "/etc/profile",
-                "/etc/shells", "/etc/akaos.conf", "/etc/hostname", "/etc/hosts", "/etc/resolv.conf",
-                "/etc/fstab", "/etc/motd", "/etc/dbus-services.conf"
-            }
-            def essential(entry):
-                path = entry["path"]
-                return entry["type"] == ENTRY_TYPE_DIR or path in keep_files
-            before = len(base_entries) + len(overlay_entries)
-            base_entries = [entry for entry in base_entries if essential(entry)]
-            overlay_entries = [entry for entry in overlay_entries if essential(entry)]
-            excluded_count += before - len(base_entries) - len(overlay_entries)
         entries_by_path = {entry["path"]: entry for entry in base_entries}
         for entry in overlay_entries:
             entries_by_path[entry["path"]] = entry

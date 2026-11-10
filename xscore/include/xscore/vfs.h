@@ -7,7 +7,11 @@
 
 struct xscore_fd_table;
 
+#if defined(XSCORE_LOW_MEMORY)
+#define XSCORE_VFS_MAX_NODES 512
+#else
 #define XSCORE_VFS_MAX_NODES 2048
+#endif
 
 enum xscore_device_kind {
     XSCORE_DEVICE_NONE = 0,

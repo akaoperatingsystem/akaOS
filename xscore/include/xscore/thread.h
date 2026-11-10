@@ -19,11 +19,20 @@ struct xscore_process;
  * tasks may be preempted at the timer interrupt-return boundary.
  */
 
+#if defined(XSCORE_LOW_MEMORY)
+#define XSCORE_MAX_THREADS 16U
+#else
 #define XSCORE_MAX_THREADS 64U
+#endif
 _Static_assert(XSCORE_MAX_THREADS <= 64U,
                "thread ready bitmap supports at most 64 TCBs");
-#define XSCORE_THREAD_STACK_PAGES 2   /* 8 KiB per kernel thread stack */
-#define XSCORE_THREAD_PRIVILEGE_STACK_PAGES 2 /* 8 KiB Ring 3 entry stack */
+#if defined(XSCORE_LOW_MEMORY)
+#define XSCORE_THREAD_STACK_PAGES 2
+#define XSCORE_THREAD_PRIVILEGE_STACK_PAGES 2
+#else
+#define XSCORE_THREAD_STACK_PAGES 4
+#define XSCORE_THREAD_PRIVILEGE_STACK_PAGES 2
+#endif
 
 /* Thread states. */
 enum xscore_thread_state {

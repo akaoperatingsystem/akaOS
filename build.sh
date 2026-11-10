@@ -117,6 +117,8 @@ Desktop & Session Configuration:
 Kernel & Build Flags:
   --test                       Enable automated self-test mode in generated boot media
   --verbose                    Enable verbose kernel hardware and boot diagnostics
+  --mem-profile full|minimal  Select normal or constrained-memory kernel/console profile
+  --low-memory-profile        Opt in to constrained-RAM console profile (experimental)
   --check-deps                 Check selected host dependencies and exit
   --menu                       Open the interactive terminal configuration menu
   -h, --help                   Display this comprehensive help manual
@@ -421,6 +423,7 @@ fi
 arch=x86_64
 firmware=uefi
 firmware_set=0
+low_memory_profile=0
 disk_type=auto
 disk_type_set=0
 target_desktop=none
@@ -479,6 +482,24 @@ while [[ $# -gt 0 ]]; do
                 exit 2
             fi
             menu_software="$2"
+            shift 2
+            ;;
+        --low-memory-profile)
+            low_memory_profile=1
+            export XSCORE_LOW_MEMORY=1
+            export AKAOS_LOW_MEMORY_PROFILE=1
+            shift
+            ;;
+        --mem-profile)
+            if [[ $# -lt 2 || "$2" != "full" && "$2" != "minimal" ]]; then
+                echo "--mem-profile requires full or minimal" >&2
+                exit 2
+            fi
+            if [[ "$2" == "minimal" ]]; then
+                low_memory_profile=1
+                export XSCORE_LOW_MEMORY=1
+                export AKAOS_LOW_MEMORY_PROFILE=1
+            fi
             shift 2
             ;;
         --packages|--package-list)
@@ -585,6 +606,10 @@ if [[ "$arch" == "x86_32" ]]; then
         esac
     fi
     build_args=(--firmware "$firmware" --disk-type "$disk_type" --software "$menu_software" --desktop "$target_desktop")
+    if [[ "$low_memory_profile" -eq 1 ]]; then
+        build_args+=(--low-memory-profile)
+        export AKAOS_LOW_MEMORY_PROFILE=1 XSCORE_LOW_MEMORY=1
+    fi
     if [[ "$bios_test" -eq 1 ]]; then
         build_args+=(--test)
     fi
@@ -3332,8 +3357,13 @@ DESKTOP_ENV=$target_desktop
 DESKTOP_THEME=dark
 EOF
 
+initramfs_profile_args=()
+if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
+    initramfs_profile_args+=(--profile minimal)
+fi
 python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --exclude-long-vfs-names \
+    "${initramfs_profile_args[@]}" \
     --dir "/bin" \
     --dir "/etc" \
     --dir "/root:0700" \
@@ -3684,6 +3714,11 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/memory/virtual.c"
     "$ROOT_DIR/xscore/memory/heap.c"
 )
+low_memory_cflags=()
+if [[ "$low_memory_profile" -eq 1 ]]; then
+    low_memory_cflags=(-DXSCORE_LOW_MEMORY=1)
+    export AKAOS_LOW_MEMORY_PROFILE=1
+fi
 XSCORE_OBJECTS=()
 for source in "${XSCORE_C_SOURCES[@]}"; do
     object="$BUILD_DIR/$(basename "${source%.c}").o"
@@ -3693,6 +3728,7 @@ for source in "${XSCORE_C_SOURCES[@]}"; do
         -mno-red-zone -mcmodel=kernel -mno-sse -mno-mmx -mno-80387 \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
         -I"$INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" -I"$GENERATED_DIR" \
+        "${low_memory_cflags[@]}" \
         -c "$source" -o "$object"
     XSCORE_OBJECTS+=("$object")
 done
@@ -3709,8 +3745,12 @@ XSCORE_OBJECTS+=("$BUILD_DIR/smp_trampoline.o")
 
 XSCORE_OBJECTS+=("$BUILD_DIR/initramfs_archive.o")
 
+kernel_linker="$ROOT_DIR/xscore/arch/x86_64/linker.ld"
+if [[ "$low_memory_profile" -eq 1 ]]; then
+    kernel_linker="$ROOT_DIR/xscore/arch/x86_64/linker-lowmem.ld"
+fi
 ld.lld -nostdlib -static -z max-page-size=0x1000 \
-    -T "$ROOT_DIR/xscore/arch/x86_64/linker.ld" \
+    -T "$kernel_linker" \
     "${XSCORE_OBJECTS[@]}" -o "$BUILD_DIR/XSCORE.ELF"
 
 # The BIOS Multiboot2 image enters through the 32-bit protected-mode bridge
@@ -3718,7 +3758,7 @@ ld.lld -nostdlib -static -z max-page-size=0x1000 \
 # normal SysV x86-64 xscore_entry point.
 ld.lld -nostdlib -static -z max-page-size=0x1000 \
     -e xscore_multiboot_entry \
-    -T "$ROOT_DIR/xscore/arch/x86_64/linker.ld" \
+    -T "$kernel_linker" \
     "${XSCORE_OBJECTS[@]}" -o "$BUILD_DIR/XSCORE-BIOS.ELF"
 
 if [[ "$need_uefi_payload" -eq 1 ]]; then

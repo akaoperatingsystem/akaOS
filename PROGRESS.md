@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.44-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.29-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.45-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.30-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -42,18 +42,22 @@ This section records measured artifact sizes. Kernel BSS and loader-reserved pag
 
 ### Memory Footprint & Low-RAM Scalability
 
-The following are measured structural budgets and test results, not a claim that total RAM usage is below 10 MiB. UEFI/BIOS, framebuffer, kernel image and initramfs are excluded from these kernel BSS estimates. Low-RAM boot validation is currently incomplete.
+These metrics separate kernel static footprint from runtime used-RAM accounting. The <10 MiB active-RAM objective is not yet met.
 
-| Metric | Target | Current measured/status | Readiness |
+| Metric | Target | Latest evidence | Status |
 | :--- | :--- | :--- | :--- |
-| x86-64 kernel BSS | < 4 MiB | 5.86 MiB (XSCORE.ELF, ELF section headers after current pool tuning) | 60% |
-| Kernel heap reservation at boot | 32–64 KiB | 128 KiB in current boot log; source config is 64 KiB, image needs rebuild/verification | 70% |
-| Page cache capacity | 32–128 pages on low RAM | 32 pages at <=16 MiB; 64 at <=32 MiB; 128 at <=64 MiB (source-configured) | 75% |
-| User initial stack | 1 page | 1 page mapped initially; growth policy not verified on constrained guests | 70% |
-| Total active RAM at boot | < 10 MiB | Not measured; 64 MiB guest reaches kernel/thread/initramfs milestones then faults during device/storage initialization | 25% |
-| Low-RAM QEMU validation | 16 / 32 / 64 MiB | 64 MiB: BIOS kernel reaches initramfs, then double fault; 16 / 32 MiB: not verified | 15% |
+| x86-64 kernel BSS | <4 MiB | 5.86 MiB in XSCORE.ELF (ELF NOBITS size; not a direct runtime RSS measurement) | Above target |
+| x86-64 kernel data+BSS load segment | reduce for 64 MiB UEFI | ~20.3 MiB at physical 16 MiB; OVMF cannot allocate the fixed PT_LOAD segment in a 64 MiB guest | Fails UEFI target |
+| Kernel heap at boot | 32–64 KiB for constrained boots | x86-32 16/32 MiB BIOS serial log: 64 KiB; x86-64 64 MiB BIOS log: 128 KiB mapped despite 64 KiB source initial setting | Measured; needs reconcile |
+| Page cache low-RAM capacity | 32–128 pages | Source selects 32/64/128 pages for <=16/32/64 MiB | Configured, not independently instrumented |
+| x86-32 minimal initramfs | compact recovery image | 68 entries, 2,151,535 bytes (~2.05 MiB); test-only minimal kernel 2.55 MiB | Build verified |
+| x86-32 16 MiB BIOS/direct kernel | reach login | 15 MiB usable; 640 free PMM pages, 64 KiB kernel heap; login prompt reached with minimal archive | Login boot verified; free reports 1,956 KiB after shell |
+| x86-32 32 MiB BIOS/direct kernel | reach login | 31 MiB usable; 4,736 free PMM pages, 64 KiB heap; login prompt reached | Login boot verified; free command not captured |
+| x86-64 64 MiB BIOS full image | reach login | 63 MiB usable; login reached; free reports 13 MiB used, 49 MiB free after shell | Boot verified; exceeds <10 MiB goal |
+| x86-64 64 MiB automated self-test | pass | Fails at process self-test with load_elf_image failure after process 68 | Fails; investigate process/mmap limits |
+| x86-64 64 MiB UEFI | boot | UEFI allocation fails for fixed kernel PT_LOAD beginning at 16 MiB | Fails; placement constraint unresolved |
 
-> BSS is not the same as committed physical RAM: portions of static BSS may be reserved/zeroed by the loader. Do not interpret the ELF section size alone as measured runtime usage. The latest 64 MiB BIOS test used the required 4 MiB VirtIO test disk; it reached the kernel heap and thread tests, mounted the initramfs and data disk, then raised exception vector 8 before userspace. Further investigation is required before claiming support at this memory size.
+Do not infer full 16 MiB support from the minimal x86-32 experiment or total used RAM from BSS/page counts. 16 MiB full profile, 32 MiB command-level stress, x86-64 UEFI at 64 MiB, and the <10 MiB total active-RAM target remain unverified or unmet.
 
 ---
 

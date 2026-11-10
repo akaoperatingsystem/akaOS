@@ -7,7 +7,11 @@
 #include <xscore/smp.h>
 #include <akaos/syscall.h>
 
+#if defined(XSCORE_LOW_MEMORY)
+#define XSCORE_SOCKET_MAX 32
+#else
 #define XSCORE_SOCKET_MAX 256
+#endif
 #define XSCORE_SOCKET_BUF_SIZE 8192
 
 #define AKAOS_AF_UNIX 1

@@ -50,8 +50,13 @@
 #define FILE_SIGNALFD UINT32_C(4194304)
 /* Reserve two file objects per pipe and headroom for concurrent desktop
  * processes at the 1024-descriptor per-process limit. */
+#if defined(XSCORE_LOW_MEMORY)
+#define XSCORE_FILE_POOL_SIZE 256
+#define XSCORE_PIPE_POOL_SIZE 32
+#else
 #define XSCORE_FILE_POOL_SIZE 2048
 #define XSCORE_PIPE_POOL_SIZE 512
+#endif
 #define XSCORE_PIPE_BUF_SIZE 4096
 #define XSCORE_PTY_MAX 4
 #define XSCORE_PTY_BUF_SIZE 1024

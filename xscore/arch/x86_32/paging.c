@@ -9,7 +9,7 @@
 #define PAGE_USER     0x04U
 
 #define KERNEL_IDENTITY_TABLES 64U  /* 256 MB identity mapped at boot */
-#define KERNEL_SHARED_TABLES   256U /* 1 GB kernel space (0x00000000 - 0x3FFFFFFF) */
+#define KERNEL_SHARED_TABLES   KERNEL_IDENTITY_TABLES
 
 static uint32_t __attribute__((aligned(4096))) initial_page_directory[1024];
 static uint32_t __attribute__((aligned(4096))) initial_kernel_tables[KERNEL_IDENTITY_TABLES][1024];
@@ -24,7 +24,7 @@ void xscore_32_paging_init(void) {
         initial_page_directory[i] = 0;
     }
 
-    /* Identity map first 256 MB of physical memory */
+    /* Identity-map the configured low-memory kernel region. */
     for (uint32_t t = 0; t < KERNEL_IDENTITY_TABLES; ++t) {
         for (int i = 0; i < 1024; ++i) {
             uint32_t paddr = (uint32_t)((t * 1024 + i) * PAGE_SIZE);
@@ -90,7 +90,7 @@ uint64_t xscore_vmm_address_space_create(void) {
     }
 
     /* Share all kernel space and MMIO mappings across every process:
-     * 1. All kernel tables < KERNEL_SHARED_TABLES (0x00000000 - 0x3FFFFFFF, including identity map & thread stacks)
+     * 1. All present low-memory kernel tables (identity map & thread stacks)
      * 2. All MMIO tables >= 0xC0000000 (including framebuffer at 0xE0000000, APIC, PCI MMIO)
      */
     for (uint32_t t = 0; t < 1024; ++t) {

@@ -88,12 +88,15 @@ if [[ "${AKAOS_TEST_SKIP_USERSPACE:-0}" != 1 ]]; then
     userspace_args=(--software "${AKAOS_SOFTWARE_BUNDLE:-all}")
     if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
         userspace_args+=(--profile minimal)
+        export XSCORE_LOW_MEMORY=1
     fi
     bash "$ROOT_DIR/tools/build-user-32.sh" "${userspace_args[@]}"
 fi
 
 echo "[BUILD] akaOS x86_32 XSCore Kernel"
 
+low_memory_cflag=()
+if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then low_memory_cflag=(-DXSCORE_LOW_MEMORY=1); fi
 CFLAGS=(
     --target=i686-unknown-none-elf
     -std=c17 -O2 -Wall -Wextra
@@ -101,6 +104,7 @@ CFLAGS=(
     -m32 -march=i386 -mno-sse -mno-mmx -mno-80387
     -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\""
     -I"$ROOT_DIR/sdk/include" -I"$ROOT_DIR/xscore/include" -I"$BUILD_DIR/generated"
+    "${low_memory_cflag[@]}"
 )
 
 # Compile architecture assembly and C sources

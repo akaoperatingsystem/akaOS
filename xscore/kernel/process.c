@@ -49,17 +49,19 @@
  * per process so HarfBuzz can use its file-read fallback when mmap is full. */
 #if defined(__x86_64__) || defined(__aarch64__) || \
     (defined(__riscv) && __riscv_xlen == 64)
+#if defined(XSCORE_LOW_MEMORY)
+#define USER_MAX_HEAP_PAGES 128U
+#else
 #define USER_MAX_HEAP_PAGES 1024U
+#endif
 #else
 #define USER_MAX_HEAP_PAGES 256U
 #endif
 /* Large upstream desktop runtimes need a wider per-process mapped-image
  * budget than the native shell. Keep the larger allowance x86_64-specific
  * until the remaining ports have equivalent loader and memory validation. */
-#if defined(__x86_64__)
-#define USER_MAX_MMAP_PAGES 1024U
-#elif defined(__riscv)
-#define USER_MAX_MMAP_PAGES 1024U
+#if defined(XSCORE_LOW_MEMORY)
+#define USER_MAX_MMAP_PAGES 128U
 #else
 #define USER_MAX_MMAP_PAGES 1024U
 #endif
@@ -84,7 +86,11 @@
 #define USER_MMAP_START (USER_CODE_ADDRESS + UINT64_C(0x02000000))
 #define USER_MMAP_END   (USER_CODE_ADDRESS + UINT64_C(0x03000000))
 #endif
+#if defined(XSCORE_LOW_MEMORY)
+#define USER_MAX_PROCESSES 16U
+#else
 #define USER_MAX_PROCESSES 32U
+#endif
 #define USER_FORK_CONTEXT_SIZE 256U
 #if defined(__aarch64__)
 #define USER_FORK_CONTEXT_ALLOCATION_SIZE 280U
