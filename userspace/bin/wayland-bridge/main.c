@@ -47,6 +47,7 @@ struct bridge_seat {
     struct wl_resource *keyboard;
     struct wl_resource *focused_surface;
     struct wl_resource *keyboard_focus_surface;
+    struct wl_resource *popup_grab_origin;
     struct bridge_surface *cursor_surface;
     struct wl_client *client;
     uint32_t last_pointer_press_serial;
@@ -244,6 +245,8 @@ static const struct zwlr_layer_shell_v1_interface layer_shell_implementation;
 static const struct zwlr_layer_surface_v1_interface layer_surface_implementation;
 static const struct zwlr_foreign_toplevel_handle_v1_interface
     foreign_handle_implementation;
+static int surface_is_within_popup(const struct bridge_surface *surface,
+                                   const struct bridge_surface *popup);
 static void dismiss_grabbed_popup(struct bridge *bridge);
 static void dismiss_grabbed_popup_to(struct bridge *bridge,
                                      struct bridge_surface *retained_popup);
@@ -1068,6 +1071,13 @@ static void unmap_surface(struct bridge_surface *surface) {
     foreign_toplevel_unmap(surface);
     (void)akaos_toolkit_surface_destroy(&surface->compositor_surface);
     surface->attached = 0;
+    for (size_t index = 0; index < WAYLAND_SEAT_LIMIT; ++index) {
+        struct bridge_seat *seat = &surface->bridge->seats[index];
+        struct bridge_surface *origin = seat->popup_grab_origin
+            ? wl_resource_get_user_data(seat->popup_grab_origin) : NULL;
+        if (surface_is_within_popup(origin, surface))
+            seat->popup_grab_origin = NULL;
+    }
 }
 
 static void surface_destroyed(struct wl_resource *resource) {
@@ -1125,6 +1135,8 @@ static void surface_destroyed(struct wl_resource *resource) {
                 surface->bridge->surfaces[index] = NULL;
         }
         for (size_t index = 0; index < WAYLAND_SEAT_LIMIT; ++index) {
+            if (surface->bridge->seats[index].popup_grab_origin == surface->wl_surface)
+                surface->bridge->seats[index].popup_grab_origin = NULL;
             if (surface->bridge->seats[index].cursor_surface == surface)
                 surface->bridge->seats[index].cursor_surface = NULL;
             if (surface->bridge->seats[index].focused_surface ==
@@ -1999,6 +2011,7 @@ static void seat_destroyed(struct wl_resource *resource) {
         seat->bridge->resizing_seat = NULL;
     }
     seat->pressed_button = 0U;
+    seat->popup_grab_origin = NULL;
     seat->resource = NULL;
     seat->pointer = NULL;
     seat->keyboard = NULL;
@@ -2298,6 +2311,9 @@ static void deliver_wayland_pointer_event(
             struct bridge_seat *seat = &bridge->seats[index];
             if (seat->pressed_button != event->code) continue;
             seat->pressed_button = 0U;
+            /* An installed grab keeps the initiating serial eligible for
+             * nested popups after the button is released. */
+            if (!bridge->grabbed_popup) seat->popup_grab_origin = NULL;
             if (bridge->moving_seat == seat) {
                 bridge->moving_surface = NULL;
                 bridge->moving_seat = NULL;
@@ -2366,6 +2382,7 @@ static void deliver_wayland_pointer_event(
         struct wl_resource *pointer_resource = seat_pointer_target
             ? seat_pointer_target->wl_surface : NULL;
         if (seat->pointer && seat->focused_surface != pointer_resource) {
+            if (!bridge->grabbed_popup) seat->popup_grab_origin = NULL;
             uint32_t serial = wl_display_next_serial(bridge->display);
             if (pointer_resource) seat->last_pointer_enter_serial = serial;
             if (seat->focused_surface)
@@ -2414,6 +2431,7 @@ static void deliver_wayland_pointer_event(
             uint32_t serial = wl_display_next_serial(bridge->display);
             if (state == WL_POINTER_BUTTON_STATE_PRESSED) {
                 seat->last_pointer_press_serial = serial;
+                seat->popup_grab_origin = pointer_resource;
                 seat->pressed_button = event->code;
                 seat->last_pointer_press_x = event->pointer_x;
                 seat->last_pointer_press_y = event->pointer_y;
@@ -3086,7 +3104,15 @@ static void xdg_surface_get_toplevel(struct wl_client *client,
 static void restore_popup_focus(struct bridge_surface *surface) {
     if (!surface || !surface->bridge) return;
     struct bridge *bridge = surface->bridge;
-    if (bridge->grabbed_popup == surface) bridge->grabbed_popup = NULL;
+    if (bridge->grabbed_popup == surface) {
+        bridge->grabbed_popup = surface->popup_parent &&
+            surface->popup_parent->popup && surface->popup_parent->attached
+            ? surface->popup_parent : NULL;
+        if (!bridge->grabbed_popup) {
+            for (size_t index = 0; index < WAYLAND_SEAT_LIMIT; ++index)
+                bridge->seats[index].popup_grab_origin = NULL;
+        }
+    }
     for (size_t index = 0; index < WAYLAND_SEAT_LIMIT; ++index) {
         struct bridge_seat *seat = &bridge->seats[index];
         if (seat->keyboard_focus_surface == surface->wl_surface)
@@ -3116,6 +3142,10 @@ static void dismiss_grabbed_popup_to(
         unmap_surface(current);
     }
     bridge->grabbed_popup = retained_popup;
+    if (!retained_popup) {
+        for (size_t index = 0; index < WAYLAND_SEAT_LIMIT; ++index)
+            bridge->seats[index].popup_grab_origin = NULL;
+    }
     for (size_t index = 0; index < WAYLAND_SEAT_LIMIT; ++index) {
         struct bridge_seat *seat = &bridge->seats[index];
         if (seat->resource && seat->client == client)
@@ -3153,17 +3183,37 @@ static void xdg_popup_grab(struct wl_client *client,
     struct bridge_seat *seat = seat_resource
         ? wl_resource_get_user_data(seat_resource) : NULL;
     if (!surface || !surface->bridge || !seat ||
-        seat->client != client || wl_resource_get_client(seat_resource) != client ||
+        seat->bridge != surface->bridge || seat->client != client ||
+        wl_resource_get_client(seat_resource) != client ||
+        wl_resource_get_client(resource) != client ||
         !seat->last_pointer_press_serial ||
-        serial != seat->last_pointer_press_serial) {
+        serial != seat->last_pointer_press_serial || !seat->popup_grab_origin) {
         wl_resource_post_error(resource, XDG_POPUP_ERROR_INVALID_GRAB,
-                               "popup grab does not match a recent pointer press");
+                               "popup grab does not match an eligible pointer press");
         return;
     }
-    if (surface->popup_parent && surface->popup_parent->popup &&
-        surface->bridge->grabbed_popup != surface->popup_parent) {
-        wl_resource_post_error(resource, XDG_SURFACE_ERROR_NOT_CONSTRUCTED,
-                               "nested popup parent does not own the grab");
+    struct bridge *bridge = surface->bridge;
+    struct bridge_surface *parent = surface->popup_parent;
+    struct bridge_surface *origin =
+        wl_resource_get_user_data(seat->popup_grab_origin);
+    struct bridge_surface *root = parent;
+    for (size_t depth = 0; root && depth < WAYLAND_SURFACE_LIMIT; ++depth) {
+        if (root->subsurface_parent) root = root->subsurface_parent;
+        else if (root->popup_parent) root = root->popup_parent;
+        else break;
+    }
+    /* A root grab needs a live press in its parent hierarchy. An existing
+     * grab may extend its own stack using that press after release. Check
+     * compositor focus here too, since it can change between input events. */
+    if (!parent || !parent->attached || !root || !root->attached ||
+        !origin || !origin->attached ||
+        !surface_is_within_popup(active_wayland_surface(bridge, NULL), root) ||
+        (parent->popup
+            ? (bridge->grabbed_popup != parent ||
+               !surface_is_within_popup(origin, root))
+            : (bridge->grabbed_popup || !seat->pressed_button ||
+               !surface_is_within_popup(origin, parent)))) {
+        xdg_popup_send_popup_done(resource);
         return;
     }
     surface->bridge->grabbed_popup = surface;

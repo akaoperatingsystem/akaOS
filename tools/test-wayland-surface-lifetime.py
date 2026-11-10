@@ -40,7 +40,7 @@ struct bridge_foreign_handle;
 stubs = r'''
 struct bridge_seat {
     struct bridge_surface *cursor_surface;
-    struct wl_resource *focused_surface, *keyboard_focus_surface;
+    struct wl_resource *focused_surface, *keyboard_focus_surface, *popup_grab_origin;
 };
 struct bridge {
     struct bridge_surface *surfaces[WAYLAND_SURFACE_LIMIT];
@@ -97,6 +97,7 @@ int main(void) {
         bridge.grabbed_popup = s;
         bridge.moving_surface = s;
         bridge.resizing_surface = s;
+        bridge.seats[0].popup_grab_origin = wl;
         bridge.seats[0].cursor_surface = s;
         bridge.seats[0].focused_surface = wl;
         bridge.seats[0].keyboard_focus_surface = wl;
@@ -122,6 +123,7 @@ int main(void) {
         assert(!bridge.grabbed_popup && !bridge.moving_surface && !bridge.resizing_surface);
         assert(!bridge.seats[0].cursor_surface && !bridge.seats[0].focused_surface);
         assert(!bridge.seats[0].keyboard_focus_surface);
+        assert(!bridge.seats[0].popup_grab_origin);
         if (client) {
             if (xdg) {
                 assert(!wl_resource_get_user_data(xdg));
