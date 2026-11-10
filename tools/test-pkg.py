@@ -64,7 +64,7 @@ def main():
     test_root = os.path.join(WORKSPACE, "target_root")
     os.makedirs(test_root, exist_ok=True)
 
-    db_dir = os.path.join(WORKSPACE, "db")
+    db_dir = os.path.join(WORKSPACE, "db space;$(printf injected)")
     cache_dir = os.path.join(WORKSPACE, "cache")
     os.makedirs(db_dir, exist_ok=True)
     os.makedirs(cache_dir, exist_ok=True)
@@ -208,6 +208,40 @@ dbdir={db_dir}
     trust_index()
     res = run_cmd(f"{pkg_bin} update", env=env)
     assert res.returncode == 0
+
+    # Even authenticated metadata must not turn identifiers into paths or commands.
+    for bad_name in ("../escape", ".", "..", "myapp;echo injected", "a" * 64):
+        invalid = trusted_index.replace(b"Package: myapp\n",
+                                        ("Package: " + bad_name + "\n").encode())
+        assert invalid != trusted_index
+        with open(index_path, "wb") as f:
+            f.write(invalid)
+        trust_index()
+        assert run_cmd(f"{pkg_bin} update", env=env).returncode != 0
+        res = subprocess.run([pkg_bin, "install", bad_name], env=env,
+                             capture_output=True, text=True)
+        assert res.returncode != 0 and "invalid package identifier" in res.stderr
+        assert not os.path.exists(os.path.join(WORKSPACE, "postinst_ran.txt"))
+
+    invalid = trusted_index.replace(b"Dependencies: libshared", b"Dependencies: ../escape")
+    assert invalid != trusted_index
+    with open(index_path, "wb") as f:
+        f.write(invalid)
+    trust_index()
+    assert run_cmd(f"{pkg_bin} update", env=env).returncode == 0
+    res = run_cmd(f"{pkg_bin} install myapp", env=env)
+    assert res.returncode != 0 and "invalid dependency identifier" in res.stderr
+    with open(index_path, "wb") as f:
+        f.write(trusted_index)
+    trust_index()
+    assert run_cmd(f"{pkg_bin} update", env=env).returncode == 0
+
+    # Historical malformed installed records cannot supply removal paths.
+    with open(os.path.join(db_dir, "installed.db"), "w") as f:
+        f.write("../escape 1.0 x86_64\n")
+    res = subprocess.run([pkg_bin, "remove", "../escape"], env=env,
+                         capture_output=True, text=True)
+    assert res.returncode != 0 and "not installed" in res.stderr
 
     # TEST 2: pkg search & pkg info
     print("\n[TEST 2] Testing 'pkg search' and 'pkg info'...")

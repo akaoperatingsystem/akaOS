@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #define PKG_VERSION "1.1.1"
@@ -602,6 +603,41 @@ static int verify_metadata(const char *path) {
 
 /* --- Database Parsing --- */
 
+/* Package identifiers must fit the database and remain a single path component. */
+static int valid_package_name(const char *name) {
+    size_t len = strlen(name);
+    if (len == 0 || len >= sizeof(repo_pkgs[0].name)) return 0;
+    for (size_t i = 0; i < len; i++) {
+        unsigned char c = (unsigned char)name[i];
+        int alnum = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                    (c >= '0' && c <= '9');
+        if (!alnum && (i == 0 || (c != '.' && c != '_' && c != '+' && c != '-')))
+            return 0;
+    }
+    return 1;
+}
+
+/* Keep the pathname out of shell command syntax, including configured directories. */
+static void run_package_hook(const char *path) {
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("pkg: fork hook");
+        return;
+    }
+    if (pid == 0) {
+        char *const args[] = {"sh", "--", (char *)path, NULL};
+        execv("/bin/sh", args);
+        perror("pkg: exec hook");
+        _exit(127);
+    }
+    while (waitpid(pid, NULL, 0) < 0) {
+        if (errno != EINTR) {
+            perror("pkg: wait hook");
+            break;
+        }
+    }
+}
+
 static void load_installed_database(void) {
     installed_pkg_count = 0;
     char path[256];
@@ -615,10 +651,11 @@ static void load_installed_database(void) {
         trim_whitespace(line);
         if (line[0] == '#' || line[0] == '\0') continue;
 
-        char name[64] = {0};
+        char name[65] = {0};
         char ver[32] = {0};
         char arch[32] = {0};
-        if (sscanf(line, "%63s %31s %31s", name, ver, arch) >= 2) {
+        if (sscanf(line, "%64s %31s %31s", name, ver, arch) >= 2 &&
+            valid_package_name(name)) {
             strncpy(installed_pkgs[installed_pkg_count].name, name, 63);
             strncpy(installed_pkgs[installed_pkg_count].version, ver, 31);
             strncpy(installed_pkgs[installed_pkg_count].arch, arch[0] ? arch : cfg.arch, 31);
@@ -697,6 +734,12 @@ static int load_repo_database(void) {
         trim_whitespace(val);
 
         if (strcasecmp(key, "Package") == 0) {
+            if (!valid_package_name(val)) {
+                fprintf(stderr, "pkg: error: invalid package identifier\n");
+                fclose(f);
+                repo_pkg_count = 0;
+                return -1;
+            }
             strncpy(current.name, val, sizeof(current.name) - 1);
         } else if (strcasecmp(key, "Version") == 0) {
             strncpy(current.version, val, sizeof(current.version) - 1);
@@ -902,7 +945,7 @@ static int extract_package_archive(const char *archive_path, const char *pkg_nam
     /* Execute post-installation script if present */
     if (postinst_path[0] && access(postinst_path, X_OK) == 0) {
         printf("[pkg] Executing post-installation script for %s...\n", pkg_name);
-        system(postinst_path);
+        run_package_hook(postinst_path);
     }
 
     return files_extracted;
@@ -940,6 +983,10 @@ static int resolve_dependencies(const char *pkg_name, char queue[][64], int *que
         while (token) {
             trim_whitespace(token);
             if (token[0] != '\0') {
+                if (!valid_package_name(token)) {
+                    fprintf(stderr, "pkg: error: invalid dependency identifier\n");
+                    return -1;
+                }
                 /* If dependency is not yet installed or queued, resolve it first */
                 if (!find_installed_pkg(token) && !is_pkg_queued(token, queue, *queue_count)) {
                     if (resolve_dependencies(token, queue, queue_count, depth + 1) != 0) {
@@ -1176,7 +1223,7 @@ static int cmd_remove(const char *pkg_name) {
     snprintf(prerm_path, sizeof(prerm_path), "%s/scripts/%s.prerm", cfg.dbdir, pkg_name);
     if (access(prerm_path, X_OK) == 0) {
         printf("[pkg] Running pre-removal script for %s...\n", pkg_name);
-        system(prerm_path);
+        run_package_hook(prerm_path);
         unlink(prerm_path);
     }
     char postinst_path[512];
