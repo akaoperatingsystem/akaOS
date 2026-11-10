@@ -89,6 +89,14 @@ static void serial_write_unlocked(const char *text) {
     xscore_spin_unlock_irqrestore(&serial_lock, irq_flags);
 }
 
+static int verbose_mode = 0;
+static int splash_active = 0;
+static int early_console_ready = 0;
+static uint32_t shell_cursor_col;
+static uint32_t shell_cursor_row;
+static uint32_t shell_input_row;
+static uint32_t shell_input_rows;
+static void shell_grid_init(void);
 static void shell_console_sink(char c);
 
 static void serial_write(const char *text) {
@@ -472,9 +480,6 @@ static void draw_text(struct canvas *canvas, uint32_t x, uint32_t y, uint32_t co
 #define UI_COLOR_PENDING 0x8b949e
 #define UI_COLOR_SUBTITLE 0x8a8a8a
 
-static int verbose_mode = 0;
-static int splash_active = 0;
-static int early_console_ready = 0;
 static uint32_t early_cursor_x = 0;
 static uint32_t early_cursor_y = 0;
 static uint32_t early_margin = 16;
@@ -618,10 +623,6 @@ static void splash_progress_step(void) {
 
 static uint32_t shell_columns;
 static uint32_t shell_rows;
-static uint32_t shell_cursor_col;
-static uint32_t shell_cursor_row;
-static uint32_t shell_input_row;
-static uint32_t shell_input_rows;
 
 #define SHELL_BACKGROUND 0x000000
 #define SHELL_CYAN 0x66d9ef
