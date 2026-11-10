@@ -449,6 +449,7 @@ target_desktop=none
 session_mode=console
 menu_software=all
 menu_custom_packages=""
+boot_mode=splash
 bios_test=0
 bios_verbose=0
 check_deps_only=0
