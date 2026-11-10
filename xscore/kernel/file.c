@@ -1471,6 +1471,7 @@ static int64_t fd_read_file(struct xscore_file *file, void *buffer,
         return (int64_t)sizeof(info);
     }
     if (file->flags & FILE_MEMORY) {
+        if (file->offset >= file->size) return 0;
         uint64_t remaining = file->size - file->offset;
         if (length > remaining) length = remaining;
         uint8_t *destination = buffer;
