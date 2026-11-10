@@ -87,6 +87,7 @@ int fstatat(int directory, const char *path, struct stat *status, int flags);
 int fstatat64(int directory, const char *path, struct stat *status, int flags);
 int akaos_stat(const char *path, struct akaos_stat *status);
 int mkdir(const char *path, mode_t mode);
+int futimens(int descriptor, const struct timespec times[2]);
 int mkdirat(int directory, const char *path, mode_t mode);
 int mkfifo(const char *path, mode_t mode);
 mode_t umask(mode_t mask);

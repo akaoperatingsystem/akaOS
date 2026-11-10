@@ -444,6 +444,97 @@ static void skip_bytes(int fd, size_t count) {
     }
 }
 
+/* Resolve each parent beneath the extraction root without following links.
+ * Reject all parent components, including ones that would stay inside the root.
+ */
+static int extraction_parent(int root, char *path, char **leaf) {
+    if (!*path || *path == '/') { errno = EINVAL; return -1; }
+    for (char *p = path; *p;) {
+        char *end = strchr(p, '/');
+        size_t len = end ? (size_t)(end - p) : strlen(p);
+        if (len == 2 && p[0] == '.' && p[1] == '.') {
+            errno = EINVAL;
+            return -1;
+        }
+        p += len;
+        if (*p) ++p;
+    }
+
+    int parent = openat(root, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+    if (parent < 0) return -1;
+    char *p = path;
+    for (;;) {
+        char *slash = strchr(p, '/');
+        if (!slash) { *leaf = *p ? p : "."; return parent; }
+        *slash = '\0';
+        if (*p && strcmp(p, ".") != 0) {
+            int next = openat(parent, p, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+            if (next < 0 && errno == ENOENT && opt_make_dirs) {
+                if (mkdirat(parent, p, 0755) == 0 || errno == EEXIST)
+                    next = openat(parent, p, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+            }
+            if (next < 0) {
+                int error = errno;
+                close(parent);
+                errno = error;
+                return -1;
+            }
+            close(parent);
+            parent = next;
+        }
+        p = slash + 1;
+    }
+}
+
+/* Consume exactly one member, even if its destination is rejected. */
+static int extract_member(int in_fd, int root, const char *name,
+                          uint32_t mode, uint32_t filesize, uint32_t mtime) {
+    int out = -1, parent = -1, result = 0;
+    char *path = NULL, *leaf = NULL;
+    if (opt_to_stdout) {
+        if (!S_ISDIR(mode)) out = STDOUT_FILENO;
+    } else {
+        path = strdup(name);
+        if (path) parent = extraction_parent(root, path, &leaf);
+        if (parent < 0) {
+            result = -1;
+        } else if (S_ISDIR(mode)) {
+            if (mkdirat(parent, leaf, mode & 07777) < 0) {
+                /* An existing directory is acceptable, but never a symlink. */
+                int dir = openat(parent, leaf, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+                if (dir < 0) result = -1;
+                else close(dir);
+            }
+        } else {
+            out = openat(parent, leaf, O_WRONLY | O_CREAT | O_NOFOLLOW |
+                         (opt_unconditional ? O_TRUNC : O_EXCL), mode & 07777);
+            if (out < 0) result = -1;
+        }
+        if (result < 0)
+            fprintf(stderr, "cpio: cannot extract %s: %s\n", name, strerror(errno));
+    }
+
+    char buf[4096];
+    uint32_t left = filesize;
+    while (left > 0) {
+        size_t count = left > sizeof(buf) ? sizeof(buf) : left;
+        ssize_t nr = read_all(in_fd, buf, count);
+        if (nr <= 0) { result = -1; break; }
+        if (out >= 0) write(out, buf, (size_t)nr);
+        left -= (uint32_t)nr;
+    }
+    if (out >= 0 && out != STDOUT_FILENO) {
+        if (opt_preserve_mtime) {
+            struct timespec times[2] = {{mtime, 0}, {mtime, 0}};
+            futimens(out, times);
+        }
+        close(out);
+    }
+    if (parent >= 0) close(parent);
+    free(path);
+    return result;
+}
+
 static int do_copy_in(void) {
     int in_fd = STDIN_FILENO;
     if (opt_archive) {
@@ -454,6 +545,15 @@ static int do_copy_in(void) {
         }
     }
 
+    int result = 0;
+    int root = -1;
+    if (!opt_list && !opt_to_stdout) {
+        root = open(".", O_RDONLY | O_DIRECTORY);
+        if (root < 0) {
+            if (opt_archive) close(in_fd);
+            return 1;
+        }
+    }
     uint64_t bytes_read = 0;
 
     for (;;) {
@@ -517,49 +617,8 @@ static int do_copy_in(void) {
                     skip_bytes(in_fd, filesize);
                     bytes_read += filesize;
                 } else if (selected) {
-                    if (opt_make_dirs) {
-                        make_parents(name);
-                    }
-                    if (S_ISDIR(mode)) {
-                        mkdir(name, mode & 07777);
-                    } else if (opt_to_stdout) {
-                        char buf[4096];
-                        uint32_t left = filesize;
-                        while (left > 0) {
-                            size_t to_read = (left > sizeof(buf)) ? sizeof(buf) : left;
-                            ssize_t nr = read_all(in_fd, buf, to_read);
-                            if (nr <= 0) break;
-                            write(STDOUT_FILENO, buf, (size_t)nr);
-                            left -= (uint32_t)nr;
-                        }
-                    } else {
-                        int out_f = open(name, O_WRONLY | O_CREAT | (opt_unconditional ? O_TRUNC : O_EXCL), mode & 07777);
-                        if (out_f < 0 && errno == EEXIST && opt_unconditional) {
-                            unlink(name);
-                            out_f = open(name, O_WRONLY | O_CREAT | O_TRUNC, mode & 07777);
-                        }
-                        if (out_f >= 0) {
-                            char buf[4096];
-                            uint32_t left = filesize;
-                            while (left > 0) {
-                                size_t to_read = (left > sizeof(buf)) ? sizeof(buf) : left;
-                                ssize_t nr = read_all(in_fd, buf, to_read);
-                                if (nr <= 0) break;
-                                write(out_f, buf, (size_t)nr);
-                                left -= (uint32_t)nr;
-                            }
-                            close(out_f);
-                            if (opt_preserve_mtime) {
-                                struct utimbuf ut;
-                                ut.actime = mtime;
-                                ut.modtime = mtime;
-                                utime(name, &ut);
-                            }
-                        } else {
-                            fprintf(stderr, "cpio: cannot create %s: %s\n", name, strerror(errno));
-                            skip_bytes(in_fd, filesize);
-                        }
-                    }
+                    if (extract_member(in_fd, root, name, mode, filesize, mtime) < 0)
+                        result = 1;
                     bytes_read += filesize;
 
                     if (opt_verbose) {
@@ -629,49 +688,8 @@ static int do_copy_in(void) {
                 skip_bytes(in_fd, filesize);
                 bytes_read += filesize;
             } else if (selected) {
-                if (opt_make_dirs) {
-                    make_parents(name);
-                }
-                if (S_ISDIR(hdr.c_mode)) {
-                    mkdir(name, hdr.c_mode & 07777);
-                } else if (opt_to_stdout) {
-                    char buf[4096];
-                    uint32_t left = filesize;
-                    while (left > 0) {
-                        size_t to_read = (left > sizeof(buf)) ? sizeof(buf) : left;
-                        ssize_t nr = read_all(in_fd, buf, to_read);
-                        if (nr <= 0) break;
-                        write(STDOUT_FILENO, buf, (size_t)nr);
-                        left -= (uint32_t)nr;
-                    }
-                } else {
-                    int out_f = open(name, O_WRONLY | O_CREAT | (opt_unconditional ? O_TRUNC : O_EXCL), hdr.c_mode & 07777);
-                    if (out_f < 0 && errno == EEXIST && opt_unconditional) {
-                        unlink(name);
-                        out_f = open(name, O_WRONLY | O_CREAT | O_TRUNC, hdr.c_mode & 07777);
-                    }
-                    if (out_f >= 0) {
-                        char buf[4096];
-                        uint32_t left = filesize;
-                        while (left > 0) {
-                            size_t to_read = (left > sizeof(buf)) ? sizeof(buf) : left;
-                            ssize_t nr = read_all(in_fd, buf, to_read);
-                            if (nr <= 0) break;
-                            write(out_f, buf, (size_t)nr);
-                            left -= (uint32_t)nr;
-                        }
-                        close(out_f);
-                        if (opt_preserve_mtime) {
-                            struct utimbuf ut;
-                            ut.actime = mtime;
-                            ut.modtime = mtime;
-                            utime(name, &ut);
-                        }
-                    } else {
-                        fprintf(stderr, "cpio: cannot create %s: %s\n", name, strerror(errno));
-                        skip_bytes(in_fd, filesize);
-                    }
-                }
+                if (extract_member(in_fd, root, name, hdr.c_mode, filesize, mtime) < 0)
+                    result = 1;
                 bytes_read += filesize;
 
                 if (opt_verbose) {
@@ -707,7 +725,8 @@ static int do_copy_in(void) {
         fprintf(stderr, "%llu blocks\n", (unsigned long long)blocks);
     }
 
-    return 0;
+    if (root >= 0) close(root);
+    return result;
 }
 
 /* --- Pass-through mode implementation --- */
