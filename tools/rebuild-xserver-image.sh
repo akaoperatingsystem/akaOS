@@ -403,6 +403,31 @@ clang --target=x86_64-unknown-none-elf \
     -mno-red-zone -mcmodel=small \
     -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
     -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/dirs/main.c" -o "$BUILD_DIR/user-dirs-main.o"
+ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-dirs-main.o" \
+    -o "$BUILD_DIR/DIRS.ELF"
+
+echo "[BUILD] user dirname"
+clang --target=x86_64-unknown-none-elf \
+echo "[BUILD] user dirs"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/dirs/main.c" -o "$BUILD_DIR/user-dirs-main.o"
+ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-dirs-main.o" \
+    -o "$BUILD_DIR/DIRS.ELF"
+    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
     -c "$ROOT_DIR/userspace/bin/dirname/main.c" -o "$BUILD_DIR/user-dirname-main.o"
 ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
     -T "$ROOT_DIR/userspace/linker/user.ld" \

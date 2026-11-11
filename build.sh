@@ -1833,6 +1833,7 @@ build_user_program at "$ROOT_DIR/userspace/bin/at/main.c" AT.ELF
 build_user_program awk "$ROOT_DIR/userspace/bin/awk/main.c" AWK.ELF
 build_user_program basename "$ROOT_DIR/userspace/bin/basename/main.c" BASENAME.ELF
 build_user_program dirname "$ROOT_DIR/userspace/bin/dirname/main.c" DIRNAME.ELF
+build_user_program dirs "$ROOT_DIR/userspace/bin/dirs/main.c" DIRS.ELF
 build_user_program base32 "$ROOT_DIR/userspace/bin/base32/main.c" BASE32.ELF
 build_user_program base64 "$ROOT_DIR/userspace/bin/base64/main.c" BASE64.ELF
 build_user_program bc "$ROOT_DIR/userspace/bin/bc/main.c" BC.ELF
@@ -3535,6 +3536,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/gawk:$BUILD_DIR/AWK.ELF:exec" \
     --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec" \
     --file "/bin/dirname:$BUILD_DIR/DIRNAME.ELF:exec" \
+    --file "/bin/dirs:$BUILD_DIR/DIRS.ELF:exec" \
     --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec" \
     --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec" \
     --file "/bin/bc:$BUILD_DIR/BC.ELF:exec" \
