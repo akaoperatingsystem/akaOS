@@ -38,6 +38,16 @@ struct shell_job {
 
 #define MAX_SHELL_JOBS 32
 static struct shell_job shell_jobs[MAX_SHELL_JOBS];
+#define MAX_DIR_STACK 32
+static char *dir_stack[MAX_DIR_STACK];
+static int dir_stack_ptr = 0;
+
+static void update_dir_stack(const char *path) {
+    if (dir_stack_ptr < MAX_DIR_STACK) {
+        dir_stack[dir_stack_ptr++] = strdup(path);
+    }
+}
+
 static int next_job_id = 1;
 static uint32_t job_seq_counter = 1;
 
@@ -1069,7 +1079,7 @@ static int is_name_shell_builtin(const char *name) {
         "shutdown", "jobs", "fg", "bg", "kill", "alias", "unalias",
         "test", "[", "echo", "export", "bind", "break", "builtin",
         "caller", "case", "command", "continue", "declare", "typeset", "true", "false", "source", ".",
-        NULL
+        "dirs", NULL
     };
     for (int i = 0; blts[i]; ++i) {
         if (strcmp(name, blts[i]) == 0) return 1;
@@ -1673,6 +1683,45 @@ if (strcmp(argv[0], "exit") == 0) {
             last_exit_status = 1;
             return 1;
         }
+
+    if (strcmp(argv[0], "dirs") == 0) {
+        int opt_c = 0, opt_p = 0, opt_v = 0;
+        int idx = 1;
+        while (idx < argc) {
+            if (argv[idx][0] == '-') {
+                for (size_t c = 1; argv[idx][c]; ++c) {
+                    switch (argv[idx][c]) {
+                        case 'c': opt_c = 1; break;
+                        case 'p': opt_p = 1; break;
+                        case 'v': opt_v = 1; break;
+                    }
+                }
+            } else if (argv[idx][0] == '+' || argv[idx][0] == '-') {
+                int n = atoi(argv[idx] + 1);
+                if (n >= 0 && n < dir_stack_ptr) {
+                    if (argv[idx][0] == '+') write_str(STDOUT_FILENO, dir_stack[n]);
+                    else write_str(STDOUT_FILENO, dir_stack[dir_stack_ptr - 1 - n]);
+                    write_str(STDOUT_FILENO, "\n");
+                    return 1;
+                }
+            }
+            idx++;
+        }
+        if (opt_c) { dir_stack_ptr = 0; return 1; }
+        if (opt_v || opt_p) {
+            for (int i = 0; i < dir_stack_ptr; ++i) {
+                if (opt_v) { char buf[16]; snprintf(buf, sizeof(buf), "%d ", i); write_str(STDOUT_FILENO, buf); }
+                write_str(STDOUT_FILENO, dir_stack[i]); write_str(STDOUT_FILENO, "\n");
+            }
+        } else {
+            for (int i = 0; i < dir_stack_ptr; ++i) {
+                write_str(STDOUT_FILENO, dir_stack[i]); write_str(STDOUT_FILENO, " ");
+            }
+            write_str(STDOUT_FILENO, "\n");
+        }
+        last_exit_status = 0; return 1;
+    }
+
         write_str(STDOUT_FILENO, "akaOS\n");
         last_exit_status = 0;
         return 1;
@@ -1819,6 +1868,7 @@ if (strcmp(argv[0], "exit") == 0) {
         if (getcwd(new_dir, sizeof(new_dir))) {
             set_shell_var("OLDPWD", cur_dir);
             set_shell_var("PWD", new_dir);
+            update_dir_stack(new_dir);
             if (print_new_dir) {
                 write_str(STDOUT_FILENO, new_dir);
                 write_str(STDOUT_FILENO, "\n");
