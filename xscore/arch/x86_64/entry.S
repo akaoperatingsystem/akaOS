@@ -499,6 +499,22 @@ xscore_syscall_int80:
     andq $-16, %rsp
     call xscore_process_capture_syscall_context
     movq %rbx, %rsp
+
+    /* Fast path check */
+    movq 112(%rbx), %rdi       /* syscall number */
+    movq 72(%rbx), %rsi        /* argument 0 */
+    movq 64(%rbx), %rdx        /* argument 1 */
+    movq 88(%rbx), %rcx        /* argument 2 */
+    andq $-16, %rsp
+    call xscore_syscall_fast_dispatch
+    movq %rbx, %rsp
+    movabsq $0xFFFFFFFFFFFFFFFF, %r10
+    cmpq %r10, %rax
+    je .Lslow_path_dispatch
+    movq %rax, 112(%rbx)
+    jmp .Lsyscall_exit
+
+.Lslow_path_dispatch:
 .Lsyscall_dispatch:
     movq 112(%rbx), %rdi       /* syscall number (user RAX) */
     movq 72(%rbx), %rsi        /* argument 0 (user RDI) */

@@ -1,1 +1,1 @@
-feat(storage): complete SATA TRIM and AHCI feature implementation; bump akaOS to v0.3.59, XSCore to v0.2.45
+perf(syscall): implement fast-path dispatch for GETPID/YIELD; bump akaOS to v0.3.61, XSCore to v0.2.47

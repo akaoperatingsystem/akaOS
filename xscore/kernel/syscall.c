@@ -753,6 +753,21 @@ recvmsg_copy_failure:
     return result;
 }
 
+
+
+uint64_t xscore_syscall_fast_dispatch(uint64_t number, uint64_t argument0,
+                                      uint64_t argument1, uint64_t argument2) {
+    if (number == AKAOS_SYSCALL_GETPID) {
+        struct xscore_process *p = xscore_process_current();
+        return p ? (uint64_t)p->pid : 0;
+    }
+    if (number == AKAOS_SYSCALL_YIELD) {
+        xscore_thread_yield();
+        return 0;
+    }
+    return XSCORE_SYSCALL_NOT_HANDLED;
+}
+
 uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
                                  uint64_t argument1, uint64_t argument2) {
     struct xscore_fd_table *table = xscore_thread_current_fd_table();
