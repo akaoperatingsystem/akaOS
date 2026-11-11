@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.55-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.38-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.60-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.46-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -185,12 +185,14 @@ All desktop environments and window managers run as **completely unmodified upst
 
 | Controller Family | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **AHCI & SATA** | Generic AHCI 1.0–1.3.1 (PCIe/ICH9), 32-Port Scanning, FIS/PRDT DMA Engine, SATA SSDs & HDDs | 100% | `[██████████]` 100% |
-| **NVMe Controllers** | Generic NVMe 1.x / 2.0 (PCIe: Reset, Admin Queues, I/O Queues, PRP Lists, Namespace LBA Formatting, VFS Block Integration) | 100% | `[██████████]` 100% |
+| **NVMe Advanced Features** | Multi-Queue Scalability, Dataset Management (TRIM/Deallocate), SMART Health Logs, HMB, Flush, Write Zeroes | 100% | `[██████████]` 100% |
+| **AHCI & SATA Features** | Generic AHCI 1.0–1.3.1, 32-Port FIS/PRDT DMA, NCQ, SATA SSD TRIM, S.M.A.R.T. Autoreporting, HDD Power Spindown | 100% | `[██████████]` 100% |
 | **VirtIO-Block** | VirtIO-PCI (Legacy & Modern 1.0) & VirtIO-MMIO (ARM/RISC-V `virt`), Ring Lifecycle | 100% | `[██████████]` 100% |
-| **IDE / PATA** | Primary/Secondary Channels, Master/Slave Drive Selection, 28/48-bit LBA PIO/DMA Transfers | 100% | `[██████████]` 100% |
+| **IDE / PATA & ATAPI** | Primary/Secondary Channels, 48-bit LBA Extensions, UDMA Modes 0–6, ATAPI Packet Command Interface | 100% | `[██████████]` 100% |
 | **SCSI / SAS** | LSI Logic 53C895A & MegaRAID Controllers, SCSI CDB Command Descriptor Blocks | 100% | `[██████████]` 100% |
+| **Unified Block & I/O Sched** | No-op / Direct Dispatch & Elevator Deadline Schedulers, FUA Barriers, BLKDISCARD / FITRIM ioctls | 100% | `[██████████]` 100% |
 | **Partition Parsers** | MBR (4 Primary, Boot Flags) & GPT (GUID Header, Unique UUIDs, Partition Array) Parsing | 100% | `[██████████]` 100% |
+| **Storage Diagnostics** | `/bin/diskinfo` Hardware Query, `/bin/smartctl` Telemetry Inspection, `/bin/hdparm` Drive Control & APM | 100% | `[██████████]` 100% |
 | **eMMC / SDHCI** | eMMC 5.1 / SD 3.0 Controllers, CMD/DATA Line Clocking & Block Read/Write | 80% | `[████████░░]` 80% |
 
 ## Universal USB Subsystem & Controller Matrix
