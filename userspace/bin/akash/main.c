@@ -1685,7 +1685,7 @@ if (strcmp(argv[0], "exit") == 0) {
         }
 
     if (strcmp(argv[0], "dirs") == 0) {
-        int opt_c = 0, opt_p = 0, opt_v = 0;
+        int opt_c = 0, opt_p = 0, opt_v = 0, opt_l = 0;
         int idx = 1;
         while (idx < argc) {
             if (argv[idx][0] == '-') {
@@ -1694,7 +1694,41 @@ if (strcmp(argv[0], "exit") == 0) {
                         case 'c': opt_c = 1; break;
                         case 'p': opt_p = 1; break;
                         case 'v': opt_v = 1; break;
+                        case 'l': opt_l = 1; break;
                     }
+                }
+            } else if (argv[idx][0] == '+' || argv[idx][0] == '-') {
+                int n = atoi(argv[idx] + 1);
+                if (n >= 0 && n < dir_stack_ptr) {
+                    if (argv[idx][0] == '+') write_str(STDOUT_FILENO, dir_stack[n]);
+                    else write_str(STDOUT_FILENO, dir_stack[dir_stack_ptr - 1 - n]);
+                    write_str(STDOUT_FILENO, "\n");
+                    return 1;
+                }
+            }
+            idx++;
+        }
+        if (opt_c) { dir_stack_ptr = 0; return 1; }
+        for (int i = 0; i < dir_stack_ptr; ++i) {
+            if (opt_v) { char buf[16]; snprintf(buf, sizeof(buf), "%d ", i); write_str(STDOUT_FILENO, buf); }
+            
+            char *path = dir_stack[i];
+            char tilde_path[256];
+            if (!opt_l) {
+                const char *home = shell_account.home;
+                if (home && *home && strncmp(path, home, strlen(home)) == 0) {
+                    snprintf(tilde_path, sizeof(tilde_path), "~%s", path + strlen(home));
+                    path = tilde_path;
+                }
+            }
+            
+            write_str(STDOUT_FILENO, path);
+            if (opt_v || opt_p) write_str(STDOUT_FILENO, "\n");
+            else write_str(STDOUT_FILENO, " ");
+        }
+        if (!opt_v && !opt_p) write_str(STDOUT_FILENO, "\n");
+        last_exit_status = 0; return 1;
+    }
                 }
             } else if (argv[idx][0] == '+' || argv[idx][0] == '-') {
                 int n = atoi(argv[idx] + 1);
