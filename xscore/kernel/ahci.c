@@ -591,9 +591,31 @@ int xscore_ahci_smart_return_status(uint8_t port_num) {
     return ahci_command_submit(port_num, ATA_CMD_SMART, SMART_RETURN_STATUS, 0, 0, 1, 0, 0x4F, 0xC2, 0, 0, 0, 0x40, NULL, 0, 0);
 }
 
+
 int xscore_ahci_trim(uint8_t port_num, uint64_t lba, uint32_t count) {
-    return 0;
+    // Allocate a page for the TRIM range data (512 bytes)
+    uint64_t dsm_phys = xscore_pmm_allocate_page();
+    if (!dsm_phys) return 0;
+    
+    // The range format: 48-bit LBA (6 bytes), 16-bit count (2 bytes) = 8 bytes total
+    uint8_t *range_buf = (uint8_t *)(uintptr_t)dsm_phys;
+    memset(range_buf, 0, 512);
+    range_buf[0] = (uint8_t)lba;
+    range_buf[1] = (uint8_t)(lba >> 8);
+    range_buf[2] = (uint8_t)(lba >> 16);
+    range_buf[3] = (uint8_t)(lba >> 24);
+    range_buf[4] = (uint8_t)(lba >> 32);
+    range_buf[5] = (uint8_t)(lba >> 40);
+    range_buf[6] = (uint8_t)count;
+    range_buf[7] = (uint8_t)(count >> 8);
+    
+    // ATA DATA SET MANAGEMENT (0x06), Feature=1 (TRIM)
+    int success = ahci_command_submit(port_num, ATA_CMD_DATA_SET_MGMT, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0x40, range_buf, 512, 1);
+    
+    xscore_pmm_free_page(dsm_phys);
+    return success;
 }
+
 
 int xscore_ahci_set_power_mode(uint8_t port_num, uint8_t mode) {
     uint8_t cmd = ATA_CMD_STANDBY_IMM;

@@ -1,1 +1,1 @@
-feat(storage): enhance smartctl and implement hdparm; bump akaOS to v0.3.58, XSCore to v0.2.44
+feat(storage): complete SATA TRIM and AHCI feature implementation; bump akaOS to v0.3.59, XSCore to v0.2.45
