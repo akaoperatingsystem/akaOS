@@ -1729,38 +1729,6 @@ if (strcmp(argv[0], "exit") == 0) {
         if (!opt_v && !opt_p) write_str(STDOUT_FILENO, "\n");
         last_exit_status = 0; return 1;
     }
-                }
-            } else if (argv[idx][0] == '+' || argv[idx][0] == '-') {
-                int n = atoi(argv[idx] + 1);
-                if (n >= 0 && n < dir_stack_ptr) {
-                    if (argv[idx][0] == '+') write_str(STDOUT_FILENO, dir_stack[n]);
-                    else write_str(STDOUT_FILENO, dir_stack[dir_stack_ptr - 1 - n]);
-                    write_str(STDOUT_FILENO, "\n");
-                    return 1;
-                }
-            }
-            idx++;
-        }
-        if (opt_c) { dir_stack_ptr = 0; return 1; }
-        if (opt_v || opt_p) {
-            for (int i = 0; i < dir_stack_ptr; ++i) {
-                if (opt_v) { char buf[16]; snprintf(buf, sizeof(buf), "%d ", i); write_str(STDOUT_FILENO, buf); }
-                write_str(STDOUT_FILENO, dir_stack[i]); write_str(STDOUT_FILENO, "\n");
-            }
-        } else {
-            for (int i = 0; i < dir_stack_ptr; ++i) {
-                write_str(STDOUT_FILENO, dir_stack[i]); write_str(STDOUT_FILENO, " ");
-            }
-            write_str(STDOUT_FILENO, "\n");
-        }
-        last_exit_status = 0; return 1;
-    }
-
-        write_str(STDOUT_FILENO, "akaOS\n");
-        last_exit_status = 0;
-        return 1;
-    }
-
     if (strcmp(argv[0], "cd") == 0) {
         if (opt_restricted_shell) {
             write_str(STDERR_FILENO, "cd: restricted\n");
