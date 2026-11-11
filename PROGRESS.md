@@ -1,12 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-<<<<<<< HEAD
 [![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.52-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.37-green.svg)](sdk/include/akaos/version.h)
-=======
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.51-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.38-green.svg)](sdk/include/akaos/version.h)
->>>>>>> 69aede1 (feat(mem): implement universal RAM management, multi-level paging, and SLAB allocator; bump akaOS to v0.3.51, XSCore to v0.2.38)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)

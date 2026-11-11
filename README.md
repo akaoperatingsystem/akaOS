@@ -1,12 +1,7 @@
 # akaOS
 
-<<<<<<< HEAD
 [![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.52-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.37-green.svg)](sdk/include/akaos/version.h)
-=======
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.51-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.38-green.svg)](sdk/include/akaos/version.h)
->>>>>>> 69aede1 (feat(mem): implement universal RAM management, multi-level paging, and SLAB allocator; bump akaOS to v0.3.51, XSCore to v0.2.38)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
 [![Build & Test](https://img.shields.io/badge/QEMU%20Tests-Passing-brightgreen.svg)](docs/development/workflow.md)
 
