@@ -140,6 +140,19 @@ size_t xscore_kernel_log_read(char *buffer, size_t max_len, int clear) {
     }
     xscore_spin_unlock_irqrestore(&kernel_log_lock, irq_flags);
     return bytes_to_copy;
+
+int xscore_dmesg_ioctl(uint32_t request, void *argument) {
+    if (request == AKAOS_DMESG_CLEAR) {
+        uintptr_t irq_flags = xscore_spin_lock_irqsave(&kernel_log_lock);
+        kernel_log_tail = kernel_log_head;
+        kernel_log_count = 0;
+        xscore_spin_unlock_irqrestore(&kernel_log_lock, irq_flags);
+        return 0;
+    }
+    // Set level not implemented yet as per requirement, but structure is there
+    return -AKAOS_ENOTTY;
+}
+
 }
 
 static void serial_write(const char *text) {

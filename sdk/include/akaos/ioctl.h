@@ -19,3 +19,7 @@
 #define AKAOS_DISK_POWER_MODE UINT32_C(0x4E03)
 
 #endif
+
+/* dmesg ioctls */
+#define AKAOS_DMESG_CLEAR UINT32_C(0x5601)
+#define AKAOS_DMESG_SETLEVEL UINT32_C(0x5602)

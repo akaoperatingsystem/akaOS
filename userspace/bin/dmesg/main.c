@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <akaos/ioctl.h>
 
 #define DMESG_VERSION "2.40.2 (akaOS coreutils)"
 #define DEFAULT_BUFSIZE 16392
@@ -73,6 +75,11 @@ int main(int argc, char **argv) {
         perror("dmesg: read kernel buffer failed");
         return 1;
     }
+
+    if (opt_clear) {
+        ioctl(fd, AKAOS_DMESG_CLEAR, NULL);
+    }
+
 
     char *buf = malloc(bufsize);
     if (!buf) {
