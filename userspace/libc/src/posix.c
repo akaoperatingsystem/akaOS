@@ -538,12 +538,6 @@ int alphasort64(const struct dirent **a, const struct dirent **b) {
     return alphasort(a, b);
 }
 
-int fchmod(int descriptor, mode_t mode) {
-    (void)descriptor;
-    (void)mode;
-    errno = ENOSYS;
-    return -1;
-}
 
 int getrlimit(int resource, struct rlimit *limit) {
     if (!limit) {

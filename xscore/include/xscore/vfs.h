@@ -109,6 +109,8 @@ int xscore_vfs_mkdir_at(uint32_t cwd_node, const char *path, uint32_t mode);
 int xscore_vfs_unlink_at(uint32_t cwd_node, const char *path);
 int xscore_vfs_rename_at(uint32_t old_cwd, const char *old_path,
                          uint32_t new_cwd, const char *new_path);
+int xscore_vfs_chmod_node(uint32_t target, uint32_t mode);
+int xscore_vfs_chown_node(uint32_t target, uint32_t uid, uint32_t gid);
 int xscore_vfs_chmod_at(uint32_t cwd_node, const char *path, uint32_t mode);
 int xscore_vfs_chown_at(uint32_t cwd_node, const char *path, uint32_t uid, uint32_t gid);
 int xscore_vfs_access_at(uint32_t cwd_node, const char *path, uint32_t access);

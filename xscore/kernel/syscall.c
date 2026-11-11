@@ -1802,6 +1802,11 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
         }
         return 0;
     }
+    if (number == AKAOS_SYSCALL_FCHMOD || number == AKAOS_SYSCALL_FCHOWN) {
+        if (!table) return (uint64_t)-AKAOS_EBADF;
+        return (uint64_t)(int64_t)xscore_fd_metadata(table, (int)argument0,
+            number == AKAOS_SYSCALL_FCHOWN, (uint32_t)argument1, (uint32_t)argument2);
+    }
     if (number == AKAOS_SYSCALL_CHMOD) {
         char path[AKAOS_SYSCALL_PATH_MAX + 1];
         if (!xscore_copy_string_from_user(path, sizeof(path), argument0, 0)) {

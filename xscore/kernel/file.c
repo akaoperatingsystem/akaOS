@@ -563,6 +563,23 @@ int64_t xscore_fd_open_vnode(struct xscore_fd_table *table,
     return descriptor;
 }
 
+/* Hold the open file reference through the metadata update so close/unlink
+ * cannot recycle its vnode while the operation is in progress. */
+int xscore_fd_metadata(struct xscore_fd_table *table, int descriptor,
+                       int ownership, uint32_t first, uint32_t second) {
+    struct xscore_file *file = fd_lookup_ref(table, descriptor);
+    if (!file) return -AKAOS_EBADF;
+    uintptr_t flags = file_operation_acquire(file);
+    int result = -AKAOS_EBADF;
+    if (file->flags & (FILE_VNODE | FILE_DIRECTORY)) {
+        result = ownership ? xscore_vfs_chown_node(file->node_id, first, second)
+                           : xscore_vfs_chmod_node(file->node_id, first);
+    }
+    file_operation_release(file, flags);
+    file_put(file);
+    return result;
+}
+
 int xscore_fd_directory_state(struct xscore_fd_table *table, int descriptor,
                               uint32_t *node_id, uint64_t *offset) {
     struct xscore_file *file = fd_lookup_ref(table, descriptor);

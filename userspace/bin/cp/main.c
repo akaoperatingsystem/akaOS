@@ -223,6 +223,19 @@ static int prompt_interactive(const char *dst) {
     return 0;
 }
 
+static int preserve_metadata(int fd, const char *dst, const struct stat *source) {
+    struct stat current;
+    /* Avoid a privileged ownership operation when ownership already matches. */
+    if (fstat(fd, &current) != 0 ||
+        ((current.st_uid != source->st_uid || current.st_gid != source->st_gid) &&
+         fchown(fd, source->st_uid, source->st_gid) != 0) ||
+        fchmod(fd, source->st_mode & 07777) != 0) {
+        fprintf(stderr, "cp: cannot preserve attributes of '%s': %s\n", dst, strerror(errno));
+        return 1;
+    }
+    return 0;
+}
+
 static int copy_file(const char *src, const char *dst);
 
 static int copy_dir(const char *src, const char *dst) {
@@ -247,9 +260,19 @@ static int copy_dir(const char *src, const char *dst) {
         return 1;
     }
 
+    int dst_fd = -1;
+    if (opt_preserve) {
+        dst_fd = open(dst, O_RDONLY | O_DIRECTORY);
+        if (dst_fd < 0) {
+            fprintf(stderr, "cp: cannot open directory '%s': %s\n", dst, strerror(errno));
+            return 1;
+        }
+    }
+
     int src_fd = open(src, O_RDONLY);
     if (src_fd < 0) {
         fprintf(stderr, "cp: cannot open directory '%s': %s\n", src, strerror(errno));
+        if (dst_fd >= 0) close(dst_fd);
         return 1;
     }
 
@@ -257,6 +280,7 @@ static int copy_dir(const char *src, const char *dst) {
     if (!entries) {
         fprintf(stderr, "cp: out of memory\n");
         close(src_fd);
+        if (dst_fd >= 0) close(dst_fd);
         return 1;
     }
 
@@ -296,11 +320,11 @@ static int copy_dir(const char *src, const char *dst) {
     if (opt_preserve) {
         struct stat src_st;
         if (stat(src, &src_st) == 0) {
-            chmod(dst, src_st.st_mode & 07777);
-            chown(dst, src_st.st_uid, src_st.st_gid);
+            had_error |= preserve_metadata(dst_fd, dst, &src_st);
         }
     }
 
+    if (dst_fd >= 0) close(dst_fd);
     return had_error;
 }
 
@@ -434,12 +458,10 @@ static int copy_file(const char *src, const char *dst) {
     }
 
     close(src_fd);
-    close(dst_fd);
 
     if (!had_error) {
         if (opt_preserve) {
-            chmod(dst, src_st.st_mode & 07777);
-            chown(dst, src_st.st_uid, src_st.st_gid);
+            had_error = preserve_metadata(dst_fd, dst, &src_st);
             struct utimbuf ut;
             ut.actime = src_st.st_atime;
             ut.modtime = src_st.st_mtime;
@@ -450,6 +472,7 @@ static int copy_file(const char *src, const char *dst) {
         }
     }
 
+    close(dst_fd);
     return had_error;
 }
 

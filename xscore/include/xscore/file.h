@@ -35,6 +35,8 @@ int64_t xscore_fd_open_directory(struct xscore_fd_table *table,
                                  uint32_t node_id);
 int64_t xscore_fd_open_vnode(struct xscore_fd_table *table,
                              uint32_t node_id, uint64_t open_flags);
+int xscore_fd_metadata(struct xscore_fd_table *table, int descriptor,
+                       int ownership, uint32_t first, uint32_t second);
 int xscore_fd_directory_state(struct xscore_fd_table *table, int descriptor,
                               uint32_t *node_id, uint64_t *offset);
 int xscore_fd_directory_set_offset(struct xscore_fd_table *table,
