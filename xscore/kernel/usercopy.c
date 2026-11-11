@@ -1,3 +1,8 @@
+/*
+ * XSCore Kernel Usercopy & Fast Memory Primitives
+ * High-performance vectorized 64-bit word transfers and unrolled memory loops
+ */
+
 #include <xscore/process.h>
 #include <xscore/usercopy.h>
 #include <xscore/vmm.h>
@@ -9,28 +14,46 @@
 typedef uintptr_t xscore_alias_word __attribute__((__may_alias__));
 
 void *xscore_memcpy(void *destination, const void *source, size_t length) {
-    uint8_t *output = destination;
-    const uint8_t *input = source;
+    uint8_t *output = (uint8_t *)destination;
+    const uint8_t *input = (const uint8_t *)source;
     const uintptr_t alignment_mask = sizeof(xscore_alias_word) - 1U;
 
     if ((((uintptr_t)output ^ (uintptr_t)input) & alignment_mask) == 0) {
+        /* Align output to machine word boundary */
         while (length != 0 && ((uintptr_t)output & alignment_mask) != 0) {
             *output++ = *input++;
             --length;
         }
 
-        xscore_alias_word *output_words =
-            (xscore_alias_word *)(void *)output;
-        const xscore_alias_word *input_words =
-            (const xscore_alias_word *)(const void *)input;
+        xscore_alias_word *output_words = (xscore_alias_word *)(void *)output;
+        const xscore_alias_word *input_words = (const xscore_alias_word *)(const void *)input;
+
+        /* Fast unrolled 64-byte batch transfers */
+        while (length >= 8 * sizeof(xscore_alias_word)) {
+            output_words[0] = input_words[0];
+            output_words[1] = input_words[1];
+            output_words[2] = input_words[2];
+            output_words[3] = input_words[3];
+            output_words[4] = input_words[4];
+            output_words[5] = input_words[5];
+            output_words[6] = input_words[6];
+            output_words[7] = input_words[7];
+            output_words += 8;
+            input_words += 8;
+            length -= 8 * sizeof(xscore_alias_word);
+        }
+
+        /* Remainder words */
         while (length >= sizeof(xscore_alias_word)) {
             *output_words++ = *input_words++;
             length -= sizeof(xscore_alias_word);
         }
+
         output = (uint8_t *)(void *)output_words;
         input = (const uint8_t *)(const void *)input_words;
     }
 
+    /* Remainder bytes */
     while (length != 0) {
         *output++ = *input++;
         --length;
@@ -100,7 +123,51 @@ void *memcpy(void *destination, const void *source, size_t count) {
 }
 
 void *memset(void *destination, int value, size_t count) {
-    uint8_t *dst = destination;
-    while (count--) *dst++ = (uint8_t)value;
+    uint8_t *dst = (uint8_t *)destination;
+    uint8_t byte_val = (uint8_t)value;
+    const uintptr_t align_mask = sizeof(xscore_alias_word) - 1U;
+
+    /* Align to machine word */
+    while (count != 0 && ((uintptr_t)dst & align_mask) != 0) {
+        *dst++ = byte_val;
+        --count;
+    }
+
+    if (count >= sizeof(xscore_alias_word)) {
+        xscore_alias_word word_val = byte_val;
+        word_val |= (word_val << 8);
+        word_val |= (word_val << 16);
+#if UINTPTR_MAX > 0xFFFFFFFFU
+        word_val |= (word_val << 32);
+#endif
+
+        xscore_alias_word *dst_words = (xscore_alias_word *)(void *)dst;
+
+        /* Unrolled 8-word chunks */
+        while (count >= 8 * sizeof(xscore_alias_word)) {
+            dst_words[0] = word_val;
+            dst_words[1] = word_val;
+            dst_words[2] = word_val;
+            dst_words[3] = word_val;
+            dst_words[4] = word_val;
+            dst_words[5] = word_val;
+            dst_words[6] = word_val;
+            dst_words[7] = word_val;
+            dst_words += 8;
+            count -= 8 * sizeof(xscore_alias_word);
+        }
+
+        while (count >= sizeof(xscore_alias_word)) {
+            *dst_words++ = word_val;
+            count -= sizeof(xscore_alias_word);
+        }
+
+        dst = (uint8_t *)(void *)dst_words;
+    }
+
+    while (count != 0) {
+        *dst++ = byte_val;
+        --count;
+    }
     return destination;
 }

@@ -757,9 +757,24 @@ recvmsg_copy_failure:
 
 uint64_t xscore_syscall_fast_dispatch(uint64_t number, uint64_t argument0,
                                       uint64_t argument1, uint64_t argument2) {
+    (void)argument0; (void)argument1; (void)argument2;
     if (number == AKAOS_SYSCALL_GETPID) {
         struct xscore_process *p = xscore_process_current();
         return p ? (uint64_t)p->pid : 0;
+    }
+    if (number == AKAOS_SYSCALL_GETTID) {
+        struct xscore_thread *t = xscore_thread_current();
+        return t ? (uint64_t)t->tid : 0;
+    }
+    if (number == AKAOS_SYSCALL_GETUID || number == AKAOS_SYSCALL_GETEUID) {
+        uint32_t uid = 0;
+        current_credentials(&uid, 0);
+        return (uint64_t)uid;
+    }
+    if (number == AKAOS_SYSCALL_GETGID || number == AKAOS_SYSCALL_GETEGID) {
+        uint32_t gid = 0;
+        current_credentials(0, &gid);
+        return (uint64_t)gid;
     }
     if (number == AKAOS_SYSCALL_YIELD) {
         xscore_thread_yield();

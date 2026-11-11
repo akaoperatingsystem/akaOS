@@ -1,3 +1,4 @@
+void *memcpy(void *dest, const void *src, size_t n);
 #include <xscore/bufcache.h>
 #include <xscore/virtio_blk.h>
 #include <xscore/nvme.h>
@@ -73,22 +74,28 @@ int xscore_bufcache_initialize(void) {
 }
 
 static struct xscore_buf_entry *find_entry(uint64_t sector) {
+    /* Fast-path hash probe */
+    size_t start = (size_t)((sector ^ (sector >> 6)) % XSCORE_BUF_CACHE_SECTORS);
     for (size_t i = 0; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
-        if ((cache[i].flags & BUF_VALID) && cache[i].sector == sector) {
-            return &cache[i];
+        size_t idx = (start + i) % XSCORE_BUF_CACHE_SECTORS;
+        if ((cache[idx].flags & BUF_VALID) && cache[idx].sector == sector) {
+            return &cache[idx];
         }
     }
     return NULL;
 }
 
 static struct xscore_buf_entry *allocate_entry(uint64_t sector) {
-    /* Look for an unused slot first */
+    size_t start = (size_t)((sector ^ (sector >> 6)) % XSCORE_BUF_CACHE_SECTORS);
+
+    /* Look for an unused slot starting from hash index */
     for (size_t i = 0; i < XSCORE_BUF_CACHE_SECTORS; ++i) {
-        if (!(cache[i].flags & BUF_VALID)) {
-            cache[i].sector = sector;
-            cache[i].flags = BUF_VALID;
-            cache[i].access_tick = ++global_tick_seq;
-            return &cache[i];
+        size_t idx = (start + i) % XSCORE_BUF_CACHE_SECTORS;
+        if (!(cache[idx].flags & BUF_VALID)) {
+            cache[idx].sector = sector;
+            cache[idx].flags = BUF_VALID;
+            cache[idx].access_tick = ++global_tick_seq;
+            return &cache[idx];
         }
     }
 
@@ -123,10 +130,7 @@ int xscore_bufcache_read(uint64_t sector, void *buffer) {
     struct xscore_buf_entry *entry = find_entry(sector);
     if (entry) {
         entry->access_tick = ++global_tick_seq;
-        uint8_t *dst = (uint8_t *)buffer;
-        for (size_t i = 0; i < XSCORE_BUF_SECTOR_SIZE; ++i) {
-            dst[i] = entry->data[i];
-        }
+        memcpy(buffer, entry->data, XSCORE_BUF_SECTOR_SIZE);
         return 1;
     }
 
@@ -136,10 +140,7 @@ int xscore_bufcache_read(uint64_t sector, void *buffer) {
         return 0;
     }
 
-    uint8_t *dst = (uint8_t *)buffer;
-    for (size_t i = 0; i < XSCORE_BUF_SECTOR_SIZE; ++i) {
-        dst[i] = entry->data[i];
-    }
+    memcpy(buffer, entry->data, XSCORE_BUF_SECTOR_SIZE);
     return 1;
 }
 
@@ -154,10 +155,7 @@ int xscore_bufcache_write(uint64_t sector, const void *buffer) {
         entry = allocate_entry(sector);
     }
 
-    const uint8_t *src = (const uint8_t *)buffer;
-    for (size_t i = 0; i < XSCORE_BUF_SECTOR_SIZE; ++i) {
-        entry->data[i] = src[i];
-    }
+    memcpy(entry->data, buffer, XSCORE_BUF_SECTOR_SIZE);
     entry->flags |= (BUF_VALID | BUF_DIRTY);
     entry->access_tick = ++global_tick_seq;
     return 1;

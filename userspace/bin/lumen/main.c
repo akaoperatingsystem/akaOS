@@ -154,30 +154,35 @@ static int pointer_relative_delta(int32_t value) {
     return delta;
 }
 
+static inline uint32_t fast_div255(uint32_t val) {
+    uint32_t t = val + 128U;
+    return (t + (t >> 8)) >> 8;
+}
+
 static uint32_t alpha_blend(uint32_t background, uint32_t foreground,
                             uint8_t alpha) {
     uint32_t inverse = 255U - alpha;
-    uint32_t r = (((background >> 16) & 0xffU) * inverse +
-                  ((foreground >> 16) & 0xffU) * alpha + 127U) / 255U;
-    uint32_t g = (((background >> 8) & 0xffU) * inverse +
-                  ((foreground >> 8) & 0xffU) * alpha + 127U) / 255U;
-    uint32_t b = ((background & 0xffU) * inverse +
-                  (foreground & 0xffU) * alpha + 127U) / 255U;
+    uint32_t r = fast_div255(((background >> 16) & 0xffU) * inverse +
+                             ((foreground >> 16) & 0xffU) * alpha);
+    uint32_t g = fast_div255(((background >> 8) & 0xffU) * inverse +
+                             ((foreground >> 8) & 0xffU) * alpha);
+    uint32_t b = fast_div255((background & 0xffU) * inverse +
+                             (foreground & 0xffU) * alpha);
     return (r << 16) | (g << 8) | b;
 }
 
 /* Wayland ARGB8888 buffers use premultiplied color channels. Blend those
- * channels directly instead of multiplying them by alpha a second time. */
+ * channels directly without division using fast bitwise shifts. */
 static uint32_t alpha_blend_premultiplied(uint32_t background,
                                           uint32_t foreground) {
     uint32_t alpha = foreground >> 24;
     uint32_t inverse = 255U - alpha;
     uint32_t r = ((foreground >> 16) & 0xffU) +
-                 (((background >> 16) & 0xffU) * inverse + 127U) / 255U;
+                 fast_div255(((background >> 16) & 0xffU) * inverse);
     uint32_t g = ((foreground >> 8) & 0xffU) +
-                 (((background >> 8) & 0xffU) * inverse + 127U) / 255U;
+                 fast_div255(((background >> 8) & 0xffU) * inverse);
     uint32_t b = (foreground & 0xffU) +
-                 ((background & 0xffU) * inverse + 127U) / 255U;
+                 fast_div255((background & 0xffU) * inverse);
     if (r > 255U) r = 255U;
     if (g > 255U) g = 255U;
     if (b > 255U) b = 255U;

@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.60-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.46-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.62-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.48-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -95,9 +95,9 @@ Do not infer full 16 MiB support from the minimal x86-32 experiment or total use
 | Target Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
 | **Memory Management** | 4-Level Paging, Buddy Allocator, Memory Zones, 2MB/1GB Huge Pages, SLAB Cache, SMBIOS | 100% | `[██████████]` 100% |
-| **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Stack COW Fault Isolation | 94% | `[█████████░]` 94% |
-| **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen, X11 Server (64MB Backing, XYBitmap/PutImage, SHAPE, X-Res), Mode Query | 94% | `[█████████░]` 94% |
-| **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
+| **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Fast-Path Syscall Dispatch, Lockless Stats | 100% | `[██████████]` 100% |
+| **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen (Damage Dirty-Rect, Division-Free Blending), X11 Server, Mode Query | 100% | `[██████████]` 100% |
+| **Storage & akaFS Overlay** | VirtIO-Block, AHCI/SATA & NVMe DMA Engine, O(1) Hash-Probed Buffer Cache, Persistent Overlay VFS | 100% | `[██████████]` 100% |
 | **NVMe Driver** | Linux NVMe Driver Port (Lockless Zero-Copy Admin Ring, Controller Init) | 100% | `[██████████]` 100% |
 | **Native libc & Linker** | Freestanding C Runtime, Dynamic Linker (`ld-akaos`), POSIX pthread_atfork Canonical Guards | 90% | `[█████████░]` 90% |
 | **Networking Stack** | VirtIO-Net, Linux netdevice/sk_buff bridge, IPv4/ARP/UDP/TCP Sockets | 95% | `[█████████░]` 95% |

@@ -41,9 +41,7 @@ void xscore_sched_timer_tick(void) {
         ++per_cpu[core].timer_ticks;
     }
     if (core == 0) {
-        uintptr_t flags = xscore_spin_lock_irqsave(&sched_lock);
-        ++sched_stats.timer_ticks;
-        xscore_spin_unlock_irqrestore(&sched_lock, flags);
+        __atomic_fetch_add(&sched_stats.timer_ticks, 1, __ATOMIC_RELAXED);
     }
     xscore_syscall_futex_timer_tick();
     /* x86 already has an audited context-switch path.  ARM/RISC-V now own
@@ -61,15 +59,11 @@ uint64_t xscore_sched_cpu_ticks(uint32_t cpu_index) {
 }
 
 void xscore_sched_record_switch(void) {
-    uintptr_t flags = xscore_spin_lock_irqsave(&sched_lock);
-    ++sched_stats.context_switches;
-    xscore_spin_unlock_irqrestore(&sched_lock, flags);
+    __atomic_fetch_add(&sched_stats.context_switches, 1, __ATOMIC_RELAXED);
 }
 
 void xscore_sched_record_preemption(void) {
-    uintptr_t flags = xscore_spin_lock_irqsave(&sched_lock);
-    ++sched_stats.preemptions;
-    xscore_spin_unlock_irqrestore(&sched_lock, flags);
+    __atomic_fetch_add(&sched_stats.preemptions, 1, __ATOMIC_RELAXED);
 }
 
 struct xscore_sched_stats xscore_sched_get_stats(void) {
