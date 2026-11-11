@@ -100,7 +100,50 @@ static uint32_t shell_input_rows;
 static void shell_grid_init(void);
 static void shell_console_sink(char c);
 
+
+#define KERNEL_LOG_RING_SIZE 16384
+static char kernel_log_ring[KERNEL_LOG_RING_SIZE];
+static size_t kernel_log_head = 0;
+static size_t kernel_log_tail = 0;
+static size_t kernel_log_count = 0;
+static xscore_spinlock_t kernel_log_lock = XSCORE_SPINLOCK_INIT;
+
+static void kernel_log_append(const char *text) {
+    if (!text) return;
+    uintptr_t irq_flags = xscore_spin_lock_irqsave(&kernel_log_lock);
+    while (*text) {
+        char c = *text++;
+        kernel_log_ring[kernel_log_head] = c;
+        kernel_log_head = (kernel_log_head + 1) % KERNEL_LOG_RING_SIZE;
+        if (kernel_log_count < KERNEL_LOG_RING_SIZE) {
+            kernel_log_count++;
+        } else {
+            kernel_log_tail = (kernel_log_tail + 1) % KERNEL_LOG_RING_SIZE;
+        }
+    }
+    xscore_spin_unlock_irqrestore(&kernel_log_lock, irq_flags);
+}
+
+size_t xscore_kernel_log_read(char *buffer, size_t max_len, int clear) {
+    if (!buffer || max_len == 0) return 0;
+    uintptr_t irq_flags = xscore_spin_lock_irqsave(&kernel_log_lock);
+    size_t bytes_to_copy = kernel_log_count < max_len ? kernel_log_count : max_len - 1;
+    size_t curr = kernel_log_tail;
+    for (size_t i = 0; i < bytes_to_copy; ++i) {
+        buffer[i] = kernel_log_ring[curr];
+        curr = (curr + 1) % KERNEL_LOG_RING_SIZE;
+    }
+    buffer[bytes_to_copy] = '\0';
+    if (clear) {
+        kernel_log_tail = kernel_log_head;
+        kernel_log_count = 0;
+    }
+    xscore_spin_unlock_irqrestore(&kernel_log_lock, irq_flags);
+    return bytes_to_copy;
+}
+
 static void serial_write(const char *text) {
+    kernel_log_append(text);
     serial_write_unlocked(text);
     if (verbose_mode && early_console_ready && !splash_active && text) {
         const char *p = text;

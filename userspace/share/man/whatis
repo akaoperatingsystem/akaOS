@@ -177,3 +177,5 @@ declare (1) - declare variables and give them attributes
 typeset (1) - declare variables and give them attributes
 lsusb (8) - list USB devices
 diff3 (1) - compare three files line by line
+
+dmesg (1) - print kernel & driver messages

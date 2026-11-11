@@ -88,6 +88,7 @@ static uint32_t proc_self_status_node;
 static uint32_t proc_processes_node;
 static uint32_t proc_mounts_node;
 static uint32_t proc_uptime_node;
+static uint32_t proc_kmsg_node;
 static uint32_t proc_realtime_node;
 static uint32_t proc_meminfo_node;
 static uint32_t proc_slabinfo_node;
@@ -1165,6 +1166,7 @@ int xscore_vfs_install_procfs(void) {
         !xscore_vfs_add_file("/proc/processes", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/mounts", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/uptime", empty, 0, 0444) ||
+        !xscore_vfs_add_file("/proc/kmsg", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/realtime", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/meminfo", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/slabinfo", empty, 0, 0444) ||
@@ -1195,6 +1197,7 @@ int xscore_vfs_install_procfs(void) {
     (void)xscore_vfs_resolve_path_at(0, "/proc/processes", &proc_processes_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/mounts", &proc_mounts_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/uptime", &proc_uptime_node);
+    (void)xscore_vfs_resolve_path_at(0, "/proc/kmsg", &proc_kmsg_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/realtime", &proc_realtime_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/meminfo", &proc_meminfo_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/slabinfo", &proc_slabinfo_node);
@@ -1221,6 +1224,7 @@ int xscore_vfs_install_procfs(void) {
     nodes[proc_processes_node].is_dynamic = 0;
     nodes[proc_mounts_node].is_dynamic = 0;
     nodes[proc_uptime_node].is_dynamic = 0;
+    nodes[proc_kmsg_node].is_dynamic = 0;
     nodes[proc_realtime_node].is_dynamic = 0;
     nodes[proc_meminfo_node].is_dynamic = 0;
     nodes[proc_slabinfo_node].is_dynamic = 0;
@@ -1934,7 +1938,7 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
      * test must NOT be gated on the nodes[] bounds check below. */
     int node_is_generated = procfs_installed &&
         (target == proc_self_status_node || target == proc_processes_node ||
-         target == proc_mounts_node || target == proc_uptime_node ||
+         target == proc_mounts_node || target == proc_uptime_node || target == proc_kmsg_node ||
          target == proc_realtime_node ||
          target == proc_meminfo_node || target == proc_net_tcp_node ||
          target == proc_net_udp_node || target == proc_net_route_node ||
@@ -2017,6 +2021,15 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
             uint8_t generated[512];
             size_t size = xscore_vfs_format_mounts((char *)generated, sizeof(generated));
             return xscore_fd_open_generated(table, generated, size);
+        }
+        if (target == proc_kmsg_node) {
+            if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
+            uint8_t *generated = (uint8_t *)xscore_heap_alloc(16384);
+            if (!generated) return -AKAOS_ENOMEM;
+            size_t size = xscore_kernel_log_read((char *)generated, 16384, 0);
+            int64_t fd = xscore_fd_open_generated(table, generated, size);
+            xscore_heap_free(generated);
+            return fd;
         }
         if (target == proc_uptime_node) {
             if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;

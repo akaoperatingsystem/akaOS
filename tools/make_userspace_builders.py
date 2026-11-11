@@ -566,6 +566,7 @@ build_user_program basename "$ROOT_DIR/userspace/bin/basename/main.c" BASENAME.E
 build_user_program dirname "$ROOT_DIR/userspace/bin/dirname/main.c" DIRNAME.ELF
 build_user_program dirs "$ROOT_DIR/userspace/bin/dirs/main.c" DIRS.ELF
 build_user_program dos2unix "$ROOT_DIR/userspace/bin/dos2unix/main.c" DOS2UNIX.ELF
+build_user_program dmesg "$ROOT_DIR/userspace/bin/dmesg/main.c" DMESG.ELF
 build_user_program base32 "$ROOT_DIR/userspace/bin/base32/main.c" BASE32.ELF
 build_user_program base64 "$ROOT_DIR/userspace/bin/base64/main.c" BASE64.ELF
 build_user_program bc "$ROOT_DIR/userspace/bin/bc/main.c" BC.ELF
@@ -811,6 +812,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/dirname:$BUILD_DIR/DIRNAME.ELF:exec" \
     --file "/bin/dirs:$BUILD_DIR/DIRS.ELF:exec" \
     --file "/bin/dos2unix:$BUILD_DIR/DOS2UNIX.ELF:exec" \\
+    --file "/bin/dmesg:$BUILD_DIR/DMESG.ELF:exec" \\
     --file "/bin/unix2dos:$BUILD_DIR/DOS2UNIX.ELF:exec" \\\n    --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec" \\\n    --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec" \\\n    --file "/bin/bc:$BUILD_DIR/BC.ELF:exec" \\\n    --file "/bin/bg:$BUILD_DIR/BG.ELF:exec" \\\n    --file "/bin/bind:$BUILD_DIR/BIND.ELF:exec" \\\n    --file "/bin/break:$BUILD_DIR/BREAK.ELF:exec" \\\n    --file "/bin/builtin:$BUILD_DIR/BUILTIN.ELF:exec" \\\n    --file "/bin/cal:$BUILD_DIR/CAL.ELF:exec" \\\n    --file "/bin/ncal:$BUILD_DIR/CAL.ELF:exec" \\\n    --file "/bin/caller:$BUILD_DIR/CALLER.ELF:exec" \\\n    --file "/bin/case:$BUILD_DIR/CASE.ELF:exec" \\\n    --file "/bin/cd:$BUILD_DIR/CD.ELF:exec" \\\n    --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec" \\\n    --file "/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec" \\\n    --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec" \
     --file "/bin/chpasswd:$BUILD_DIR/CHPASSWD.ELF:exec" \
     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec" \

@@ -18,4 +18,6 @@ void xscore_serial_write(const char *text);
  * terminated. The whole buffer is emitted as one serial transaction. */
 void xscore_serial_write_n(const char *text, uint64_t length);
 
+size_t xscore_kernel_log_read(char *buffer, size_t max_len, int clear);
+
 #endif
