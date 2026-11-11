@@ -1,6 +1,7 @@
 #include <akaos/boot_info.h>
 #include <xscore/arch.h>
 #include <xscore/heap.h>
+#include <xscore/slab.h>
 #include <xscore/memory.h>
 #include <xscore/vmm.h>
 #include <xscore/sections.h>
@@ -1527,6 +1528,14 @@ __attribute__((noreturn)) void xscore_entry(const struct akaos_boot_info *boot_i
     serial_number("[INFO] Kernel heap mapped: ", heap_stats.mapped_bytes / 1024, " KB\n");
     serial_write("[INFO] Kernel heap verified\n");
     boot_log_ok("Kernel heap ready");
+
+    /* Initialize Hierarchical SLAB Object Allocator */
+    xscore_slab_initialize();
+    void *slab_test = kmalloc(64);
+    if (slab_test) {
+        kfree(slab_test);
+        serial_write("[INFO] Kernel SLAB object allocator verified\n");
+    }
 
     // ---- Stage 1 complete: Early text logs were on framebuffer (if verbose) or serial only (if quiet) ----
     // Stage 2: Clean graphical splash — like Windows boot logo + Plymouth

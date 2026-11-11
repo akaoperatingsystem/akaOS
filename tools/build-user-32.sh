@@ -453,6 +453,7 @@ build_user_pie_program hello-pie "$ROOT_DIR/userspace/bin/hello/main.c" HELLO_PI
 build_user_program cat "$ROOT_DIR/userspace/bin/cat/main.c" CAT.ELF
 build_user_program ls "$ROOT_DIR/userspace/bin/ls/main.c" LS.ELF
 build_user_program dir "$ROOT_DIR/userspace/bin/dir/main.c" DIR.ELF
+build_user_program dircolors "$ROOT_DIR/userspace/bin/dircolors/main.c" DIRCOLORS.ELF
 build_user_program grep "$ROOT_DIR/userspace/bin/grep/main.c" GREP.ELF
 build_user_program head "$ROOT_DIR/userspace/bin/head/main.c" HEAD.ELF
 build_user_program tail "$ROOT_DIR/userspace/bin/tail/main.c" TAIL.ELF
@@ -533,6 +534,7 @@ build_user_program aspell "$ROOT_DIR/userspace/bin/aspell/main.c" ASPELL.ELF
 build_user_program at "$ROOT_DIR/userspace/bin/at/main.c" AT.ELF
 build_user_program awk "$ROOT_DIR/userspace/bin/awk/main.c" AWK.ELF
 build_user_program basename "$ROOT_DIR/userspace/bin/basename/main.c" BASENAME.ELF
+build_user_program dirname "$ROOT_DIR/userspace/bin/dirname/main.c" DIRNAME.ELF
 build_user_program base32 "$ROOT_DIR/userspace/bin/base32/main.c" BASE32.ELF
 build_user_program base64 "$ROOT_DIR/userspace/bin/base64/main.c" BASE64.ELF
 build_user_program bc "$ROOT_DIR/userspace/bin/bc/main.c" BC.ELF
@@ -579,9 +581,11 @@ build_bzip2
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
+build_user_program vmstat "$ROOT_DIR/userspace/bin/vmstat/main.c" VMSTAT.ELF
 build_user_program watch "$ROOT_DIR/userspace/bin/watch/main.c" WATCH.ELF
 build_user_program sed "$ROOT_DIR/userspace/bin/sed/main.c" SED.ELF
 build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF
+build_user_program diff3 "$ROOT_DIR/userspace/bin/diff3/main.c" DIFF3.ELF
 build_user_program cmp "$ROOT_DIR/userspace/bin/cmp/main.c" CMP.ELF
 build_user_program patch "$ROOT_DIR/userspace/bin/patch/main.c" PATCH.ELF
 build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
@@ -652,12 +656,7 @@ build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
 
 echo "[BUILD] akaOS x86_32 initramfs archive"
-initramfs_profile_args=()
-if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
-    initramfs_profile_args+=(--profile minimal)
-fi
 python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
-    "${initramfs_profile_args[@]}" \
     --dir "/bin" \
     --dir "/etc" \
     --dir "/usr" \
@@ -688,6 +687,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
     --file "/bin/ls:$BUILD_DIR/LS.ELF:exec" \
     --file "/bin/dir:$BUILD_DIR/DIR.ELF:exec" \
     --file "/bin/d:$BUILD_DIR/DIR.ELF:exec" \
+    --file "/bin/dircolors:$BUILD_DIR/DIRCOLORS.ELF:exec" \
     --file "/bin/grep:$BUILD_DIR/GREP.ELF:exec" \
     --file "/bin/head:$BUILD_DIR/HEAD.ELF:exec" \
     --file "/bin/tail:$BUILD_DIR/TAIL.ELF:exec" \
@@ -785,7 +785,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
     --file "/bin/batch:$BUILD_DIR/AT.ELF:exec" \
     --file "/bin/awk:$BUILD_DIR/AWK.ELF:exec" \
     --file "/bin/gawk:$BUILD_DIR/AWK.ELF:exec" \
-    --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec" \
+    --file "/bin/basename:$BUILD_DIR/BASENAME.ELF:exec"     --file "/bin/dirname:$BUILD_DIR/DIRNAME.ELF:exec" \
     --file "/bin/base32:$BUILD_DIR/BASE32.ELF:exec" \
     --file "/bin/base64:$BUILD_DIR/BASE64.ELF:exec" \
     --file "/bin/bc:$BUILD_DIR/BC.ELF:exec" \
@@ -853,10 +853,10 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
     --dir "/var/spool/at/spool" \
     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \
-    --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \
+    --file "/bin/free:$BUILD_DIR/FREE.ELF:exec"     --file "/bin/vmstat:$BUILD_DIR/VMSTAT.ELF:exec" \
     --file "/bin/watch:$BUILD_DIR/WATCH.ELF:exec" \
     --file "/bin/sed:$BUILD_DIR/SED.ELF:exec" \
-    --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \
+    --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec"     --file "/bin/diff3:$BUILD_DIR/DIFF3.ELF:exec" \
     --file "/bin/cmp:$BUILD_DIR/CMP.ELF:exec" \
     --file "/bin/patch:$BUILD_DIR/PATCH.ELF:exec" \
     --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec"     --file "/bin/cpio:$BUILD_DIR/CPIO.ELF:exec"     --file "/bin/cron:$BUILD_DIR/CRON.ELF:exec"     --file "/bin/csplit:$BUILD_DIR/CSPLIT.ELF:exec"     --file "/bin/date:$BUILD_DIR/DATE.ELF:exec"     --file "/bin/declare:$BUILD_DIR/DECLARE.ELF:exec"     --file "/bin/typeset:$BUILD_DIR/DECLARE.ELF:exec"     --file "/bin/dc:$BUILD_DIR/DC.ELF:exec"     --file "/bin/dd:$BUILD_DIR/DD.ELF:exec"     --file "/bin/ddrescue:$BUILD_DIR/DDRESCUE.ELF:exec"     --file "/bin/ddrescuelog:$BUILD_DIR/DDRESCUELOG.ELF:exec"     --file "/bin/lsusb:$BUILD_DIR/LSUSB.ELF:exec"     --file "/bin/crond:$BUILD_DIR/CROND.ELF:exec"     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \

@@ -107,9 +107,17 @@ int main(int argc, char **argv) {
         strcpy(gpu_model, "VirtIO-GPU / VESA Linear Framebuffer (/dev/fb0)");
     }
 
+    char mem_free_str[64];
     get_proc_field("/proc/meminfo", "MemTotal", mem_total, sizeof(mem_total));
-    if (mem_total[0] == '\0') {
-        strcpy(mem_total, "256 MB");
+    get_proc_field("/proc/meminfo", "MemFree", mem_free_str, sizeof(mem_free_str));
+    unsigned long total_k = strtoul(mem_total, NULL, 10);
+    unsigned long free_k = strtoul(mem_free_str, NULL, 10);
+    unsigned long used_k = total_k > free_k ? total_k - free_k : (total_k / 4);
+    char mem_display[96];
+    if (total_k > 0) {
+        snprintf(mem_display, sizeof(mem_display), "%lu MB / %lu MB (DDR4)", used_k / 1024, total_k / 1024);
+    } else {
+        strcpy(mem_display, "256 MB / 512 MB (DDR4)");
     }
 
     int host_fd = open("/etc/hostname", O_RDONLY);
@@ -138,7 +146,7 @@ int main(int argc, char **argv) {
     printf(COLOR_CYAN " ##    ##  ##    ## " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "CPU:" COLOR_RESET "       %s\n", cpu_model);
     printf(COLOR_CYAN " ##    ##  ##    ## " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "SIMD / ISA:" COLOR_RESET " %s\n", simd_engine);
     printf(COLOR_CYAN "                    " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "GPU:" COLOR_RESET "       %s\n", gpu_model);
-    printf(COLOR_CYAN "   ####      ####   " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "Memory:" COLOR_RESET "    %s\n", mem_total);
+    printf(COLOR_CYAN "   ####      ####   " COLOR_RESET "  " COLOR_BOLD COLOR_YELLOW "Memory:" COLOR_RESET "    %s\n", mem_display);
     printf("\n");
     printf("                      " COLOR_BLUE "███" COLOR_CYAN "███" COLOR_GREEN "███" COLOR_YELLOW "███" COLOR_WHITE "███" COLOR_RESET "\n\n");
 

@@ -49,6 +49,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/memory/physical.c"
     "$ROOT_DIR/xscore/memory/virtual.c"
     "$ROOT_DIR/xscore/memory/heap.c"
+    "$ROOT_DIR/xscore/memory/slab.c"
 )
 XSCORE_OBJECTS=()
 for source in "${XSCORE_C_SOURCES[@]}"; do

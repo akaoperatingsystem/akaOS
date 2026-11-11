@@ -1,7 +1,12 @@
 # akaOS Development Progress & Architecture Roadmap
 
+<<<<<<< HEAD
 [![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.52-blue.svg)](sdk/include/akaos/version.h)
 [![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.37-green.svg)](sdk/include/akaos/version.h)
+=======
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.51-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.38-green.svg)](sdk/include/akaos/version.h)
+>>>>>>> 69aede1 (feat(mem): implement universal RAM management, multi-level paging, and SLAB allocator; bump akaOS to v0.3.51, XSCore to v0.2.38)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -94,7 +99,7 @@ Do not infer full 16 MiB support from the minimal x86-32 experiment or total use
 
 | Target Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **Memory Management** | 4-Level Paging, 131K Refcount Slots, 2048-Page Cache, Dynamic Stack Growth, 32MB Heap | 100% | `[██████████]` 100% |
+| **Memory Management** | 4-Level Paging, Buddy Allocator, Memory Zones, 2MB/1GB Huge Pages, SLAB Cache, SMBIOS | 100% | `[██████████]` 100% |
 | **Process & Scheduling** | Preemptive Multitasking, Local APIC Timer, POSIX Fork/Execve, Stack COW Fault Isolation | 94% | `[█████████░]` 94% |
 | **GPU & Display Drivers** | Framebuffer (`/dev/fb0`), Lumen, X11 Server (64MB Backing, XYBitmap/PutImage, SHAPE, X-Res), Mode Query | 94% | `[█████████░]` 94% |
 | **Storage & akaFS Overlay** | VirtIO-Block, IDE/ATA PIO Fallback, Persistent Flash Overlay VFS | 85% | `[████████░░]` 85% |
@@ -103,6 +108,19 @@ Do not infer full 16 MiB support from the minimal x86-32 experiment or total use
 | **Networking Stack** | VirtIO-Net, Linux netdevice/sk_buff bridge, IPv4/ARP/UDP/TCP Sockets | 95% | `[█████████░]` 95% |
 | **Audio Subsystem** | AC97 / Intel HDA Sound Driver Foundation, `/dev/audio` Device Stream | 85% | `[█████████░]` 85% |
 | **Boot Display Subsystem** | Dual Boot Modes: Graphical Splash (Logo & Spinner) vs. Text-Only Verbose Console (Live Diagnostics), GRUB Selection, CLI & TUI Options | 100% | `[██████████]` 100% |
+
+### Memory Subsystem & RAM Architecture Matrix
+
+| Subsystem / Capability | Hardware Scope & Implementation | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **PMM Buddy Allocator & Zones** | Hierarchical Buddy Allocator (Order 0..10), Memory Zones (ZONE_DMA, DMA32, Normal, HighMem) | 100% | `[██████████]` 100% |
+| **VMM Multi-Level Paging** | 4-Level Paging (x86_64, AArch64), 2-Level & PAE (x86_32), Sv39/Sv48 (RISC-V), TCR/TTBR Split | 100% | `[██████████]` 100% |
+| **Huge Pages & Super Pages** | 2MB Large Pages, 1GB Giant Pages, Transparent Huge Page (THP) & Explicit `MAP_HUGETLB` | 100% | `[██████████]` 100% |
+| **SLAB / SLUB Object Allocators**| Fine-Grained Power-of-Two Caches (32B–4KB), Dedicated Named Caches, `kmalloc` & `kfree` | 100% | `[██████████]` 100% |
+| **Demand Paging & COW Engine** | Zero-Copy Copy-On-Write `fork()`, Atomic Refcounting, Fault-Driven Lazy Page Allocator | 100% | `[██████████]` 100% |
+| **Hardware RAM & SMBIOS DMI** | Type 16 (Array) & Type 17 (Device) Discovery: Form Factor, Speed (MT/s), DDR4/5, ECC Sizing | 100% | `[██████████]` 100% |
+| **Memory Diagnostics & Stats** | `/proc/meminfo`, `/proc/slabinfo`, `sysinfo()`, `/bin/free`, and `/bin/vmstat` Event Reporting | 100% | `[██████████]` 100% |
+
 
 ---
 

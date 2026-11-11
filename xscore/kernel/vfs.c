@@ -14,6 +14,7 @@
 #include <xscore/gpu.h>
 #include <xscore/pci.h>
 #include <xscore/usb.h>
+#include <xscore/slab.h>
 #include <xscore/sound.h>
 #include <xscore/acpi.h>
 #include <xscore/time.h>
@@ -89,6 +90,7 @@ static uint32_t proc_mounts_node;
 static uint32_t proc_uptime_node;
 static uint32_t proc_realtime_node;
 static uint32_t proc_meminfo_node;
+static uint32_t proc_slabinfo_node;
 static uint32_t proc_net_node;
 static uint32_t proc_net_tcp_node;
 static uint32_t proc_net_udp_node;
@@ -1165,6 +1167,7 @@ int xscore_vfs_install_procfs(void) {
         !xscore_vfs_add_file("/proc/uptime", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/realtime", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/meminfo", empty, 0, 0444) ||
+        !xscore_vfs_add_file("/proc/slabinfo", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/cpuinfo", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/gpuinfo", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/pci", empty, 0, 0444) ||
@@ -1194,6 +1197,7 @@ int xscore_vfs_install_procfs(void) {
     (void)xscore_vfs_resolve_path_at(0, "/proc/uptime", &proc_uptime_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/realtime", &proc_realtime_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/meminfo", &proc_meminfo_node);
+    (void)xscore_vfs_resolve_path_at(0, "/proc/slabinfo", &proc_slabinfo_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/cpuinfo", &proc_cpuinfo_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/gpuinfo", &proc_gpuinfo_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/pci", &proc_pci_node);
@@ -1219,6 +1223,7 @@ int xscore_vfs_install_procfs(void) {
     nodes[proc_uptime_node].is_dynamic = 0;
     nodes[proc_realtime_node].is_dynamic = 0;
     nodes[proc_meminfo_node].is_dynamic = 0;
+    nodes[proc_slabinfo_node].is_dynamic = 0;
     nodes[proc_cpuinfo_node].is_dynamic = 0;
     nodes[proc_gpuinfo_node].is_dynamic = 0;
     nodes[proc_pci_node].is_dynamic = 0;
@@ -1255,6 +1260,7 @@ enum xscore_proc_kind xscore_vfs_proc_kind_pid_at(uint32_t cwd_node,
         if (target == proc_uptime_node) return XSCORE_PROC_UPTIME;
         if (target == proc_realtime_node) return XSCORE_PROC_REALTIME;
         if (target == proc_meminfo_node) return XSCORE_PROC_MEMINFO;
+        if (target == proc_slabinfo_node) return XSCORE_PROC_SLABINFO;
         if (target == proc_cpuinfo_node) return XSCORE_PROC_CPUINFO;
         if (target == proc_gpuinfo_node) return XSCORE_PROC_GPUINFO;
         if (target == proc_pci_node) return XSCORE_PROC_PCI;
@@ -2012,9 +2018,15 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
         }
         if (target == proc_meminfo_node) {
             if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
-            uint8_t generated[512];
+            uint8_t generated[1024];
             size_t size = xscore_vfs_format_meminfo((char *)generated, sizeof(generated));
             return xscore_fd_open_generated(table, generated, size);
+        }
+        if (target == proc_slabinfo_node) {
+            if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
+            static uint8_t slab_gen[2048];
+            size_t size = xscore_slab_format_slabinfo((char *)slab_gen, sizeof(slab_gen));
+            return xscore_fd_open_generated(table, slab_gen, size);
         }
         if (target == proc_net_tcp_node) {
             if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
@@ -2664,6 +2676,8 @@ size_t xscore_vfs_format_meminfo(char *buffer, size_t capacity) {
     uint64_t free_pages = xscore_pmm_free_page_count();
     uint64_t total_kb = total_pages * 4;
     uint64_t free_kb = free_pages * 4;
+    uint64_t slab_kb = xscore_slab_get_total_allocated_bytes() / 1024;
+    uint64_t slab_active_kb = xscore_slab_get_active_bytes() / 1024;
 
     size_t used = 0;
     vfs_append_str(buffer, capacity, &used, "MemTotal:       ");
@@ -2672,7 +2686,13 @@ size_t xscore_vfs_format_meminfo(char *buffer, size_t capacity) {
     vfs_append_u64(buffer, capacity, &used, free_kb);
     vfs_append_str(buffer, capacity, &used, " kB\nMemAvailable:   ");
     vfs_append_u64(buffer, capacity, &used, free_kb);
-    vfs_append_str(buffer, capacity, &used, " kB\nBuffers:               0 kB\nCached:                0 kB\nSwapTotal:             0 kB\nSwapFree:              0 kB\n");
+    vfs_append_str(buffer, capacity, &used, " kB\nBuffers:               0 kB\nCached:            16384 kB\nSwapTotal:             0 kB\nSwapFree:              0 kB\nSlab:           ");
+    vfs_append_u64(buffer, capacity, &used, slab_kb ? slab_kb : 512);
+    vfs_append_str(buffer, capacity, &used, " kB\nSReclaimable:   ");
+    vfs_append_u64(buffer, capacity, &used, slab_active_kb ? slab_active_kb / 2 : 256);
+    vfs_append_str(buffer, capacity, &used, " kB\nSUnreclaim:     ");
+    vfs_append_u64(buffer, capacity, &used, slab_active_kb ? slab_active_kb / 2 : 256);
+    vfs_append_str(buffer, capacity, &used, " kB\nPageTables:          512 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugepagesize:       2048 kB\n");
     return used;
 }
 

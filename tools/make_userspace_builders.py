@@ -610,6 +610,7 @@ build_bzip2
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
+build_user_program vmstat "$ROOT_DIR/userspace/bin/vmstat/main.c" VMSTAT.ELF
 build_user_program watch "$ROOT_DIR/userspace/bin/watch/main.c" WATCH.ELF
 build_user_program sed "$ROOT_DIR/userspace/bin/sed/main.c" SED.ELF
 build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF
@@ -860,7 +861,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/usr/local/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec" \\\n    --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \\\n    --dir "/var/spool" \\\n    --dir "/var/spool/at" \\\n    --dir "/var/spool/at/spool" \\
     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \\
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \\
-    --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \\
+    --file "/bin/free:$BUILD_DIR/FREE.ELF:exec" \
+    --file "/bin/vmstat:$BUILD_DIR/VMSTAT.ELF:exec" \\
     --file "/bin/watch:$BUILD_DIR/WATCH.ELF:exec" \\
     --file "/bin/sed:$BUILD_DIR/SED.ELF:exec" \\
     --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \

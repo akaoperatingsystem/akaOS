@@ -67,6 +67,7 @@ kill (1) - send a signal to a process or jobspec
 pkill (1) - signal processes based on name and attributes
 uptime (1) - tell how long the system has been running
 free (1) - display amount of free and used memory in the system
+vmstat (8) - report virtual memory statistics
 watch (1) - execute a program periodically, showing output fullscreen
 df (1) - report filesystem disk space usage
 du (1) - estimate file space usage

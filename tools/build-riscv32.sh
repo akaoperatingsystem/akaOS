@@ -75,6 +75,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/sched.c"
     "$ROOT_DIR/xscore/memory/physical.c"
     "$ROOT_DIR/xscore/memory/heap.c"
+    "$ROOT_DIR/xscore/memory/slab.c"
 )
 
 KERNEL_OBJECTS=()
