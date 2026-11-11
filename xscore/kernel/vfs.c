@@ -72,7 +72,16 @@ static void vfs_lock_release(uintptr_t flags) {
     if (!vfs_locked) return;
     xscore_spin_unlock_irqrestore(&vfs_lock, flags);
 }
+/* High-water mark of ever-used vnode slots (kept for diagnostics only).
+ * Lookups and iteration now walk the active-slot linked list below, so hot
+ * paths no longer scale with this value. */
 static uint32_t node_count;
+/* Free-list head: singly-linked through nodes[].parent, which is unused
+ * while a slot holds XSCORE_VNODE_UNUSED. This turns slot allocation from
+ * an O(MAX_NODES) scan into O(1), matching the slab allocator's LIFO
+ * freelist. Allocation order may differ from a linear scan, but callers
+ * never depend on specific slot numbers (paths resolve by name). */
+static uint32_t first_free_node;
 static int vfs_initialized;
 static int persistence_ready;
 static int persistence_loading;
@@ -275,13 +284,51 @@ static int name_equals(const char *left, const char *right, size_t length) {
     return left[length] == 0;
 }
 
+/* Active vnode slots form a singly-linked list threaded through the `next`
+ * field of each slot. The link field is only meaningful while a slot is in
+ * use; free slots live on the separate first_free_node chain instead. This
+ * keeps directory scans and full-tree iterations proportional to the number
+ * of live vnodes rather than the capacity of the static table. */
+static uint32_t active_slot_list_head;
+
+static void retire_vnode_locked(struct xscore_vnode *node, uint32_t index) {
+    /* Common teardown: release backing blocks, mark the slot unused, and
+     * push it onto the O(1) free list. Callers must hold the vfs lock. */
+    free_vnode_blocks(node);
+    node->type = XSCORE_VNODE_UNUSED;
+    node->references = 0;
+    node->unlinked = 0;
+    node->name[0] = 0;
+    node->size = 0;
+    node->data = 0;
+    node->uid = 0;
+    node->gid = 0;
+    node->is_dynamic = 0;
+    node->parent = first_free_node;
+    first_free_node = index;
+}
+
 static int find_child(uint32_t parent, const char *name, size_t length) {
-    for (uint32_t index = 1; index < node_count; ++index) {
+    for (uint32_t index = active_slot_list_head; index != 0;
+         index = nodes[index].next) {
         if (nodes[index].type != XSCORE_VNODE_UNUSED &&
             nodes[index].parent == parent &&
             name_equals(nodes[index].name, name, length)) return (int)index;
     }
     return -1;
+}
+
+static uint32_t allocate_vnode_slot(void) {
+    /* Returns UINT32_MAX when the table is exhausted. Caller holds the lock. */
+    uint32_t slot = first_free_node;
+    if (slot == 0) return UINT32_MAX;
+    first_free_node = nodes[slot].parent; /* reuse parent as next-free link */
+    if (slot >= node_count) node_count = slot + 1;
+    /* Thread the slot onto the head of the active list so tree walks and
+     * readdir-style iteration stay compact. */
+    nodes[slot].next = active_slot_list_head;
+    active_slot_list_head = slot;
+    return slot;
 }
 
 static int split_path(const char *path, char *parent_out, size_t parent_out_max,
