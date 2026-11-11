@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -130,7 +131,19 @@ static int parse_url(const char *url, char *host, int *port, char *path) {
     return 0;
 }
 
-static int fetch_url(const char *url) {
+/* Compare header names without case or whitespace before the colon. */
+static int credential_header(const char *header) {
+    const char *colon = strchr(header, ':');
+    if (!colon) return 0;
+    while (*header == ' ' || *header == '\t') header++;
+    const char *end = colon;
+    while (end > header && (end[-1] == ' ' || end[-1] == '\t')) end--;
+    size_t len = (size_t)(end - header);
+    return (len == 13 && strncasecmp(header, "Authorization", len) == 0) ||
+           (len == 6 && strncasecmp(header, "Cookie", len) == 0);
+}
+
+static int fetch_url(const char *url, const char *credential_url) {
     char host[128];
     int port = 80;
     char path[256];
@@ -141,6 +154,15 @@ static int fetch_url(const char *url) {
         }
         return 3;
     }
+
+    /* Credentials belong to the initial origin, even across multiple redirects. */
+    char credential_host[128], credential_path[256];
+    int credential_port = 80;
+    int send_credentials =
+        parse_url(credential_url, credential_host, &credential_port, credential_path) == 0 &&
+        strcasecmp(host, credential_host) == 0 && port == credential_port &&
+        (strncmp(url, "https://", 8) == 0) ==
+        (strncmp(credential_url, "https://", 8) == 0);
 
     if (strncmp(url, "https://", 8) == 0 && !opt_insecure) {
         if (!opt_silent || opt_show_error) {
@@ -201,7 +223,7 @@ static int fetch_url(const char *url) {
         "Connection: close\r\n",
         method, path, host, opt_user_agent);
 
-    if (opt_cookie) {
+    if (opt_cookie && send_credentials) {
         req_len += snprintf(req + req_len, sizeof(req) - req_len, "Cookie: %s\r\n", opt_cookie);
     }
 
@@ -209,13 +231,14 @@ static int fetch_url(const char *url) {
         req_len += snprintf(req + req_len, sizeof(req) - req_len, "Accept-Encoding: gzip, deflate\r\n");
     }
 
-    if (opt_user) {
+    if (opt_user && send_credentials) {
         char b64[256];
         base64_encode(opt_user, b64, sizeof(b64));
         req_len += snprintf(req + req_len, sizeof(req) - req_len, "Authorization: Basic %s\r\n", b64);
     }
 
     for (int i = 0; i < opt_header_count; ++i) {
+        if (!send_credentials && credential_header(opt_headers[i])) continue;
         req_len += snprintf(req + req_len, sizeof(req) - req_len, "%s\r\n", opt_headers[i]);
     }
 
@@ -374,7 +397,7 @@ static int fetch_url(const char *url) {
     if (opt_location && (http_status == 301 || http_status == 302 || http_status == 303 || http_status == 307 || http_status == 308)) {
         if (redirect_url[0] != '\0') {
             if (opt_verbose) fprintf(stderr, "* Issue redirect to: %s\n", redirect_url);
-            return fetch_url(redirect_url);
+            return fetch_url(redirect_url, credential_url);
         }
     }
 
@@ -486,5 +509,5 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    return fetch_url(url);
+    return fetch_url(url, url);
 }
