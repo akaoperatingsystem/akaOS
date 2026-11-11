@@ -1724,12 +1724,11 @@ int xscore_vfs_rename_at(uint32_t old_cwd, const char *old_path,
     return sync_failed ? -AKAOS_EIO : 0;
 }
 
-int xscore_vfs_chmod_at(uint32_t cwd_node, const char *path, uint32_t mode) {
-    if (!vfs_initialized || !path || !*path) return -AKAOS_EINVAL;
+static int vfs_chmod(uint32_t cwd_node, const char *path, uint32_t target, uint32_t mode) {
+    if (!vfs_initialized || (path && !*path)) return -AKAOS_EINVAL;
     uintptr_t lock_flags = 0;
     if (vfs_locked) lock_flags = xscore_spin_lock_irqsave(&vfs_lock);
-    uint32_t target;
-    int err = xscore_vfs_resolve_path_at(cwd_node, path, &target);
+    int err = path ? xscore_vfs_resolve_path_at(cwd_node, path, &target) : 0;
     if (err != 0) {
         vfs_lock_release(lock_flags);
         return err;
@@ -1761,12 +1760,20 @@ int xscore_vfs_chmod_at(uint32_t cwd_node, const char *path, uint32_t mode) {
     return 0;
 }
 
-int xscore_vfs_chown_at(uint32_t cwd_node, const char *path, uint32_t uid, uint32_t gid) {
-    if (!vfs_initialized || !path || !*path) return -AKAOS_EINVAL;
+int xscore_vfs_chmod_at(uint32_t cwd_node, const char *path, uint32_t mode) {
+    if (!path) return -AKAOS_EINVAL;
+    return vfs_chmod(cwd_node, path, 0, mode);
+}
+
+int xscore_vfs_chmod_node(uint32_t target, uint32_t mode) {
+    return vfs_chmod(0, 0, target, mode);
+}
+
+static int vfs_chown(uint32_t cwd_node, const char *path, uint32_t target, uint32_t uid, uint32_t gid) {
+    if (!vfs_initialized || (path && !*path)) return -AKAOS_EINVAL;
     uintptr_t lock_flags = 0;
     if (vfs_locked) lock_flags = xscore_spin_lock_irqsave(&vfs_lock);
-    uint32_t target;
-    int err = xscore_vfs_resolve_path_at(cwd_node, path, &target);
+    int err = path ? xscore_vfs_resolve_path_at(cwd_node, path, &target) : 0;
     if (err != 0) {
         vfs_lock_release(lock_flags);
         return err;
@@ -1782,8 +1789,9 @@ int xscore_vfs_chown_at(uint32_t cwd_node, const char *path, uint32_t uid, uint3
         vfs_lock_release(lock_flags);
         return -AKAOS_EPERM;
     }
-    node->uid = uid;
-    node->gid = gid;
+    if (path || uid != UINT32_MAX) node->uid = uid;
+    if (path || gid != UINT32_MAX) node->gid = gid;
+    if (!path) node->mode &= ~06000U;
     if (!node->is_dynamic && node->type == XSCORE_VNODE_REGULAR) {
         if (!convert_to_dynamic(node)) {
             vfs_lock_release(lock_flags);
@@ -1794,6 +1802,15 @@ int xscore_vfs_chown_at(uint32_t cwd_node, const char *path, uint32_t uid, uint3
     vfs_lock_release(lock_flags);
     if (sync_needed) (void)xscore_vfs_persistence_sync();
     return 0;
+}
+
+int xscore_vfs_chown_at(uint32_t cwd_node, const char *path, uint32_t uid, uint32_t gid) {
+    if (!path) return -AKAOS_EINVAL;
+    return vfs_chown(cwd_node, path, 0, uid, gid);
+}
+
+int xscore_vfs_chown_node(uint32_t target, uint32_t uid, uint32_t gid) {
+    return vfs_chown(0, 0, target, uid, gid);
 }
 
 int xscore_vfs_stat_at(uint32_t cwd_node, const char *path,

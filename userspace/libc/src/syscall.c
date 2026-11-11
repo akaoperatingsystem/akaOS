@@ -1709,11 +1709,14 @@ int chown(const char *path, uid_t uid, gid_t gid) {
         AKAOS_SYSCALL_CHOWN, (uint64_t)(uintptr_t)path, (uint64_t)uid, (uint64_t)gid));
 }
 
+int fchmod(int fd, mode_t mode) {
+    return (int)translate_result(syscall3(
+        AKAOS_SYSCALL_FCHMOD, (uint64_t)fd, (uint64_t)mode, 0));
+}
+
 int fchown(int fd, uid_t uid, gid_t gid) {
-    (void)fd;
-    (void)uid;
-    (void)gid;
-    return 0;
+    return (int)translate_result(syscall3(
+        AKAOS_SYSCALL_FCHOWN, (uint64_t)fd, (uint64_t)uid, (uint64_t)gid));
 }
 
 uid_t getuid(void) {
