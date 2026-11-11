@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <xscore/pci.h>
 
+
+
 #define XSCORE_NVME_MAX_NAMESPACES 8U
 
 struct xscore_nvme_namespace_info {
@@ -37,6 +39,7 @@ const struct xscore_nvme_controller_info *xscore_nvme_get_info(void);
 int xscore_nvme_read_blocks(uint32_t nsid, uint64_t lba, uint32_t count, void *buffer);
 int xscore_nvme_write_blocks(uint32_t nsid, uint64_t lba, uint32_t count, const void *buffer);
 int xscore_nvme_flush(uint32_t nsid);
+int xscore_nvme_get_smart_log(uint32_t nsid, struct nvme_smart_log *log);
 
 /* 512-byte block adapter for the existing akaFS buffer-cache backend. */
 int xscore_nvme_block_present(void);

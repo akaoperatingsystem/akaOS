@@ -370,6 +370,19 @@ static int nvme_transfer(uint32_t nsid, uint64_t lba, uint32_t count,
     return ok;
 }
 
+
+static int nvme_admin_submit(uint8_t opcode, uint32_t nsid, uint64_t prp1, uint64_t prp2,
+                             uint32_t cdw10, uint32_t cdw11, uint32_t cdw12, uint32_t *result) {
+    if (!controller.admin_ready) return 0;
+    
+    // We need to use the admin queue
+    // I should create a helper that locks if necessary (though admin is usually synchronous)
+    return nvme_submit(controller.asq, controller.acq, 0,
+                       &controller.admin_sq_tail, &controller.admin_cq_head,
+                       &controller.admin_cq_phase, opcode, nsid, prp1, prp2,
+                       cdw10, cdw11, cdw12, result);
+}
+
 int xscore_nvme_initialize(void) {
     memset(&controller, 0, sizeof(controller));
     uint32_t devices = xscore_pci_device_count();
@@ -520,3 +533,29 @@ int xscore_nvme_write_sector(uint64_t sector, const void *buffer) {
     if (ok) ok = xscore_nvme_flush(controller.info.namespaces[0].nsid);
     return ok;
 }
+
+
+int xscore_nvme_get_smart_log(uint32_t nsid, struct nvme_smart_log *log) {
+    if (!log) return 0;
+    
+    // Allocate a page for the log data (NVMe log pages are usually 512 bytes, but need 4KB alignment)
+    uint64_t log_phys = xscore_pmm_allocate_page();
+    if (!log_phys) return 0;
+    
+    // Command: Get Log Page (0x02)
+    // CDW10: LID (0x02 for SMART), Number of DWords (0x02 is 512 bytes -> (512/4)-1 = 127)
+    // Actually SMART log is 512 bytes, so 128 DWords. (512/4) - 1 = 127
+    uint32_t cdw10 = 0x02 | (127 << 16); 
+    
+    // PRP1: Physical address of buffer
+    uint32_t result = 0;
+    if (!nvme_admin_submit(0x02, nsid, log_phys, 0, cdw10, 0, 0, &result)) {
+        xscore_pmm_free_page(log_phys);
+        return 0;
+    }
+    
+    memcpy(log, (void *)(uintptr_t)log_phys, sizeof(struct nvme_smart_log));
+    xscore_pmm_free_page(log_phys);
+    return 1;
+}
+

@@ -17,6 +17,7 @@
 #include <akaos/poll.h>
 #include <akaos/display.h>
 #include <akaos/ioctl.h>
+#include <xscore/nvme.h>
 #include <akaos/syscall.h>
 #include <akaos/signalfd.h>
 #include <akaos/termios.h>
@@ -587,6 +588,9 @@ int xscore_fd_directory_state(struct xscore_fd_table *table, int descriptor,
     uintptr_t operation_flags = file_operation_acquire(file);
     if ((file->flags & FILE_DIRECTORY) == 0) {
         file_operation_release(file, operation_flags);
+        return -AKAOS_EIO;
+    }
+
         file_put(file);
         return 0;
     }
@@ -1217,6 +1221,16 @@ int64_t xscore_fd_ioctl(struct xscore_fd_table *table, int descriptor,
         file_operation_release(file, operation_flags);
         file_put(file);
         return 0;
+    }
+    if (request == AKAOS_NVME_GET_SMART_LOG) {
+        if (xscore_nvme_get_smart_log(0, (struct nvme_smart_log *)argument)) {
+             file_operation_release(file, operation_flags);
+             file_put(file);
+             return 0;
+        }
+        file_operation_release(file, operation_flags);
+        file_put(file);
+        return -AKAOS_EIO;
     }
     file_operation_release(file, operation_flags);
     file_put(file);
