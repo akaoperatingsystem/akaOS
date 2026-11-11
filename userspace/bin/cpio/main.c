@@ -1000,7 +1000,18 @@ int main(int argc, char **argv) {
             g_dest_dir = arg;
         } else {
             /* Pattern in copy-in mode */
-            if (!g_patterns) g_patterns = malloc(sizeof(char *) * 32);
+            if (!g_patterns) {
+                /* Each pattern consumes an argv entry, so argc is an upper bound. */
+                if ((size_t)argc > SIZE_MAX / sizeof(*g_patterns)) {
+                    fprintf(stderr, "cpio: too many patterns\n");
+                    return 1;
+                }
+                g_patterns = malloc((size_t)argc * sizeof(*g_patterns));
+                if (!g_patterns) {
+                    fprintf(stderr, "cpio: cannot allocate patterns\n");
+                    return 1;
+                }
+            }
             g_patterns[g_pattern_count++] = arg;
         }
     }

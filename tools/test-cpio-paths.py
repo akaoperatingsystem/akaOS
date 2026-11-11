@@ -91,6 +91,19 @@ class ExtractionTests(unittest.TestCase):
                 self.assertEqual(run('-iu').returncode, 0)
                 self.assertEqual((root / 'missing/file').read_bytes(), b'hello')
 
+    def test_many_patterns(self):
+        for count in (1, 31, 32, 33, 64, 1024):
+            with self.subTest(count=count):
+                patterns = ['missing'] * (count - 1) + ['selected*']
+                data = archive('newc', [('ignored', b'', 0o100644),
+                                        ('selected-file', b'hello', 0o100644)])
+                for flags, expected in (('-it', b'selected-file\n'),
+                                        ('-itf', b'ignored\n')):
+                    run = subprocess.run([self.binary, flags, '--quiet', *patterns],
+                                         input=data, capture_output=True)
+                    self.assertEqual(run.returncode, 0, run.stderr)
+                    self.assertEqual(run.stdout, expected)
+
 
 if __name__ == '__main__':
     unittest.main()
