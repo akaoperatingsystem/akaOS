@@ -510,9 +510,11 @@ int xscore_ahci_flush(uint8_t port_num) {
 
 
 
+
 static int ahci_command_submit(uint8_t port_num, uint8_t command, uint8_t featurel, 
                                uint8_t featureh, uint8_t countl, uint8_t counth,
-                               uint64_t lba, uint8_t device, void *buffer, size_t size, int write) {
+                               uint8_t lba0, uint8_t lba1, uint8_t lba2, uint8_t lba3, 
+                               uint8_t lba4, uint8_t lba5, uint8_t device, void *buffer, size_t size, int write) {
     struct xscore_ahci_device *dev = 0;
     for (uint32_t i = 0; i < g_ahci_device_count; ++i) {
         if (g_ahci_devices[i].port_num == port_num) {
@@ -554,12 +556,12 @@ static int ahci_command_submit(uint8_t port_num, uint8_t command, uint8_t featur
     cmdfis->command = command;
     cmdfis->featurel = featurel;
     cmdfis->featureh = featureh;
-    cmdfis->lba0 = (uint8_t)(lba);
-    cmdfis->lba1 = (uint8_t)(lba >> 8);
-    cmdfis->lba2 = (uint8_t)(lba >> 16);
-    cmdfis->lba3 = (uint8_t)(lba >> 24);
-    cmdfis->lba4 = (uint8_t)(lba >> 32);
-    cmdfis->lba5 = (uint8_t)(lba >> 40);
+    cmdfis->lba0 = lba0;
+    cmdfis->lba1 = lba1;
+    cmdfis->lba2 = lba2;
+    cmdfis->lba3 = lba3;
+    cmdfis->lba4 = lba4;
+    cmdfis->lba5 = lba5;
     cmdfis->device = device;
     cmdfis->countl = countl;
     cmdfis->counth = counth;
@@ -578,18 +580,18 @@ static int ahci_command_submit(uint8_t port_num, uint8_t command, uint8_t featur
     xscore_spin_unlock_irqrestore(&g_ahci_lock, flags);
     return success;
 }
+}
+
 
 int xscore_ahci_smart_read_data(uint8_t port_num, void *buffer) {
-    return ahci_command_submit(port_num, ATA_CMD_SMART, SMART_READ_DATA, 0, 0, 1, 0, 0x40, buffer, 512, 0);
+    return ahci_command_submit(port_num, ATA_CMD_SMART, SMART_READ_DATA, 0, 0, 1, 0, 0x4F, 0xC2, 0, 0, 0, 0x40, buffer, 512, 0);
 }
 
 int xscore_ahci_smart_return_status(uint8_t port_num) {
-    return ahci_command_submit(port_num, ATA_CMD_SMART, SMART_RETURN_STATUS, 0, 0, 1, 0, 0x40, NULL, 0, 0);
+    return ahci_command_submit(port_num, ATA_CMD_SMART, SMART_RETURN_STATUS, 0, 0, 1, 0, 0x4F, 0xC2, 0, 0, 0, 0x40, NULL, 0, 0);
 }
 
 int xscore_ahci_trim(uint8_t port_num, uint64_t lba, uint32_t count) {
-    // Trim needs a buffer with LBA ranges... SATA TRIM is complex.
-    // For now, return 0 as not fully implemented yet.
     return 0;
 }
 
@@ -597,12 +599,12 @@ int xscore_ahci_set_power_mode(uint8_t port_num, uint8_t mode) {
     uint8_t cmd = ATA_CMD_STANDBY_IMM;
     if (mode == 0) cmd = ATA_CMD_IDLE_IMM;
     else if (mode == 2) cmd = ATA_CMD_SLEEP;
-    return ahci_command_submit(port_num, cmd, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
+    return ahci_command_submit(port_num, cmd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
 }
 
 int xscore_ahci_check_power_mode(uint8_t port_num, uint8_t *mode) {
-    // Implement ATA CHECK POWER MODE (0xE5)
-    return ahci_command_submit(port_num, ATA_CMD_CHECK_POWER_MD, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
+    return ahci_command_submit(port_num, ATA_CMD_CHECK_POWER_MD, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
 }
+
 
 

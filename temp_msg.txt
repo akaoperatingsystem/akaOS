@@ -1,1 +1,1 @@
-feat(storage): implement SATA AHCI SMART and power management API; bump akaOS to v0.3.56, XSCore to v0.2.42
+feat(storage): implement diskinfo and hdparm utilities; bump akaOS to v0.3.57, XSCore to v0.2.43
