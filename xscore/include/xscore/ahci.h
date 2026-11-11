@@ -29,6 +29,20 @@
 #define ATA_CMD_IDENTIFY        0xEC
 #define ATA_CMD_IDENTIFY_PACKET 0xA1
 
+/* SATA SMART & Power Management */
+#define ATA_CMD_SMART           0xB0
+#define ATA_CMD_DATA_SET_MGMT   0x06
+#define ATA_CMD_STANDBY_IMM     0xE0
+#define ATA_CMD_IDLE_IMM        0xE1
+#define ATA_CMD_SLEEP           0xE6
+#define ATA_CMD_CHECK_POWER_MD  0xE5
+
+/* SMART Subcommands */
+#define SMART_READ_DATA         0xD0
+#define SMART_ENABLE_AUTOSAVE   0xD2
+#define SMART_RETURN_STATUS     0xDA
+
+
 /* Port Signature */
 #define SATA_SIG_ATA    0x00000101U /* SATA drive */
 #define SATA_SIG_ATAPI  0xEB140101U /* SATAPI optical drive */
@@ -187,5 +201,13 @@ const struct xscore_ahci_device *xscore_ahci_get_device(uint32_t index);
 int xscore_ahci_read_sectors(uint8_t port_num, uint64_t start_lba, uint32_t count, void *buffer);
 int xscore_ahci_write_sectors(uint8_t port_num, uint64_t start_lba, uint32_t count, const void *buffer);
 int xscore_ahci_flush(uint8_t port_num);
+
+/* Public AHCI SMART & Power API */
+int xscore_ahci_smart_read_data(uint8_t port_num, void *buffer);
+int xscore_ahci_smart_return_status(uint8_t port_num);
+int xscore_ahci_trim(uint8_t port_num, uint64_t lba, uint32_t count);
+int xscore_ahci_set_power_mode(uint8_t port_num, uint8_t mode);
+int xscore_ahci_check_power_mode(uint8_t port_num, uint8_t *mode);
+
 
 #endif /* XSCORE_AHCI_H */

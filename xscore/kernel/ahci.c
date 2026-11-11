@@ -507,3 +507,30 @@ int xscore_ahci_flush(uint8_t port_num) {
     xscore_spin_unlock_irqrestore(&g_ahci_lock, flags);
     return success;
 }
+
+
+int xscore_ahci_smart_read_data(uint8_t port_num, void *buffer) {
+    // Implement ATA SMART READ DATA (0xB0, 0xD0)
+    return 0; // Not implemented yet
+}
+
+int xscore_ahci_smart_return_status(uint8_t port_num) {
+    // Implement ATA SMART RETURN STATUS (0xB0, 0xDA)
+    return 0; // Not implemented yet
+}
+
+int xscore_ahci_trim(uint8_t port_num, uint64_t lba, uint32_t count) {
+    // Implement ATA DATA SET MANAGEMENT (0x06, TRIM)
+    return 0; // Not implemented yet
+}
+
+int xscore_ahci_set_power_mode(uint8_t port_num, uint8_t mode) {
+    // Implement ATA Power Management (0xE0/0xE1/0xE6/0xE5)
+    return 0; // Not implemented yet
+}
+
+int xscore_ahci_check_power_mode(uint8_t port_num, uint8_t *mode) {
+    // Implement ATA CHECK POWER MODE (0xE5)
+    return 0; // Not implemented yet
+}
+

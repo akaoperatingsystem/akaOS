@@ -39,6 +39,7 @@ const struct xscore_nvme_controller_info *xscore_nvme_get_info(void);
 int xscore_nvme_read_blocks(uint32_t nsid, uint64_t lba, uint32_t count, void *buffer);
 int xscore_nvme_write_blocks(uint32_t nsid, uint64_t lba, uint32_t count, const void *buffer);
 int xscore_nvme_flush(uint32_t nsid);
+int xscore_nvme_trim(uint32_t nsid, uint64_t lba, uint32_t count);
 int xscore_nvme_get_smart_log(uint32_t nsid, struct nvme_smart_log *log);
 
 /* 512-byte block adapter for the existing akaFS buffer-cache backend. */

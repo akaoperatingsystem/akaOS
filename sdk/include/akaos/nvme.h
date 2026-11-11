@@ -27,4 +27,11 @@ struct nvme_smart_log {
     uint8_t reserved1[296];
 };
 
+
+struct nvme_dsm_range {
+    uint32_t context_attributes;
+    uint32_t length;
+    uint64_t starting_lba;
+};
+
 #endif

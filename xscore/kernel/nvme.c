@@ -559,3 +559,31 @@ int xscore_nvme_get_smart_log(uint32_t nsid, struct nvme_smart_log *log) {
     return 1;
 }
 
+
+
+int xscore_nvme_trim(uint32_t nsid, uint64_t lba, uint32_t count) {
+    if (!controller.io_ready || count == 0) return 0;
+    
+    uint64_t dsm_phys = xscore_pmm_allocate_page();
+    if (!dsm_phys) return 0;
+    
+    struct nvme_dsm_range *range = (struct nvme_dsm_range *)(uintptr_t)dsm_phys;
+    range->context_attributes = 0;
+    range->length = count;
+    range->starting_lba = lba;
+    
+    uint32_t cdw10 = 0; // 1 range
+    uint32_t cdw11 = (1 << 2); // Attribute Deallocate
+    
+    uintptr_t irq_flags = xscore_spin_lock_irqsave(&nvme_io_lock);
+    
+    int ok = nvme_submit(controller.iosq, controller.iocq, NVME_IO_QUEUE_ID,
+                         &controller.io_sq_tail, &controller.io_cq_head,
+                         &controller.io_cq_phase, 0x0A, nsid, dsm_phys, 0,
+                         cdw10, cdw11, 0, NULL);
+                         
+    xscore_spin_unlock_irqrestore(&nvme_io_lock, irq_flags);
+    xscore_pmm_free_page(dsm_phys);
+    return ok;
+}
+

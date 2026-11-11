@@ -1222,6 +1222,22 @@ int64_t xscore_fd_ioctl(struct xscore_fd_table *table, int descriptor,
         file_put(file);
         return 0;
     }
+
+    if (request == AKAOS_BLKDISCARD) {
+        uint64_t *range = (uint64_t *)argument;
+        uint64_t start_lba = range[0] / 512;
+        uint64_t count = range[1] / 512;
+        
+        if (xscore_nvme_trim(1, start_lba, (uint32_t)count)) {
+            file_operation_release(file, operation_flags);
+            file_put(file);
+            return 0;
+        }
+        file_operation_release(file, operation_flags);
+        file_put(file);
+        return -AKAOS_EIO;
+    }
+
     if (request == AKAOS_NVME_GET_SMART_LOG) {
         if (xscore_nvme_get_smart_log(0, (struct nvme_smart_log *)argument)) {
              file_operation_release(file, operation_flags);
