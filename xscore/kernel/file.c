@@ -1238,6 +1238,22 @@ int64_t xscore_fd_ioctl(struct xscore_fd_table *table, int descriptor,
         return -AKAOS_EIO;
     }
 
+
+    if (request == AKAOS_DISK_POWER_MODE) {
+        // Assume SATA for now or detect via file->node_id
+        // For testing, just call SATA power mode
+        uint8_t *mode = (uint8_t *)argument;
+        // In reality, need to check if device supports power modes
+        if (xscore_ahci_set_power_mode(0, *mode)) {
+             file_operation_release(file, operation_flags);
+             file_put(file);
+             return 0;
+        }
+        file_operation_release(file, operation_flags);
+        file_put(file);
+        return -AKAOS_EIO;
+    }
+
     if (request == AKAOS_NVME_GET_SMART_LOG) {
         if (xscore_nvme_get_smart_log(0, (struct nvme_smart_log *)argument)) {
              file_operation_release(file, operation_flags);

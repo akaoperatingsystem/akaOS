@@ -14,4 +14,8 @@
 /* Block device ioctls */
 #define AKAOS_BLKDISCARD UINT32_C(0x1277)
 
+
+/* Disk Power Management ioctl */
+#define AKAOS_DISK_POWER_MODE UINT32_C(0x4E03)
+
 #endif
