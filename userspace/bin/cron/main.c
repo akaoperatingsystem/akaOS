@@ -2,6 +2,8 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -124,7 +126,18 @@ static void execute_job(const char *user, const char *cmd) {
     cron_log("[cron] executing command for user %s: %s", user ? user : "root", cmd);
     pid_t pid = fork();
     if (pid == 0) {
-        /* Child process */
+        /* Establish job credentials before running any user command. */
+        struct passwd *account = user ? getpwnam(user) : NULL;
+        if (!account) {
+            fprintf(stderr, "cron: unknown or missing job user: %s\n",
+                    user ? user : "(missing)");
+            _exit(126);
+        }
+        if (setgroups(0, NULL) != 0 || setgid(account->pw_gid) != 0 ||
+            setuid(account->pw_uid) != 0) {
+            perror("cron: unable to establish job credentials");
+            _exit(126);
+        }
         char *const args[] = {"/bin/sh", "-c", (char *)cmd, NULL};
         execv("/bin/sh", args);
         _exit(127);
