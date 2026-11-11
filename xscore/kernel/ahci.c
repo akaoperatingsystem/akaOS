@@ -509,28 +509,100 @@ int xscore_ahci_flush(uint8_t port_num) {
 }
 
 
+
+static int ahci_command_submit(uint8_t port_num, uint8_t command, uint8_t featurel, 
+                               uint8_t featureh, uint8_t countl, uint8_t counth,
+                               uint64_t lba, uint8_t device, void *buffer, size_t size, int write) {
+    struct xscore_ahci_device *dev = 0;
+    for (uint32_t i = 0; i < g_ahci_device_count; ++i) {
+        if (g_ahci_devices[i].port_num == port_num) {
+            dev = &g_ahci_devices[i];
+            break;
+        }
+    }
+    if (!dev || !dev->active) return 0;
+
+    volatile struct hba_port *port = &g_abar->ports[port_num];
+    uintptr_t flags = xscore_spin_lock_irqsave(&g_ahci_lock);
+    int slot = ahci_find_cmdslot(port);
+    if (slot < 0) {
+        xscore_spin_unlock_irqrestore(&g_ahci_lock, flags);
+        return 0;
+    }
+
+    struct hba_cmd_header *cmdheader = &dev->cmd_headers[slot];
+    cmdheader->cfl = sizeof(struct fis_reg_h2d) / sizeof(uint32_t);
+    cmdheader->w = write ? 1 : 0;
+    cmdheader->prdtl = size > 0 ? 1 : 0;
+    cmdheader->prdbc = 0;
+    cmdheader->ctba = (uint32_t)dev->ctba_phys;
+    cmdheader->ctbau = (uint32_t)(dev->ctba_phys >> 32);
+
+    struct hba_cmd_tbl *cmdtbl = dev->cmd_table;
+    memset(cmdtbl, 0, sizeof(struct hba_cmd_tbl));
+    
+    if (buffer && size > 0) {
+        cmdtbl->prdt_entry[0].dba = (uint32_t)xscore_vmm_get_phys((uintptr_t)buffer);
+        cmdtbl->prdt_entry[0].dbc = (uint32_t)(size - 1);
+        cmdtbl->prdt_entry[0].i = 1;
+    }
+
+    struct fis_reg_h2d *cmdfis = (struct fis_reg_h2d *)(&cmdtbl->cfis);
+    memset(cmdfis, 0, sizeof(struct fis_reg_h2d));
+    cmdfis->fis_type = FIS_TYPE_REG_H2D;
+    cmdfis->c = 1;
+    cmdfis->command = command;
+    cmdfis->featurel = featurel;
+    cmdfis->featureh = featureh;
+    cmdfis->lba0 = (uint8_t)(lba);
+    cmdfis->lba1 = (uint8_t)(lba >> 8);
+    cmdfis->lba2 = (uint8_t)(lba >> 16);
+    cmdfis->lba3 = (uint8_t)(lba >> 24);
+    cmdfis->lba4 = (uint8_t)(lba >> 32);
+    cmdfis->lba5 = (uint8_t)(lba >> 40);
+    cmdfis->device = device;
+    cmdfis->countl = countl;
+    cmdfis->counth = counth;
+
+    port->is = 0xFFFFFFFF;
+    port->ci = (1U << slot);
+
+    int success = 0;
+    for (uint32_t spin = 0; spin < AHCI_TIMEOUT_SPINS; ++spin) {
+        if (!(port->ci & (1U << slot))) {
+            success = 1;
+            break;
+        }
+    }
+    
+    xscore_spin_unlock_irqrestore(&g_ahci_lock, flags);
+    return success;
+}
+
 int xscore_ahci_smart_read_data(uint8_t port_num, void *buffer) {
-    // Implement ATA SMART READ DATA (0xB0, 0xD0)
-    return 0; // Not implemented yet
+    return ahci_command_submit(port_num, ATA_CMD_SMART, SMART_READ_DATA, 0, 0, 1, 0, 0x40, buffer, 512, 0);
 }
 
 int xscore_ahci_smart_return_status(uint8_t port_num) {
-    // Implement ATA SMART RETURN STATUS (0xB0, 0xDA)
-    return 0; // Not implemented yet
+    return ahci_command_submit(port_num, ATA_CMD_SMART, SMART_RETURN_STATUS, 0, 0, 1, 0, 0x40, NULL, 0, 0);
 }
 
 int xscore_ahci_trim(uint8_t port_num, uint64_t lba, uint32_t count) {
-    // Implement ATA DATA SET MANAGEMENT (0x06, TRIM)
-    return 0; // Not implemented yet
+    // Trim needs a buffer with LBA ranges... SATA TRIM is complex.
+    // For now, return 0 as not fully implemented yet.
+    return 0;
 }
 
 int xscore_ahci_set_power_mode(uint8_t port_num, uint8_t mode) {
-    // Implement ATA Power Management (0xE0/0xE1/0xE6/0xE5)
-    return 0; // Not implemented yet
+    uint8_t cmd = ATA_CMD_STANDBY_IMM;
+    if (mode == 0) cmd = ATA_CMD_IDLE_IMM;
+    else if (mode == 2) cmd = ATA_CMD_SLEEP;
+    return ahci_command_submit(port_num, cmd, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
 }
 
 int xscore_ahci_check_power_mode(uint8_t port_num, uint8_t *mode) {
     // Implement ATA CHECK POWER MODE (0xE5)
-    return 0; // Not implemented yet
+    return ahci_command_submit(port_num, ATA_CMD_CHECK_POWER_MD, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
 }
+
 
