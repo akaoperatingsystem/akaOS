@@ -5,6 +5,7 @@
 #include <xscore/serial.h>
 #include <xscore/virtio_input.h>
 #include <xscore/input.h>
+#include <xscore/ps2.h>
 #include <xscore/apic.h>
 #include <xscore/smp.h>
 #if !defined(__x86_64__) && !defined(__i386__)
@@ -115,14 +116,14 @@ static inline void port_out8(uint16_t port, uint8_t value) {
     __asm__ volatile("outb %0, %1" : : "a"(value), "Nd"(port));
 }
 
-static int ps2_wait_input_clear(void) {
+int xscore_xscore_ps2_wait_input_clear(void) {
     for (uint32_t attempt = 0; attempt < 100000; ++attempt) {
         if ((port_in8(0x64) & 2) == 0) return 1;
     }
     return 0;
 }
 
-static int ps2_wait_output(uint8_t *value) {
+int xscore_xscore_ps2_wait_output(uint8_t *value) {
     for (uint32_t attempt = 0; attempt < 100000; ++attempt) {
         if (port_in8(0x64) & 1) {
             if (value) *value = port_in8(0x60);
@@ -134,79 +135,28 @@ static int ps2_wait_output(uint8_t *value) {
 
 static int ps2_mouse_write(uint8_t value) {
     uint8_t response = 0;
-    if (!ps2_wait_input_clear()) return 0;
+    if (!xscore_ps2_wait_input_clear()) return 0;
     port_out8(0x64, 0xd4);
-    if (!ps2_wait_input_clear()) return 0;
+    if (!xscore_ps2_wait_input_clear()) return 0;
     port_out8(0x60, value);
-    return ps2_wait_output(&response) && response == 0xfa;
+    return xscore_ps2_wait_output(&response) && response == 0xfa;
 }
 
-static void ps2_flush_output(void) {
+void xscore_xscore_ps2_flush_output(void) {
     for (uint32_t attempt = 0; attempt < 256 && (port_in8(0x64) & 1); ++attempt)
         (void)port_in8(0x60);
 }
 
 static int ps2_write_controller_config(uint8_t config) {
-    if (!ps2_wait_input_clear()) return 0;
+    if (!xscore_ps2_wait_input_clear()) return 0;
     port_out8(0x64, 0x60);
-    if (!ps2_wait_input_clear()) return 0;
+    if (!xscore_ps2_wait_input_clear()) return 0;
     port_out8(0x60, config);
-    return ps2_wait_input_clear();
+    return xscore_ps2_wait_input_clear();
 }
 
-static int ps2_mouse_initialize(void) {
-    ps2_mouse_packet_index = 0;
-    ps2_mouse_buttons = 0;
-    ps2_flush_output();
-    if (!ps2_wait_input_clear()) {
-        xscore_serial_write("[WARN] PS/2 mouse: controller busy before enable\n");
-        return 0;
-    }
-    port_out8(0x64, 0xa8);
-    if (!ps2_wait_input_clear()) {
-        xscore_serial_write("[WARN] PS/2 mouse: controller busy after enable\n");
-        return 0;
-    }
-    port_out8(0x64, 0x20);
-    uint8_t config = 0;
-    if (!ps2_wait_output(&config)) {
-        xscore_serial_write("[WARN] PS/2 mouse: configuration read timed out\n");
-        return 0;
-    }
-    /* Enable keyboard/mouse IRQ delivery and explicitly clear both clock-
-     * disable bits. Firmware commonly leaves the auxiliary clock disabled. */
-    config = (uint8_t)((config | 0x03U) & (uint8_t)~0x30U);
-    if (!ps2_write_controller_config(config)) {
-        xscore_serial_write("[WARN] PS/2 mouse: configuration write failed\n");
-        return 0;
-    }
-    ps2_flush_output();
-    if (!ps2_mouse_write(0xf6)) {
-        xscore_serial_write("[WARN] PS/2 mouse: defaults command rejected\n");
-        return 0;
-    }
-    if (!ps2_mouse_write(0xf4)) {
-        xscore_serial_write("[WARN] PS/2 mouse: streaming command rejected\n");
-        return 0;
-    }
-    return 1;
-}
+/* PS/2 Mouse logic moved to xscore/kernel/ps2_mouse.c */
 
-static void ps2_mouse_input_byte(uint8_t value) {
-    if (ps2_mouse_packet_index == 0 && (value & 0x08) == 0) return;
-    ps2_mouse_packet[ps2_mouse_packet_index++] = value;
-    if (ps2_mouse_packet_index != 3) return;
-    ps2_mouse_packet_index = 0;
-
-    uint8_t flags = ps2_mouse_packet[0];
-    if ((flags & 0xc0) != 0) return;
-    int32_t relative_x = (int32_t)(int8_t)ps2_mouse_packet[1];
-    int32_t relative_y = -(int32_t)(int8_t)ps2_mouse_packet[2];
-    uint8_t buttons = flags & 7;
-
-    if (relative_x != 0) {
-        xscore_input_publish(AKAOS_EV_REL, AKAOS_REL_X, relative_x);
-    }
     if (relative_y != 0) {
         xscore_input_publish(AKAOS_EV_REL, AKAOS_REL_Y, relative_y);
     }
@@ -950,11 +900,11 @@ int xscore_tty_enable_interrupts(void) {
     uintptr_t saved = xscore_irq_save();
     uint8_t command;
     xscore_tty_poll_keyboard();
-    if (!ps2_wait_input_clear()) goto failed;
+    if (!xscore_ps2_wait_input_clear()) goto failed;
     port_out8(0x64, 0x20);
-    if (!ps2_wait_output(&command) || !ps2_wait_input_clear()) goto failed;
+    if (!xscore_ps2_wait_output(&command) || !xscore_ps2_wait_input_clear()) goto failed;
     port_out8(0x64, 0x60);
-    if (!ps2_wait_input_clear()) goto failed;
+    if (!xscore_ps2_wait_input_clear()) goto failed;
     command = (uint8_t)((command | 3U) & (uint8_t)~0x30U);
     port_out8(0x60, command); /* IRQs on; keyboard and auxiliary clocks on. */
     port_out8(0x3f8 + 4, port_in8(0x3f8 + 4) | 8); /* OUT2 gates UART IRQ. */
