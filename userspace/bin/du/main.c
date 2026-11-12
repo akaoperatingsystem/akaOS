@@ -6,9 +6,23 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
+#include <stdint.h>
+
+#ifdef __AKAOS__
+#include <akaos/fs.h>
+#define STAT_STRUCT akaos_stat
+#define STAT_MODE st_mode
+#define STAT_SIZE st_size
+#else
+#include <sys/types.h>
+#define akaos_dirent dirent
+#define STAT_STRUCT stat
+#define STAT_MODE st_mode
+#define STAT_SIZE st_size
+#endif
 
 #define MAX_DEPTH 16
-static struct akaos_dirent entries_pool[MAX_DEPTH][16];
+static struct akaos_dirent entries_pool[MAX_DEPTH][16] __attribute__((unused));
 static char child_paths[MAX_DEPTH][256];
 
 static void print_usage(void) {
@@ -50,15 +64,15 @@ static void print_size(uint64_t kb, int human) {
 }
 
 static uint64_t du_path(const char *path, int depth, int max_depth, int opt_all, int opt_human) {
-    struct akaos_stat st;
-    if (stat(path, &st) != 0) {
+    struct STAT_STRUCT st;
+    if (stat(path, (struct stat *)&st) != 0) {
         fprintf(stderr, "du: cannot access '%s': %s\n", path, strerror(errno));
         return 0;
     }
 
-    if (!S_ISDIR(st.mode)) {
-        uint64_t kb = (st.size + 1023ULL) / 1024ULL;
-        if (kb == 0 && st.size > 0) kb = 1;
+    if (!S_ISDIR(st.STAT_MODE)) {
+        uint64_t kb = (st.STAT_SIZE + 1023ULL) / 1024ULL;
+        if (kb == 0 && st.STAT_SIZE > 0) kb = 1;
         if (opt_all && (max_depth < 0 || depth <= max_depth)) {
             print_size(kb, opt_human);
             printf("%s\n", path);
@@ -70,12 +84,19 @@ static uint64_t du_path(const char *path, int depth, int max_depth, int opt_all,
     if (depth < MAX_DEPTH) {
         int fd = open(path, O_RDONLY);
         if (fd >= 0) {
+            #ifdef __AKAOS__
             struct akaos_dirent *entries = entries_pool[depth];
             for (;;) {
                 ssize_t count = getdents(fd, entries, 16);
                 if (count <= 0) break;
                 for (ssize_t i = 0; i < count; ++i) {
                     const char *name = entries[i].name;
+            #else
+            DIR *d = fdopendir(fd);
+            struct dirent *entry;
+            while ((entry = readdir(d)) != NULL) {
+                const char *name = entry->d_name;
+            #endif
                     if (!name || !*name) continue;
                     if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
 
@@ -88,7 +109,11 @@ static uint64_t du_path(const char *path, int depth, int max_depth, int opt_all,
 
                     dir_kb += du_path(child, depth + 1, max_depth, opt_all, opt_human);
                 }
+            #ifdef __AKAOS__
             }
+            #else
+            closedir(d);
+            #endif
             close(fd);
         }
     }

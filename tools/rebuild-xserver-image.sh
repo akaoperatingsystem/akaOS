@@ -424,7 +424,21 @@ ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
 
 echo "[BUILD] user dos2unix" ...
 
-echo "[BUILD] user dmesg"
+echo "[BUILD] user dmesg" ...
+
+echo "[BUILD] user du"
+clang --target=x86_64-unknown-none-elf \
+    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
+    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
+    -mno-red-zone -mcmodel=small \
+    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -c "$ROOT_DIR/userspace/bin/du/main.c" -o "$BUILD_DIR/user-du-main.o"
+ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
+    -T "$ROOT_DIR/userspace/linker/user.ld" \
+    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-du-main.o" \
+    -o "$BUILD_DIR/DU.ELF"
+
 clang --target=x86_64-unknown-none-elf \
     -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
     -ffreestanding -fno-builtin -fno-stack-protector -fpie \
