@@ -1445,3 +1445,9 @@ This directory registers all certified, recognized, and targeted wired Ethernet 
   * X2522 / X2522-25G (Dual-port 10G/25G SFP28, sub-microsecond latency)
   * X2541 (Single-port 100G QSFP28)
   * X2542 (Dual-port 100G QSFP28)
+
+## Input Hardware Matrix
+| Hardware | Implementation | Readiness | Progress Bar |
+| :--- | :--- | :--- | :--- |
+| **PS/2 Mouse** | Native i8042, IntelliMouse Protocol | 100% | `[██████████]` 100% |
+| **USB HID** | Native USB HID Driver | 0% | `[░░░░░░░░░░]` 0% |
