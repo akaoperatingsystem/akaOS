@@ -1,0 +1,2 @@
+ Volume in drive C is NVMe
+ Volume Serial Number is D170-B420

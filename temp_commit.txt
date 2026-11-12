@@ -1,0 +1,1 @@
+feat(input): implement full IntelliMouse protocol and modular I/O; bump akaOS to v0.3.64, XSCore to v0.2.50

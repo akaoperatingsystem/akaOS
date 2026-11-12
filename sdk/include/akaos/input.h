@@ -23,6 +23,16 @@
 #define AKAOS_BTN_RIGHT  UINT16_C(273)
 #define AKAOS_BTN_MIDDLE UINT16_C(274)
 
+#define AKAOS_REL_HWHEEL UINT16_C(6)
+#define AKAOS_BTN_SIDE   UINT16_C(275)
+#define AKAOS_BTN_EXTRA  UINT16_C(276)
+
+/* Mouse Acceleration Profiles */
+#define AKAOS_MOUSE_ACCEL_FIXED    0
+#define AKAOS_MOUSE_ACCEL_LINEAR   1
+#define AKAOS_MOUSE_ACCEL_ADAPTIVE 2
+
+
 #define AKAOS_INPUT_EVENT_PATH "/dev/input/event0"
 
 struct akaos_input_event {

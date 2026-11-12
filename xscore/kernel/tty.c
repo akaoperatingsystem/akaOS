@@ -6,6 +6,7 @@
 #include <xscore/virtio_input.h>
 #include <xscore/input.h>
 #include <xscore/ps2.h>
+#include <xscore/io.h>
 #include <xscore/apic.h>
 #include <xscore/smp.h>
 #if !defined(__x86_64__) && !defined(__i386__)
@@ -106,15 +107,7 @@ static const char tty_shift_keymap[128] = {
 };
 
 #if defined(__x86_64__) || defined(__i386__)
-static inline uint8_t port_in8(uint16_t port) {
-    uint8_t value;
-    __asm__ volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
-    return value;
-}
-
-static inline void port_out8(uint16_t port, uint8_t value) {
-    __asm__ volatile("outb %0, %1" : : "a"(value), "Nd"(port));
-}
+/* port_in8 / port_out8 moved to xscore/io.h */
 
 int xscore_xscore_ps2_wait_input_clear(void) {
     for (uint32_t attempt = 0; attempt < 100000; ++attempt) {
