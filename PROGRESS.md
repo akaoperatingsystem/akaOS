@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.62-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.48-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.68-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.54-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -233,9 +233,10 @@ XSCore features a native, unified USB host controller stack and peripheral devic
 
 | Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **ACPI** | ACPI 6.x Tables, DSDT/SSDT Parsing | 100% | `[██████████]` 100% |
-| **Power States** | Suspend-to-RAM (S3), S4, S5 (Soft Off) | 100% | `[██████████]` 100% |
-| **Thermal Mgmt** | ACPI Thermal Zones & Battery Monitoring | 100% | `[██████████]` 100% |
+| **SMBus/I2C** | Intel i801 SMBus Controller Driver | 100% | `[██████████]` 100% |
+| **Smart Battery** | SBDS Telemetry (mAh, V, A, Health) | 100% | `[██████████]` 100% |
+| **Power Mgmt** | ACPI S3/S4/S5, Policy Profiles | 100% | `[██████████]` 100% |
+| **Thermal Mgmt** | Thermal Zones & Passive Throttling | 100% | `[██████████]` 100% |
 
 ## Input Subsystem
 
