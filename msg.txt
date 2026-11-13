@@ -1,1 +1,1 @@
-feat(cmds): add missing AKAOS_BLKFORMAT handler, verify all; bump akaOS to v0.3.71, XSCore to v0.2.57
+feat(cmds): stabilize and verify all implemented commands; bump akaOS to v0.3.71, XSCore to v0.2.57

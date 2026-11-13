@@ -15,6 +15,7 @@ enum xscore_storage_type {
     XSCORE_STORAGE_VIRTIO,     /* Cloud / Hypervisor VirtIO -> /dev/vda, /dev/vdb */
     XSCORE_STORAGE_IDE,        /* Legacy Parallel ATA / IDE -> /dev/hda, /dev/hdb */
     XSCORE_STORAGE_USB,        /* USB Mass Storage (BOT/UAS)-> /dev/sd* */
+    XSCORE_STORAGE_FLOPPY,     /* Floppy Disk Drive -> /dev/fd0 */
 };
 
 /* Partition Entry (MBR or GPT) */
