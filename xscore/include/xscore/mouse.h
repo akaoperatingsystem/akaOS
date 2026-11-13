@@ -1,4 +1,3 @@
-
 #ifndef XSCORE_MOUSE_H
 #define XSCORE_MOUSE_H
 
@@ -18,7 +17,18 @@ struct xscore_mouse_driver {
     int (*set_acceleration)(int profile);
 };
 
+/* Core Subsystem Registration */
 void xscore_mouse_register_driver(struct xscore_mouse_driver *driver);
+void xscore_mouse_init_all(void);
 
+/* Hardware Ingress Hooks */
+void ps2_mouse_register(void);
 void ps2_mouse_input_byte(uint8_t value);
+
+void xscore_serial_mouse_register(void);
+void xscore_serial_mouse_input_byte(uint8_t byte);
+
+void xscore_usb_mouse_register(void);
+void xscore_usb_mouse_input_report(const uint8_t *report, size_t length);
+
 #endif /* XSCORE_MOUSE_H */

@@ -1,1 +1,1 @@
-feat(input): implement full IntelliMouse protocol and modular I/O; bump akaOS to v0.3.64, XSCore to v0.2.50
+feat(input): implement USB HID mouse, Serial mouse, acceleration profiles, and mouse-config; bump akaOS to v0.3.65, XSCore to v0.2.51

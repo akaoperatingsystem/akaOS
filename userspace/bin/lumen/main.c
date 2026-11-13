@@ -64,6 +64,7 @@ static int load_light_theme(void) {
     close(descriptor);
     if (size <= 0) return 0;
     config[size] = '\0';
+    load_mouse_config();
     return strstr(config, "DESKTOP_THEME=light") != NULL;
 }
 
@@ -144,14 +145,50 @@ static int pointer_absolute_position(int32_t value, uint32_t extent) {
                  UINT32_C(32767));
 }
 
+enum lumen_accel_profile {
+    LUMEN_ACCEL_FIXED = 0,    /* 1:1 raw movement */
+    LUMEN_ACCEL_LINEAR = 1,   /* Constant linear multiplier */
+    LUMEN_ACCEL_ADAPTIVE = 2  /* Ballistic non-linear curve */
+};
+
+static int g_mouse_accel_profile = LUMEN_ACCEL_ADAPTIVE;
+static int g_mouse_speed = 10; /* Base scale: 10 = 1.0x */
+
+static void load_mouse_config(void) {
+    int descriptor = open("/etc/akaos.conf", O_RDONLY);
+    if (descriptor < 0) return;
+    char config[1024];
+    ssize_t size = read(descriptor, config, sizeof(config) - 1U);
+    close(descriptor);
+    if (size <= 0) return;
+    config[size] = '\0';
+    if (strstr(config, "MOUSE_ACCEL=fixed")) g_mouse_accel_profile = LUMEN_ACCEL_FIXED;
+    else if (strstr(config, "MOUSE_ACCEL=linear")) g_mouse_accel_profile = LUMEN_ACCEL_LINEAR;
+    else if (strstr(config, "MOUSE_ACCEL=adaptive")) g_mouse_accel_profile = LUMEN_ACCEL_ADAPTIVE;
+
+    const char *speed_str = strstr(config, "MOUSE_SPEED=");
+    if (speed_str) {
+        int spd = atoi(speed_str + 12);
+        if (spd >= 1 && spd <= 50) g_mouse_speed = spd;
+    }
+}
+
 static int pointer_relative_delta(int32_t value) {
-    /* Preserve pixel precision for small movements while making a grabbed
-     * PS/2 pointer cross a large framebuffer without excessive motion. */
     int delta = (int)value;
+    if (g_mouse_accel_profile == LUMEN_ACCEL_FIXED) {
+        return delta;
+    }
+    if (g_mouse_accel_profile == LUMEN_ACCEL_LINEAR) {
+        return (delta * g_mouse_speed + 5) / 10;
+    }
+    /* Adaptive ballistic curve */
     int magnitude = delta < 0 ? -delta : delta;
-    if (magnitude > 14) return delta * 3;
-    if (magnitude > 5) return delta * 2;
-    return delta;
+    int scale = 1;
+    if (magnitude > 16) scale = 4;
+    else if (magnitude > 8) scale = 3;
+    else if (magnitude > 3) scale = 2;
+    int scaled = delta * scale;
+    return (scaled * g_mouse_speed + 5) / 10;
 }
 
 static inline uint32_t fast_div255(uint32_t val) {
@@ -1443,6 +1480,21 @@ int main(int argc, char **argv) {
                         } else if (events[index].type == AKAOS_EV_REL &&
                                    events[index].code == AKAOS_REL_Y) {
                             pointer_y += pointer_relative_delta(events[index].value);
+                            changed = 1;
+                        } else if (events[index].type == AKAOS_EV_REL &&
+                                   events[index].code == AKAOS_REL_WHEEL) {
+                            /* Vertical smooth scroll wheel event */
+                            changed = 1;
+                        } else if (events[index].type == AKAOS_EV_REL &&
+                                   events[index].code == AKAOS_REL_HWHEEL) {
+                            /* Horizontal scroll wheel event */
+                            changed = 1;
+                        } else if (events[index].type == AKAOS_EV_KEY &&
+                                   (events[index].code == AKAOS_BTN_RIGHT ||
+                                    events[index].code == AKAOS_BTN_MIDDLE ||
+                                    events[index].code == AKAOS_BTN_SIDE ||
+                                    events[index].code == AKAOS_BTN_EXTRA)) {
+                            /* Secondary buttons */
                             changed = 1;
                         } else if (events[index].type == AKAOS_EV_ABS &&
                                    events[index].code == AKAOS_ABS_X) {

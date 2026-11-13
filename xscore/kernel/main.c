@@ -917,6 +917,7 @@ __attribute__((noreturn)) static void xscore_shell_run(void) {
         splash_active = 0;
     }
     xscore_tty_initialize();
+    xscore_mouse_init_all();
     serial_write("[INFO] akaOS shell active\n");
 
     const char *init_path = "/bin/init";
