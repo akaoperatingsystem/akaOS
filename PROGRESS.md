@@ -233,9 +233,9 @@ XSCore features a native, unified USB host controller stack and peripheral devic
 
 | Subsystem | Scope / Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
-| **ACPI** | ACPI 6.x Tables, DSDT/SSDT Parsing | 65% | `[██████░░░░]` 65% |
-| **Power States** | Suspend-to-RAM (S3), Resume | 40% | `[████░░░░░░]` 40% |
-| **Thermal Mgmt** | ACPI Thermal Zones | 35% | `[███░░░░░░░]` 35% |
+| **ACPI** | ACPI 6.x Tables, DSDT/SSDT Parsing | 100% | `[██████████]` 100% |
+| **Power States** | Suspend-to-RAM (S3), S4, S5 (Soft Off) | 100% | `[██████████]` 100% |
+| **Thermal Mgmt** | ACPI Thermal Zones & Battery Monitoring | 100% | `[██████████]` 100% |
 
 ## Input Subsystem
 
@@ -1450,4 +1450,4 @@ This directory registers all certified, recognized, and targeted wired Ethernet 
 | Hardware | Implementation | Readiness | Progress Bar |
 | :--- | :--- | :--- | :--- |
 | **PS/2 Mouse** | Native i8042, IntelliMouse Protocol | 100% | `[██████████]` 100% |
-| **USB HID** | Native USB HID Driver | 0% | `[░░░░░░░░░░]` 0% |
+| **USB HID** | Native USB HID Driver | 100% | `[██████████]` 100% |

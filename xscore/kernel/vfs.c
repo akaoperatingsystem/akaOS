@@ -17,6 +17,7 @@
 #include <xscore/slab.h>
 #include <xscore/sound.h>
 #include <xscore/acpi.h>
+#include <xscore/power.h>
 #include <xscore/time.h>
 #include <xscore/usercopy.h>
 #include <akaos/errno.h>
@@ -109,6 +110,8 @@ static uint32_t proc_acpi_node;
 static uint32_t proc_acpi_info_node;
 static uint32_t proc_acpi_fadt_node;
 static uint32_t proc_acpi_madt_node;
+static uint32_t proc_acpi_battery_node;
+static uint32_t proc_acpi_thermal_node;
 static int procfs_installed;
 
 static void vfs_append_str(char *buffer, size_t capacity, size_t *used,
@@ -1183,6 +1186,8 @@ int xscore_vfs_install_procfs(void) {
         !xscore_vfs_add_file("/proc/acpi/info", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/acpi/fadt", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/acpi/madt", empty, 0, 0444) ||
+        !xscore_vfs_add_file("/proc/acpi/battery", empty, 0, 0444) ||
+        !xscore_vfs_add_file("/proc/acpi/thermal", empty, 0, 0444) ||
         !xscore_vfs_add_directory("/proc/net", 0555) ||
         !xscore_vfs_add_file("/proc/net/tcp", empty, 0, 0444) ||
         !xscore_vfs_add_file("/proc/net/udp", empty, 0, 0444) ||
@@ -1212,6 +1217,8 @@ int xscore_vfs_install_procfs(void) {
     (void)xscore_vfs_resolve_path_at(0, "/proc/acpi/info", &proc_acpi_info_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/acpi/fadt", &proc_acpi_fadt_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/acpi/madt", &proc_acpi_madt_node);
+    (void)xscore_vfs_resolve_path_at(0, "/proc/acpi/battery", &proc_acpi_battery_node);
+    (void)xscore_vfs_resolve_path_at(0, "/proc/acpi/thermal", &proc_acpi_thermal_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/net", &proc_net_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/net/tcp", &proc_net_tcp_node);
     (void)xscore_vfs_resolve_path_at(0, "/proc/net/udp", &proc_net_udp_node);
@@ -1237,6 +1244,8 @@ int xscore_vfs_install_procfs(void) {
     nodes[proc_acpi_info_node].is_dynamic = 0;
     nodes[proc_acpi_fadt_node].is_dynamic = 0;
     nodes[proc_acpi_madt_node].is_dynamic = 0;
+    nodes[proc_acpi_battery_node].is_dynamic = 0;
+    nodes[proc_acpi_thermal_node].is_dynamic = 0;
     nodes[proc_net_node].is_dynamic = 0;
     nodes[proc_net_tcp_node].is_dynamic = 0;
     nodes[proc_net_udp_node].is_dynamic = 0;
@@ -1274,6 +1283,8 @@ enum xscore_proc_kind xscore_vfs_proc_kind_pid_at(uint32_t cwd_node,
         if (target == proc_acpi_info_node) return XSCORE_PROC_ACPI_INFO;
         if (target == proc_acpi_fadt_node) return XSCORE_PROC_ACPI_FADT;
         if (target == proc_acpi_madt_node) return XSCORE_PROC_ACPI_MADT;
+        if (target == proc_acpi_battery_node) return XSCORE_PROC_ACPI_BATTERY;
+        if (target == proc_acpi_thermal_node) return XSCORE_PROC_ACPI_THERMAL;
         if (target == proc_net_node) return XSCORE_PROC_NET_DIR;
         if (target == proc_net_tcp_node) return XSCORE_PROC_NET_TCP;
         if (target == proc_net_udp_node) return XSCORE_PROC_NET_UDP;
@@ -2134,6 +2145,18 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
             if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
             static uint8_t generated[4096];
             size_t size = xscore_acpi_format_proc_madt((char *)generated, sizeof(generated));
+            return xscore_fd_open_generated(table, generated, size);
+        }
+        if (target == proc_acpi_battery_node) {
+            if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
+            static uint8_t generated[1024];
+            size_t size = xscore_power_format_proc_battery((char *)generated, sizeof(generated));
+            return xscore_fd_open_generated(table, generated, size);
+        }
+        if (target == proc_acpi_thermal_node) {
+            if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
+            static uint8_t generated[1024];
+            size_t size = xscore_power_format_proc_thermal((char *)generated, sizeof(generated));
             return xscore_fd_open_generated(table, generated, size);
         }
         if (target >= XSCORE_VFS_PROC_PID_BASE + 0x1000 &&

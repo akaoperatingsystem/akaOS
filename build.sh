@@ -1918,6 +1918,9 @@ build_user_program mouse-config "$ROOT_DIR/userspace/bin/mouse-config/main.c" MO
 build_user_program kbdrate "$ROOT_DIR/userspace/bin/kbdrate/main.c" KBDRATE.ELF
 build_user_program loadkeys "$ROOT_DIR/userspace/bin/loadkeys/main.c" LOADKEYS.ELF
 build_user_program showkey "$ROOT_DIR/userspace/bin/showkey/main.c" SHOWKEY.ELF
+build_user_program battery "$ROOT_DIR/userspace/bin/battery/main.c" BATTERY.ELF
+build_user_program cpufreq "$ROOT_DIR/userspace/bin/cpufreq/main.c" CPUFREQ.ELF
+build_user_program pmctl "$ROOT_DIR/userspace/bin/pmctl/main.c" PMCTL.ELF
 build_user_program watch "$ROOT_DIR/userspace/bin/watch/main.c" WATCH.ELF
 build_user_program sed "$ROOT_DIR/userspace/bin/sed/main.c" SED.ELF
 build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF

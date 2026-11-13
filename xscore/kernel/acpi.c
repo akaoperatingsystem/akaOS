@@ -75,38 +75,46 @@ static const struct acpi_rsdp *scan_memory_for_rsdp(void) {
 static const struct acpi_rsdp *scan_memory_for_rsdp(void) { return 0; }
 #endif
 
-static void parse_dsdt_s5(uint64_t dsdt_paddr) {
+static void parse_dsdt_sleep_states(uint64_t dsdt_paddr) {
     if (!dsdt_paddr) return;
     const struct acpi_sdt_header *dsdt = (const struct acpi_sdt_header *)(uintptr_t)dsdt_paddr;
     if (!dsdt || dsdt->length < sizeof(struct acpi_sdt_header)) return;
 
-    /* Scan DSDT AML byte stream for "_S5_" signature */
     const uint8_t *aml = (const uint8_t *)dsdt;
     size_t len = dsdt->length;
+
     for (size_t i = 36; i + 8 < len; ++i) {
-        if (aml[i] == '_' && aml[i + 1] == 'S' && aml[i + 2] == '5' && aml[i + 3] == '_') {
-            /* Found "_S5_", check for AML Package opcode 0x12 */
+        if (aml[i] == '_' && aml[i + 1] == 'S' && aml[i + 3] == '_') {
+            char state_char = (char)aml[i + 2];
             size_t p = i + 4;
             while (p + 4 < len && aml[p] != 0x12 && p < i + 12) p++;
             if (aml[p] == 0x12) {
-                p++; /* Skip Package opcode */
-                /* Skip package length (1-4 bytes) */
+                p++;
                 uint8_t pkg_lead = aml[p];
                 if ((pkg_lead & 0xC0) == 0) p += 1;
                 else p += ((pkg_lead >> 6) & 3) + 1;
-                p++; /* Skip NumElements */
-                /* Read SLP_TYPa */
+                p++;
+                uint8_t typ_a = 0, typ_b = 0;
                 if (p < len) {
-                    if (aml[p] == 0x0a) g_acpi.slp_typa = aml[p + 1]; /* BytePrefix */
-                    else g_acpi.slp_typa = aml[p];
+                    if (aml[p] == 0x0a) typ_a = aml[p + 1];
+                    else typ_a = aml[p];
                 }
-                /* Advance to next element for SLP_TYPb */
                 p += (aml[p] == 0x0a) ? 2 : 1;
                 if (p < len) {
-                    if (aml[p] == 0x0a) g_acpi.slp_typb = aml[p + 1];
-                    else g_acpi.slp_typb = aml[p];
+                    if (aml[p] == 0x0a) typ_b = aml[p + 1];
+                    else typ_b = aml[p];
                 }
-                return;
+
+                if (state_char == '5') {
+                    g_acpi.slp_typa = typ_a;
+                    g_acpi.slp_typb = typ_b;
+                } else if (state_char == '3') {
+                    g_acpi.slp_typa_s3 = typ_a;
+                    g_acpi.slp_typb_s3 = typ_b;
+                } else if (state_char == '4') {
+                    g_acpi.slp_typa_s4 = typ_a;
+                    g_acpi.slp_typb_s4 = typ_b;
+                }
             }
         }
     }
@@ -139,10 +147,14 @@ static void parse_fadt(const struct acpi_fadt *fadt) {
     /* Default QEMU / PC sleep type fallback */
     g_acpi.slp_typa = 5;
     g_acpi.slp_typb = 5;
+    g_acpi.slp_typa_s3 = 3;
+    g_acpi.slp_typb_s3 = 3;
+    g_acpi.slp_typa_s4 = 4;
+    g_acpi.slp_typb_s4 = 4;
 
     /* Parse DSDT for exact _S5 sleep values if available */
     if (g_acpi.dsdt_address) {
-        parse_dsdt_s5(g_acpi.dsdt_address);
+        parse_dsdt_sleep_states(g_acpi.dsdt_address);
     }
 }
 
@@ -315,6 +327,38 @@ int xscore_acpi_present(void) {
 
 const struct xscore_acpi_info *xscore_acpi_get_info(void) {
     return &g_acpi;
+}
+
+int xscore_acpi_sleep(int state) {
+    if (state == 5) {
+        xscore_acpi_shutdown();
+        return 1;
+    }
+    if (state == 3) {
+        if (g_acpi.fadt_present && g_acpi.pm1a_cnt_blk != 0) {
+            if (g_acpi.smi_cmd && g_acpi.acpi_enable) {
+                acpi_out8((uint16_t)g_acpi.smi_cmd, g_acpi.acpi_enable);
+            }
+            uint16_t val_a = (uint16_t)(((uint16_t)g_acpi.slp_typa_s3 << 10) | (1U << 13));
+            acpi_out16(g_acpi.pm1a_cnt_blk, val_a);
+            if (g_acpi.pm1b_cnt_blk != 0) {
+                uint16_t val_b = (uint16_t)(((uint16_t)g_acpi.slp_typb_s3 << 10) | (1U << 13));
+                acpi_out16(g_acpi.pm1b_cnt_blk, val_b);
+            }
+            return 1;
+        }
+        /* Fallback: QEMU / PC standby */
+        acpi_out16(0x604, 0x1400);
+        return 1;
+    }
+    if (state == 4) {
+        if (g_acpi.fadt_present && g_acpi.pm1a_cnt_blk != 0) {
+            uint16_t val_a = (uint16_t)(((uint16_t)g_acpi.slp_typa_s4 << 10) | (1U << 13));
+            acpi_out16(g_acpi.pm1a_cnt_blk, val_a);
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void xscore_acpi_shutdown(void) {

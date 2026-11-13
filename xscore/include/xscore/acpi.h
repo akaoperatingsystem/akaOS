@@ -188,6 +188,10 @@ struct xscore_acpi_info {
     uint64_t dsdt_address;
     uint8_t slp_typa;
     uint8_t slp_typb;
+    uint8_t slp_typa_s3;
+    uint8_t slp_typb_s3;
+    uint8_t slp_typa_s4;
+    uint8_t slp_typb_s4;
     uint8_t reset_supported;
     uint8_t reset_value;
     uint64_t reset_address;
@@ -222,6 +226,7 @@ const struct xscore_acpi_info *xscore_acpi_get_info(void);
 
 void xscore_acpi_shutdown(void);
 void xscore_acpi_reboot(void);
+int xscore_acpi_sleep(int state);
 
 size_t xscore_acpi_format_proc_info(char *buf, size_t max_size);
 size_t xscore_acpi_format_proc_fadt(char *buf, size_t max_size);
