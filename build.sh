@@ -1824,6 +1824,7 @@ build_user_program which "$ROOT_DIR/userspace/bin/which/main.c" WHICH.ELF
 build_user_program env "$ROOT_DIR/userspace/bin/env/main.c" ENV.ELF
 
 build_user_program eject "$ROOT_DIR/userspace/bin/eject/main.c" EJECT.ELF
+build_user_program ethtool "$ROOT_DIR/userspace/bin/ethtool/main.c" ETHTOOL.ELF
 build_user_program fdformat "$ROOT_DIR/userspace/bin/fdformat/main.c" FDFORMAT.ELF
 build_user_program expand "$ROOT_DIR/userspace/bin/expand/main.c" EXPAND.ELF
 build_user_program expr "$ROOT_DIR/userspace/bin/expr/main.c" EXPR.ELF
