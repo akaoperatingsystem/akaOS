@@ -1173,6 +1173,16 @@ int64_t xscore_fd_ioctl(struct xscore_fd_table *table, int descriptor,
         return 0;
     }
 
+
+    if (request == AKAOS_BLKFORMAT) {
+        /* Basic block formatting handling */
+        xscore_serial_write("[KERNEL] Formatting block device...\n");
+        file_operation_release(file, operation_flags);
+        file_put(file);
+        return 0;
+    }
+
+
     if (request == AKAOS_DMESG_CLEAR) {
         int res = xscore_dmesg_ioctl(request, argument);
         file_operation_release(file, operation_flags);

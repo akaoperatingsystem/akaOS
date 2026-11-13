@@ -1,1 +1,1 @@
-feat(cmds): implement eject, ethtool, fdformat, enable, eval, exec, exit, env, expand, expr, false; bump akaOS to v0.3.69, XSCore to v0.2.55
+feat(cmds): stabilize and verify all implemented commands; bump akaOS to v0.3.70, XSCore to v0.2.56
