@@ -23,3 +23,8 @@
 /* dmesg ioctls */
 #define AKAOS_DMESG_CLEAR UINT32_C(0x5601)
 #define AKAOS_DMESG_SETLEVEL UINT32_C(0x5602)
+
+/* Command Subsystem IOCTLs */
+#define AKAOS_EJECT            UINT32_C(0x541C)
+#define AKAOS_SIOCGIFSTATS     UINT32_C(0x8901)
+#define AKAOS_BLKFORMAT        UINT32_C(0x1278)

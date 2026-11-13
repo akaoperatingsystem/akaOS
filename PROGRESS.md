@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.68-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.54-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.69-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.55-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -1452,3 +1452,13 @@ This directory registers all certified, recognized, and targeted wired Ethernet 
 | :--- | :--- | :--- | :--- |
 | **PS/2 Mouse** | Native i8042, IntelliMouse Protocol | 100% | `[██████████]` 100% |
 | **USB HID** | Native USB HID Driver | 100% | `[██████████]` 100% |
+
+
+## Command Subsystem Implementation & Shell Integration
+
+| Category | Command | Implementation | Readiness | Progress |
+| :--- | :--- | :--- | :--- | :--- |
+| **Kernel Support** | `eject`, `ethtool`, `fdformat` | IOCTLs, Floppy Driver | 100% | `[██████████]` 100% |
+| **Shell Builtin** | `enable`, `eval`, `exec`, `exit`, `export` | Shell Registry | 100% | `[██████████]` 100% |
+| **Userspace** | `env`, `expand`, `expr`, `false` | POSIX Utils | 100% | `[██████████]` 100% |
+

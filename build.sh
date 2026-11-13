@@ -1822,6 +1822,13 @@ build_account_program ssh "$ROOT_DIR/userspace/bin/ssh/main.c" SSH.ELF
 build_user_program sleep "$ROOT_DIR/userspace/bin/sleep/main.c" SLEEP.ELF
 build_user_program which "$ROOT_DIR/userspace/bin/which/main.c" WHICH.ELF
 build_user_program env "$ROOT_DIR/userspace/bin/env/main.c" ENV.ELF
+
+build_user_program eject "$ROOT_DIR/userspace/bin/eject/main.c" EJECT.ELF
+build_user_program fdformat "$ROOT_DIR/userspace/bin/fdformat/main.c" FDFORMAT.ELF
+build_user_program expand "$ROOT_DIR/userspace/bin/expand/main.c" EXPAND.ELF
+build_user_program expr "$ROOT_DIR/userspace/bin/expr/main.c" EXPR.ELF
+build_user_program false "$ROOT_DIR/userspace/bin/false/main.c" FALSE.ELF
+
 build_user_program cut "$ROOT_DIR/userspace/bin/cut/main.c" CUT.ELF
 build_user_program tr "$ROOT_DIR/userspace/bin/tr/main.c" TR.ELF
 build_user_program df "$ROOT_DIR/userspace/bin/df/main.c" DF.ELF
@@ -3795,7 +3802,8 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/memory/physical.c"
     "$ROOT_DIR/xscore/memory/virtual.c"
     "$ROOT_DIR/xscore/memory/heap.c"
-    "$ROOT_DIR/xscore/memory/slab.c"
+    "$ROOT_DIR/xscore/memory/slab.c" \
+    "$ROOT_DIR/xscore/kernel/drivers/block/floppy.c"
 )
 low_memory_cflags=()
 if [[ "$low_memory_profile" -eq 1 ]]; then

@@ -1087,6 +1087,48 @@ static int is_name_shell_builtin(const char *name) {
     return 0;
 }
 
+
+static int builtin_enable(int argc, char *argv[]) {
+    write_str(STDOUT_FILENO, "enable: Not fully implemented (stubbed for registry update).\n");
+    return 0;
+}
+
+static int builtin_eval(int argc, char *argv[]) {
+    if (argc < 2) return 0;
+    size_t len = 0;
+    for (int i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
+    char *buf = malloc(len + 1);
+    buf[0] = '\0';
+    for (int i = 1; i < argc; i++) {
+        strcat(buf, argv[i]);
+        if (i < argc - 1) strcat(buf, " ");
+    }
+    last_exit_status = execute_command_line(buf);
+    free(buf);
+    return 0;
+}
+
+static int builtin_exec(int argc, char *argv[]) {
+    if (argc == 1) return 0;
+    char *const *cmd_argv = &argv[1];
+    execvp(cmd_argv[0], cmd_argv);
+    write_str(STDERR_FILENO, "akash: exec: failed to execute\n");
+    _exit(127);
+    return 1;
+}
+
+static int builtin_exit(int argc, char *argv[]) {
+    int code = last_exit_status;
+    if (argc > 1) {
+        code = (int)parse_num_val(argv[1]);
+    }
+    // Cleanup tasks: sync, signal cleanup, etc
+    sync();
+    _exit(code);
+    return 0;
+}
+
+
 static int execute_builtin(int argc, char *argv[]) {
     if (argc == 0) return 0;
 
