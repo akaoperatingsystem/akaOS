@@ -54,6 +54,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/ahci.c"
     "$ROOT_DIR/xscore/kernel/storage.c"
     "$ROOT_DIR/xscore/kernel/mouse.c"
+    "$ROOT_DIR/xscore/kernel/keyboard.c"
     "$ROOT_DIR/xscore/kernel/ps2_mouse.c"
     "$ROOT_DIR/xscore/kernel/serial_mouse.c"
     "$ROOT_DIR/xscore/kernel/usb_mouse.c"

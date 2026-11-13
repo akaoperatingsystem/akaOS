@@ -5,6 +5,7 @@
 #include <xscore/serial.h>
 #include <xscore/virtio_input.h>
 #include <xscore/input.h>
+#include <xscore/keyboard.h>
 #include <xscore/ps2.h>
 #include <xscore/io.h>
 #include <xscore/apic.h>
@@ -42,6 +43,8 @@ static int tty_draining_pending = 0;
 static int tty_shift = 0;
 static int tty_ctrl = 0;
 static int tty_extended = 0;
+static int tty_capslock = 0;
+static int tty_altgr = 0;
 static int tty_initialized = 0;
 static int tty_irq_enabled;
 static int tty_echo_enabled = 1;
@@ -803,6 +806,19 @@ void xscore_tty_input_scancode(uint8_t scan_code) {
         tty_shift = 0;
         return;
     }
+    if (scan_code == 0x3a) { /* CapsLock toggle */
+        tty_capslock ^= 1;
+        xscore_keyboard_set_leds(tty_capslock ? KEYBOARD_LED_CAPS_LOCK : 0);
+        return;
+    }
+    if (scan_code == 0x38) {
+        if (tty_extended) tty_altgr = 1;
+        return;
+    }
+    if (scan_code == 0xb8) {
+        tty_altgr = 0;
+        return;
+    }
     if (scan_code & 0x80) return;
 
     if (scan_code == 0x1c) {
@@ -877,7 +893,7 @@ void xscore_tty_input_scancode(uint8_t scan_code) {
 
     char character = 0;
     if (scan_code < 128) {
-        character = tty_shift ? tty_shift_keymap[scan_code] : tty_keymap[scan_code];
+        character = xscore_keyboard_translate(scan_code, tty_shift, tty_altgr, tty_capslock);
     }
     if (character) {
         xscore_tty_input_char(character);

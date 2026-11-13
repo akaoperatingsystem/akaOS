@@ -103,6 +103,7 @@ const struct xscore_storage_device *xscore_storage_find_by_name(const char *name
 int xscore_storage_read(const char *dev_name, uint64_t lba, uint32_t count, void *buffer);
 int xscore_storage_write(const char *dev_name, uint64_t lba, uint32_t count, const void *buffer);
 int xscore_storage_flush(const char *dev_name);
+int xscore_storage_eject(const char *dev_name);
 
 /* Partition Parsers */
 int xscore_partition_parse_mbr(struct xscore_storage_device *dev, const uint8_t *sector0);

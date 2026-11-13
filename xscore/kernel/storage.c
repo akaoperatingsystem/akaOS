@@ -391,3 +391,12 @@ int xscore_storage_flush(const char *dev_name) {
             return 1;
     }
 }
+
+
+int xscore_storage_eject(const char *dev_name) {
+    const struct xscore_storage_device *dev = xscore_storage_find_by_name(dev_name);
+    if (!dev) return -1;
+    // Logic for ejecting goes here.
+    // For now, it's just a placeholder as we don't have driver-specific eject.
+    return 0;
+}

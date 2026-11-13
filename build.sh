@@ -1915,6 +1915,9 @@ build_user_program smartctl "$ROOT_DIR/userspace/bin/smartctl/main.c" SMARTCTL.E
 build_user_program diskinfo "$ROOT_DIR/userspace/bin/diskinfo/main.c" DISKINFO.ELF
 build_user_program hdparm "$ROOT_DIR/userspace/bin/hdparm/main.c" HDPARM.ELF
 build_user_program mouse-config "$ROOT_DIR/userspace/bin/mouse-config/main.c" MOUSE_CONFIG.ELF
+build_user_program kbdrate "$ROOT_DIR/userspace/bin/kbdrate/main.c" KBDRATE.ELF
+build_user_program loadkeys "$ROOT_DIR/userspace/bin/loadkeys/main.c" LOADKEYS.ELF
+build_user_program showkey "$ROOT_DIR/userspace/bin/showkey/main.c" SHOWKEY.ELF
 build_user_program watch "$ROOT_DIR/userspace/bin/watch/main.c" WATCH.ELF
 build_user_program sed "$ROOT_DIR/userspace/bin/sed/main.c" SED.ELF
 build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF
@@ -3582,6 +3585,9 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/diskinfo:$BUILD_DIR/DISKINFO.ELF:exec" \
     --file "/bin/hdparm:$BUILD_DIR/HDPARM.ELF:exec" \
     --file "/bin/mouse-config:$BUILD_DIR/MOUSE_CONFIG.ELF:exec" \
+    --file "/bin/kbdrate:$BUILD_DIR/KBDRATE.ELF:exec" \
+    --file "/bin/loadkeys:$BUILD_DIR/LOADKEYS.ELF:exec" \
+    --file "/bin/showkey:$BUILD_DIR/SHOWKEY.ELF:exec" \
     --file "/bin/watch:$BUILD_DIR/WATCH.ELF:exec" \
     --file "/bin/sed:$BUILD_DIR/SED.ELF:exec" \
     --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \
@@ -3773,6 +3779,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/ahci.c"
     "$ROOT_DIR/xscore/kernel/storage.c"
     "$ROOT_DIR/xscore/kernel/mouse.c"
+    "$ROOT_DIR/xscore/kernel/keyboard.c"
     "$ROOT_DIR/xscore/kernel/ps2_mouse.c"
     "$ROOT_DIR/xscore/kernel/serial_mouse.c"
     "$ROOT_DIR/xscore/kernel/usb_mouse.c"

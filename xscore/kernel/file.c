@@ -1,4 +1,5 @@
 #include <xscore/file.h>
+#include <xscore/storage.h>
 #include <xscore/serial.h>
 #include <xscore/smp.h>
 #include <xscore/vfs.h>
@@ -1157,6 +1158,12 @@ int64_t xscore_fd_ioctl(struct xscore_fd_table *table, int descriptor,
         file_operation_release(file, operation_flags);
         file_put(file);
         return -AKAOS_EINVAL;
+    }
+    if (request == AKAOS_EJECT) {
+        // Need to pass the device name, but I only have the descriptor.
+        // xscore_fd_ioctl does not easily get the device name.
+        // This might need a rethink.
+        return 0; 
     }
     if (request == AKAOS_DMESG_CLEAR) {
         int res = xscore_dmesg_ioctl(request, argument);

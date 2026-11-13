@@ -1,1 +1,1 @@
-feat(input): implement USB HID mouse, Serial mouse, acceleration profiles, and mouse-config; bump akaOS to v0.3.65, XSCore to v0.2.51
+feat(input): implement international keyboard layout engine, USB/PS2 keyboard drivers, and diagnostic tools; bump akaOS to v0.3.66, XSCore to v0.2.52
