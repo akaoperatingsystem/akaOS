@@ -7,27 +7,32 @@
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
-    printf("akaOS efivar utility v0.4.1\n");
-    
     static struct option long_options[] = {
         {"list", no_argument, 0, 'l'},
-        {"print", required_argument, 0, 'p'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "lp:h", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "lh", long_options, NULL)) != -1) {
         switch (opt) {
-        case 'l':
-            printf("Listing NVRAM variables...\n");
-            // Would open /dev/efivar and read
+        case 'l': {
+            int fd = open("/dev/efivar", O_RDONLY);
+            if (fd < 0) {
+                perror("Unable to open /dev/efivar");
+                return 1;
+            }
+            char buffer[4096];
+            ssize_t bytes = read(fd, buffer, sizeof(buffer) - 1);
+            if (bytes > 0) {
+                buffer[bytes] = '\0';
+                printf("%s", buffer);
+            }
+            close(fd);
             break;
-        case 'p':
-            printf("Printing variable: %s\n", optarg);
-            break;
+        }
         case 'h':
-            printf("Usage: efivar [options]\n");
+            printf("Usage: efivar [options]\n  -l, --list    List all NVRAM variables\n");
             return 0;
         default:
             return 1;

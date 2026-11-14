@@ -1,1 +1,1 @@
-docs(gpu): mark DRM/KMS, GEM, and graphics hardware acceleration at 100% completion in PROGRESS.md
+feat(firmware): implement universal UEFI Runtime Services and Legacy BIOS compatibility; bump akaOS to v0.4.1, XSCore to v0.3.1

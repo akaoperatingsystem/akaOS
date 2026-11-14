@@ -31,6 +31,7 @@
 #include <xscore/bufcache.h>
 #include <xscore/net.h>
 #include <xscore/version.h>
+#include <xscore/firmware.h>
 #include <xscore/acpi.h>
 #include <xscore/smp.h>
 #include <font_data.h>
@@ -1143,6 +1144,9 @@ __attribute__((noreturn)) static void xscore_boot_on_kernel_stack(uint64_t boot_
     /* Install TSS with IST entries */
     xscore_tss_install();
     serial_write("[INFO] TSS installed\n");
+    xscore_firmware_initialize(boot_info);
+    serial_write("[INFO] Firmware subsystem initialized\n");
+
     boot_log_ok("TSS installed (IST active)");
     splash_progress_step();
     boot_overview("Stacks", "Guard pages + IST");
