@@ -13,6 +13,8 @@ static const EFI_GUID simple_fs_guid = {0x0964e5b22, 0x6459, 0x11d2, {0x8e, 0x39
 static const EFI_GUID gop_guid = {0x9042a9de, 0x23dc, 0x4a38, {0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a}};
 static const EFI_GUID acpi_20_guid = {0x8868e871, 0xe4f1, 0x11d3, {0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81}};
 static const EFI_GUID acpi_10_guid = {0xeb9d2d30, 0x2d88, 0x11d3, {0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d}};
+static const EFI_GUID smbios_guid = {0xeb9d2d31, 0x2d88, 0x11d3, {0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d}};
+static const EFI_GUID smbios3_guid = {0xf2fd1544, 0x9794, 0x4a2c, {0x99, 0x2e, 0xe5, 0xbb, 0xcf, 0x20, 0xe3, 0x94}};
 
 static int guid_equal(const EFI_GUID *a, const EFI_GUID *b) {
     if (a->data1 != b->data1 || a->data2 != b->data2 || a->data3 != b->data3) return 0;
@@ -28,13 +30,22 @@ static void detect_acpi_table(void) {
     for (UINTN i = 0; i < g_system_table->number_of_table_entries; ++i) {
         if (guid_equal(&tables[i].vendor_guid, &acpi_20_guid)) {
             g_boot_info.acpi_rsdp = (uint64_t)(uintptr_t)tables[i].vendor_table;
-            return;
+            break;
+        }
+    }
+    if (!g_boot_info.acpi_rsdp) {
+        for (UINTN i = 0; i < g_system_table->number_of_table_entries; ++i) {
+            if (guid_equal(&tables[i].vendor_guid, &acpi_10_guid)) {
+                g_boot_info.acpi_rsdp = (uint64_t)(uintptr_t)tables[i].vendor_table;
+                break;
+            }
         }
     }
     for (UINTN i = 0; i < g_system_table->number_of_table_entries; ++i) {
-        if (guid_equal(&tables[i].vendor_guid, &acpi_10_guid)) {
-            g_boot_info.acpi_rsdp = (uint64_t)(uintptr_t)tables[i].vendor_table;
-            return;
+        if (guid_equal(&tables[i].vendor_guid, &smbios3_guid) ||
+            guid_equal(&tables[i].vendor_guid, &smbios_guid)) {
+            g_boot_info.smbios_table = (uint64_t)(uintptr_t)tables[i].vendor_table;
+            break;
         }
     }
 }
@@ -398,6 +409,8 @@ typedef void(__attribute__((sysv_abi)) *kernel_entry_t)(const struct akaos_boot_
 
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     g_system_table = system_table;
+    g_boot_info.uefi_system_table = (uint64_t)(uintptr_t)system_table;
+    g_boot_info.uefi_runtime_services = (uint64_t)(uintptr_t)system_table->runtime_services;
     serial_init();
     serial_write("[INFO] akaOS UEFI loader starting\n");
     console_write(L"akaOS UEFI loader\r\n");

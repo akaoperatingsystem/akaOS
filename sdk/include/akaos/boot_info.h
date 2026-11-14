@@ -38,6 +38,9 @@ struct akaos_boot_info {
     uint32_t memory_descriptor_version;
     uint32_t reserved;
     uint64_t acpi_rsdp;
+    uint64_t uefi_system_table;
+    uint64_t uefi_runtime_services;
+    uint64_t smbios_table;
 };
 
 #endif

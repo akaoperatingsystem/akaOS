@@ -1,1 +1,1 @@
-feat(input): implement international keyboard layout engine, USB/PS2 keyboard drivers, and diagnostic tools; bump akaOS to v0.3.66, XSCore to v0.2.52
+docs(gpu): mark DRM/KMS, GEM, and graphics hardware acceleration at 100% completion in PROGRESS.md

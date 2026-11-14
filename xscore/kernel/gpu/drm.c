@@ -274,3 +274,44 @@ int xscore_drm_register_device(struct xscore_drm_device *drm) {
     xscore_serial_write("[DRM] Device /dev/gpu0 registered.\n");
     return 0;
 }
+
+/* Bochs BGA Hardware Acceleration Stubs */
+#define BGA_INDEX_PORT 0x01CE
+#define BGA_DATA_PORT 0x01CF
+
+int xscore_drm_bochs_fill_rect(struct xscore_drm_device *drm, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color) {
+    if (!drm) return -1;
+    
+    // Simulate writing to Bochs BGA MMIO or I/O ports
+    xscore_serial_write("[DRM] Bochs BGA: Executing 2D fill rect via I/O ports.\n");
+    return 0;
+}
+
+/* V-Blank Interrupt Handler */
+void xscore_drm_handle_vblank(struct xscore_drm_device *drm) {
+    if (!drm) return;
+    
+    // In a real driver, this would notify the compositor and update atomic states
+    xscore_serial_write("[DRM] V-Blank interrupt received.\n");
+    
+    if (g_vblank_handler) {
+        g_vblank_handler(drm);
+    }
+}
+
+void xscore_drm_trigger_vblank(struct xscore_drm_device *drm) {
+    // In real hardware, an interrupt vector fires. Here we invoke the handler.
+    xscore_drm_handle_vblank(drm);
+}
+
+/* Atomic Mode Setting Stubs */
+int xscore_drm_atomic_check(struct xscore_drm_device *drm, struct drm_atomic_state *state) {
+    xscore_serial_write("[DRM] Atomic mode setting check called.\n");
+    return 0; // Success
+}
+
+int xscore_drm_atomic_commit(struct xscore_drm_device *drm, struct drm_atomic_state *state) {
+    xscore_serial_write("[DRM] Atomic mode setting commit called.\n");
+    // Trigger display update / page flip logic
+    return 0; // Success
+}

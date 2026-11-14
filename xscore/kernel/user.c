@@ -945,7 +945,7 @@ int xscore_user_process_self_test(void) {
     uint64_t akash_bg_status = UINT64_MAX;
     if (!p_akash_bg || !xscore_process_wait(p_akash_bg, &akash_bg_status) || akash_bg_status != 0 || !xscore_process_reap(p_akash_bg)) return 0;
 
-    const char *akash_job_ctrl_args[] = {"/bin/akash", "-c", "help bg; sleep 0.01 & bg %1; jobs; kill %1; wait", 0};
+    const char *akash_job_ctrl_args[] = {"/bin/akash", "-c", "help bg; help fg; sleep 0.01 & bg %1; jobs; kill %1; wait", 0};
     struct xscore_process *p_akash_jc = xscore_process_create_path_args("/bin/akash", 3, akash_job_ctrl_args);
     uint64_t akash_jc_status = UINT64_MAX;
     if (!p_akash_jc || !xscore_process_wait(p_akash_jc, &akash_jc_status) || akash_jc_status != 0 || !xscore_process_reap(p_akash_jc)) return 0;

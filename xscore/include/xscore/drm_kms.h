@@ -168,4 +168,9 @@ int xscore_drm_map_bar(struct xscore_drm_device *drm, int bar_index);
 int xscore_drm_accel_fill_rect(struct xscore_drm_device *drm, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color);
 int xscore_drm_virtio_submit_cmd(struct xscore_drm_device *drm, uint32_t *cmd, size_t size);
 int xscore_drm_register_device(struct xscore_drm_device *drm);
+int xscore_drm_bochs_fill_rect(struct xscore_drm_device *drm, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color);
+void xscore_drm_handle_vblank(struct xscore_drm_device *drm);
+void xscore_drm_trigger_vblank(struct xscore_drm_device *drm);
+int xscore_drm_atomic_check(struct xscore_drm_device *drm, struct drm_atomic_state *state);
+int xscore_drm_atomic_commit(struct xscore_drm_device *drm, struct drm_atomic_state *state);
 #endif /* XSCORE_DRM_KMS_H */
