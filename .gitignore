@@ -63,3 +63,5 @@ Thumbs.db
 /config.h
 /Makefile
 /man/
+
+temp*.txt
