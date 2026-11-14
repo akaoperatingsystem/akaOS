@@ -1,23 +1,17 @@
 #ifndef XSCORE_COLOR_H
 #define XSCORE_COLOR_H
 
-/* ANSI Escape Codes for Foreground Colors */
-#define ANSI_RESET          "\033[0m"
-#define ANSI_BLACK          "\033[30m"
-#define ANSI_RED            "\033[31m"
-#define ANSI_GREEN          "\033[32m"
-#define ANSI_YELLOW         "\033[33m"
-#define ANSI_BLUE           "\033[34m"
-#define ANSI_MAGENTA        "\033[35m"
-#define ANSI_CYAN           "\033[36m"
-#define ANSI_WHITE          "\033[37m"
-#define ANSI_BRIGHT_RED     "\033[1;31m"
+/* ANSI Escape Codes mapping to standard RGB colors */
+#define ANSI_COLOR_BLACK   0x000000
+#define ANSI_COLOR_RED     0xAA0000
+#define ANSI_COLOR_GREEN   0x00AA00
+#define ANSI_COLOR_YELLOW  0xAA5500
+#define ANSI_COLOR_BLUE    0x0000AA
+#define ANSI_COLOR_MAGENTA 0xAA00AA
+#define ANSI_COLOR_CYAN    0x00AAAA
+#define ANSI_COLOR_WHITE   0xAAAAAA
 
-/* Standard Status Tags */
-#define TAG_OK      "[" ANSI_GREEN " OK " ANSI_RESET "]"
-#define TAG_INFO    "[" ANSI_CYAN "INFO" ANSI_RESET "]"
-#define TAG_WARN    "[" ANSI_YELLOW "WARN" ANSI_RESET "]"
-#define TAG_FAIL    "[" ANSI_BRIGHT_RED "FAIL" ANSI_RESET "]"
-#define TAG_DEBUG   "[" ANSI_BLACK ";1mDEBUG" ANSI_RESET "]"
+#define ANSI_DEFAULT_FG    0xe6edf3
+#define ANSI_DEFAULT_BG    0x000000
 
 #endif /* XSCORE_COLOR_H */

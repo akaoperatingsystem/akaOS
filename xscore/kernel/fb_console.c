@@ -4,6 +4,7 @@
 #include <xscore/vmm.h>
 #include <akaos/boot_info.h>
 #include <xscore/version.h>
+#include <xscore/color.h>
 #include <font_data.h>
 #include <font8x16_data.h>
 #include <stddef.h>
@@ -199,6 +200,8 @@ static uint32_t shell_rows;
 static uint32_t shell_cursor_col;
 static uint32_t shell_cursor_row;
 static int shell_reverse_video = 0;
+static uint32_t shell_fg_color = ANSI_DEFAULT_FG;
+static uint32_t shell_bg_color = ANSI_DEFAULT_BG;
 static uint32_t shell_fg_color = SHELL_TEXT;
 
 
@@ -213,6 +216,21 @@ static uint32_t get_ansi_color(int code) {
         case 36: return 0x00ffff; // Cyan
         case 37: return 0xffffff; // White
         default: return SHELL_TEXT;
+    }
+}
+
+
+static uint32_t get_ansi_color(int code) {
+    switch (code) {
+        case 30: case 40: return ANSI_COLOR_BLACK;
+        case 31: case 41: return ANSI_COLOR_RED;
+        case 32: case 42: return ANSI_COLOR_GREEN;
+        case 33: case 43: return ANSI_COLOR_YELLOW;
+        case 34: case 44: return ANSI_COLOR_BLUE;
+        case 35: case 45: return ANSI_COLOR_MAGENTA;
+        case 36: case 46: return ANSI_COLOR_CYAN;
+        case 37: case 47: return ANSI_COLOR_WHITE;
+        default: return ANSI_DEFAULT_FG;
     }
 }
 
@@ -254,7 +272,7 @@ static void shell_draw_glyph(uint32_t x, uint32_t y, uint32_t color, unsigned ch
         y + SHELL_CELL_HEIGHT > g_boot_canvas.height) return;
     const uint8_t *glyph = akaos_vga_font + (size_t)ch * AKAOS_VGA_FONT_CELL_HEIGHT;
     uint32_t fg_val = shell_reverse_video ? SHELL_BACKGROUND : shell_fg_color;
-    uint32_t bg_val = shell_reverse_video ? color : SHELL_BACKGROUND;
+    uint32_t bg_val = shell_reverse_video ? shell_fg_color : shell_bg_color;
     uint32_t fg = native_color(&g_boot_canvas, fg_val);
     uint32_t bg = native_color(&g_boot_canvas, bg_val);
     for (unsigned row = 0; row < SHELL_CELL_HEIGHT; ++row) {
