@@ -1,1 +1,0 @@
-fix(storage): replace AKAOS_BLKFORMAT dummy stub with real driver dispatch; bump akaOS to v0.3.73, XSCore to v0.2.59
