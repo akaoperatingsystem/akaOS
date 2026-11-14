@@ -1,1 +1,1 @@
-feat(firmware): implement universal UEFI Runtime Services and Legacy BIOS compatibility; bump akaOS to v0.4.1, XSCore to v0.3.1
+feat(firmware): implement /dev/efivar interface and functional efivar userspace utility

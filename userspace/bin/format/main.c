@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-
 #include <errno.h>
 #include <string.h>
+
+/* Forward declaration and minimal constant to avoid header mess */
+extern int ioctl(int fd, unsigned long request, void *argument);
+#define AKAOS_BLKFORMAT 0x1278
 
 #define FORMAT_VERSION "1.0 (akaOS coreutils)"
 
@@ -55,7 +57,6 @@ int main(int argc, char *argv[]) {
 
     printf("Formatting device: %s...\n", device);
     
-    // Using the same ioctl as fdformat, as it seems to be the system's way to format blocks
     if (ioctl(fd, AKAOS_BLKFORMAT, NULL) < 0) {
         perror("format: ioctl AKAOS_BLKFORMAT");
         close(fd);
