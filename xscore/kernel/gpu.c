@@ -1,3 +1,4 @@
+#include <xscore/drm_kms.h>
 #include <xscore/gpu.h>
 #include <xscore/pci.h>
 #include <xscore/framebuffer.h>
@@ -307,6 +308,10 @@ void xscore_gpu_initialize(void) {
         xscore_serial_write(cur->chipset_name);
         xscore_serial_write("]\n");
     }
+
+        /* Initialize DRM/KMS subsystem for the active GPU */
+        xscore_drm_initialize(&g_gpus[g_active_gpu_idx]);
+
 }
 
 uint32_t xscore_gpu_count(void) {

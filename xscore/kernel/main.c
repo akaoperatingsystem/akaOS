@@ -21,6 +21,7 @@
 #include <xscore/pci.h>
 #include <xscore/cpu.h>
 #include <xscore/gpu.h>
+#include <xscore/drm_kms.h>
 #include <xscore/sound.h>
 #include <xscore/usb.h>
 #include <xscore/nvme.h>

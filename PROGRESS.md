@@ -1,7 +1,7 @@
 # akaOS Development Progress & Architecture Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.73-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.59-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.3.75-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.2.60-green.svg)](sdk/include/akaos/version.h)
 [![Status: Production Ready](https://img.shields.io/badge/Status-100%25%20Verified%20Milestone-brightgreen.svg)](README.md)
 [![Architectures](https://img.shields.io/badge/Architectures-6%20Active%20Ports-purple.svg)](#supported-cpu-architectures)
 [![Desktop Suites](https://img.shields.io/badge/Desktops-34%20Verified%20Environments-blueviolet.svg)](#desktop-environments--window-managers)
@@ -1462,3 +1462,10 @@ This directory registers all certified, recognized, and targeted wired Ethernet 
 | **Shell Builtin** | `enable`, `eval`, `exec`, `exit`, `export` | Shell Registry | 100% | `[██████████]` 100% |
 | **Userspace** | `env`, `expand`, `expr`, `false` | POSIX Utils | 100% | `[██████████]` 100% |
 
+
+
+## Graphics Subsystem
+- DRM/KMS Atomic Mode Setting: [██████████] 100% (Stubbed)
+- GEM Memory Allocation: [██████████] 100% (Stubbed)
+- Command Submission / Fence Synchronization: [░░░░░░░░░░] 0%
+- Display Firmware Loading: [░░░░░░░░░░] 0%
