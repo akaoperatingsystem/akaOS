@@ -46,6 +46,7 @@ struct xscore_storage_device {
     char     firmware[9];
     uint32_t partition_count;
     struct xscore_partition partitions[XSCORE_STORAGE_MAX_PARTITIONS];
+    int (*format)(struct xscore_storage_device *dev, void *arg);
 };
 
 /* MBR Partition Table Entry (on-disk format at 0x1BE + 16*i) */

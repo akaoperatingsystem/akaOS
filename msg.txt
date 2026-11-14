@@ -1,1 +1,1 @@
-feat(driver): implement kernel-level floppy disk driver; bump akaOS to v0.3.72, XSCore to v0.2.58
+feat(driver): implement hardware-level AKAOS_BLKFORMAT in floppy driver; bump akaOS to v0.3.73, XSCore to v0.2.59

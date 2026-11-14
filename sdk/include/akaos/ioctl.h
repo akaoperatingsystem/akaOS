@@ -28,3 +28,10 @@
 #define AKAOS_EJECT            UINT32_C(0x541C)
 #define AKAOS_SIOCGIFSTATS     UINT32_C(0x8901)
 #define AKAOS_BLKFORMAT        UINT32_C(0x1278)
+
+struct akaos_format_params {
+    uint8_t track;
+    uint8_t head;
+    uint8_t sector_count;
+    uint8_t fill_byte;
+};

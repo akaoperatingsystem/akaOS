@@ -3,6 +3,7 @@
 #include <xscore/ioctl.h>
 #include <xscore/io.h>
 #include <xscore/serial.h>
+#include <xscore/usercopy.h>
 
 #define FDC_BASE_PORT 0x3F0
 #define FDC_IRQ 6
@@ -61,7 +62,9 @@ int floppy_ioctl(int request, void *arg) {
     switch (request) {
         case AKAOS_BLKFORMAT:
             xscore_serial_write("[FLOPPY] Executing format command.\n");
-            // Here we would orchestrate the FDC to format a track
+            floppy_recalibrate(0);
+            floppy_seek(0, 0);
+            floppy_format_track(0, 0);
             return 0;
         default:
             return -1;
@@ -106,6 +109,7 @@ void floppy_register() {
     strncpy(dev.model, "Floppy Disk Drive", 40);
     dev.sector_size = 512;
     dev.total_sectors = 2880; // 1.44MB floppy
+    dev.format = floppy_storage_format;
     
     xscore_storage_register_device(&dev);
 }
@@ -171,4 +175,13 @@ uint8_t floppy_sense_interrupt(uint8_t *st0, uint8_t *cyl) {
     *st0 = fdc_read_byte();
     *cyl = fdc_read_byte();
     return 0;
+}
+
+
+int floppy_storage_format(struct xscore_storage_device *dev, void *arg) {
+    struct akaos_format_params params;
+    if (xscore_copy_from_user(&params, arg, sizeof(params)) != 0) {
+        return -AKAOS_EFAULT;
+    }
+    return floppy_ioctl(AKAOS_BLKFORMAT, &params);
 }

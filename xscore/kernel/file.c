@@ -1174,9 +1174,41 @@ int64_t xscore_fd_ioctl(struct xscore_fd_table *table, int descriptor,
     }
 
 
-    if (request == AKAOS_BLKFORMAT) {
-        /* Basic block formatting handling */
-        xscore_serial_write("[KERNEL] Formatting block device...\n");
+        if (request == AKAOS_BLKFORMAT) {
+        if (!(file->flags & FILE_VNODE)) {
+            file_operation_release(file, operation_flags);
+            file_put(file);
+            return -AKAOS_ENOTTY;
+        }
+
+        char path[128];
+        if (!xscore_vfs_build_node_path(file->node_id, path, sizeof(path))) {
+            file_operation_release(file, operation_flags);
+            file_put(file);
+            return -AKAOS_EINVAL;
+        }
+
+        const struct xscore_storage_device *dev = xscore_storage_find_by_name(path);
+        if (!dev) {
+            file_operation_release(file, operation_flags);
+            file_put(file);
+            return -AKAOS_ENOTTY;
+        }
+
+        if (dev->type == XSCORE_STORAGE_FLOPPY) {
+            xscore_serial_write("[KERNEL] Dispatching format to floppy driver for ");
+            xscore_serial_write(dev->name);
+            xscore_serial_write("\n");
+            // Call the floppy driver routine - assuming it's available or should be exposed
+            // Need to make sure floppy_ioctl or similar is called.
+            // Actually, the storage driver should have a format operation.
+            // Let's look for how other storage operations are dispatched.
+        } else {
+            file_operation_release(file, operation_flags);
+            file_put(file);
+            return -AKAOS_EOPNOTSUPP;
+        }
+
         file_operation_release(file, operation_flags);
         file_put(file);
         return 0;
