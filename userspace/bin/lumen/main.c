@@ -55,6 +55,7 @@ static const char pointer_art[POINTER_HEIGHT][POINTER_WIDTH + 1] = {
 };
 
 static int g_light_theme;
+static void load_mouse_config(void);
 
 static int load_light_theme(void) {
     int descriptor = open("/etc/akaos.conf", O_RDONLY);

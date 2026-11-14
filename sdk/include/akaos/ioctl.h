@@ -18,15 +18,15 @@
 /* Disk Power Management ioctl */
 #define AKAOS_DISK_POWER_MODE UINT32_C(0x4E03)
 
-#endif
-
 /* dmesg ioctls */
 #define AKAOS_DMESG_CLEAR UINT32_C(0x5601)
 #define AKAOS_DMESG_SETLEVEL UINT32_C(0x5602)
 
 /* Command Subsystem IOCTLs */
 #define AKAOS_EJECT            UINT32_C(0x541C)
-#define AKAOS_SIOCGIFSTATS     UINT32_C(0x8901)
+#ifndef AKAOS_SIOCGIFSTATS
+#define AKAOS_SIOCGIFSTATS     UINT32_C(0x89f0)
+#endif
 #define AKAOS_BLKFORMAT        UINT32_C(0x1278)
 
 struct akaos_format_params {
@@ -35,3 +35,5 @@ struct akaos_format_params {
     uint8_t sector_count;
     uint8_t fill_byte;
 };
+
+#endif

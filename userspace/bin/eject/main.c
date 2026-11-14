@@ -7,7 +7,9 @@
 #include <errno.h>
 
 /* Eject ioctl, to be implemented in the kernel */
-#define AKAOS_EJECT 0x5309
+#ifndef AKAOS_EJECT
+#define AKAOS_EJECT 0x541C
+#endif
 
 static void print_usage(void) {
     printf("Usage: eject [options] [device]\n");

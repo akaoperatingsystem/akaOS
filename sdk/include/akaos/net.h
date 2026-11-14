@@ -4,7 +4,9 @@
 #include <stdint.h>
 
 #define AKAOS_NET_DEVICE_PATH "/dev/net"
+#ifndef AKAOS_SIOCGIFSTATS
 #define AKAOS_SIOCGIFSTATS    UINT32_C(0x89f0)
+#endif
 
 struct akaos_net_stats {
     uint32_t rx_packets;

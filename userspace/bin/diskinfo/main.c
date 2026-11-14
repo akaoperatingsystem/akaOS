@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <akaos/ioctl.h>
 #include <akaos/nvme.h>
-#include <xscore/storage.h>
 
 int main(int argc, char **argv) {
     if (argc < 2) {
