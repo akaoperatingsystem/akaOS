@@ -1,1 +1,1 @@
-feat(firmware): implement /dev/efivar interface and functional efivar userspace utility
+fix(core): complete stability audit of hot-paths; bump akaOS to v0.4.2, XSCore to v0.3.2
