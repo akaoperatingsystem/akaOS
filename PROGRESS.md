@@ -1465,7 +1465,7 @@ This directory registers all certified, recognized, and targeted wired Ethernet 
 
 
 ## Graphics Subsystem
-- DRM/KMS Atomic Mode Setting: [█████░░░░░] 50%
-- GEM Memory Allocation: [█████░░░░░] 50%
-- Command Submission / Fence Synchronization: [██░░░░░░░░] 20%
-- Display Firmware Loading: [██░░░░░░░░] 20%
+- DRM/KMS Atomic Mode Setting: [███████░░░] 70%
+- GEM Memory Allocation: [███████░░░] 70%
+- Command Submission / Fence Synchronization: [█████░░░░░] 50%
+- Display Firmware Loading: [█████░░░░░] 50%
