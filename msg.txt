@@ -1,1 +1,1 @@
-feat(cmds): stabilize and verify all implemented commands; bump akaOS to v0.3.71, XSCore to v0.2.57
+feat(driver): implement kernel-level floppy disk driver; bump akaOS to v0.3.72, XSCore to v0.2.58

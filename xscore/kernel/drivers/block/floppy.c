@@ -2,7 +2,7 @@
 #include <xscore/arch.h>
 #include <xscore/ioctl.h>
 #include <xscore/io.h>
-#include <xscore/serial.h> // Assuming serial.h exists for logging
+#include <xscore/serial.h>
 
 #define FDC_BASE_PORT 0x3F0
 #define FDC_IRQ 6
@@ -132,4 +132,43 @@ void floppy_seek(uint8_t drive, uint8_t cylinder) {
     fdc_send_byte(FDC_CMD_SEEK);
     fdc_send_byte(drive);
     fdc_send_byte(cylinder);
+}
+
+
+void floppy_format_track(uint8_t drive, uint8_t track) {
+    xscore_serial_write("[FLOPPY] Formatting track...");
+    
+    // 1. Setup DMA for format data
+    // The format data usually requires 4 bytes per sector: C, H, R, N
+    // For 1.44MB floppy: 18 sectors/track
+    uint8_t format_data[4 * 18];
+    for (int i = 0; i < 18; i++) {
+        format_data[i*4] = track;      // Cylinder
+        format_data[i*4+1] = 0;        // Head
+        format_data[i*4+2] = i + 1;    // Sector
+        format_data[i*4+3] = 2;        // Size (512 bytes)
+    }
+    
+    floppy_dma_init((uint32_t)format_data, sizeof(format_data));
+    
+    // 2. Send FORMAT TRACK command
+    fdc_send_byte(FDC_CMD_FORMAT);
+    fdc_send_byte(drive);
+    fdc_send_byte(2); // N=2 (512 bytes)
+    fdc_send_byte(18); // 18 sectors
+    fdc_send_byte(0x1B); // Gap length 3
+    fdc_send_byte(0xE5); // Fill byte
+    
+    uint8_t st0, cyl;
+    floppy_sense_interrupt(&st0, &cyl);
+    xscore_serial_write(" Command completed.\n");
+}
+
+
+// Sense interrupt from FDC
+uint8_t floppy_sense_interrupt(uint8_t *st0, uint8_t *cyl) {
+    fdc_send_byte(FDC_CMD_SENSE_INT);
+    *st0 = fdc_read_byte();
+    *cyl = fdc_read_byte();
+    return 0;
 }
