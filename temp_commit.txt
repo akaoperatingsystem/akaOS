@@ -1,1 +1,0 @@
-fix(core): verify AHCI stability, complete audit; bump akaOS to v0.3.4, XSCore to v0.2.7
