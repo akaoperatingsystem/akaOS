@@ -199,6 +199,22 @@ static uint32_t shell_rows;
 static uint32_t shell_cursor_col;
 static uint32_t shell_cursor_row;
 static int shell_reverse_video = 0;
+static uint32_t shell_fg_color = SHELL_TEXT;
+
+
+static uint32_t get_ansi_color(int code) {
+    switch (code) {
+        case 30: return 0x000000; // Black
+        case 31: return 0xff0000; // Red
+        case 32: return 0x00ff00; // Green
+        case 33: return 0xffff00; // Yellow
+        case 34: return 0x0000ff; // Blue
+        case 35: return 0xff00ff; // Magenta
+        case 36: return 0x00ffff; // Cyan
+        case 37: return 0xffffff; // White
+        default: return SHELL_TEXT;
+    }
+}
 
 static void shell_grid_init(void) {
     if (!g_boot_canvas_valid) {
@@ -237,7 +253,7 @@ static void shell_draw_glyph(uint32_t x, uint32_t y, uint32_t color, unsigned ch
     if (x + SHELL_CELL_WIDTH > g_boot_canvas.width ||
         y + SHELL_CELL_HEIGHT > g_boot_canvas.height) return;
     const uint8_t *glyph = akaos_vga_font + (size_t)ch * AKAOS_VGA_FONT_CELL_HEIGHT;
-    uint32_t fg_val = shell_reverse_video ? SHELL_BACKGROUND : color;
+    uint32_t fg_val = shell_reverse_video ? SHELL_BACKGROUND : shell_fg_color;
     uint32_t bg_val = shell_reverse_video ? color : SHELL_BACKGROUND;
     uint32_t fg = native_color(&g_boot_canvas, fg_val);
     uint32_t bg = native_color(&g_boot_canvas, bg_val);
@@ -296,12 +312,14 @@ static void handle_csi_command(char cmd) {
     } else if (cmd == 'm') {
         if (shell_csi_param_count == 0) {
             shell_reverse_video = 0;
+            shell_fg_color = SHELL_TEXT;
         } else {
             for (int i = 0; i < shell_csi_param_count; ++i) {
                 int p = shell_csi_params[i];
-                if (p == 0) shell_reverse_video = 0;
+                if (p == 0) { shell_reverse_video = 0; shell_fg_color = SHELL_TEXT; }
                 else if (p == 7) shell_reverse_video = 1;
                 else if (p == 27) shell_reverse_video = 0;
+                else if (p >= 30 && p <= 37) shell_fg_color = get_ansi_color(p);
             }
         }
     } else if (cmd == 'K') {

@@ -7,3 +7,5 @@
 - Legacy BIOS Data Area (BDA/EBDA) Mapping: [██████████] 100%
 - Secure Boot Verification: [██████████] 100%
 - Firmware Capsule Update Interface: [██████████] 100%
+
+[██████████] ANSI Color Console
