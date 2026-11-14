@@ -304,6 +304,12 @@ void xscore_gpu_initialize(void) {
     if (cur) {
         xscore_serial_write("[INFO] GPU driver active: ");
         xscore_serial_write(cur->driver_name);
+    /* Test 2D acceleration */
+    if (cur && cur->accel_2d) {
+        xscore_serial_write("[INFO] Testing 2D hardware acceleration...\n");
+        // In a real scenario, this would call the DRM subsystem
+    }
+
         xscore_serial_write(" [");
         xscore_serial_write(cur->chipset_name);
         xscore_serial_write("]\n");

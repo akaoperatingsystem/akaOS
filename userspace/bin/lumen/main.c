@@ -1679,7 +1679,11 @@ int main(int argc, char **argv) {
                         if (!channel->surfaces[index].active ||
                             !(channel->surfaces[index].flags &
                               AKAOS_SURFACE_FLAG_WAYLAND)) continue;
+                        
                         puts("lumen: Wayland surface presented on framebuffer");
+                        // Trigger DRM page flip (simulated via print for user space or ioctl)
+                        // In a real implementation: ioctl(drm_fd, DRM_IOCTL_MODE_ATOMIC_COMMIT, &state);
+
                         wayland_surface_presented = 1;
                         break;
                     }

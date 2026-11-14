@@ -3783,6 +3783,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/cpu.c"
     "$ROOT_DIR/xscore/kernel/gpu.c"
     "$ROOT_DIR/xscore/kernel/gpu/drm.c"
+    "$ROOT_DIR/xscore/kernel/gpu/drm_pci.c"
     "$ROOT_DIR/xscore/kernel/nvme.c"
     "$ROOT_DIR/xscore/kernel/audio_drivers.c"
     "$ROOT_DIR/xscore/kernel/virtio_blk.c"
