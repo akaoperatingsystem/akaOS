@@ -26,7 +26,7 @@ void xscore_sound_initialize(void) {
         const struct xscore_pci_device *dev = xscore_pci_get_device(i);
         if (!dev) continue;
 
-        if (dev->class_code == 0x04 && (dev->subclass == 0x03 || dev->subclass == 0x01)) {
+        if (dev->class_code == 0x04) {
             struct xscore_sound_device *snd = &g_sound_cards[g_sound_count++];
             snd->vendor_id = dev->vendor_id;
             snd->device_id = dev->device_id;
