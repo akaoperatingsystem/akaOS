@@ -244,7 +244,7 @@ fi
 if [[ "$build_fat32" -eq 1 ]]; then
     echo "[BUILD] akaOS x86_32 FAT32 image"
     FAT_IMAGE="$BUILD_DIR/akaos32.img"
-    truncate -s 64M "$FAT_IMAGE"
+    truncate -s 32M "$FAT_IMAGE"
     mkfs.fat -F 32 -n AKAOS32 "$FAT_IMAGE" >/dev/null
     mmd -i "$FAT_IMAGE" ::/EFI ::/EFI/BOOT ::/boot ::/boot/grub
     if [[ "$build_uefi" -eq 1 ]]; then
@@ -340,7 +340,7 @@ EOF
         # They are intentionally self-contained and can each be >10 MiB, so
         # a 16 MiB FAT image can overflow when both files are copied.  Keep
         # enough headroom for either loader plus FAT metadata.
-        truncate -s 16M "$EFI_IMAGE"
+        truncate -s 4M "$EFI_IMAGE"
         mkfs.fat -F 16 -n AKAOS32EFI "$EFI_IMAGE" >/dev/null
         mmd -i "$EFI_IMAGE" ::/EFI ::/EFI/BOOT
         mcopy -o -i "$EFI_IMAGE" "$BUILD_DIR/BOOTX64.EFI" ::/EFI/BOOT/BOOTX64.EFI
