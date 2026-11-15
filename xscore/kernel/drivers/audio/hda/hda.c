@@ -40,3 +40,13 @@ void hda_send_cmd(hda_controller_t *controller, uint32_t codec_addr, uint32_t ni
     mmio_write32(controller->base_addr + 0x60 + (wp * 4), cmd); // Assuming base offset
     mmio_write16(controller->base_addr + HDA_REG_CORBWP, (wp + 1) % 2);
 }
+
+// Enhanced HDA stream management
+#define HDA_REG_SDNCTL(n) (0x80 + (n * 0x20))
+#define HDA_REG_SDNBDPL(n) (0x84 + (n * 0x20))
+
+void hda_setup_stream(hda_controller_t *controller, int stream_idx, uint64_t bdl_addr) {
+    // Setup stream descriptor control and buffer descriptor list
+    mmio_write32(controller->base_addr + HDA_REG_SDNBDPL(stream_idx), (uint32_t)bdl_addr);
+    mmio_write8(controller->base_addr + HDA_REG_SDNCTL(stream_idx), 0x01); // Run
+}
