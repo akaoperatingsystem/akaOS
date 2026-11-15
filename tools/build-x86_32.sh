@@ -231,11 +231,11 @@ if [[ "$build_uefi" -eq 1 ]]; then
     EFI_MODULES="normal configfile search search_label search_fs_file fat iso9660 part_gpt part_msdos multiboot multiboot2 all_video gfxterm font"
     sed "s/@AKAOS_KERNEL_ARGS@/$kernel_args/" \
         "$ROOT_DIR/boot/grub/efi-bootstrap.cfg" > "$BUILD_DIR/grub32-uefi.cfg"
-    grub-mkstandalone -d "$GRUB_EFI64_DIR" -O x86_64-efi \
+    grub-mkstandalone -d "$GRUB_EFI64_DIR" -O x86_64-efi --modules="biosdisk iso9660 normal multiboot2 all_video" \
         --install-modules="$EFI_MODULES" --modules="$EFI_MODULES" \
         -o "$BUILD_DIR/BOOTX64.EFI" \
         "boot/grub/grub.cfg=$BUILD_DIR/grub32-uefi.cfg"
-    grub-mkstandalone -d "$GRUB_EFI32_DIR" -O i386-efi \
+    grub-mkstandalone -d "$GRUB_EFI32_DIR" -O i386-efi --modules="biosdisk iso9660 normal multiboot2 all_video" \
         --install-modules="$EFI_MODULES" --modules="$EFI_MODULES" \
         -o "$BUILD_DIR/BOOTIA32.EFI" \
         "boot/grub/grub.cfg=$BUILD_DIR/grub32-uefi.cfg"
