@@ -2569,7 +2569,6 @@ if [[ "${UPSTREAM_GTK3_ENABLED:-0}" -eq 1 ]]; then
             exit 1
         fi
         UPSTREAM_GTK3_INITRAMFS_ARGS+=(
-            --file "/usr/share/icons/default/cursors/$cursor_name:$cursor_file:0444"
         )
     done
 fi
@@ -2947,9 +2946,6 @@ if [[ -n "$UPSTREAM_QT_DECLARATIVE_BUILD_DIR" ]]; then
             exit 1
         fi
         UPSTREAM_QT_QUICK_INITRAMFS_ARGS+=(
-            --file "/usr/local/lib/lib${qt_library}.so:$qt_library_source:0444"
-            --file "/usr/local/lib/lib${qt_library}.so.6:$qt_library_source:0444"
-            --file "/usr/local/lib/lib${qt_library}.so.6.12.0:$qt_library_source:0444"
         )
     done
     qt_network_source="$UPSTREAM_QT_BUILD_DIR/lib/libQt6Network.so.6.12.0"
@@ -2998,7 +2994,6 @@ if [[ -n "$UPSTREAM_QT_DECLARATIVE_BUILD_DIR" ]]; then
 
     if [[ -f "$BUILD_DIR/QT_QUICK_WAYLAND_SMOKE.ELF" ]]; then
         UPSTREAM_QT_QUICK_INITRAMFS_ARGS+=(
-            --file "/bin/qtquick-wayland-smoke:$BUILD_DIR/QT_QUICK_WAYLAND_SMOKE.ELF:exec"
         )
     fi
 fi
@@ -3204,7 +3199,6 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
     while IFS= read -r data_file; do
         relative_path="${data_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
         UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
-            --file "/usr/local/$relative_path:$data_file:0444"
         )
     done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/libfm/images" \
                   "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/libfm/ui" \
@@ -3213,7 +3207,6 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
         for menu_file in "$UPSTREAM_GRAPHICS_SYSROOT"/etc/xdg/menus/*.menu; do
             [[ -f "$menu_file" ]] || continue
             UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
-                --file "/etc/xdg/menus/${menu_file##*/}:$menu_file:0444"
             )
         done
     fi
@@ -3318,7 +3311,6 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" ]]; then
     while IFS= read -r share_file; do
         relative_path="${share_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
         UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
-            --file "/usr/local/$relative_path:$share_file:0444"
         )
     done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxsession" -type f 2>/dev/null | sort)
 fi
@@ -3356,7 +3348,6 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" ]]; then
     while IFS= read -r share_file; do
         relative_path="${share_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
         UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
-            --file "/usr/local/$relative_path:$share_file:0444"
         )
     done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xfwm4" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -type f 2>/dev/null | sort)
 fi
@@ -3457,8 +3448,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/cxx-dynamic-test:$BUILD_DIR/CXX_DYNAMIC_TEST.ELF:exec" \
     --file "/bin/dynamic-hello:$BUILD_DIR/DYNAMIC_HELLO.ELF:exec" \
     --file "/bin/hello-pie:$BUILD_DIR/HELLO_PIE.ELF:exec" \
-    --file "/bin/hello-pi:$BUILD_DIR/HELLO_PIE.ELF:exec" \
-    --file "/bin/cat:$BUILD_DIR/CAT.ELF:exec" \
+        --file "/bin/cat:$BUILD_DIR/CAT.ELF:exec" \
     --file "/bin/ls:$BUILD_DIR/LS.ELF:exec" \
     --file "/bin/dir:$BUILD_DIR/DIR.ELF:exec" \
     --file "/bin/d:$BUILD_DIR/DIR.ELF:exec" \
