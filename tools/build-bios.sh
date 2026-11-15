@@ -103,7 +103,7 @@ cp "$KERNEL" "$BIOS_ROOT/boot/XSCORE.ELF"
 # which is how xorriso represents an EFI image larger than 65535 512-byte
 # sectors.
 kernel_bytes=$(stat -c '%s' "$UEFI_KERNEL")
-efi_image_bytes=$(((kernel_bytes + 8 * 1024 * 1024 + 1024 * 1024 - 1) /
+efi_image_bytes=$(((kernel_bytes + 1 * 1024 * 1024 + 1024 * 1024 - 1) /
     (1024 * 1024) * 1024 * 1024))
 if (( efi_image_bytes <= 32 * 1024 * 1024 )); then
     efi_fat_type=16

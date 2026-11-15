@@ -58,8 +58,8 @@ static int g_num_vars = 0;
 static struct rule g_rules[MAX_TARGETS];
 static int g_num_rules = 0;
 
-static struct pattern_rule g_patterns[32];
-static int g_num_patterns = 0;
+/* static struct pattern_rule g_patterns[32]; */
+/* static int g_num_patterns = 0; */
 
 static char *g_default_target = NULL;
 static int g_opt_always_make = 0;
