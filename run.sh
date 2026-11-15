@@ -403,6 +403,14 @@ Virtual RAM Memory  : $menu_mem"
                 ;;
         esac
     done
+
+# Sync command line arguments with menu variables
+menu_arch=${arch:-$menu_arch}
+menu_firmware=${firmware:-$menu_firmware}
+menu_disk=${disk_type:-$menu_disk}
+menu_desktop=${menu_desktop:-$menu_desktop}
+menu_software=${menu_software:-$menu_software}
+
 }
 
 open_menu=0
