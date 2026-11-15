@@ -1935,6 +1935,14 @@ build_user_program sed "$ROOT_DIR/userspace/bin/sed/main.c" SED.ELF
 build_user_program diff "$ROOT_DIR/userspace/bin/diff/main.c" DIFF.ELF
 build_user_program diff3 "$ROOT_DIR/userspace/bin/diff3/main.c" DIFF3.ELF
 build_user_program cmp "$ROOT_DIR/userspace/bin/cmp/main.c" CMP.ELF
+build_user_program make "$ROOT_DIR/userspace/bin/make/main.c" MAKE.ELF
+build_user_program ar "$ROOT_DIR/userspace/bin/ar/main.c" AR.ELF
+build_user_program nm "$ROOT_DIR/userspace/bin/nm/main.c" NM.ELF
+build_user_program objdump "$ROOT_DIR/userspace/bin/objdump/main.c" OBJDUMP.ELF
+build_user_program as "$ROOT_DIR/userspace/bin/as/main.c" AS.ELF
+build_user_program ld "$ROOT_DIR/userspace/bin/ld/main.c" LD.ELF
+build_user_program cc "$ROOT_DIR/userspace/bin/cc/main.c" CC.ELF
+build_user_program gcc "$ROOT_DIR/userspace/bin/gcc/main.c" GCC.ELF
 build_user_program patch "$ROOT_DIR/userspace/bin/patch/main.c" PATCH.ELF
 build_user_program tar "$ROOT_DIR/userspace/bin/tar/main.c" TAR.ELF
 build_user_program cpio "$ROOT_DIR/userspace/bin/cpio/main.c" CPIO.ELF
@@ -3605,6 +3613,14 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
     --file "/bin/diff:$BUILD_DIR/DIFF.ELF:exec" \
     --file "/bin/diff3:$BUILD_DIR/DIFF3.ELF:exec" \
     --file "/bin/cmp:$BUILD_DIR/CMP.ELF:exec" \
+    --file "/bin/make:$BUILD_DIR/MAKE.ELF:exec" \
+    --file "/bin/ar:$BUILD_DIR/AR.ELF:exec" \
+    --file "/bin/nm:$BUILD_DIR/NM.ELF:exec" \
+    --file "/bin/objdump:$BUILD_DIR/OBJDUMP.ELF:exec" \
+    --file "/bin/as:$BUILD_DIR/AS.ELF:exec" \
+    --file "/bin/ld:$BUILD_DIR/LD.ELF:exec" \
+    --file "/bin/cc:$BUILD_DIR/CC.ELF:exec" \
+    --file "/bin/gcc:$BUILD_DIR/GCC.ELF:exec" \
     --file "/bin/patch:$BUILD_DIR/PATCH.ELF:exec" \
     --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec" \
     --file "/bin/cpio:$BUILD_DIR/CPIO.ELF:exec" \

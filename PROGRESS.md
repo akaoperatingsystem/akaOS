@@ -9,3 +9,8 @@
 - Firmware Capsule Update Interface: [██████████] 100%
 
 [██████████] ANSI Color Console
+## Native Self-Hosting Toolchain Matrix
+- Native Make (POSIX & GNU Make compatible): [██████████] 100%
+- GNU Binutils (ar, nm, objdump, as, ld): [██████████] 100%
+- C/C++ Compiler Driver (cc, gcc): [██████████] 100%
+- POSIX libc Toolchain Hardening (process, I/O, VFS): [██████████] 100%

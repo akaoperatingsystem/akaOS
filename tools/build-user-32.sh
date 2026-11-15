@@ -452,6 +452,13 @@ build_user_cpp_program cxxabi-test "$ROOT_DIR/userspace/bin/cxxabi-test/main.cpp
 build_user_pie_program hello-pie "$ROOT_DIR/userspace/bin/hello/main.c" HELLO_PIE.ELF
 build_user_program cat "$ROOT_DIR/userspace/bin/cat/main.c" CAT.ELF
 build_user_program make "$ROOT_DIR/userspace/bin/make/main.c" MAKE.ELF
+build_user_program ar "$ROOT_DIR/userspace/bin/ar/main.c" AR.ELF
+build_user_program nm "$ROOT_DIR/userspace/bin/nm/main.c" NM.ELF
+build_user_program objdump "$ROOT_DIR/userspace/bin/objdump/main.c" OBJDUMP.ELF
+build_user_program as "$ROOT_DIR/userspace/bin/as/main.c" AS.ELF
+build_user_program ld "$ROOT_DIR/userspace/bin/ld/main.c" LD.ELF
+build_user_program cc "$ROOT_DIR/userspace/bin/cc/main.c" CC.ELF
+build_user_program gcc "$ROOT_DIR/userspace/bin/gcc/main.c" GCC.ELF
 build_user_program ls "$ROOT_DIR/userspace/bin/ls/main.c" LS.ELF
 build_user_program dir "$ROOT_DIR/userspace/bin/dir/main.c" DIR.ELF
 build_user_program dircolors "$ROOT_DIR/userspace/bin/dircolors/main.c" DIRCOLORS.ELF
@@ -687,7 +694,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs32.img" \
     --file "/bin/dynamic-hello:$BUILD_DIR/DYNAMIC_HELLO.ELF:exec" \
     --file "/bin/hello-pie:$BUILD_DIR/HELLO_PIE.ELF:exec" \
     --file "/bin/hello-pi:$BUILD_DIR/HELLO_PIE.ELF:exec" \
-    --file "/bin/cat:$BUILD_DIR/CAT.ELF:exec" \
+    --file "/bin/make:$BUILD_DIR/MAKE.ELF:exec"     --file "/bin/ar:$BUILD_DIR/AR.ELF:exec"     --file "/bin/nm:$BUILD_DIR/NM.ELF:exec"     --file "/bin/objdump:$BUILD_DIR/OBJDUMP.ELF:exec"     --file "/bin/as:$BUILD_DIR/AS.ELF:exec"     --file "/bin/ld:$BUILD_DIR/LD.ELF:exec"     --file "/bin/cc:$BUILD_DIR/CC.ELF:exec"     --file "/bin/gcc:$BUILD_DIR/GCC.ELF:exec"     --file "/bin/cat:$BUILD_DIR/CAT.ELF:exec" \
     --file "/bin/ls:$BUILD_DIR/LS.ELF:exec" \
     --file "/bin/dir:$BUILD_DIR/DIR.ELF:exec" \
     --file "/bin/d:$BUILD_DIR/DIR.ELF:exec" \
