@@ -64,8 +64,8 @@ sed -i 's#^glib_compile_schemas=.*#glib_compile_schemas=glib-compile-schemas#' \
 
 export PKG_CONFIG_LIBDIR="$HOST_GLIB_PKGCONFIG:$SYSROOT/usr/local/lib/pkgconfig:$SYSROOT/usr/local/share/pkgconfig:$SYSROOT/usr/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
-export CFLAGS="-nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -D__AKAOS__ -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
-export LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--as-needed -L$SYSROOT/usr/lib -L$SYSROOT/usr/local/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6"
+export CFLAGS="-Os -ffunction-sections -fdata-sections -nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -D__AKAOS__ -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
+export LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--as-needed -L$SYSROOT/usr/lib -L$SYSROOT/usr/local/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6"
 
 meson_args=(
     --cross-file "$ROOT_DIR/tools/meson-akaos-pango-x86_64.ini"

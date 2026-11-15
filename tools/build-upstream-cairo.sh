@@ -73,8 +73,8 @@ fi
 
 # Match the freestanding x86_64 ABI used by GLib/GIO, and route all package
 # discovery through the target Pixman sysroot rather than host libraries.
-export CFLAGS="-nostdinc -I/usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$SYSROOT_DIR/glib-x86_64/usr/include -I$SYSROOT_DIR/pcre2-10.49-x86_64/usr/include -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
-export LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,-e,main -Wl,--no-as-needed -L$SYSROOT_DIR/glib-x86_64/usr/lib -L$SYSROOT_DIR/pcre2-10.49-x86_64/usr/lib -L$PIXMAN_SYSROOT/usr/local/lib -L$BUILD_DIR -liconv $BUILD_DIR/libc.so.6 $BUILD_DIR/cxx-runtime/llvm-21.1.8/x86_64/libakaos-compiler-builtins.a"
+export CFLAGS="-Os -ffunction-sections -fdata-sections -nostdinc -I/usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$SYSROOT_DIR/glib-x86_64/usr/include -I$SYSROOT_DIR/pcre2-10.49-x86_64/usr/include -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
+export LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,-e,main -Wl,--no-as-needed -L$SYSROOT_DIR/glib-x86_64/usr/lib -L$SYSROOT_DIR/pcre2-10.49-x86_64/usr/lib -L$PIXMAN_SYSROOT/usr/local/lib -L$BUILD_DIR -liconv $BUILD_DIR/libc.so.6 $BUILD_DIR/cxx-runtime/llvm-21.1.8/x86_64/libakaos-compiler-builtins.a"
 
 # The Xlib surface needs the upstream X11 client libraries, which live in the
 # graphics sysroot next to the other desktop libraries.
@@ -101,8 +101,8 @@ if grep -q "shmproto.h" "$CAIRO_SOURCE/meson.build" 2>/dev/null; then
     patch -d "$CAIRO_SOURCE" -p1 < "$ROOT_DIR/tools/cairo-x11-no-sysv-shm.patch" || true
 fi
 
-export CFLAGS="$CFLAGS -I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/libpng16 -I$GRAPHICS_SYSROOT/usr/local/include/freetype2 -I$CAIRO_STUB_INCLUDE"
-export LDFLAGS="$LDFLAGS -L$GRAPHICS_SYSROOT/usr/local/lib"
+export CFLAGS="-Os -ffunction-sections -fdata-sections $CFLAGS -I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/libpng16 -I$GRAPHICS_SYSROOT/usr/local/include/freetype2 -I$CAIRO_STUB_INCLUDE"
+export LDFLAGS="-Wl,--gc-sections -s $LDFLAGS -L$GRAPHICS_SYSROOT/usr/local/lib"
 
 if [[ ! -f "$PIXMAN_BUILD/meson-private/coredata.dat" ]]; then
     meson setup --cross-file "$ROOT_DIR/tools/meson-akaos-x86_64.ini" \

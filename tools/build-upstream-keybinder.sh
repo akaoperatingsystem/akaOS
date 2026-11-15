@@ -99,9 +99,9 @@ mkdir -p "$BUILD_TREE"
 (
     cd "$BUILD_TREE" || exit 1
     env CC="$CC_WRAPPER" \
-        CFLAGS="-O2 -g0 -fno-strict-aliasing" \
+        CFLAGS="-Os -ffunction-sections -fdata-sections -O2 -g0 -fno-strict-aliasing" \
         CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include" \
-        LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
+        LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
         LIBS="" \
         PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig" \
         PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT" \

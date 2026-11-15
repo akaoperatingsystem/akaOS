@@ -55,8 +55,8 @@ if [[ ! -f "$SOURCE_TREE/meson.build" ]]; then
         -C "$SOURCE_TREE" --strip-components=1
 fi
 
-export CFLAGS="-nostdinc -I/usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
-export LDFLAGS="-nostdlib -fuse-ld=lld -Wl,-e,main -Wl,--no-as-needed -L$BUILD_DIR $BUILD_DIR/libc.so.6 $BUILD_DIR/cxx-runtime/llvm-21.1.8/x86_64/libakaos-compiler-builtins.a"
+export CFLAGS="-Os -ffunction-sections -fdata-sections -nostdinc -I/usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
+export LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,-e,main -Wl,--no-as-needed -L$BUILD_DIR $BUILD_DIR/libc.so.6 $BUILD_DIR/cxx-runtime/llvm-21.1.8/x86_64/libakaos-compiler-builtins.a"
 
 if [[ ! -f "$BUILD_TREE/meson-private/coredata.dat" ]]; then
     meson setup --cross-file "$ROOT_DIR/tools/meson-akaos-x86_64.ini" \
@@ -77,8 +77,8 @@ if [[ ! -f "$PIXMAN_BUILD/meson-private/coredata.dat" ||
     exit 2
 fi
 DESTDIR="$GRAPHICS_SYSROOT" meson install -C "$PIXMAN_BUILD"
-export CFLAGS="-nostdinc -I/usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$GRAPHICS_SYSROOT/usr/local/include/pixman-1 -I$GRAPHICS_SYSROOT/usr/local/include/freetype2 -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
-export LDFLAGS="-nostdlib -fuse-ld=lld -Wl,-e,main -Wl,--no-as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$BUILD_DIR $BUILD_DIR/libc.so.6 $BUILD_DIR/cxx-runtime/llvm-21.1.8/x86_64/libakaos-compiler-builtins.a"
+export CFLAGS="-Os -ffunction-sections -fdata-sections -nostdinc -I/usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$GRAPHICS_SYSROOT/usr/local/include/pixman-1 -I$GRAPHICS_SYSROOT/usr/local/include/freetype2 -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
+export LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,-e,main -Wl,--no-as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$BUILD_DIR $BUILD_DIR/libc.so.6 $BUILD_DIR/cxx-runtime/llvm-21.1.8/x86_64/libakaos-compiler-builtins.a"
 export PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"
 

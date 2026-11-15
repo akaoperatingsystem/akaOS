@@ -126,8 +126,8 @@ export PATH="$WAYLAND_HOST_PREFIX/bin:$PATH"
 export PKG_CONFIG_PATH="$WAYLAND_HOST_PREFIX/lib/pkgconfig"
 export PKG_CONFIG_PATH_FOR_BUILD="$WAYLAND_HOST_PREFIX/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR_FOR_BUILD=""
-export CFLAGS="-nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -D__AKAOS__ -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include -I$SYSROOT/usr/local/include/freetype2"
-export LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$SYSROOT/usr/lib -L$SYSROOT/usr/local/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6"
+export CFLAGS="-Os -ffunction-sections -fdata-sections -nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -D__AKAOS__ -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include -I$SYSROOT/usr/local/include/freetype2"
+export LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$SYSROOT/usr/lib -L$SYSROOT/usr/local/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6"
 
 meson_args=(
     --cross-file "$ROOT_DIR/tools/meson-akaos-pango-x86_64.ini"

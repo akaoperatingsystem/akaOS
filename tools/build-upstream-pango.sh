@@ -107,9 +107,9 @@ ln -sfn libpcre2-8.so.0 "$GRAPHICS_SYSROOT/usr/lib/libpcre2-8.so"
 
 export PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"
-export CFLAGS="-nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include -I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2"
+export CFLAGS="-Os -ffunction-sections -fdata-sections -nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include -I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2"
 export CXXFLAGS="-nostdinc -nostdinc++ -I$CXX_RUNTIME/include/c++/v1 -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fno-exceptions -fno-rtti -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
-export LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/lib -L$GRAPHICS_SYSROOT/usr/local/lib -L$BUILD_DIR -L$CXX_RUNTIME $BUILD_DIR/libc++.so.1 $BUILD_DIR/libc++abi.so.1 $BUILD_DIR/libunwind.so.1 $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6 $CXX_RUNTIME/libakaos-compiler-builtins.a"
+export LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/lib -L$GRAPHICS_SYSROOT/usr/local/lib -L$BUILD_DIR -L$CXX_RUNTIME $BUILD_DIR/libc++.so.1 $BUILD_DIR/libc++abi.so.1 $BUILD_DIR/libunwind.so.1 $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6 $CXX_RUNTIME/libakaos-compiler-builtins.a"
 
 meson_args=(
     --cross-file "$ROOT_DIR/tools/meson-akaos-pango-x86_64.ini"

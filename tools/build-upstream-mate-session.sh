@@ -82,7 +82,7 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-session" ]]; then
     mkdir -p "$BUILD_DIR_PATH" "$STAGE"
     (
         cd "$BUILD_DIR_PATH"
-        env             CC="$CC_WRAPPER"             CFLAGS="-O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2"             LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             GL_TEST_CFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             GL_TEST_LIBS="-L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -lepoxy -lX11 -lXcomposite"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --disable-nls                 --disable-schemas-compile                 --without-systemd                 --without-elogind                 --with-default-wm=marco
+        env             CC="$CC_WRAPPER"             CFLAGS="-Os -ffunction-sections -fdata-sections -O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2"             LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             GL_TEST_CFLAGS="-Os -ffunction-sections -fdata-sections -I$GRAPHICS_SYSROOT/usr/local/include"             GL_TEST_LIBS="-L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -lepoxy -lX11 -lXcomposite"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --disable-nls                 --disable-schemas-compile                 --without-systemd                 --without-elogind                 --with-default-wm=marco
     ) >"$LOG_DIR/mate-session-configure.log" 2>&1 || {
         echo "[mate-session] configure failed" >&2
         tail -30 "$LOG_DIR/mate-session-configure.log" >&2
@@ -91,7 +91,7 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-session" ]]; then
 
     echo "[mate-session] building libegg"
     make -C "$BUILD_DIR_PATH/mate-submodules/libegg" -j1 \
-        LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
+        LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
         >"$LOG_DIR/mate-session-build.log" 2>&1 || {
         echo "[mate-session] build libegg failed" >&2
         tail -30 "$LOG_DIR/mate-session-build.log" >&2
@@ -100,7 +100,7 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-session" ]]; then
 
     echo "[mate-session] building libgsmutil"
     make -C "$BUILD_DIR_PATH/mate-session" libgsmutil.la -j1 \
-        LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
+        LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
         >>"$LOG_DIR/mate-session-build.log" 2>&1 || {
         echo "[mate-session] build libgsmutil failed" >&2
         tail -30 "$LOG_DIR/mate-session-build.log" >&2
@@ -110,7 +110,7 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-session" ]]; then
     make -C "$BUILD_DIR_PATH/mate-session" gsm-marshal.c gsm-marshal.h gsm-manager-glue.h gsm-presence-glue.h gsm-inhibitor-glue.h gsm-client-glue.h gsm-app-glue.h
     echo "[mate-session] building mate-session binary"
     make -C "$BUILD_DIR_PATH/mate-session" mate-session -j1 \
-        LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6 -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o" \
+        LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6 -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o" \
         >>"$LOG_DIR/mate-session-build.log" 2>&1 || {
         echo "[mate-session] build mate-session failed" >&2
         tail -30 "$LOG_DIR/mate-session-build.log" >&2
@@ -119,7 +119,7 @@ if [[ ! -x "$STAGE_PREFIX/bin/mate-session" ]]; then
 
     echo "[mate-session] building tools"
     make -C "$BUILD_DIR_PATH/tools" mate-session-save mate-session-inhibit -j1 \
-        LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6 -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o" \
+        LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6 -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o" \
         >>"$LOG_DIR/mate-session-build.log" 2>&1 || {
         echo "[mate-session] build tools failed" >&2
         tail -30 "$LOG_DIR/mate-session-build.log" >&2

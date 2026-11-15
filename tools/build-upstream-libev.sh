@@ -57,9 +57,9 @@ else
         cd "$BUILD_DIR_PATH" || exit 1
         env \
             CC="$CC_WRAPPER" \
-            CFLAGS="-O2 -g0" \
+            CFLAGS="-Os -ffunction-sections -fdata-sections -O2 -g0" \
             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include" \
-            LDFLAGS="-nostdlib -fuse-ld=lld -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6" \
+            LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6" \
             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig" \
             PKG_CONFIG_SYSROOT_DIR="" \
             "$SOURCE_DIR/configure" \

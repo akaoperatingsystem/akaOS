@@ -197,9 +197,9 @@ build_package() {
         cd "$build_dir" || exit 1
         env \
             CC="$CC_WRAPPER" \
-            CFLAGS="-O2 -g0 -fno-strict-aliasing" \
+            CFLAGS="-Os -ffunction-sections -fdata-sections -O2 -g0 -fno-strict-aliasing" \
             CPPFLAGS="-I$SYSROOT/usr/local/include -I$SYSROOT/usr/local/include/freetype2" \
-            LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--as-needed -L$STAGE/usr/local/lib -L$STAGE/usr/lib -L$SYSROOT/usr/local/lib -L$SYSROOT/usr/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6" \
+            LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--as-needed -L$STAGE/usr/local/lib -L$STAGE/usr/lib -L$SYSROOT/usr/local/lib -L$SYSROOT/usr/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6" \
             LIBS="" \
             PKG_CONFIG_LIBDIR="$STAGE/usr/local/lib/pkgconfig:$STAGE/usr/local/share/pkgconfig:$STAGE/usr/lib/pkgconfig:$STAGE/usr/share/pkgconfig:$SYSROOT/usr/local/lib/pkgconfig:$SYSROOT/usr/local/share/pkgconfig" \
             PKG_CONFIG_SYSROOT_DIR="" \

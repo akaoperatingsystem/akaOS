@@ -46,8 +46,8 @@ if [[ ! -f "$SOURCE_TREE/meson.build" ]]; then
         -C "$SOURCE_TREE" --strip-components=1
 fi
 
-export CFLAGS="-nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
-export LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--as-needed -L$BUILD_DIR $BUILD_DIR/libc.so.6"
+export CFLAGS="-Os -ffunction-sections -fdata-sections -nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include"
+export LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--as-needed -L$BUILD_DIR $BUILD_DIR/libc.so.6"
 
 meson_args=(
     --cross-file "$ROOT_DIR/tools/meson-akaos-x86_64.ini"

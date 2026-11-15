@@ -72,8 +72,8 @@ if [[ ! -f "$HOST_EXPAT_ROOT/usr/include/expat.h" ||
 fi
 
 HOST_EXPAT_PC="$HOST_EXPAT_ROOT/usr/lib/x86_64-linux-gnu/pkgconfig"
-HOST_EXPAT_CFLAGS="-I$HOST_EXPAT_ROOT/usr/include"
-HOST_EXPAT_LDFLAGS="-L$HOST_EXPAT_ROOT/usr/lib/x86_64-linux-gnu"
+HOST_EXPAT_CFLAGS="-Os -ffunction-sections -fdata-sections -I$HOST_EXPAT_ROOT/usr/include"
+HOST_EXPAT_LDFLAGS="-Wl,--gc-sections -s -L$HOST_EXPAT_ROOT/usr/lib/x86_64-linux-gnu"
 native_pkg_env=(
     "PKG_CONFIG_PATH=$HOST_EXPAT_PC"
     "CFLAGS=$HOST_EXPAT_CFLAGS"
@@ -117,8 +117,8 @@ export PKG_CONFIG_PATH_FOR_BUILD="$HOST_PREFIX/lib/pkgconfig"
 export PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"
 export PKG_CONFIG_SYSROOT_DIR_FOR_BUILD=""
-export CFLAGS="-nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2"
-export LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/lib -L$GRAPHICS_SYSROOT/usr/local/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6"
+export CFLAGS="-Os -ffunction-sections -fdata-sections -nostdinc -idirafter /usr/lib/llvm-21/lib/clang/21/include -ffreestanding -fno-builtin -fno-stack-protector -fPIC -I$ROOT_DIR/sdk/include -I$ROOT_DIR/userspace/libc/include -I$GRAPHICS_SYSROOT/usr/local/include/freetype2"
+export LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/lib -L$GRAPHICS_SYSROOT/usr/local/lib -L$BUILD_DIR $BUILD_DIR/libm.so.6 $BUILD_DIR/libc.so.6"
 
 target_meson_args=(
     --cross-file "$ROOT_DIR/tools/meson-akaos-pango-x86_64.ini"

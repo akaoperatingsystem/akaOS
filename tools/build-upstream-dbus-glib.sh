@@ -73,7 +73,7 @@ if [[ ! -f "$STAGE_PREFIX/lib/libdbus-glib-1.so" ]]; then
     mkdir -p "$BUILD_DIR_PATH" "$STAGE"
     (
         cd "$BUILD_DIR_PATH"
-        env             CC="$CC_WRAPPER"             CFLAGS="-O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --disable-tests                 --disable-gtk-doc                 --with-dbus-binding-tool="$(which dbus-binding-tool)"
+        env             CC="$CC_WRAPPER"             CFLAGS="-Os -ffunction-sections -fdata-sections -O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --disable-tests                 --disable-gtk-doc                 --with-dbus-binding-tool="$(which dbus-binding-tool)"
     ) >"$LOG_DIR/dbus-glib-configure.log" 2>&1 || {
         echo "[dbus-glib] configure failed" >&2
         tail -30 "$LOG_DIR/dbus-glib-configure.log" >&2
@@ -81,14 +81,14 @@ if [[ ! -f "$STAGE_PREFIX/lib/libdbus-glib-1.so" ]]; then
     }
 
     echo "[dbus-glib] building dbus-gmain"
-    make -C "$BUILD_DIR_PATH/dbus-gmain" -j1         LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"         >"$LOG_DIR/dbus-glib-build.log" 2>&1 || {
+    make -C "$BUILD_DIR_PATH/dbus-gmain" -j1         LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"         >"$LOG_DIR/dbus-glib-build.log" 2>&1 || {
         echo "[dbus-glib] build dbus-gmain failed" >&2
         tail -30 "$LOG_DIR/dbus-glib-build.log" >&2
         exit 1
     }
 
     echo "[dbus-glib] building dbus"
-    make -C "$BUILD_DIR_PATH/dbus" -j1         LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"         >>"$LOG_DIR/dbus-glib-build.log" 2>&1 || {
+    make -C "$BUILD_DIR_PATH/dbus" -j1         LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"         >>"$LOG_DIR/dbus-glib-build.log" 2>&1 || {
         echo "[dbus-glib] build dbus failed" >&2
         tail -30 "$LOG_DIR/dbus-glib-build.log" >&2
         exit 1

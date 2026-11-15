@@ -96,7 +96,7 @@ if [[ ! -f "$STAGE_PREFIX/lib/libxfconf-0.so" ]]; then
     mkdir -p "$BUILD_DIR_PATH" "$STAGE"
     (
         cd "$BUILD_DIR_PATH"
-        env             CC="$CC_WRAPPER"             CFLAGS="-O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --disable-introspection                 --disable-vala                 --disable-gsettings-backend
+        env             CC="$CC_WRAPPER"             CFLAGS="-Os -ffunction-sections -fdata-sections -O2 -g0 -fno-strict-aliasing"             CPPFLAGS="-I$GRAPHICS_SYSROOT/usr/local/include"             LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6"             LIBS=""             PKG_CONFIG_LIBDIR="$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$GRAPHICS_SYSROOT/usr/lib/pkgconfig"             PKG_CONFIG_SYSROOT_DIR="$GRAPHICS_SYSROOT"             "$SOURCE_DIR/configure"                 --host=x86_64-pc-linux-gnu                 --prefix=/usr/local                 --sysconfdir=/etc                 --disable-static                 --enable-shared                 --disable-introspection                 --disable-vala                 --disable-gsettings-backend
     ) >"$LOG_DIR/xfconf-configure.log" 2>&1 || {
         echo "[xfconf] configure failed" >&2
         tail -30 "$LOG_DIR/xfconf-configure.log" >&2
@@ -109,7 +109,7 @@ if [[ ! -f "$STAGE_PREFIX/lib/libxfconf-0.so" ]]; then
     glib-genmarshal --prefix=_xfconf_marshal "$SOURCE_DIR/common/xfconf-marshal.list" --body >> "$BUILD_DIR_PATH/common/xfconf-marshal.c"
 
     make -C "$BUILD_DIR_PATH" -j1 \
-        LDFLAGS="-nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
+        LDFLAGS="-Wl,--gc-sections -s -nostdlib -fuse-ld=lld -Wl,--allow-shlib-undefined -Wl,--as-needed -L$GRAPHICS_SYSROOT/usr/local/lib -L$GRAPHICS_SYSROOT/usr/lib -L$BUILD_DIR -Wl,-l:libm.so.6 -Wl,-l:libc.so.6" \
         >"$LOG_DIR/xfconf-build.log" 2>&1 || {
         echo "[xfconf] build failed" >&2
         tail -30 "$LOG_DIR/xfconf-build.log" >&2
@@ -119,9 +119,9 @@ if [[ ! -f "$STAGE_PREFIX/lib/libxfconf-0.so" ]]; then
     # Re-link binaries with the akaOS dynamic linker and startup object
     rm -f "$BUILD_DIR_PATH/xfconf-query/xfconf-query" "$BUILD_DIR_PATH/xfconf-query/.libs/xfconf-query"           "$BUILD_DIR_PATH/xfconfd/xfconfd" "$BUILD_DIR_PATH/xfconfd/.libs/xfconfd"
 
-    make -C "$BUILD_DIR_PATH/xfconf-query"         xfconf_query_LDFLAGS="-pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o"         >>"$LOG_DIR/xfconf-build.log" 2>&1
+    make -C "$BUILD_DIR_PATH/xfconf-query"         xfconf_query_LDFLAGS="-Wl,--gc-sections -s -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o"         >>"$LOG_DIR/xfconf-build.log" 2>&1
 
-    make -C "$BUILD_DIR_PATH/xfconfd"         xfconfd_LDFLAGS="-pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o"         >>"$LOG_DIR/xfconf-build.log" 2>&1
+    make -C "$BUILD_DIR_PATH/xfconfd"         xfconfd_LDFLAGS="-Wl,--gc-sections -s -pie -Wl,--eh-frame-hdr -Wl,-z,max-page-size=0x1000 -Wl,--dynamic-linker,/lib/ld-akaos.so -Wl,-T,$ROOT_DIR/userspace/linker/user-dynamic.ld $BUILD_DIR/user-dynamic-crt0.o"         >>"$LOG_DIR/xfconf-build.log" 2>&1
 
     make -C "$BUILD_DIR_PATH" install DESTDIR="$STAGE" >"$LOG_DIR/xfconf-install.log" 2>&1 || {
         echo "[xfconf] install failed" >&2
