@@ -6,6 +6,20 @@
 
 set -euo pipefail
 
+# Modular Bundling Logic
+get_initramfs_args() {
+    local args=()
+    # Desktop exclusion
+    if [[ "$menu_desktop" == "none" ]]; then
+        args+=(--exclude-prefix "aurora" --exclude-prefix "lumen" --exclude-prefix "openbox" --exclude-prefix "pcmanfm" --exclude-prefix "lxpanel")
+    fi
+    # Software bundle-specific exclusions
+    if [[ "$menu_software" == "minimal" || "$menu_software" == "net" || "$menu_software" == "dev" ]]; then
+        args+=(--exclude-prefix "gtk" --exclude-prefix "qt" --exclude-prefix "cairo" --exclude-prefix "pango" --exclude-prefix "freetype")
+    fi
+    echo "${args[@]}"
+}
+
 
 
 # Modular Bundling Logic
@@ -3468,7 +3482,7 @@ initramfs_profile_args=()
 if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
     initramfs_profile_args+=(--profile minimal)
 fi
-python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.raw" $(get_initramfs_args) \ && zstd -19 -T0 "$BUILD_DIR/initramfs.img.raw" -o "$BUILD_DIR/initramfs.img"
+python3 " $(get_initramfs_args) "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.raw" $(get_initramfs_args) \ && zstd -19 -T0 "$BUILD_DIR/initramfs.img.raw" -o "$BUILD_DIR/initramfs.img"
     --exclude-long-vfs-names \
     "${initramfs_profile_args[@]}" \
     --dir "/bin" \
