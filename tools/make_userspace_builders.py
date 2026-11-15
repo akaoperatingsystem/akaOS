@@ -480,6 +480,7 @@ build_user_program hello "$ROOT_DIR/userspace/bin/hello/main.c" HELLO.ELF
 build_user_cpp_program cxxabi-test "$ROOT_DIR/userspace/bin/cxxabi-test/main.cpp" CXXABI_TEST.ELF
 build_user_pie_program hello-pie "$ROOT_DIR/userspace/bin/hello/main.c" HELLO_PIE.ELF
 build_user_program cat "$ROOT_DIR/userspace/bin/cat/main.c" CAT.ELF
+build_user_program make "$ROOT_DIR/userspace/bin/make/main.c" MAKE.ELF
 build_user_program ls "$ROOT_DIR/userspace/bin/ls/main.c" LS.ELF
 build_user_program dir "$ROOT_DIR/userspace/bin/dir/main.c" DIR.ELF
 build_user_program dircolors "$ROOT_DIR/userspace/bin/dircolors/main.c" DIRCOLORS.ELF
