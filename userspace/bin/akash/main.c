@@ -1079,52 +1079,11 @@ static int is_name_shell_builtin(const char *name) {
         "shutdown", "jobs", "fg", "bg", "kill", "alias", "unalias",
         "test", "[", "echo", "export", "bind", "break", "builtin",
         "caller", "case", "command", "continue", "declare", "typeset", "true", "false", "source", ".",
-        "dirs", NULL
+        "dirs", "getopts", "hash", "history", NULL
     };
     for (int i = 0; blts[i]; ++i) {
         if (strcmp(name, blts[i]) == 0) return 1;
     }
-    return 0;
-}
-
-
-static int builtin_enable(int argc, char *argv[]) {
-    write_str(STDOUT_FILENO, "enable: Not fully implemented (stubbed for registry update).\n");
-    return 0;
-}
-
-static int builtin_eval(int argc, char *argv[]) {
-    if (argc < 2) return 0;
-    size_t len = 0;
-    for (int i = 1; i < argc; i++) len += strlen(argv[i]) + 1;
-    char *buf = malloc(len + 1);
-    buf[0] = '\0';
-    for (int i = 1; i < argc; i++) {
-        strcat(buf, argv[i]);
-        if (i < argc - 1) strcat(buf, " ");
-    }
-    last_exit_status = execute_command_line(buf);
-    free(buf);
-    return 0;
-}
-
-static int builtin_exec(int argc, char *argv[]) {
-    if (argc == 1) return 0;
-    char *const *cmd_argv = &argv[1];
-    execvp(cmd_argv[0], cmd_argv);
-    write_str(STDERR_FILENO, "akash: exec: failed to execute\n");
-    _exit(127);
-    return 1;
-}
-
-static int builtin_exit(int argc, char *argv[]) {
-    int code = last_exit_status;
-    if (argc > 1) {
-        code = (int)parse_num_val(argv[1]);
-    }
-    // Cleanup tasks: sync, signal cleanup, etc
-    sync();
-    _exit(code);
     return 0;
 }
 
@@ -1518,149 +1477,40 @@ if (strcmp(argv[0], "exit") == 0) {
     }
 
     if (strcmp(argv[0], "help") == 0) {
-        if (argc > 1 && strcmp(argv[1], "command") == 0) {
-            write_str(STDOUT_FILENO, "command: command [-pVv] command [arg ...]\n"
-                                     "    Execute a simple command or display information about commands.\n\n"
-                                     "    Runs COMMAND with ARGS suppressing shell function lookup, or display\n"
-                                     "    information about the specified COMMANDs. Can be used to invoke commands\n"
-                                     "    on disk when a function with the same name exists.\n\n"
-                                     "    Options:\n"
-                                     "      -p    use a default value for PATH that is guaranteed to find all of\n"
-                                     "            the standard utilities\n"
-                                     "      -v    print a single word indicating the command or filename that\n"
-                                     "            invokes COMMAND\n"
-                                     "      -V    print a more verbose description of each COMMAND\n\n"
-                                     "    Exit Status:\n"
-                                     "    Returns exit status of COMMAND, or failure if COMMAND is not found.\n");
-            last_exit_status = 0;
-            return 1;
+        if (argc > 1) {
+            const char *topic = argv[1];
+            if (is_name_shell_builtin(topic)) {
+                write_str(STDOUT_FILENO, topic);
+                write_str(STDOUT_FILENO, ": shell builtin command\n");
+                write_str(STDOUT_FILENO, "    Refer to manual pages via man for detailed documentation.\n");
+                last_exit_status = 0;
+                return 1;
+            } else {
+                write_str(STDERR_FILENO, "akash: help: no help topics match \"");
+                write_str(STDERR_FILENO, topic);
+                write_str(STDERR_FILENO, "\". Try help.\n");
+                last_exit_status = 1;
+                return 1;
+            }
         }
-        if (argc > 1 && strcmp(argv[1], "cd") == 0) {
-            write_str(STDOUT_FILENO, "cd: cd [-L|-P] [dir]\n"
-                                     "    Change the shell working directory.\n\n"
-                                     "    Change the current directory to DIR. The default DIR is the value of the\n"
-                                     "    HOME shell variable.\n\n"
-                                     "    The variable CDPATH defines the search path for the directory containing\n"
-                                     "    DIR. Alternative directory names in CDPATH are separated by a colon (:).\n"
-                                     "    A null directory name in CDPATH is the same as the current directory.\n\n"
-                                     "    Options:\n"
-                                     "      -L    force symbolic links to be followed: resolve symbolic\n"
-                                     "            links in DIR after processing instances of `..' (default)\n"
-                                     "      -P    use the physical directory structure without following\n"
-                                     "            symbolic links\n\n"
-                                     "    The default is to follow symbolic links, as if `-L' were specified.\n"
-                                     "    `..' is processed by removing the immediately previous pathname component,\n"
-                                     "    back to a slash or the beginning of DIR.\n\n"
-                                     "    Exit Status:\n"
-                                     "    Returns 0 if the directory is changed; non-zero otherwise.\n");
-            last_exit_status = 0;
-            return 1;
-        }
-        if (argc > 1 && strcmp(argv[1], "case") == 0) {
-            write_str(STDOUT_FILENO, "case: case WORD in [PATTERN [| PATTERN]...) COMMANDS ;;]... esac\n"
-                                     "    Execute commands based on pattern matching.\n\n"
-                                     "    Selectively execute the command-list corresponding to the first\n"
-                                     "    pattern that matches WORD.\n\n"
-                                     "    Exit Status:\n"
-                                     "    Returns the status of the executed command-list, or zero if no pattern\n"
-                                     "    matches.\n");
-            last_exit_status = 0;
-            return 1;
-        }
-        if (argc > 1 && strcmp(argv[1], "caller") == 0) {
-            write_str(STDOUT_FILENO, "caller: caller [expr]\n"
-                                     "    Return the context of the current subroutine call.\n\n"
-                                     "    Without EXPR, returns \"$line $filename\". With EXPR, returns\n"
-                                     "    \"$line $subroutine $filename\"; this extra information can be used to\n"
-                                     "    provide a stack trace.\n\n"
-                                     "    The value of EXPR indicates how many call frames to go back before the\n"
-                                     "    current one; the top frame is frame 0.\n\n"
-                                     "    Exit Status:\n"
-                                     "    Returns 0 unless the shell is not executing a shell function or EXPR\n"
-                                     "    is invalid.\n");
-            last_exit_status = 0;
-            return 1;
-        }
-        if (argc > 1 && (strcmp(argv[1], "builtin") == 0 || strcmp(argv[1], "[b]uiltin") == 0)) {
-            write_str(STDOUT_FILENO, "builtin: builtin [shell-builtin [arg ...]]\n"
-                                     "    Execute shell builtins.\n\n"
-                                     "    Execute SHELL-BUILTIN with arguments ARGs without performing command\n"
-                                     "    lookup. This is useful when you wish to reimplement a shell builtin\n"
-                                     "    as a shell function, but need to execute the builtin within the function.\n\n"
-                                     "    Exit Status:\n"
-                                     "    Returns the exit status of SHELL-BUILTIN, or false if SHELL-BUILTIN is\n"
-                                     "    not a shell builtin.\n");
-            last_exit_status = 0;
-            return 1;
-        }
-        if (argc > 1 && strcmp(argv[1], "break") == 0) {
-            write_str(STDOUT_FILENO, "break: break [n]\n"
-                                     "    Exit for, while, until, or select loops.\n\n"
-                                     "    Exit a FOR, WHILE, UNTIL or SELECT loop. If N is specified, break N\n"
-                                     "    enclosing loops. N must be >= 1.\n\n"
-                                     "    Exit Status:\n"
-                                     "    The exit status is 0 unless N is not greater than or equal to 1.\n");
-            last_exit_status = 0;
-            return 1;
-        }
-        if (argc > 1 && strcmp(argv[1], "continue") == 0) {
-            write_str(STDOUT_FILENO, "continue: continue [n]\n"
-                                     "    Resume for, while, until, or select loops.\n\n"
-                                     "    Resumes the next iteration of the enclosing FOR, WHILE, UNTIL, or\n"
-                                     "    SELECT loop. If N is specified, resume the Nth enclosing loop.\n"
-                                     "    N must be >= 1.\n\n"
-                                     "    Exit Status:\n"
-                                     "    The exit status is 0 unless N is not greater than or equal to 1.\n");
-            last_exit_status = 0;
-            return 1;
-        }
-        if (argc > 1 && (strcmp(argv[1], "declare") == 0 || strcmp(argv[1], "typeset") == 0)) {
-            write_str(STDOUT_FILENO, "declare: declare [-aAfFgiIlnrtux] [-p] [name[=value] ...]\n"
-                                     "    Set variable values and attributes.\n\n"
-                                     "    Declare variables and give them attributes. If no NAMEs are given,\n"
-                                     "    display the attributes and values of all variables.\n\n"
-                                     "    Options:\n"
-                                     "      -a        to make NAMEs indexed arrays (if supported)\n"
-                                     "      -A        to make NAMEs associative arrays (if supported)\n"
-                                     "      -i        to make NAMEs have the `integer' attribute\n"
-                                     "      -l        to convert the value to lower case on assignment\n"
-                                     "      -u        to convert the value to upper case on assignment\n"
-                                     "      -r        to make NAMEs readonly\n"
-                                     "      -x        to make NAMEs export\n"
-                                     "      -n        make NAME a reference to the variable named by its value\n"
-                                     "      -f        to refer to function names only\n"
-                                     "      -F        to display function names without definitions\n"
-                                     "      -p        display attributes and values of each NAME\n\n"
-                                     "    Exit Status:\n"
-                                     "    Returns 0 unless an invalid option is supplied or a variable\n"
-                                     "    assignment error occurs.\n");
-            last_exit_status = 0;
-            return 1;
-        }
-        if (argc > 1 && strcmp(argv[1], "bg") == 0) {
-            write_str(STDOUT_FILENO, "bg: bg [job_id...]\n");
-            write_str(STDOUT_FILENO, "    Send a job to background\n\n");
-            write_str(STDOUT_FILENO, "    Syntax\n");
-            write_str(STDOUT_FILENO, "          bg [job_id...]\n\n");
-            write_str(STDOUT_FILENO, "    Send the specified jobs to the background. A background job is executed\n");
-            write_str(STDOUT_FILENO, "    simultaneously with fish, and does not have access to the keyboard. If no\n");
-            write_str(STDOUT_FILENO, "    job is specified, the last job to be used is put in the background.\n\n");
-            write_str(STDOUT_FILENO, "    bg takes a \"job ID\" available from jobs, not a PID.\n");
-            write_str(STDOUT_FILENO, "    If jobspec is not present, the shell's notion of the current job is used.\n");
-            write_str(STDOUT_FILENO, "    To kill a specific background job use, kill %jobspec.\n\n");
-            write_str(STDOUT_FILENO, "    bg is a BASH shell builtin and a ZSH shell builtin.\n");
-            last_exit_status = 0;
-            return 1;
-        }
-        if (argc != 1) {
-            write_str(STDERR_FILENO, "help: no arguments supported\n");
-            last_exit_status = 1;
-            return 1;
-        }
-        write_str(STDOUT_FILENO, "akash - native userspace shell\n");
-        write_str(STDOUT_FILENO, "Built-in commands: cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill, alias, unalias, test, [, echo, export, bind, break, builtin, caller, case, command, continue, declare, typeset, dirs\n");
-        write_str(STDOUT_FILENO, "Utilities: ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm, chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort, uniq, xargs, apropos, aspell, at, atq, atrm, batch, awk, gawk, basename, base32, base64, bash, rbash, bc, bind, bzip2, bunzip2, bzcat, cal, ncal, caller, cd, cfdisk, chattr, chgrp, chpasswd, chroot, chkconfig, cksum, comm\n");
-        write_str(STDOUT_FILENO, "Scripting: if/then/elif/else/fi, for/do/done, while/do/done, case/in/esac, break [n], continue [n], ;, &&, ||, variables, positional parameters ($0-$9, $#, $*, $@)\n");
+
+        /* Generic clean, simple, and up-to-date help listing */
+        write_str(STDOUT_FILENO, "akash - native userspace shell, version " AKAOS_VERSION " (" AKAOS_ARCH_NAME ")\n");
+        write_str(STDOUT_FILENO, "These shell commands are defined internally. Type help name to see builtin info.\n\n");
+        write_str(STDOUT_FILENO, "Built-in commands:\n");
+        write_str(STDOUT_FILENO, "  cd, exit, help, about, version, id, hostname, shutdown, jobs, fg, bg, kill,\n");
+        write_str(STDOUT_FILENO, "  alias, unalias, test, [, echo, export, bind, break, builtin, caller, case,\n");
+        write_str(STDOUT_FILENO, "  command, continue, declare, typeset, true, false, source, ., dirs, getopts,\n");
+        write_str(STDOUT_FILENO, "  hash, history\n\n");
+        write_str(STDOUT_FILENO, "Core utilities:\n");
+        write_str(STDOUT_FILENO, "  ls, cat, grep, head, tail, wc, ps, tty, stty, uname, whoami, touch, mkdir, rm,\n");
+        write_str(STDOUT_FILENO, "  chmod, chown, ted, sync, reboot, poweroff, hello, clear, less, more, find, sort,\n");
+        write_str(STDOUT_FILENO, "  uniq, xargs, apropos, aspell, at, awk, basename, dirname, base64, bc, bzip2,\n");
+        write_str(STDOUT_FILENO, "  cal, cfdisk, fdisk, file, fmt, fold, format, free, fsck, ftp, fuser, getfacl,\n");
+        write_str(STDOUT_FILENO, "  groupadd, groupdel, groupmod, groups, gzip, gunzip\n\n");
+        write_str(STDOUT_FILENO, "Scripting engine:\n");
+        write_str(STDOUT_FILENO, "  function name() { ... }, if/then/elif/else/fi, for/do/done, while/do/done,\n");
+        write_str(STDOUT_FILENO, "  case/in/esac, break [n], continue [n], ;, &&, ||, variables, $0-$9, $#, $*, $@\n");
         last_exit_status = 0;
         return 1;
     }
@@ -1725,6 +1575,10 @@ if (strcmp(argv[0], "exit") == 0) {
             last_exit_status = 1;
             return 1;
         }
+        write_str(STDOUT_FILENO, "akaOS\n");
+        last_exit_status = 0;
+        return 1;
+    }
 
     if (strcmp(argv[0], "dirs") == 0) {
         int opt_c = 0, opt_p = 0, opt_v = 0, opt_l = 0;

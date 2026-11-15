@@ -1,0 +1,4 @@
+root:x:0:root
+testgroup:x:1001:testuser
+othergroup:x:1002:testuser,otheruser
+usergroup:x:1003:

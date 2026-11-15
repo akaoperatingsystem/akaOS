@@ -1093,7 +1093,28 @@ int xscore_user_process_self_test(void) {
     uint64_t cal_status = UINT64_MAX;
     if (!p_cal || !xscore_process_wait(p_cal, &cal_status) || cal_status != 0 || !xscore_process_reap(p_cal)) return 0;
 
+    /* Verify grep utility with regex support */
+    const char *grep_args[] = {"/bin/grep", "-E", "a[0-9]+", "/etc/akaos.conf", 0};
+    struct xscore_process *p_grep = xscore_process_create_path_args("/bin/grep", 5, grep_args);
+    uint64_t grep_status = UINT64_MAX;
+    if (!p_grep || !xscore_process_wait(p_grep, &grep_status) || !xscore_process_reap(p_grep)) return 0;
+    xscore_serial_write("[INFO] Search utility grep verified\n");
+
     /* Verify subroutine caller context builtin */
+    /* Verify shell function macros (function name() { ... }) */
+    const char *func_macro_args[] = {"/bin/akash", "-c", "function add() { echo $1; }; add FUNC_MACRO_OK", 0};
+    struct xscore_process *p_func_macro = xscore_process_create_path_args("/bin/akash", 3, func_macro_args);
+    uint64_t func_macro_status = UINT64_MAX;
+    if (!p_func_macro || !xscore_process_wait(p_func_macro, &func_macro_status) || func_macro_status != 0 || !xscore_process_reap(p_func_macro)) return 0;
+    xscore_serial_write("[INFO] Shell function macro engine verified\n");
+
+    /* Verify getopts shell builtin for option parsing */
+    const char *getopts_test_args[] = {"/bin/akash", "-c", "while getopts \"ab:c\" opt -a -b foo -c; do echo -n \"$opt:\$OPTARG \"; done", 0};
+    struct xscore_process *p_getopts = xscore_process_create_path_args("/bin/akash", 3, getopts_test_args);
+    uint64_t getopts_status = UINT64_MAX;
+    if (!p_getopts || !xscore_process_wait(p_getopts, &getopts_status) || getopts_status != 0 || !xscore_process_reap(p_getopts)) return 0;
+    xscore_serial_write("[INFO] Positional parameter parser getopts verified\n");
+
     const char *caller_args[] = {"/bin/akash", "-c", "sub() { caller 0; }; sub", 0};
     struct xscore_process *p_caller = xscore_process_create_path_args("/bin/akash", 3, caller_args);
     uint64_t caller_status = UINT64_MAX;

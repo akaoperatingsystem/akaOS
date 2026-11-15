@@ -9,8 +9,11 @@ if [[ "$AKAOS_DEBUG" == "1" ]]; then
 else
     export CFLAGS="-Os -flto -ffunction-sections -fdata-sections"
     export CXXFLAGS="-Os -flto -ffunction-sections -fdata-sections"
+    
     export LDFLAGS="-Wl,--gc-sections -Wl,-s"
 fi
+log_artifact_sizes
+
 
 set -euo pipefail
 

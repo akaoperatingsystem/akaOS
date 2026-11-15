@@ -180,3 +180,5 @@ lsusb (8) - list USB devices
 diff3 (1) - compare three files line by line
 
 dmesg (1) - print kernel & driver messages
+hash (1) - remember the full pathname of a name argument
+history (1) - display command history
