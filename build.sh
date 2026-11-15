@@ -5,6 +5,7 @@
 # GLOBAL OPTIMIZATION INJECTION (akaOS Minimization Directive)
 
 set -euo pipefail
+source "$ROOT_DIR/tools/modular-bundling.sh"
 
 # Modular Bundling Logic
 get_initramfs_args() {
@@ -3513,7 +3514,7 @@ initramfs_profile_args=()
 if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
     initramfs_profile_args+=(--profile minimal)
 fi
-python3 " $(get_initramfs_args) "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.raw" $(get_initramfs_args) \ && zstd -19 -T0 "$BUILD_DIR/initramfs.img.raw" -o "$BUILD_DIR/initramfs.img"
+python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.raw" $(get_initramfs_args) \ && zstd -19 -T0 "$BUILD_DIR/initramfs.img.raw" -o "$BUILD_DIR/initramfs.img"
     --exclude-long-vfs-names \
     "${initramfs_profile_args[@]}" \
     --dir "/bin" \
