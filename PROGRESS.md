@@ -11,12 +11,12 @@
 
 | Target Architecture | Target Triple | Microkernel ABI | Toolchain Status | Build Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **x86-64** (AMD64) | `x86_64-unknown-none-elf` | 4-Level Paging, APIC, IST | Native Toolchain & LLVM | [██████████] 100% |
-| **x86-32** (i386) | `i386-unknown-none-elf` | 2-Level Paging, PIC, FPU | Clang / LLVM LLD | [██████████] 100% |
-| **AArch64** (ARM 64-bit) | `aarch64-unknown-none-elf` | 4-Level Paging, GIC, Virt | Clang / LLVM LLD | [██████████] 100% |
-| **ARM32** (ARMv7-A) | `armv7-unknown-none-eabi` | Short-descriptor, VFP | Clang / LLVM LLD | [██████████] 100% |
-| **RISC-V64** (RV64GC) | `riscv64-unknown-none-elf` | Sv39 Paging, PLIC, CLINT | Clang / LLVM LLD | [██████████] 100% |
-| **RISC-V32** (RV32GC) | `riscv32-unknown-none-elf` | Sv32 Paging, PLIC, CLINT | Clang / LLVM LLD | [██████████] 100% |
+| **x86-64** (AMD64) | `x86_64-unknown-none-elf` | 4-Level Paging, APIC, IST | Native Toolchain & LLVM | (Completed) 100% |
+| **x86-32** (i386) | `i386-unknown-none-elf` | 2-Level Paging, PIC, FPU | Clang / LLVM LLD | (Completed) 100% |
+| **AArch64** (ARM 64-bit) | `aarch64-unknown-none-elf` | 4-Level Paging, GIC, Virt | Clang / LLVM LLD | (Completed) 100% |
+| **ARM32** (ARMv7-A) | `armv7-unknown-none-eabi` | Short-descriptor, VFP | Clang / LLVM LLD | (Completed) 100% |
+| **RISC-V64** (RV64GC) | `riscv64-unknown-none-elf` | Sv39 Paging, PLIC, CLINT | Clang / LLVM LLD | (Completed) 100% |
+| **RISC-V32** (RV32GC) | `riscv32-unknown-none-elf` | Sv32 Paging, PLIC, CLINT | Clang / LLVM LLD | (Completed) 100% |
 
 ---
 
@@ -24,11 +24,11 @@
 
 | Security Subsystem | Implementation Details | Verified Status |
 | :--- | :--- | :--- |
-| **KASLR** | Boot-time kernel-base physical & virtual slide via RDRAND/RDTSC/APIC entropy | [██████████] 100% |
-| **Seccomp-BPF** | Classical BPF bytecode evaluation engine for syscall interception (`prctl`, `seccomp`) | [██████████] 100% |
-| **POSIX Capabilities** | Fine-grained bitmask (`akaos_cap_t`) replacing monolithic root checks across kernel | [██████████] 100% |
-| **Stack Canaries & Guards** | Guard-page isolated kernel stacks with Dedicated Interrupt Stack Tables (IST) | [██████████] 100% |
-| **Address Space Isolation** | Strict Ring 0 / Ring 3 privilege boundaries and non-executable (`NX`) page protection | [██████████] 100% |
+| **KASLR** | Boot-time kernel-base physical & virtual slide via RDRAND/RDTSC/APIC entropy | (Completed) 100% |
+| **Seccomp-BPF** | Classical BPF bytecode evaluation engine for syscall interception (`prctl`, `seccomp`) | (Completed) 100% |
+| **POSIX Capabilities** | Fine-grained bitmask (`akaos_cap_t`) replacing monolithic root checks across kernel | (Completed) 100% |
+| **Stack Canaries & Guards** | Guard-page isolated kernel stacks with Dedicated Interrupt Stack Tables (IST) | (Completed) 100% |
+| **Address Space Isolation** | Strict Ring 0 / Ring 3 privilege boundaries and non-executable (`NX`) page protection | (Completed) 100% |
 
 ---
 
@@ -36,13 +36,13 @@
 
 | Storage Subsystem | Capabilities & Hardware Handlers | Verified Status |
 | :--- | :--- | :--- |
-| **NVMe Controller** | PCIe BAR MMIO, Admin & I/O submission queues, 64-bit DMA, SMART log telemetry | [██████████] 100% |
-| **AHCI / SATA** | HBA reset, GHC, BOHC handoff, FIS/PRDT scatter-gather, LBA48 DMA, SMART, TRIM | [██████████] 100% |
-| **ATA / IDE** | Multi-sector PIO data transfers on primary/secondary IDE controllers | [██████████] 100% |
-| **VirtIO-Block** | Virtual queue descriptors, event indexes, and asynchronous block I/O | [██████████] 100% |
-| **Floppy Controller (FDC)** | Standard PC 82078 FDC driver, MSR polling, seek calibration, diskette format | [██████████] 100% |
-| **Buffer Cache (bufcache)** | In-memory LRU block cache with hash-based lookup and dirty-page sync | [██████████] 100% |
-| **Persistent Filesystem** | akaFS overlay filesystem with persistence across reboots | [██████████] 100% |
+| **NVMe Controller** | PCIe BAR MMIO, Admin & I/O submission queues, 64-bit DMA, SMART log telemetry | (Completed) 100% |
+| **AHCI / SATA** | HBA reset, GHC, BOHC handoff, FIS/PRDT scatter-gather, LBA48 DMA, SMART, TRIM | (Completed) 100% |
+| **ATA / IDE** | Multi-sector PIO data transfers on primary/secondary IDE controllers | (Completed) 100% |
+| **VirtIO-Block** | Virtual queue descriptors, event indexes, and asynchronous block I/O | (Completed) 100% |
+| **Floppy Controller (FDC)** | Standard PC 82078 FDC driver, MSR polling, seek calibration, diskette format | (Completed) 100% |
+| **Buffer Cache (bufcache)** | In-memory LRU block cache with hash-based lookup and dirty-page sync | (Completed) 100% |
+| **Persistent Filesystem** | akaFS overlay filesystem with persistence across reboots | (Completed) 100% |
 
 ---
 
@@ -50,11 +50,11 @@
 
 | Subsystem | Features & Interfaces | Verified Status |
 | :--- | :--- | :--- |
-| **UEFI Runtime Services** | `GetTime`, `SetTime`, `GetVariable`, `SetVariable`, `ResetSystem` | [██████████] 100% |
-| **NVRAM Variable Access** | Character device interface at `/dev/efivar` and procfs telemetry | [██████████] 100% |
-| **Legacy BIOS Fallback** | BDA (`0x400`), EBDA segment mapping, real-mode thunking (INT 10h, 13h, 15h) | [██████████] 100% |
-| **Secure Boot Verification** | Key database validation chain (`PK`, `KEK`, `db`, `dbx`) | [██████████] 100% |
-| **Capsule Update** | `UpdateCapsule` firmware update orchestration protocol | [██████████] 100% |
+| **UEFI Runtime Services** | `GetTime`, `SetTime`, `GetVariable`, `SetVariable`, `ResetSystem` | (Completed) 100% |
+| **NVRAM Variable Access** | Character device interface at `/dev/efivar` and procfs telemetry | (Completed) 100% |
+| **Legacy BIOS Fallback** | BDA (`0x400`), EBDA segment mapping, real-mode thunking (INT 10h, 13h, 15h) | (Completed) 100% |
+| **Secure Boot Verification** | Key database validation chain (`PK`, `KEK`, `db`, `dbx`) | (Completed) 100% |
+| **Capsule Update** | `UpdateCapsule` firmware update orchestration protocol | (Completed) 100% |
 
 ---
 
@@ -62,10 +62,10 @@
 
 | Component | Architecture & Integration | Verified Status |
 | :--- | :--- | :--- |
-| **DRM/KMS Core** | Direct Rendering Manager with atomic mode setting (`crtc`, `connector`, `plane`) | [██████████] 100% |
-| **GEM Memory Management** | Graphics Execution Manager handle-to-buffer mapping, pinning, and aperture space | [██████████] 100% |
-| **Hardware Acceleration** | VirtIO-GPU VirGL 2D/3D accelerator and Bochs VBE display adapter | [██████████] 100% |
-| **Lumen Compositor** | Hardware cursor overlay planes and atomic page-flipping during V-Blank | [██████████] 100% |
+| **DRM/KMS Core** | Direct Rendering Manager with atomic mode setting (`crtc`, `connector`, `plane`) | (Completed) 100% |
+| **GEM Memory Management** | Graphics Execution Manager handle-to-buffer mapping, pinning, and aperture space | (Completed) 100% |
+| **Hardware Acceleration** | VirtIO-GPU VirGL 2D/3D accelerator and Bochs VBE display adapter | (Completed) 100% |
+| **Lumen Compositor** | Hardware cursor overlay planes and atomic page-flipping during V-Blank | (Completed) 100% |
 
 ---
 
@@ -73,11 +73,11 @@
 
 | Protocol Layer | Features & Capabilities | Verified Status |
 | :--- | :--- | :--- |
-| **VirtIO-Net Driver** | DMA-based transmit and receive rings, interrupt completion, MAC filtering | [██████████] 100% |
-| **L2 (Ethernet)** | Ethernet II frame encapsulation/decapsulation and MAC addressing | [██████████] 100% |
-| **L3 (ARP & ICMP)** | ARP address resolution, ICMP Echo request and reply engine (real `ping`) | [██████████] 100% |
-| **L3 (IPv4)** | IPv4 packet routing, header parsing, and internet checksumming | [██████████] 100% |
-| **L4 (TCP & UDP)** | BSD socket transport engine with sequence tracking and port multiplexing | [██████████] 100% |
+| **VirtIO-Net Driver** | DMA-based transmit and receive rings, interrupt completion, MAC filtering | (Completed) 100% |
+| **L2 (Ethernet)** | Ethernet II frame encapsulation/decapsulation and MAC addressing | (Completed) 100% |
+| **L3 (ARP & ICMP)** | ARP address resolution, ICMP Echo request and reply engine (real `ping`) | (Completed) 100% |
+| **L3 (IPv4)** | IPv4 packet routing, header parsing, and internet checksumming | (Completed) 100% |
+| **L4 (TCP & UDP)** | BSD socket transport engine with sequence tracking and port multiplexing | (Completed) 100% |
 
 ---
 
@@ -85,10 +85,10 @@
 
 | Telemetry Subsystem | Hardware Handlers | Verified Status |
 | :--- | :--- | :--- |
-| **ACPI Table Ingestion** | RSDP discovery, XSDT/RSDT traversal, FADT, MADT, and DSDT parsing | [██████████] 100% |
-| **Thermal Diagnostics** | Thermal zone temperature polling and status reporting via `/proc/acpi/thermal` | [██████████] 100% |
-| **Battery Monitoring** | Real-time state of charge, voltage, and remaining capacity telemetry | [██████████] 100% |
-| **Power Control (pmctl)** | Unified power transitions (`pmctl poweroff`, `pmctl reboot`) via ACPI and UEFI | [██████████] 100% |
+| **ACPI Table Ingestion** | RSDP discovery, XSDT/RSDT traversal, FADT, MADT, and DSDT parsing | (Completed) 100% |
+| **Thermal Diagnostics** | Thermal zone temperature polling and status reporting via `/proc/acpi/thermal` | (Completed) 100% |
+| **Battery Monitoring** | Real-time state of charge, voltage, and remaining capacity telemetry | (Completed) 100% |
+| **Power Control (pmctl)** | Unified power transitions (`pmctl poweroff`, `pmctl reboot`) via ACPI and UEFI | (Completed) 100% |
 
 ---
 
@@ -96,10 +96,10 @@
 
 | Device Interface | Hardware Driver | Verified Status |
 | :--- | :--- | :--- |
-| **PS/2 Keyboard** | Standard Scan Code Set 1/2 decoder with IRQ 1 interrupt handling | [██████████] 100% |
-| **PS/2 Mouse** | 3-byte standard and 4-byte Intellimouse scroll wheel packet decoder with IRQ 12 | [██████████] 100% |
-| **VirtIO Input** | VirtIO virtual event ring for keyboard, mouse, and tablet devices | [██████████] 100% |
-| **Serial & USB Mouse** | Microsoft 2/3-button serial mouse protocol and USB HID mouse driver | [██████████] 100% |
+| **PS/2 Keyboard** | Standard Scan Code Set 1/2 decoder with IRQ 1 interrupt handling | (Completed) 100% |
+| **PS/2 Mouse** | 3-byte standard and 4-byte Intellimouse scroll wheel packet decoder with IRQ 12 | (Completed) 100% |
+| **VirtIO Input** | VirtIO virtual event ring for keyboard, mouse, and tablet devices | (Completed) 100% |
+| **Serial & USB Mouse** | Microsoft 2/3-button serial mouse protocol and USB HID mouse driver | (Completed) 100% |
 
 ---
 
@@ -107,9 +107,9 @@
 
 | Console Engine | Specifications | Verified Status |
 | :--- | :--- | :--- |
-| **ANSI SGR Parser** | Full 8/16-color VT100/ANSI escape sequence parsing in framebuffer & serial console | [██████████] 100% |
-| **Color Diagnostic Tags** | Standardized status tags (`[ OK ]`, `[INFO]`, `[WARN]`, `[FAIL]`, `[DEBUG]`) | [██████████] 100% |
-| **Verbose Boot Engine** | Diagnostic text-mode scrolling console with clean graphical splash fallback | [██████████] 100% |
+| **ANSI SGR Parser** | Full 8/16-color VT100/ANSI escape sequence parsing in framebuffer & serial console | (Completed) 100% |
+| **Color Diagnostic Tags** | Standardized status tags (`[ OK ]`, `[INFO]`, `[WARN]`, `[FAIL]`, `[DEBUG]`) | (Completed) 100% |
+| **Verbose Boot Engine** | Diagnostic text-mode scrolling console with clean graphical splash fallback | (Completed) 100% |
 
 ---
 
@@ -117,13 +117,13 @@
 
 | Toolchain Component | Implementation Details | Verified Status |
 | :--- | :--- | :--- |
-| **Native Make** | POSIX & GNU Make-compatible build engine with pattern rules & macro expansion | [██████████] 100% |
-| **GNU Binutils: ar** | Static library archive generator, modifier, indexer, and extractor | [██████████] 100% |
-| **GNU Binutils: nm** | Symbol lister for ELF32/ELF64 objects with symbol classification | [██████████] 100% |
-| **GNU Binutils: objdump** | Object file dumper displaying file headers, section headers, syms, and disasm | [██████████] 100% |
-| **GNU Binutils: as / ld** | Assembler driver (`as`) and linker driver (`ld`) targeting the native akaOS ABI | [██████████] 100% |
-| **Compiler Drivers (cc, gcc)** | Native C compiler drivers invoking compiler, assembler, and linker toolchain | [██████████] 100% |
-| **POSIX libc Hardening** | Full syscall wrapper coverage (`posix_spawn`, `execve`, `waitpid`, `pipe`, file I/O) | [██████████] 100% |
+| **Native Make** | POSIX & GNU Make-compatible build engine with pattern rules & macro expansion | (Completed) 100% |
+| **GNU Binutils: ar** | Static library archive generator, modifier, indexer, and extractor | (Completed) 100% |
+| **GNU Binutils: nm** | Symbol lister for ELF32/ELF64 objects with symbol classification | (Completed) 100% |
+| **GNU Binutils: objdump** | Object file dumper displaying file headers, section headers, syms, and disasm | (Completed) 100% |
+| **GNU Binutils: as / ld** | Assembler driver (`as`) and linker driver (`ld`) targeting the native akaOS ABI | (Completed) 100% |
+| **Compiler Drivers (cc, gcc)** | Native C compiler drivers invoking compiler, assembler, and linker toolchain | (Completed) 100% |
+| **POSIX libc Hardening** | Full syscall wrapper coverage (`posix_spawn`, `execve`, `waitpid`, `pipe`, file I/O) | (Completed) 100% |
 
 ---
 
