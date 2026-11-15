@@ -13,7 +13,7 @@
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 1. [Overview](#-overview)
 2. [Key Subsystems](#-key-subsystems)
 3. [Architecture Matrix](#-architecture-matrix)
@@ -23,14 +23,14 @@
 
 ---
 
-## 🚀 Overview
+## Overview
 **akaOS** is an independent, original Unix-like operating system engineered from the hardware up around the **XSCore** kernel.
 
 akaOS runs entirely on its own microkernel, freestanding C runtime library (libc), dynamic ELF linker (`ld-akaos`), native display server, compositor (`lumen`), and userspace utilities. It is **not** Linux; it does not embed the Linux kernel, and does not depend on Linux at runtime.
 
 ---
 
-## 🏗 Key Subsystems
+## Key Subsystems
 
 | Subsystem | Core Features |
 | :--- | :--- |
@@ -43,7 +43,7 @@ akaOS runs entirely on its own microkernel, freestanding C runtime library (libc
 
 ---
 
-## 📐 Architecture Matrix
+## Architecture Matrix
 
 | Architecture | Kernel Image | Firmware Hand-off | Storage Media |
 | :--- | :--- | :--- | :--- |
@@ -56,7 +56,7 @@ akaOS runs entirely on its own microkernel, freestanding C runtime library (libc
 
 ---
 
-## 📏 Footprint Metrics
+## Footprint Metrics
 
 Automated builds enforce extreme size minimization (`-Os`, stripping, ZSTD compression).
 
@@ -67,7 +67,7 @@ Automated builds enforce extreme size minimization (`-Os`, stripping, ZSTD compr
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ```sh
 # 1. Automated Build (includes optimization & strip)
@@ -79,12 +79,12 @@ Automated builds enforce extreme size minimization (`-Os`, stripping, ZSTD compr
 
 ---
 
-## 💡 Contributing
+## Contributing
 All contributors must adhere to the **[docs/rules.md](docs/rules.md)**.
 - **BSD 3-Clause License** required for all contributions.
 - **Verification**: Ensure `./test.sh` and `./tools/build-arch-smoke.sh --all` pass before submitting.
 
 ---
 
-## 📈 Star History
+## Star History
 [![Star History Chart](https://api.star-history.com/svg?repos=akaoperatingsystem/akaOS&type=Date)](https://star-history.com/#akaoperatingsystem/akaOS&Date)
