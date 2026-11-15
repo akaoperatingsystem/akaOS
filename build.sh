@@ -11,8 +11,6 @@ else
     export CXXFLAGS="-Os -flto -ffunction-sections -fdata-sections"
     export LDFLAGS="-Wl,--gc-sections -Wl,-s"
 fi
-export CXXFLAGS="-Os -flto -ffunction-sections -fdata-sections"
-export LDFLAGS="-Wl,--gc-sections -Wl,-s"
 
 set -euo pipefail
 
