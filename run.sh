@@ -82,6 +82,12 @@ Examples:
 EOF
 }
 
+
+trigger_build() {
+    bash "$ROOT_DIR/build.sh" --arch "$menu_arch" --firmware "$menu_firmware" \
+        --disk-type "$menu_disk" --desktop "$menu_desktop" --software "$menu_software"
+}
+
 configure_run_interactively() {
     source "$ROOT_DIR/tools/interactive-ui.sh"
     akaos_ui_require_terminal || exit 2
@@ -371,6 +377,7 @@ Graphics Device     : $menu_vga
 Virtual CPU Cores   : $menu_smp vCPUs
 Virtual RAM Memory  : $menu_mem"
                 if akaos_ui_confirm "Confirm QEMU Run" "$summary" "Start akaOS" "Back"; then
+                    trigger_build
                     INTERACTIVE_RUN_ARGS=(
                         --arch "$menu_arch"
                         --firmware "$menu_firmware"
