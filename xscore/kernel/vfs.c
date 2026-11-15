@@ -1,3 +1,4 @@
+#include <akaos/capability.h>
 #include <xscore/bufcache.h>
 #include <xscore/file.h>
 #include <xscore/memory.h>
@@ -181,7 +182,7 @@ static void current_credentials(uint32_t *uid, uint32_t *gid) {
 static int node_allows(const struct xscore_vnode *node, uint32_t access) {
     uint32_t uid = 0, gid = 0;
     current_credentials(&uid, &gid);
-    if (uid == 0) return 1;
+    if (uid == 0 || xscore_process_has_cap(xscore_process_current(), AKAOS_CAP_DAC_OVERRIDE)) return 1;
     uint32_t shift = uid == node->uid ? 6 : (gid == node->gid ? 3 : 0);
     return (((node->mode >> shift) & access) == access);
 }

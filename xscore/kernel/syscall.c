@@ -1,3 +1,6 @@
+#include <xscore/syscall_frame.h>
+#include <akaos/seccomp.h>
+#include <akaos/prctl.h>
 #include <xscore/bufcache.h>
 #include <xscore/file.h>
 #include <xscore/heap.h>
@@ -783,8 +786,7 @@ uint64_t xscore_syscall_fast_dispatch(uint64_t number, uint64_t argument0,
     return XSCORE_SYSCALL_NOT_HANDLED;
 }
 
-uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
-                                 uint64_t argument1, uint64_t argument2) {
+uint64_t xscore_syscall_dispatch(struct xscore_syscall_frame *frame) {
     struct xscore_fd_table *table = xscore_thread_current_fd_table();
     struct xscore_process *process = xscore_process_current();
     uint32_t cwd_node = process ? xscore_process_cwd_node(process) : 0;
@@ -1832,7 +1834,28 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
         }
         return 0;
     }
-    if (number == AKAOS_SYSCALL_FCHMOD || number == AKAOS_SYSCALL_FCHOWN) {
+    
+    if (number == AKAOS_SYSCALL_PRCTL) {
+        if (!process) return (uint64_t)-AKAOS_EINVAL;
+        switch (argument0) {
+        case AKAOS_PR_SET_SECCOMP:
+            if (argument1 == AKAOS_SECCOMP_MODE_STRICT)
+                return (uint64_t)xscore_seccomp_set_mode_strict(process);
+            return (uint64_t)-AKAOS_EINVAL;
+        case AKAOS_PR_SET_NO_NEW_PRIVS:
+            return (uint64_t)xscore_process_set_no_new_privs(process);
+        default:
+            return (uint64_t)-AKAOS_EINVAL;
+        }
+    }
+    if (number == AKAOS_SYSCALL_SECCOMP) {
+        if (!process) return (uint64_t)-AKAOS_EINVAL;
+        if (argument0 == AKAOS_SECCOMP_SET_MODE_FILTER) {
+             return (uint64_t)xscore_seccomp_set_mode_filter(process, (const struct akaos_sock_fprog *)(uintptr_t)argument1);
+        }
+        return (uint64_t)-AKAOS_EINVAL;
+    }
+if (number == AKAOS_SYSCALL_FCHMOD || number == AKAOS_SYSCALL_FCHOWN) {
         if (!table) return (uint64_t)-AKAOS_EBADF;
         return (uint64_t)(int64_t)xscore_fd_metadata(table, (int)argument0,
             number == AKAOS_SYSCALL_FCHOWN, (uint32_t)argument1, (uint32_t)argument2);

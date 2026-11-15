@@ -521,12 +521,28 @@ xscore_syscall_int80:
     call xscore_process_capture_syscall_context
     movq %rbx, %rsp
 .Lsyscall_dispatch:
-    movq 112(%rbx), %rdi       /* syscall number (user RAX) */
-    movq 72(%rbx), %rsi        /* argument 0 (user RDI) */
-    movq 64(%rbx), %rdx        /* argument 1 (user RSI) */
-    movq 88(%rbx), %rcx        /* argument 2 (user RDX) */
+    subq $64, %rsp
+    movq 112(%rbx), %rax       /* syscall number (user RAX) */
+    movq %rax, 0(%rsp)
+    movq 72(%rbx), %rax        /* argument 0 (user RDI) */
+    movq %rax, 8(%rsp)
+    movq 64(%rbx), %rax        /* argument 1 (user RSI) */
+    movq %rax, 16(%rsp)
+    movq 88(%rbx), %rax        /* argument 2 (user RDX) */
+    movq %rax, 24(%rsp)
+    movq 104(%rbx), %rax       /* argument 3 (user R10) */
+    movq %rax, 32(%rsp)
+    movq 96(%rbx), %rax        /* argument 4 (user R8) */
+    movq %rax, 40(%rsp)
+    movq 80(%rbx), %rax        /* argument 5 (user R9) */
+    movq %rax, 48(%rsp)
+    movq 120(%rbx), %rax       /* instruction pointer (user RIP) */
+    movq %rax, 56(%rsp)
+    
+    movq %rsp, %rdi            /* Frame pointer as first argument */
     andq $-16, %rsp
     call xscore_syscall_dispatch
+    addq $64, %rsp
     movq %rbx, %rsp
     movabsq $0x8000000000000000, %r10
     cmpq %r10, %rax

@@ -1,3 +1,4 @@
+#include <akaos/capability.h>
 #ifndef XSCORE_PROCESS_H
 #define XSCORE_PROCESS_H
 
@@ -6,6 +7,18 @@
 #include <akaos/fs.h>
 
 struct xscore_process;
+int xscore_process_has_cap(const struct xscore_process *process, akaos_cap_t cap);
+struct akaos_cap;
+struct akaos_sock_filter;
+int xscore_process_get_capabilities(const struct xscore_process *process, struct akaos_cap *cap);
+int xscore_process_set_capabilities(struct xscore_process *process, const struct akaos_cap *cap);
+uint32_t xscore_process_get_seccomp_mode(const struct xscore_process *process);
+int xscore_process_set_seccomp_strict(struct xscore_process *process);
+int xscore_process_set_seccomp_filter(struct xscore_process *process, struct akaos_sock_filter *filter, uint16_t len);
+const struct akaos_sock_filter *xscore_process_get_seccomp_filter(const struct xscore_process *process, uint16_t *len);
+int xscore_process_set_no_new_privs(struct xscore_process *process);
+int xscore_process_get_no_new_privs(const struct xscore_process *process);
+
 struct xscore_fd_table;
 struct akaos_mmap_args;
 struct akaos_spawn_file_action;

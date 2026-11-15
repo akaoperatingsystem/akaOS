@@ -1,3 +1,4 @@
+#include <akaos/capability.h>
 #include <xscore/arch.h>
 #include <xscore/file.h>
 #include <xscore/heap.h>
@@ -408,6 +409,14 @@ struct xscore_process {
     uint32_t gid;
     uint32_t effective_uid;
     uint32_t effective_gid;
+    akaos_cap_t capabilities;
+    struct akaos_cap cap_effective;
+    struct akaos_cap cap_permitted;
+    struct akaos_cap cap_inheritable;
+    uint32_t seccomp_mode;
+    struct akaos_sock_filter *seccomp_filter;
+    uint16_t seccomp_filter_len;
+    uint8_t no_new_privs;
     uint32_t saved_uid;
     uint32_t saved_gid;
     char cwd[128];
@@ -3064,7 +3073,7 @@ uint32_t xscore_process_effective_gid(const struct xscore_process *process) {
 int xscore_process_set_uid(struct xscore_process *process, uint32_t uid) {
     if (!process) return -AKAOS_EINVAL;
     uintptr_t flags = xscore_spin_lock_irqsave(&process->lock);
-    if (process->effective_uid == 0) {
+    if (xscore_process_has_cap(process, AKAOS_CAP_ROOT) || process->effective_uid == 0) {
         process->uid = uid;
         process->effective_uid = uid;
         process->saved_uid = uid;
@@ -5873,4 +5882,61 @@ uint64_t xscore_process_brk(struct xscore_process *process, uint64_t new_brk) {
 
     process->heap_break = new_brk;
     return process->heap_break;
+}
+
+int xscore_process_has_cap(const struct xscore_process *process, akaos_cap_t cap) {
+    if (!process) return 0;
+    if (process->capabilities & AKAOS_CAP_ROOT) return 1;
+    return (process->capabilities & cap) != 0;
+}
+
+
+int xscore_process_get_capabilities(const struct xscore_process *process, struct akaos_cap *cap) {
+    if (!process || !cap) return -AKAOS_EINVAL;
+    cap->effective = process->cap_effective.effective;
+    cap->permitted = process->cap_permitted.permitted;
+    cap->inheritable = process->cap_inheritable.inheritable;
+    return 0;
+}
+
+int xscore_process_set_capabilities(struct xscore_process *process, const struct akaos_cap *cap) {
+    if (!process || !cap) return -AKAOS_EINVAL;
+    process->cap_effective.effective = cap->effective;
+    process->cap_permitted.permitted = cap->permitted;
+    process->cap_inheritable.inheritable = cap->inheritable;
+    return 0;
+}
+
+uint32_t xscore_process_get_seccomp_mode(const struct xscore_process *process) {
+    return process ? process->seccomp_mode : AKAOS_SECCOMP_MODE_DISABLED;
+}
+
+int xscore_process_set_seccomp_strict(struct xscore_process *process) {
+    if (!process) return -AKAOS_EINVAL;
+    process->seccomp_mode = AKAOS_SECCOMP_MODE_STRICT;
+    return 0;
+}
+
+int xscore_process_set_seccomp_filter(struct xscore_process *process, struct akaos_sock_filter *filter, uint16_t len) {
+    if (!process || !filter) return -AKAOS_EINVAL;
+    process->seccomp_filter = filter;
+    process->seccomp_filter_len = len;
+    process->seccomp_mode = AKAOS_SECCOMP_MODE_FILTER;
+    return 0;
+}
+
+const struct akaos_sock_filter *xscore_process_get_seccomp_filter(const struct xscore_process *process, uint16_t *len) {
+    if (!process) return NULL;
+    if (len) *len = process->seccomp_filter_len;
+    return process->seccomp_filter;
+}
+
+int xscore_process_set_no_new_privs(struct xscore_process *process) {
+    if (!process) return -AKAOS_EINVAL;
+    process->no_new_privs = 1;
+    return 0;
+}
+
+int xscore_process_get_no_new_privs(const struct xscore_process *process) {
+    return process ? process->no_new_privs : 0;
 }
