@@ -6,7 +6,9 @@ static audio_params_t current_params = {48000, 2, 16};
 
 static int audio_open(vfs_node_t *node, uint32_t flags) { return 0; }
 static int audio_read(vfs_node_t *node, uint64_t offset, uint32_t size, uint8_t *buffer) { return 0; }
-static int audio_write(vfs_node_t *node, uint64_t offset, uint32_t size, uint8_t *buffer) { return 0; }
+#include "pcm.h"
+static pcm_buffer_t pcm_buf;
+static int audio_write(vfs_node_t *node, uint64_t offset, uint32_t size, uint8_t *buffer) { return pcm_buffer_push(&pcm_buf, buffer, size); }
 
 static int audio_ioctl(vfs_node_t *node, uint32_t cmd, void *arg) { 
     switch (cmd) {
