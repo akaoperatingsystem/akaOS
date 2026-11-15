@@ -657,7 +657,8 @@ if [[ "$arch" == "x86_32" ]]; then
     if [[ "$firmware" == "uefi" && "$boot_disk_type" == "fat32" ]]; then
         if [[ ! -f "$ROOT_DIR/build/akaos32.img" ]]; then
             build_args=(--arch x86_32 --firmware uefi --disk-type fat32 --software "$menu_software" --boot-mode "$boot_mode")
-            if [[ "$menu_desktop" != "none" ]]; then
+            if [[ "$AKAOS_DEBUG" == "1" ]]; then build_args+=(--debug); fi
+    if [[ "$menu_desktop" != "none" ]]; then
                 build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
             fi
             "$ROOT_DIR/build.sh" "${build_args[@]}"

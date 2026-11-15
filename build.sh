@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+
+# GLOBAL OPTIMIZATION INJECTION (akaOS Minimization Directive)
+
+if [[ "$AKAOS_DEBUG" == "1" ]]; then
+    export CFLAGS="-g -O0"
+    export CXXFLAGS="-g -O0"
+    export LDFLAGS=""
+else
+    export CFLAGS="-Os -flto -ffunction-sections -fdata-sections"
+    export CXXFLAGS="-Os -flto -ffunction-sections -fdata-sections"
+    export LDFLAGS="-Wl,--gc-sections -Wl,-s"
+fi
+export CXXFLAGS="-Os -flto -ffunction-sections -fdata-sections"
+export LDFLAGS="-Wl,--gc-sections -Wl,-s"
+
 set -euo pipefail
 
 # The build host can carry include and pkg-config search paths for an unrelated
@@ -582,6 +597,11 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             usage
             exit 0
+            ;;
+
+        --debug)
+            export AKAOS_DEBUG=1
+            shift
             ;;
         *)
             echo "Unknown option '$1'; use --help for usage" >&2
@@ -3429,7 +3449,7 @@ initramfs_profile_args=()
 if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
     initramfs_profile_args+=(--profile minimal)
 fi
-python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" \
+python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.raw" \ && zstd -19 -T0 "$BUILD_DIR/initramfs.img.raw" -o "$BUILD_DIR/initramfs.img"
     --exclude-long-vfs-names \
     "${initramfs_profile_args[@]}" \
     --dir "/bin" \
@@ -3948,5 +3968,19 @@ if [[ "$need_iso_image" -eq 1 ]]; then
         bios_args+=(--verbose)
     fi
     bios_args+=(--boot-mode "$boot_mode")
-    bash "$ROOT_DIR/tools/build-bios.sh" "${bios_args[@]}"
+    strip_artifacts
+bash "$ROOT_DIR/tools/build-bios.sh" "${bios_args[@]}"
+log_artifact_sizes
 fi
+
+# METRICS LOGGING (akaOS Minimization Directive)
+log_artifact_sizes() {
+    echo "--- Artifact Sizes ---" >> build_metrics.log
+    find build/ -maxdepth 1 -name "*.iso" -o -name "*.img" -o -name "*.ELF" -exec du -h {} + >> build_metrics.log
+    echo "----------------------" >> build_metrics.log
+}
+
+# POST-BUILD STRIPPING (akaOS Minimization Directive)
+strip_artifacts() {
+    find build/ -name "*.ELF" -exec strip --strip-all {} +
+}
