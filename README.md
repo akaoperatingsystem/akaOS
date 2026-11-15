@@ -1,55 +1,81 @@
 # akaOS
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.6.3-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.5.3-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.6.5-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.5.5-green.svg)](sdk/include/akaos/version.h)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
 [![Build & Test](https://img.shields.io/badge/QEMU%20Tests-Passing-brightgreen.svg)](docs/development/workflow.md)
 
-**akaOS** is an original, independent Unix-like operating system engineered from scratch around the **XSCore** kernel.
+**akaOS** is an independent, original Unix-like operating system engineered from the hardware up around the **XSCore** kernel.
 
-akaOS runs entirely on its own kernel, freestanding C library (libc), dynamic loader (`ld-akaos`), native display server, and userspace applications. It is **not** Linux, does **not** embed the Linux kernel, and does **not** rely on Linux at runtime (Linux is used solely as a development cross-compilation host).
+akaOS runs entirely on its own microkernel, freestanding C runtime library (libc), dynamic ELF linker (`ld-akaos`), native display server, compositor (`lumen`), and userspace utilities. It is **not** Linux, does **not** embed the Linux kernel, and does **not** depend on Linux at runtime (Linux is used solely as a cross-compilation build host).
 
 ---
 
 ## Live Progress & Status
 
-Track real-time progress across hardware architectures, graphics drivers, desktop environments and more in **[PROGRESS.md](PROGRESS.md)**.
+Track real-time engineering milestones across all subsystems, hardware drivers, and size metrics in **[PROGRESS.md](PROGRESS.md)**.
 
 ---
 
-## Key Features
+## Key Subsystems & Architecture
 
-- **XSCore Kernel**: Modular preemptive microkernel with 4-level paging, guarded stacks, Local APIC timer preemption, kernel threads, real UID/GID credentials, and demand paging with Copy-on-Write (COW).
-- **6 Hardware Architectures**: Bootable native paths across x86-64, x86-32, AArch64, ARM32, RISC-V64, and RISC-V32 under QEMU.
-- **Dual Firmware Support**: Boots via UEFI (GOP framebuffer & memory handoff) and legacy BIOS (Multiboot2) on x86 platforms.
-- **Native Userspace & C Runtime**: Freestanding C runtime (libc), dynamic ELF linker (`ld-akaos`), POSIX syscall ABI subset, and standard Unix shell (`akash`).
-- **Complete CLI Toolkit**: Over 100 native command-line utilities including `ls`, `cat`, `grep`, `sed`, `tar`, `ps`, `sysmon`, `curl`, `ssh`, `sshd`, `httpd`, and network diagnostics.
-- **Native Graphical Stack**:
-  - Native compositor **Lumen** and resident desktop shell **Aurora**.
-  - Custom X11 display server (`xserver`) supporting core X11 protocols, `SHAPE`, `X-Resource`, and `BIG-REQUESTS`.
-  - Upstream porting layer for unmodified desktop software (Cairo, Pango, HarfBuzz, FreeType, Fontconfig, GLib, GTK3/GTK4, Qt6, LXQt, and LXDE).
-- **Persistent Storage (akaFS)**: Dynamic VFS with an overlay filesystem backing persistent storage on VirtIO or ATA/IDE disks across reboots.
+- **XSCore Microkernel**: Modular, preemptive kernel featuring 4-level hierarchical paging, guarded kernel stacks with ISTs, Local APIC timer preemption, kernel threads, real UID/GID process credentials, and demand paging with Copy-on-Write (COW).
+- **Kernel Security Hardening**:
+  - **KASLR**: Boot-time physical and virtual address slide using hardware entropy (RDRAND, RDTSC, APIC timer, and memory map).
+  - **Seccomp-BPF**: In-kernel classical Berkeley Packet Filter (cBPF) execution engine filtering system calls with `prctl(PR_SET_SECCOMP)` and `seccomp(SECCOMP_SET_MODE_FILTER)`.
+  - **POSIX Capabilities**: Fine-grained capability bitmask (`akaos_cap_t`) replacing monolithic root checks across process management, raw I/O, network administration, and VFS permissions.
+- **6 Hardware Architectures**: Native boot and execution paths across **x86-64**, **x86-32**, **AArch64**, **ARM32**, **RISC-V64**, and **RISC-V32**.
+- **Dual Firmware Integration**:
+  - **UEFI Runtime Services**: Preserved runtime tables (`GetTime`, `SetTime`, `GetVariable`, `SetVariable`, `ResetSystem`), native NVRAM variable store accessed via `/dev/efivar`, Secure Boot key validation chain (`PK`, `KEK`, `db`, `dbx`), and Capsule Update protocol.
+  - **Legacy BIOS Fallback**: BIOS Data Area (BDA at `0x400`), Extended BIOS Data Area (EBDA), and protected-to-real-mode thunking interface for BIOS interrupts (INT 10h VBE, INT 13h Disk, INT 15h E820).
+- **Storage Subsystems & Hardware Drivers**:
+  - **NVMe**: PCIe BAR MMIO discovery, Admin/IO queue management, 64-bit DMA, and SMART telemetry (`smartctl`).
+  - **AHCI / SATA**: HBA reset, Global Host Control (GHC), BOHC handoff, FIS/PRDT scatter-gather DMA, LBA48 read/write, SMART diagnostics, and TRIM.
+  - **ATA / IDE**: Direct PIO multi-sector transfer engine for legacy storage.
+  - **Floppy Disk Controller (FDC)**: Standard PC 82078 FDC driver with MSR status polling, cylinder seek calibration, and disk formatting ioctls.
+  - **Buffer Cache (bufcache)**: In-memory LRU block cache with hash-based sector lookup and dirty-page synchronization.
+  - **Persistent Filesystem (akaFS)**: VFS overlay filesystem preserving changes across reboots on VirtIO and ATA/IDE storage.
+- **Graphics & KMS**:
+  - **DRM/KMS Engine**: Direct Rendering Manager with atomic mode setting (`crtc`, `connector`, `plane`), GEM memory buffer allocation, and fence-based command synchronization.
+  - **Hardware Drivers**: VirtIO-GPU hardware accelerator and Bochs VBE display adapter.
+  - **Compositor Integration**: Native **Lumen** compositor operating with atomic page flipping and hardware cursor overlay planes.
+- **Hardware-Compliant Network Stack**:
+  - **VirtIO-Net Driver**: DMA-based transmit and receive descriptor rings with interrupt completion handling.
+  - **L2 / L3 / L4 Protocols**: Ethernet II framing, ARP cache resolution, IPv4 packet routing and header checksumming, ICMP Echo request/reply engine (real `ping`), and BSD socket transport (UDP and TCP).
+- **Power & Platform Telemetry**:
+  - **ACPI**: Dual-mode RSDP discovery (UEFI configuration tables and BIOS memory scanning), XSDT/RSDT traversal, FADT, MADT, and DSDT parsing.
+  - **Platform Management**: Thermal zone temperature reporting, battery state monitoring, and system power transitions (`pmctl poweroff`, `pmctl reboot`).
+- **Input Subsystem**:
+  - Interrupt-driven drivers for PS/2 keyboard and mouse (standard and Intellimouse scroll wheel packets).
+  - VirtIO input device driver (keyboard, mouse, tablet).
+  - Serial mouse and USB HID device drivers.
+- **Color-Coded Console & Diagnostics**:
+  - Built-in ANSI/VT100 SGR color escape sequence parser supporting full 8/16-color palettes in framebuffer console and serial output.
+  - Standardized diagnostic status tags (`[ OK ]`, `[INFO]`, `[WARN]`, `[FAIL]`) for verbose boot mode.
+- **Native Self-Hosting Toolchain**:
+  - **Make**: Native POSIX and GNU Make-compatible build engine supporting variable expansion, pattern rules, and dependency resolution.
+  - **Binutils**: Native archiver (`ar`), symbol lister (`nm`), object dumper (`objdump`), assembler driver (`as`), and linker driver (`ld`).
+  - **Compiler Drivers**: Native `cc` and `gcc` drivers for C source compilation on akaOS.
+- **Complete CLI Toolkit**: Over 124 native command-line utilities including `akash`, `bash`, `ls`, `cat`, `grep`, `sed`, `awk`, `tar`, `patch`, `diff`, `curl`, `ssh`, `sshd`, `httpd`, `efivar`, and `smartctl`.
 
 ---
 
 ## Architecture Portability Matrix
 
-| Architecture | Kernel Binary | Firmware Hand-off | Storage Media | QEMU Target |
-| :--- | :--- | :--- | :--- | :--- |
-| **x86-64** | `XSCORE.ELF` | UEFI / SeaBIOS | FAT32 (`.img`) / ISO (`.iso`) | `q35` / OVMF |
-| **x86-32** | `XSCORE32.ELF` | UEFI / SeaBIOS | FAT32 (`.img`) / ISO (`.iso`) | `pc` / SeaBIOS |
-| **AArch64** | `XSCORE_AARCH64.ELF` | Direct kernel | VirtIO MMIO | `virt` |
-| **ARM32** | `XSCORE_ARM32.ELF` | Direct kernel | VirtIO MMIO | `virt` |
-| **RISC-V64** | `XSCORE_RISCV64.ELF` | Direct kernel | VirtIO MMIO | `virt` |
-| **RISC-V32** | `XSCORE_RISCV32.ELF` | Direct kernel | VirtIO MMIO | `virt` |
-
-For detailed technical specifications, explore the [Documentation Index](docs/README.md).
+| Architecture | Target Triple | Kernel Image | Firmware Hand-off | Storage Media | Default QEMU Target |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **x86-64** | `x86_64-unknown-none-elf` | `XSCORE.ELF` | UEFI (GOP) / BIOS (Multiboot2) | FAT32 (`.img`) / Dual Hybrid ISO (`.iso`) | `q35` / OVMF |
+| **x86-32** | `i386-unknown-none-elf` | `XSCORE32.ELF` | UEFI / SeaBIOS (Multiboot2) | FAT32 (`.img`) / Hybrid ISO (`.iso`) | `pc` / SeaBIOS |
+| **AArch64** | `aarch64-unknown-none-elf` | `XSCORE_AARCH64.ELF` | Direct kernel boot | VirtIO MMIO / RAMFB | `virt` / Cortex-A57 |
+| **ARM32** | `armv7-unknown-none-eabi` | `XSCORE_ARM32.ELF` | Direct kernel boot | VirtIO MMIO / RAMFB | `virt` / Cortex-A7 |
+| **RISC-V64** | `riscv64-unknown-none-elf` | `XSCORE_RISCV64.ELF` | Direct kernel boot | VirtIO MMIO / RAMFB | `virt` / RV64GC |
+| **RISC-V32** | `riscv32-unknown-none-elf` | `XSCORE_RISCV32.ELF` | Direct kernel boot | VirtIO MMIO / RAMFB | `virt` / RV32GC |
 
 ---
 
 ## Quick Start
 
-### 1. Host Setup & Toolchain Check
+### 1. Host Setup & Dependencies
 
 On Windows, use **Ubuntu WSL**:
 ```powershell
@@ -68,12 +94,12 @@ Verify build requirements using the automated dependency assistant:
   sudo apt update && sudo apt install -y clang lld llvm binutils python3 python3-pil \
     fonts-dejavu-core dosfstools mtools grub-pc-bin grub-common grub2-common \
     grub-efi-amd64-bin grub-efi-ia32-bin xorriso qemu-system-x86 qemu-system-arm \
-    qemu-system-misc ovmf whiptail
+    qemu-system-misc ovmf whiptail zstd
   ```
 - **Arch Linux**:
   ```sh
   sudo pacman -S --needed clang lld llvm binutils python python-pillow \
-    ttf-dejavu dosfstools mtools grub xorriso qemu-full edk2-ovmf libnewt
+    ttf-dejavu dosfstools mtools grub xorriso qemu-full edk2-ovmf libnewt zstd
   ```
 - **Fedora**:
   ```sh
@@ -81,43 +107,35 @@ Verify build requirements using the automated dependency assistant:
     dejavu-sans-fonts dosfstools mtools grub2-tools grub2-tools-extra \
     grub2-pc-modules grub2-efi-x64-modules grub2-efi-ia32-modules xorriso \
     qemu-system-x86 qemu-system-arm qemu-system-aarch64 qemu-system-riscv \
-    edk2-ovmf newt
+    edk2-ovmf newt zstd
   ```
-
-See [docs/BUILDING.md](docs/BUILDING.md) for openSUSE and Alpine instructions.
 
 ---
 
-### 2. Build & Boot (Interactive Menu)
+### 2. Build & Launch
 
-Running without arguments opens a full-screen terminal menu:
+Run without arguments to launch the interactive configuration menu:
 
 ```sh
-# 1. Build kernel and disk image
+# 1. Build kernel, toolchain, and system images
 ./build.sh
 
 # 2. Boot inside QEMU
 ./run.sh
 ```
 
-*Navigation:* Arrow keys to move, Tab to switch buttons, Enter to select, and Escape to cancel. (Falls back to a clean text-based menu if `whiptail` is not installed).
-
----
-
-### 3. Non-Interactive CLI Commands
-
-You can build and launch target configurations directly:
+#### Direct Command Line Targets
 
 ```sh
 # x86-64 UEFI (Default)
 ./build.sh --arch x86_64 --firmware uefi --disk-type fat32
 ./run.sh --arch x86_64 --firmware uefi --disk-type fat32 --gui
 
-# x86-64 Dual UEFI/BIOS Hybrid ISO
+# x86-64 Dual UEFI/BIOS Hybrid ISO (Optimized <30MB)
 ./build.sh --arch x86_64 --firmware both --disk-type iso
 ./run.sh --arch x86_64 --firmware bios --disk-type iso
 
-# x86-32 BIOS (ATA/IDE persistent storage)
+# x86-32 BIOS (Optimized ~12MB)
 ./build.sh --arch x86_32 --firmware bios --disk-type iso
 ./run.sh --arch x86_32 --firmware bios --disk-type iso
 
@@ -130,113 +148,40 @@ You can build and launch target configurations directly:
 ./run.sh --arch riscv64 --headless
 ```
 
-#### Key Options for `run.sh`
-- `--gui`: Launch with graphical display output (QEMU GTK/SDL window).
-- `--headless`: Run purely over serial console in the terminal.
-<!-- coderabbit-ai-generated:v1 -->
-
-<!-- coderabbit-ai-generated-section:v1:5207c3c0abb4ef4237a4fb7972952ccc05acbc6e20b7a45678d8e2c6823762e8 -->
-
-- `./debug.sh`: Boot paused with a GDB server on a Unix socket in a private temporary directory. Use the printed attach command (GDB 9 or newer).
-
-<!-- /coderabbit-ai-generated:v1 -->
-
----
-
-## Default Credentials
-
-The generated development image includes two pre-configured accounts:
-
-| Username | Password | Privileges | Initial Shell Prompt |
-| :--- | :--- | :--- | :--- |
-| **`root`** | `root` | Superuser / Administrator | `#` |
-| **`user`** | `akaos` | Standard User | `$` |
-
-*Security notice: Change these passwords with `passwd` before deploying images outside local development.*
-
----
-
-## Repository Structure
-
-```text
-akaOS/
-├── boot/              # UEFI bootloader (BOOTX64.EFI) and handoff protocol
-├── xscore/            # XSCore kernel (core operating system)
-│   ├── arch/          # Architecture HAL (x86_64, x86_32, aarch64, arm32, riscv64, riscv32)
-│   ├── kernel/        # Scheduler, processes, threads, VFS, syscalls, IPC, TTY, APIC
-│   └── memory/        # Physical bitmap allocator, 4-level paging, kernel heap
-├── userspace/         # Native userspace ecosystem
-│   ├── bin/           # 100+ native applications, shells, display servers, and GUIs
-│   ├── libc/          # Freestanding C library, math, pthreads, POSIX wrapper
-│   ├── linker/        # Dynamic ELF linker (ld-akaos)
-│   └── etc/           # System configuration, passwd, services
-├── sdk/               # Shared kernel-to-userspace ABI and boot headers
-├── tools/             # Cross-compilation scripts, QEMU test harnesses, patch toolchain
-└── docs/              # In-depth technical documentation categorized by subsystem
-```
-
 ---
 
 ## Verification & Automated Testing
 
-akaOS maintains an extensive automated QEMU regression suite:
+akaOS maintains an extensive automated regression test harness:
 
 ```sh
-# Run full automated boot & regression test
-./test.sh
-
-# Verify all 6 architecture compiler targets (smoke test)
+# Verify all 6 architecture compiler targets (smoke build)
 ./tools/build-arch-smoke.sh --all
 
-# Test filesystem persistence across reboots
-./tools/test-persistence.sh
+# Run full automated boot and regression suite
+./test.sh
 
 # Test ISO booting under both UEFI and SeaBIOS
 ./tools/test-iso.sh
 
 # Test user authentication and privilege separation
 ./tools/test-auth.sh
+
+# Test filesystem persistence across reboots
+./tools/test-persistence.sh
 ```
 
 ---
 
-## Contributor & AI Guidelines
+## Default Credentials
 
-All contributors — **both human developers and anyone utilizing AI coding assistants** (Cursor, Copilot, DeepSeek, Claude, ChatGPT, etc.) — **must read and follow the mandatory guidelines** in **[docs/rules.md](docs/rules.md)**:
-
-1. **Universal BSD 3-Clause License**: Every single line of code, header, script, and documentation contributed to akaOS must be licensed under the [BSD 3-Clause License](LICENSE). Incompatible or copyleft code must never be introduced into core subsystems.
-2. **Upstream Desktop Purity**: All desktop environments (GNOME, KDE, XFCE, MATE, Cinnamon, LXQt, LXDE) and window managers must run as **completely unmodified upstream software**. Compatibility belongs inside akaOS subsystems (kernel, libc, display server), never by patching desktop code.
-3. **Code Quality & Verification**: All code (human-written or AI-assisted) must be verified against automated QEMU regression scripts (`./test.sh`) and architecture targets (`./tools/build-arch-smoke.sh --all`).
-4. **Independent Dual Versioning**: Follow the semantic versioning contract for akaOS and the XSCore kernel defined in [`sdk/include/akaos/version.h`](sdk/include/akaos/version.h).
-
----
-
-## Contributing, Bug Reports & Pull Requests
-
-We welcome issues, feature requests, bug reports, and pull requests!
-
-### Reporting Bugs
-If you find a bug, crash, or hardware incompatibility:
-1. Open an issue on our [GitHub Issues](https://github.com/akaoperatingsystem/akaOS/issues) tracker.
-2. Include the targeted architecture (`x86-64`, `x86-32`, `AArch64`, `ARM32`, `RISC-V64`, or `RISC-V32`) and firmware (`UEFI` or `BIOS`).
-3. Attach relevant reproduction steps and serial boot logs.
-
-### Submitting Pull Requests
-1. **Fork** the repository and create your feature branch:
-   ```sh
-   git checkout -b feature/your-feature-name
-   ```
-2. **Adhere to [docs/rules.md](docs/rules.md)** (BSD 3-Clause License and zero-patching upstream rule).
-3. **Verify Builds & Tests**:
-   ```sh
-   ./tools/build-arch-smoke.sh --all
-   ./test.sh
-   ```
-4. **Submit a Pull Request** against the `main` branch on [GitHub Pull Requests](https://github.com/akaoperatingsystem/akaOS/pulls).
+| Username | Password | Privileges | Initial Shell Prompt |
+| :--- | :--- | :--- | :--- |
+| **`root`** | `root` | Superuser / Administrator | `#` |
+| **`user`** | `akaos` | Standard User | `$` |
 
 ---
 
 ## License
 
 akaOS is open-source software licensed under the **[BSD 3-Clause License](LICENSE)**.
-You are completely free to use, modify, distribute, and fork this project for personal, educational, or commercial purposes.
