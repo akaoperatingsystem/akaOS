@@ -1,21 +1,38 @@
 #!/usr/bin/env bash
 
+# ...
+
 # GLOBAL OPTIMIZATION INJECTION (akaOS Minimization Directive)
 
-if [[ "$AKAOS_DEBUG" == "1" ]]; then
+set -euo pipefail
+
+
+# Modular Bundling Logic
+get_initramfs_args() {
+    local args=()
+    # Desktop exclusion
+    if [[ "$menu_desktop" == "none" ]]; then
+        args+=(--exclude "aurora" --exclude "lumen" --exclude "openbox" --exclude "pcmanfm" --exclude "lxpanel")
+    fi
+    # Software bundle-specific exclusions
+    if [[ "$menu_software" == "minimal" || "$menu_software" == "net" || "$menu_software" == "dev" ]]; then
+        args+=(--exclude "gtk*" --exclude "qt*" --exclude "cairo" --exclude "pango" --exclude "freetype")
+    fi
+    echo "${args[@]}"
+}
+
+
+# GLOBAL OPTIMIZATION INJECTION (akaOS Minimization Directive)
+if [[ "${AKAOS_DEBUG:-0}" == "1" ]]; then
     export CFLAGS="-g -O0"
     export CXXFLAGS="-g -O0"
     export LDFLAGS=""
 else
     export CFLAGS="-Os -flto -ffunction-sections -fdata-sections"
     export CXXFLAGS="-Os -flto -ffunction-sections -fdata-sections"
-    
     export LDFLAGS="-Wl,--gc-sections -Wl,-s"
 fi
-log_artifact_sizes
 
-
-set -euo pipefail
 
 # The build host can carry include and pkg-config search paths for an unrelated
 # toolchain.  Clang honours CPATH even under -nostdinc and pkg-config prefers
@@ -3450,7 +3467,7 @@ initramfs_profile_args=()
 if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
     initramfs_profile_args+=(--profile minimal)
 fi
-python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.raw" \ && zstd -19 -T0 "$BUILD_DIR/initramfs.img.raw" -o "$BUILD_DIR/initramfs.img"
+python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img.raw" $(get_initramfs_args) \ && zstd -19 -T0 "$BUILD_DIR/initramfs.img.raw" -o "$BUILD_DIR/initramfs.img"
     --exclude-long-vfs-names \
     "${initramfs_profile_args[@]}" \
     --dir "/bin" \
