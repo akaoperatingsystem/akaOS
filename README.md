@@ -185,3 +185,9 @@ akaOS maintains an extensive automated regression test harness:
 ## License
 
 akaOS is open-source software licensed under the **[BSD 3-Clause License](LICENSE)**.
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=akaoperatingsystem/akaOS&type=Date)](https://star-history.com/#akaoperatingsystem/akaOS&Date)
