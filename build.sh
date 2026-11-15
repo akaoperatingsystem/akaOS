@@ -7,6 +7,24 @@
 set -euo pipefail
 
 # Modular Bundling Logic
+
+get_initramfs_args() {
+    local args=()
+    # Desktop exclusion
+    if [[ "$menu_desktop" == "none" ]]; then
+        args+=(--exclude-prefix "aurora" --exclude-prefix "lumen" --exclude-prefix "openbox" --exclude-prefix "pcmanfm" --exclude-prefix "lxpanel")
+    fi
+    # Software bundle-specific exclusions
+    if [[ "$menu_software" == "minimal" || "$menu_software" == "net" || "$menu_software" == "dev" ]]; then
+        args+=(--exclude-prefix "gtk" --exclude-prefix "qt" --exclude-prefix "cairo" --exclude-prefix "pango" --exclude-prefix "freetype")
+    fi
+    echo "${args[@]}"
+}
+"
+}
+
+
+# Modular Bundling Logic
 get_initramfs_args() {
     local args=()
     # Desktop exclusion
@@ -826,7 +844,7 @@ for source in "${USER_LIBC_SOURCES[@]}"; do
         -ffunction-sections -fdata-sections \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" -I"./xscore/include" \
         -c "$source" -o "$object"
     USER_LIBC_OBJECTS+=("$object")
 done
@@ -851,7 +869,7 @@ build_user_program() {
         -ffunction-sections -fdata-sections \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$main_object"
     ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
@@ -874,7 +892,7 @@ build_xserver() {
             -ffunction-sections -fdata-sections \
             -mno-red-zone -mcmodel=small \
             -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$GENERATED_DIR" -I"$source_dir/include" \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" -I"$GENERATED_DIR" -I"$source_dir/include" -I"./xscore/include" \
             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
     done
@@ -896,7 +914,7 @@ build_bzip2() {
             -ffreestanding -fno-builtin -fno-stack-protector -fpie \
             -ffunction-sections -fdata-sections \
             -mno-red-zone -mcmodel=small \
-            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$source_dir" \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" -I"$source_dir" -I"./xscore/include" \
             -D_FILE_OFFSET_BITS=64 \
             -c "$source_dir/$unit.c" -o "$object"
         objects+=("$object")
@@ -932,7 +950,7 @@ build_user_cpp_program() {
         -fexceptions -frtti \
         -D_LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE \
         -mno-red-zone -mcmodel=small \
-        -I"$cxx_runtime_dir/include/c++/v1" -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$cxx_runtime_dir/include/c++/v1" -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$main_object"
     ld.lld -nostdlib -pie -static --eh-frame-hdr -z max-page-size=0x1000 \
         --undefined=__register_frame \
@@ -953,7 +971,7 @@ build_user_pie_program() {
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$main_object"
     ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
@@ -974,7 +992,7 @@ build_account_program() {
         -ffunction-sections -fdata-sections \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$main_object"
     ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
         -T "$ROOT_DIR/userspace/linker/user.ld" \
@@ -1006,7 +1024,7 @@ build_shared_libc() {
             -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
             -mno-red-zone -mcmodel=small \
             -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+            -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
             -c "$source" -o "$object"
         shared_objects+=("$object")
     done
@@ -1041,12 +1059,12 @@ build_cxx_shared_object() {
         -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
         -fno-exceptions -fno-rtti \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$ROOT_DIR/userspace/libc/tests/shared_cxx.cpp" -o "$object"
     clang --target=x86_64-unknown-none-elf -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$ROOT_DIR/userspace/libc/crt/cxx-dso-fini.c" -o "$fini_object"
     ld.lld -m elf_x86_64 -nostdlib -shared -soname "$output" \
         --hash-style=gnu -z max-page-size=0x1000 --no-undefined \
@@ -1086,7 +1104,7 @@ build_dynamic_cpp_program() {
         -ffreestanding -fno-builtin -fstack-protector-strong -fpie \
         -fexceptions -frtti -D_LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE \
         -mno-red-zone -mcmodel=small \
-        -I"$runtime_dir/include/c++/v1" -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$runtime_dir/include/c++/v1" -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1181,7 +1199,7 @@ build_runtime_library() {
         -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
         -mno-red-zone -mcmodel=small \
         -DAKAOS_RUNTIME_ID="$runtime_id" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -shared -soname "$output" -z max-page-size=0x1000 \
         "$object" "$BUILD_DIR/runtime-io.o" -o "$BUILD_DIR/$output"
@@ -1197,7 +1215,7 @@ build_dynamic_program() {
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
         -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$main_object"
     ld.lld -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1226,7 +1244,7 @@ build_upstream_glib_program() {
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
         "${upstream_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
 
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
@@ -1284,7 +1302,7 @@ build_upstream_cairo_program() {
         -I"$UPSTREAM_CAIRO_BUILD/src" \
         -I"$BUILD_DIR/upstream-source/cairo-1.18.6/src" \
         -I"$BUILD_DIR/upstream-sysroot/pixman-0.46.4-x86_64/usr/local/include/pixman-1" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     local -a cairo_glib_libs=()
     if [[ -f "$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0" ]]; then
@@ -1315,7 +1333,7 @@ build_upstream_freetype_program() {
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
         -I"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/include/freetype2" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1335,7 +1353,7 @@ build_upstream_harfbuzz_program() {
         -mno-red-zone -mcmodel=small \
         -I"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/include/freetype2" \
         -I"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/include/harfbuzz" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1357,7 +1375,7 @@ build_upstream_fontconfig_program() {
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
         -I"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/include" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1379,7 +1397,7 @@ build_upstream_fribidi_program() {
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
         -I"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/include" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1406,7 +1424,7 @@ build_upstream_pango_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1432,7 +1450,7 @@ build_upstream_graphene_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1469,7 +1487,7 @@ build_upstream_gtk_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     mkdir -p "$BUILD_DIR/gtk-wayland-test"
     "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner" server-header \
@@ -1480,7 +1498,7 @@ build_upstream_gtk_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -I"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/include" \
         -I"$BUILD_DIR/gtk-wayland-test" \
         -c "$wayland_source" -o "$wayland_object"
@@ -1488,7 +1506,7 @@ build_upstream_gtk_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -I"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/include" \
         -I"$BUILD_DIR/gtk-wayland-test" \
         -c "$protocol_source" -o "$protocol_object"
@@ -1521,7 +1539,7 @@ build_upstream_gtk3_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1551,7 +1569,7 @@ build_upstream_gtk3_x11_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1582,7 +1600,7 @@ build_upstream_x11_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1612,7 +1630,7 @@ build_upstream_x11_wm_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1669,28 +1687,28 @@ build_upstream_wayland_bridge_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -I"$include_dir" -I"$protocol_dir" \
         -c "$protocol_source" -o "$protocol_object"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -I"$include_dir" -I"$protocol_dir" \
         -c "$layer_protocol_source" -o "$layer_protocol_object"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -I"$include_dir" -I"$protocol_dir" \
         -c "$foreign_toplevel_protocol_source" -o "$foreign_toplevel_protocol_object"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -I"$include_dir" -I"$protocol_dir" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
@@ -1724,7 +1742,7 @@ build_upstream_xkbcommon_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small "${pkg_cflags[@]}" \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
@@ -1761,21 +1779,21 @@ build_upstream_wayland_program() {
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$include_dir" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" -I"$include_dir" \
         -I"$protocol_dir" \
         -c "$source" -o "$object"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -I"$include_dir" -I"$protocol_dir" \
         -c "$protocol_source" -o "$protocol_object"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
         -mno-red-zone -mcmodel=small \
-        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+        -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -I"$include_dir" -I"$protocol_dir" \
         -c "$foreign_protocol_source" -o "$foreign_protocol_object"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
@@ -1793,7 +1811,7 @@ clang --target=x86_64-unknown-none-elf \
     -std=c17 -O2 -Wall -Wextra -Werror \
     -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
     -mno-red-zone -mcmodel=small \
-    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
+    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
     -c "$ROOT_DIR/userspace/libc/tests/desktop_io.c" \
     -o "$BUILD_DIR/runtime-io.o"
 
