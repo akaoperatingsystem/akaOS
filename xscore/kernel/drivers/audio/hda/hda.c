@@ -50,3 +50,20 @@ void hda_setup_stream(hda_controller_t *controller, int stream_idx, uint64_t bdl
     mmio_write32(controller->base_addr + HDA_REG_SDNBDPL(stream_idx), (uint32_t)bdl_addr);
     mmio_write8(controller->base_addr + HDA_REG_SDNCTL(stream_idx), 0x01); // Run
 }
+
+// BDL Entry Definition
+typedef struct {
+    uint64_t addr;
+    uint32_t len;
+    uint32_t flags;
+} hda_bdl_entry_t;
+
+void hda_dma_setup(hda_controller_t *controller, pcm_buffer_t *pcm) {
+    hda_bdl_entry_t *bdl = (hda_bdl_entry_t*)kmalloc(sizeof(hda_bdl_entry_t) * 2);
+    bdl[0].addr = (uint64_t)pcm->buffer;
+    bdl[0].len = pcm->size;
+    bdl[0].flags = 0x01; // IOC - Interrupt on completion
+    
+    // Program BDL address into stream descriptor
+    mmio_write32(controller->base_addr + 0x84, (uint32_t)(uint64_t)bdl);
+}
