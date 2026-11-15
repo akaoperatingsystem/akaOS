@@ -7,16 +7,17 @@
 set -euo pipefail
 
 
+
 # Modular Bundling Logic
 get_initramfs_args() {
     local args=()
     # Desktop exclusion
     if [[ "$menu_desktop" == "none" ]]; then
-        args+=(--exclude "aurora" --exclude "lumen" --exclude "openbox" --exclude "pcmanfm" --exclude "lxpanel")
+        args+=(--exclude-prefix "aurora" --exclude-prefix "lumen" --exclude-prefix "openbox" --exclude-prefix "pcmanfm" --exclude-prefix "lxpanel")
     fi
     # Software bundle-specific exclusions
     if [[ "$menu_software" == "minimal" || "$menu_software" == "net" || "$menu_software" == "dev" ]]; then
-        args+=(--exclude "gtk*" --exclude "qt*" --exclude "cairo" --exclude "pango" --exclude "freetype")
+        args+=(--exclude-prefix "gtk" --exclude-prefix "qt" --exclude-prefix "cairo" --exclude-prefix "pango" --exclude-prefix "freetype")
     fi
     echo "${args[@]}"
 }
