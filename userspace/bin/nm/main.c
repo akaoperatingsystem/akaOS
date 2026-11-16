@@ -12,6 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <stdint.h>
 #include <elf.h>
@@ -49,6 +50,7 @@ static void print_usage(void) {
 }
 
 static int dump_elf64(const uint8_t *data, size_t size, const char *fname) {
+    (void)fname;
     if (size < sizeof(Elf64_Ehdr)) return -1;
     const Elf64_Ehdr *ehdr = (const Elf64_Ehdr *)data;
 

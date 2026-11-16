@@ -217,4 +217,51 @@ typedef struct {
     Elf64_Word n_type;
 } Elf64_Nhdr;
 
+
+typedef struct {
+    Elf32_Word st_name;
+    Elf32_Addr st_value;
+    Elf32_Word st_size;
+    unsigned char st_info;
+    unsigned char st_other;
+    Elf32_Half st_shndx;
+} Elf32_Sym;
+
+typedef struct {
+    Elf64_Word st_name;
+    unsigned char st_info;
+    unsigned char st_other;
+    Elf64_Half st_shndx;
+    Elf64_Addr st_value;
+    Elf64_Xword st_size;
+} Elf64_Sym;
+
+#define ELF32_ST_BIND(i) ((i) >> 4)
+#define ELF32_ST_TYPE(i) ((i) & 0xf)
+#define ELF32_ST_INFO(b, t) (((b) << 4) + ((t) & 0xf))
+
+#define ELF64_ST_BIND(i) ((i) >> 4)
+#define ELF64_ST_TYPE(i) ((i) & 0xf)
+#define ELF64_ST_INFO(b, t) (((b) << 4) + ((t) & 0xf))
+
+#define STB_LOCAL 0
+#define STB_GLOBAL 1
+#define STB_WEAK 2
+
+#define STT_NOTYPE 0
+#define STT_OBJECT 1
+#define STT_FUNC 2
+#define STT_SECTION 3
+#define STT_FILE 4
+#define STT_COMMON 5
+#define STT_TLS 6
+
+#define SHN_UNDEF 0
+#define SHN_LORESERVE 0xff00
+#define SHN_LOPROC 0xff00
+#define SHN_HIPROC 0xff1f
+#define SHN_ABS 0xfff1
+#define SHN_COMMON 0xfff2
+#define SHN_HIRESERVE 0xffff
+
 #endif
