@@ -443,6 +443,7 @@ custom_memory=""
 enable_kvm=0
 qemu_extra_args=()
 check_deps_only=0
+test_mode=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
