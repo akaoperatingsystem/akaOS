@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/akaOS-v0.8.0-blue.svg" alt="akaOS Version">
-  <img src="https://img.shields.io/badge/XSCore-v0.7.0-green.svg" alt="XSCore Version">
+  <img src="https://img.shields.io/badge/akaOS-v0.8.9-blue.svg" alt="akaOS Version">
+  <img src="https://img.shields.io/badge/XSCore-v0.7.9-green.svg" alt="XSCore Version">
   <img src="https://img.shields.io/badge/License-BSD--3--Clause-blue.svg" alt="License">
   <img src="https://img.shields.io/github/stars/akaoperatingsystem/akaOS?style=social" alt="GitHub Stars">
 </p>
