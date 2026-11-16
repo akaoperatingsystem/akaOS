@@ -4,9 +4,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <akaos/ioctl.h>
-#include <xscore/storage.h>
 
 int main(int argc, char **argv) {
+    (void)argv;
     if (argc < 3) {
         printf("Usage: hdparm <options> <device>\n");
         return 1;

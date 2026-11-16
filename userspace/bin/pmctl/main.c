@@ -13,8 +13,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/syscall.h>
 #include <akaos/syscall.h>
+#include <stdarg.h>
+
+extern long akaos_thread_syscall(uint64_t number, uint64_t argument0, uint64_t argument1, uint64_t argument2);
+static inline long syscall(long number, ...) {
+    va_list args;
+    va_start(args, number);
+    long arg1 = va_arg(args, long);
+    long arg2 = va_arg(args, long);
+    long arg3 = va_arg(args, long);
+    va_end(args);
+    return akaos_thread_syscall((uint64_t)number, (uint64_t)arg1, (uint64_t)arg2, (uint64_t)arg3);
+}
+#include <stdarg.h>
+
 
 static void print_usage(void) {
     puts("Usage: pmctl <command> [options]\n"

@@ -181,6 +181,15 @@ def main():
                 else:
                     kept_base_entries.append(entry)
             base_entries = kept_base_entries
+            kept_overlay_entries = []
+            for entry in overlay_entries:
+                path = entry["path"]
+                if any(path == prefix or path.startswith(prefix + "/")
+                       for prefix in prefixes):
+                    excluded_count += 1
+                else:
+                    kept_overlay_entries.append(entry)
+            overlay_entries = kept_overlay_entries
         if args.exclude_long_vfs_names:
             kept_base_entries = []
             for entry in base_entries:

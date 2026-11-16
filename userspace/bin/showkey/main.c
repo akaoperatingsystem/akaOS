@@ -5,6 +5,8 @@
 #include <fcntl.h>
 
 int main(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
     printf("Press any key (ESC to exit)...\n");
     int fd = open("/dev/input/event0", O_RDONLY);
     if (fd < 0) {

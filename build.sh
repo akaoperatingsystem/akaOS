@@ -1,74 +1,5 @@
 #!/usr/bin/env bash
 
-# ...
-
-# GLOBAL OPTIMIZATION INJECTION (akaOS Minimization Directive)
-
-set -euo pipefail
-source "$ROOT_DIR/tools/modular-bundling.sh"
-
-# Modular Bundling Logic
-get_initramfs_args() {
-    local args=()
-    if [[ "$menu_desktop" == "none" ]]; then
-        args+=(--exclude-prefix "/bin/aurora" --exclude-prefix "/bin/lumen" --exclude-prefix "/bin/openbox" --exclude-prefix "/bin/pcmanfm" --exclude-prefix "/bin/lxpanel")
-    fi
-    if [[ "$menu_software" == "minimal" || "$menu_software" == "net" || "$menu_software" == "dev" ]]; then
-        args+=(--exclude-prefix "/lib/libgtk" --exclude-prefix "/lib/libqt" --exclude-prefix "/lib/libcairo" --exclude-prefix "/lib/libpango" --exclude-prefix "/lib/libfreetype")
-    fi
-    echo "${args[@]}"
-}
-
-
-# Modular Bundling Logic
-
-get_initramfs_args() {
-    local args=()
-    # Desktop exclusion
-    if [[ "$menu_desktop" == "none" ]]; then
-        args+=(--exclude-prefix "aurora" --exclude-prefix "lumen" --exclude-prefix "openbox" --exclude-prefix "pcmanfm" --exclude-prefix "lxpanel")
-    fi
-    # Software bundle-specific exclusions
-    if [[ "$menu_software" == "minimal" || "$menu_software" == "net" || "$menu_software" == "dev" ]]; then
-        args+=(--exclude-prefix "gtk" --exclude-prefix "qt" --exclude-prefix "cairo" --exclude-prefix "pango" --exclude-prefix "freetype")
-    fi
-    echo "${args[@]}"
-}
-"
-}
-
-
-# Modular Bundling Logic
-get_initramfs_args() {
-    local args=()
-    # Desktop exclusion
-    if [[ "$menu_desktop" == "none" ]]; then
-        args+=(--exclude-prefix "aurora" --exclude-prefix "lumen" --exclude-prefix "openbox" --exclude-prefix "pcmanfm" --exclude-prefix "lxpanel")
-    fi
-    # Software bundle-specific exclusions
-    if [[ "$menu_software" == "minimal" || "$menu_software" == "net" || "$menu_software" == "dev" ]]; then
-        args+=(--exclude-prefix "gtk" --exclude-prefix "qt" --exclude-prefix "cairo" --exclude-prefix "pango" --exclude-prefix "freetype")
-    fi
-    echo "${args[@]}"
-}
-
-
-
-# Modular Bundling Logic
-get_initramfs_args() {
-    local args=()
-    # Desktop exclusion
-    if [[ "$menu_desktop" == "none" ]]; then
-        args+=(--exclude-prefix "aurora" --exclude-prefix "lumen" --exclude-prefix "openbox" --exclude-prefix "pcmanfm" --exclude-prefix "lxpanel")
-    fi
-    # Software bundle-specific exclusions
-    if [[ "$menu_software" == "minimal" || "$menu_software" == "net" || "$menu_software" == "dev" ]]; then
-        args+=(--exclude-prefix "gtk" --exclude-prefix "qt" --exclude-prefix "cairo" --exclude-prefix "pango" --exclude-prefix "freetype")
-    fi
-    echo "${args[@]}"
-}
-
-
 # GLOBAL OPTIMIZATION INJECTION (akaOS Minimization Directive)
 if [[ "${AKAOS_DEBUG:-0}" == "1" ]]; then
     export CFLAGS="-g -O0"
@@ -80,6 +11,7 @@ else
     export LDFLAGS="-Wl,--gc-sections -Wl,-s"
 fi
 
+set -euo pipefail
 
 # The build host can carry include and pkg-config search paths for an unrelated
 # toolchain.  Clang honours CPATH even under -nostdinc and pkg-config prefers
@@ -93,6 +25,8 @@ unset LIBRARY_PATH
 unset PKG_CONFIG_PATH
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$ROOT_DIR/tools/modular-bundling.sh"
+
 BUILD_DIR="$ROOT_DIR/build"
 ESP_DIR="$BUILD_DIR/esp"
 INCLUDE_DIR="$ROOT_DIR/sdk/include"
@@ -3514,7 +3448,7 @@ initramfs_profile_args=()
 if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
     initramfs_profile_args+=(--profile minimal)
 fi
-"$ROOT_DIR/tools/mkinitramfs-wrapper.sh" "$BUILD_DIR/initramfs.img.raw" $(get_initramfs_args) \ && zstd -19 -T0 "$BUILD_DIR/initramfs.img.raw" -o "$BUILD_DIR/initramfs.img"
+python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initramfs_args) \
     --exclude-long-vfs-names \
     "${initramfs_profile_args[@]}" \
     --dir "/bin" \
