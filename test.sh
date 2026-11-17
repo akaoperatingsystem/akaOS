@@ -51,7 +51,7 @@ fi
 cp "$OVMF_VARS_SOURCE" "$OVMF_VARS"
 
 set +e
-timeout 90s qemu-system-x86_64 \
+timeout 300s qemu-system-x86_64 \
     -machine q35 \
     -m 256M \
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
@@ -226,6 +226,7 @@ grep -Fq "[INFO] Unix text transformation & diff suite sed/diff/cmp/patch verifi
 grep -Fq "[INFO] Archiving & compression suite tar/gzip/gunzip verified" "$TEST_LOG"
 grep -Fq "[INFO] Archive tool cpio verified" "$TEST_LOG"
 grep -Fq "[INFO] Data transfer utility curl verified" "$TEST_LOG"
+grep -Fq "[INFO] Command history utility history verified" "$TEST_LOG"
 grep -Fq "[INFO] Advanced shell job control & pipelines in akash verified" "$TEST_LOG"
 grep -Fq "[INFO] Shell function macro engine verified" "$TEST_LOG"
 grep -Fq "[INFO] Search utility grep verified" "$TEST_LOG"

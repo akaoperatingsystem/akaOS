@@ -171,3 +171,51 @@ void *memset(void *destination, int value, size_t count) {
     }
     return destination;
 }
+
+size_t strlen(const char *s) {
+    size_t len = 0;
+    if (!s) return 0;
+    while (s[len]) len++;
+    return len;
+}
+
+int strcmp(const char *s1, const char *s2) {
+    if (!s1 || !s2) return (s1 == s2) ? 0 : (s1 ? 1 : -1);
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return *(const unsigned char *)s1 - *(const unsigned char *)s2;
+}
+
+int strncmp(const char *s1, const char *s2, size_t n) {
+    if (!s1 || !s2 || n == 0) return 0;
+    while (n && *s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+        n--;
+    }
+    if (n == 0) return 0;
+    return *(const unsigned char *)s1 - *(const unsigned char *)s2;
+}
+
+char *strcpy(char *dst, const char *src) {
+    char *ret = dst;
+    if (!dst || !src) return dst;
+    while ((*dst++ = *src++) != '\0') {}
+    return ret;
+}
+
+char *strncpy(char *dst, const char *src, size_t n) {
+    char *ret = dst;
+    if (!dst || !src || n == 0) return dst;
+    while (n > 0 && *src != '\0') {
+        *dst++ = *src++;
+        n--;
+    }
+    while (n > 0) {
+        *dst++ = '\0';
+        n--;
+    }
+    return ret;
+}

@@ -3,6 +3,7 @@
 #define XSCORE_DRM_KMS_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 /* DRM Object Types */
 typedef uint32_t drm_mode_object_id;
@@ -24,13 +25,9 @@ struct drm_plane {
     uint32_t zpos;
 };
 
-/* GEM Object */
-struct drm_gem_object {
-    uint32_t handle;
-    uint64_t size;
-    uintptr_t vaddr;
-    uint64_t paddr;
-};
+/* Forward declarations */
+struct xscore_gem_manager;
+struct xscore_gpu_device;
 
 /* DRM Device Structure */
 struct xscore_drm_device {

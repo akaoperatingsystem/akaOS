@@ -67,6 +67,11 @@ int xscore_initramfs_mount_archive(const uint8_t *archive, size_t archive_size) 
         }
         path_buf[128] = '\0';
 
+        if (entry->type == INITRAMFS_TYPE_FILE) {
+             xscore_serial_write("[DEBUG-INITRAMFS] adding file: ");
+             xscore_serial_write(path_buf);
+             xscore_serial_write("\n");
+        }
         if (entry->type == INITRAMFS_TYPE_DIR) {
             if (!xscore_vfs_add_directory(path_buf, entry->mode)) {
                 xscore_serial_write("[FATAL] Failed to add initramfs directory: ");

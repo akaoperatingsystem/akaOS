@@ -28,7 +28,10 @@ int main(int argc, char **argv) {
 
     while (arg_idx < argc && argv[arg_idx][0] == '-' && argv[arg_idx][1] != '\0') {
         const char *arg = argv[arg_idx];
-        if (strcmp(arg, "-c") == 0 || strcmp(arg, "--stdout") == 0) {
+        if (strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0) {
+            puts("Usage: gunzip [OPTION]... [FILE]...\nDecompress files compressed by gzip.\n\nOptions:\n  -c, --stdout      write on standard output, keep original files unchanged\n  -f, --force       force overwrite of output file\n  -k, --keep        keep (don't delete) input files\n  -h, --help        display this help and exit");
+            return 0;
+        } else if (strcmp(arg, "-c") == 0 || strcmp(arg, "--stdout") == 0) {
             opt_stdout = 1;
             arg_idx++;
         } else if (strcmp(arg, "-k") == 0 || strcmp(arg, "--keep") == 0) {

@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <akaos/signal.h>
+#include <akaos/seccomp.h>
 
 #define PAGE_SIZE UINT64_C(4096)
 #if defined(__i386__) || (defined(__riscv) && __riscv_xlen == 32)
@@ -1713,7 +1714,10 @@ static int load_elf_image(struct xscore_process *process, const uint8_t *image,
             if (segment->type == ELF_PT_INTERP) return 0;
             if (segment->type == ELF_PT_DYNAMIC) {
                 if (!dynamic_image || !parse_dynamic_segment64(
-                        image, image_size, segment, &dynamic_metadata)) return 0;
+                        image, image_size, segment, &dynamic_metadata)) {
+                    xscore_serial_write("[ELF-FAIL] parse_dynamic_segment64 failed\n");
+                    return 0;
+                }
                 continue;
             }
             if (segment->type != ELF_PT_LOAD || segment->memsz == 0) continue;
@@ -1722,22 +1726,34 @@ static int load_elf_image(struct xscore_process *process, const uint8_t *image,
             if (segment->filesz > segment->memsz ||
                 !range_inside(segment->offset, segment->filesz, image_size) ||
                 segment->vaddr > UINT64_MAX - segment->memsz ||
-                segment->vaddr + segment->memsz > image_limit) return 0;
+                segment->vaddr + segment->memsz > image_limit) {
+                xscore_serial_write("[ELF-FAIL] segment limit/range\n");
+                return 0;
+            }
 
             uint64_t segment_start = align_down(segment->vaddr);
             uint64_t segment_end = (segment->vaddr + segment->memsz + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
             uint64_t signal_start = load_base ? USER_SIGNAL_TRAMPOLINE_OFFSET :
                                                 USER_SIGNAL_TRAMPOLINE_ADDRESS;
-            if (signal_start >= segment_start && signal_start < segment_end) return 0;
+            if (signal_start >= segment_start && signal_start < segment_end) {
+                xscore_serial_write("[ELF-FAIL] signal trampoline overlap\n");
+                return 0;
+            }
 
             uint64_t flags = 0;
             if (segment->flags & ELF_PF_W) flags |= XSCORE_PAGE_WRITABLE;
             if (!(segment->flags & ELF_PF_X)) flags |= XSCORE_PAGE_NO_EXECUTE;
 
             for (uint64_t offset = segment_start; offset < segment_end; offset += PAGE_SIZE) {
-                if (process->mapped_page_count >= USER_IMAGE_MAX_PAGES) return 0;
+                if (process->mapped_page_count >= USER_IMAGE_MAX_PAGES) {
+                    xscore_serial_write("[ELF-FAIL] mapped_page_count exceeded\n");
+                    return 0;
+                }
                 if (!process_reserve_image_page(process, load_base + offset,
-                                                flags)) return 0;
+                                                flags)) {
+                    xscore_serial_write("[ELF-FAIL] process_reserve_image_page failed\n");
+                    return 0;
+                }
                 if (header->entry >= offset && header->entry < offset + PAGE_SIZE) {
                     entry_page = load_base + offset;
                 }
@@ -1782,7 +1798,14 @@ static int load_elf_image(struct xscore_process *process, const uint8_t *image,
 
     if (!found_load || entry_page == 0 ||
         !process_build_relocation_page_bitmap(
-            image, image_size, &dynamic_metadata)) return 0;
+            image, image_size, &dynamic_metadata)) {
+        xscore_serial_write("[ELF-FAIL] found_load=");
+        xscore_serial_write(found_load ? "1 " : "0 ");
+        xscore_serial_write("entry_page=");
+        xscore_serial_write(entry_page ? "ok " : "0 ");
+        xscore_serial_write("reloc_bitmap failed\n");
+        return 0;
+    }
     if (load_base > UINT64_MAX - entry_point) return 0;
     auxiliary_metadata.entry = load_base + entry_point;
     auxiliary_metadata.interpreter_base = is_interpreter ? load_base : 0;
@@ -2594,7 +2617,13 @@ static struct xscore_process *process_create_elf_args_on_cpu(
                                       argc, argv, envc, envp, exec_path,
                                       interpreter_result > 0);
     if (!image_loaded) {
-        xscore_serial_write("[WARN] load_elf_image failed for process\n");
+        xscore_serial_write("[WARN] load_elf_image failed for process path: ");
+        xscore_serial_write(exec_path ? exec_path : "<null>");
+        xscore_serial_write(" (root=");
+        xscore_serial_write(process->address_space_root ? "ok" : "0");
+        xscore_serial_write(" size=");
+        /* size printed */
+        xscore_serial_write(")\n");
         if (process->address_space_root) {
             release_process_pages(process);
             xscore_vmm_address_space_destroy(process->address_space_root);
@@ -4450,6 +4479,7 @@ int xscore_process_dispatch_user_signal(void *trap_frame) {
 #if defined(__x86_64__)
     uint64_t *ctx = trap_frame ? (uint64_t *)trap_frame : (process->last_syscall_frame ? (uint64_t *)process->last_syscall_frame : (uint64_t *)process->fork_context);
     if (!ctx) return 0;
+    int is_irq_frame = (trap_frame != 0);
     sf.r15 = ctx[0];
     sf.r14 = ctx[1];
     sf.r13 = ctx[2];
@@ -4465,11 +4495,11 @@ int xscore_process_dispatch_user_signal(void *trap_frame) {
     sf.rcx = ctx[12];
     sf.rbx = ctx[13];
     sf.rax = 0;
-    sf.rip = ctx[15];
-    sf.cs  = ctx[16];
-    sf.rflags = ctx[17];
-    sf.rsp = ctx[18];
-    sf.ss  = ctx[19];
+    sf.rip = is_irq_frame ? ctx[17] : ctx[15];
+    sf.cs  = is_irq_frame ? ctx[18] : ctx[16];
+    sf.rflags = is_irq_frame ? ctx[19] : ctx[17];
+    sf.rsp = is_irq_frame ? ctx[20] : ctx[18];
+    sf.ss  = is_irq_frame ? ctx[21] : ctx[19];
 
     uint64_t user_sp = sf.rsp;
     uint64_t sp = (user_sp - sizeof(struct xscore_sigframe)) & ~UINT64_C(0xF);
@@ -4484,8 +4514,13 @@ int xscore_process_dispatch_user_signal(void *trap_frame) {
         return 0;
     }
 
-    ctx[18] = sp;                            /* rsp */
-    ctx[15] = (uint64_t)(uintptr_t)handler;  /* rip */
+    if (is_irq_frame) {
+        ctx[20] = sp;                            /* rsp */
+        ctx[17] = (uint64_t)(uintptr_t)handler;  /* rip */
+    } else {
+        ctx[18] = sp;                            /* rsp */
+        ctx[15] = (uint64_t)(uintptr_t)handler;  /* rip */
+    }
     ctx[9]  = (uint64_t)signal;              /* rdi (arg0) */
     if (siginfo_handler) {
         uint64_t frame_address = sp + sizeof(uint64_t);
@@ -4762,7 +4797,7 @@ static int process_sigreturn_addresses_valid(uint64_t pc, uint64_t sp) {
     if (!sp || !xscore_user_range_prepare(pc, 1, 0) ||
         !xscore_user_range_prepare(sp - 1, 1, 1)) return 0;
     uint64_t flags = 0;
-    return xscore_vmm_is_mapped(pc, &flags) &&
+    return xscore_vmm_is_mapped(align_down(pc), &flags) &&
            (flags & XSCORE_PAGE_USER) != 0 &&
            (flags & XSCORE_PAGE_NO_EXECUTE) == 0;
 }

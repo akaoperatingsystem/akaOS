@@ -1,11 +1,11 @@
+#include <stddef.h>
+#include <stdint.h>
 void *memcpy(void *dest, const void *src, size_t n);
 #include <xscore/bufcache.h>
 #include <xscore/virtio_blk.h>
 #include <xscore/nvme.h>
 #include <xscore/ahci.h>
 #include <xscore/serial.h>
-#include <stddef.h>
-#include <stdint.h>
 
 #define BUF_VALID UINT32_C(1)
 #define BUF_DIRTY UINT32_C(2)

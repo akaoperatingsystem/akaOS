@@ -98,7 +98,8 @@ static int dump_elf64(const uint8_t *data, size_t size, const char *fname) {
                     tc = (type == STT_OBJECT) ? 'V' : 'W';
                 } else if (s->st_shndx < ehdr->e_shnum) {
                     const Elf64_Shdr *sec = &shdrs[s->st_shndx];
-                    const char *sec_name = shstrtab + sec->sh_name;
+                    const char *sec_name __attribute__((unused)) = shstrtab + sec->sh_name;
+                    (void)sec_name;
                     if (sec->sh_flags & SHF_EXECINSTR) {
                         tc = 'T';
                     } else if (sec->sh_type == SHT_NOBITS) {

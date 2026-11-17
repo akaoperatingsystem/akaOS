@@ -1,5 +1,6 @@
 
 #include <xscore/mouse.h>
+#include <xscore/serial.h>
 #include <xscore/ps2.h>
 #include <xscore/io.h>
 #include <xscore/input.h>
@@ -105,7 +106,12 @@ static int ps2_mouse_initialize(void) {
         }
     }
     
-    return ps2_mouse_write(0xf4);
+    int ok = ps2_mouse_write(0xf4);
+    if (ok)
+        xscore_serial_write("[INFO] PS/2 mouse streaming enabled\n");
+    else
+        xscore_serial_write("[WARN] PS/2 mouse initialization failed\n");
+    return ok;
 }
 
 static int ps2_mouse_read_event(int *dx, int *dy, int *buttons) {

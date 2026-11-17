@@ -5,6 +5,7 @@
 #include <xscore/serial.h>
 #include <xscore/virtio_input.h>
 #include <xscore/input.h>
+#include <xscore/mouse.h>
 #include <xscore/keyboard.h>
 #include <xscore/ps2.h>
 #include <xscore/io.h>
@@ -51,12 +52,6 @@ static int tty_echo_enabled = 1;
 static struct akaos_termios tty_termios;
 static int tty_esc_state = 0;
 
-#if defined(__x86_64__) || defined(__i386__)
-static uint8_t ps2_mouse_packet[3];
-static uint8_t ps2_mouse_packet_index;
-static uint8_t ps2_mouse_buttons;
-#endif
-
 static char tty_history[TTY_HISTORY_MAX][TTY_BUF_SIZE];
 static int tty_history_count = 0;
 static int tty_history_index = -1;
@@ -83,43 +78,17 @@ static int tty_pending_pop(char *out) {
     return 1;
 }
 
-static const char tty_keymap[128] = {
-    [0x02] = '1', [0x03] = '2', [0x04] = '3', [0x05] = '4', [0x06] = '5',
-    [0x07] = '6', [0x08] = '7', [0x09] = '8', [0x0a] = '9', [0x0b] = '0',
-    [0x0c] = '-', [0x0d] = '=', [0x0f] = '\t', [0x10] = 'q', [0x11] = 'w', [0x12] = 'e',
-    [0x13] = 'r', [0x14] = 't', [0x15] = 'y', [0x16] = 'u', [0x17] = 'i',
-    [0x18] = 'o', [0x19] = 'p', [0x1a] = '[', [0x1b] = ']', [0x1e] = 'a',
-    [0x1f] = 's', [0x20] = 'd', [0x21] = 'f', [0x22] = 'g', [0x23] = 'h',
-    [0x24] = 'j', [0x25] = 'k', [0x26] = 'l', [0x27] = ';', [0x28] = '\'',
-    [0x29] = '`', [0x2b] = '\\', [0x2c] = 'z', [0x2d] = 'x', [0x2e] = 'c',
-    [0x2f] = 'v', [0x30] = 'b', [0x31] = 'n', [0x32] = 'm', [0x33] = ',',
-    [0x34] = '.', [0x35] = '/', [0x39] = ' ',
-};
-
-static const char tty_shift_keymap[128] = {
-    [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%',
-    [0x07] = '^', [0x08] = '&', [0x09] = '*', [0x0a] = '(', [0x0b] = ')',
-    [0x0c] = '_', [0x0d] = '+', [0x0f] = '\t', [0x10] = 'Q', [0x11] = 'W', [0x12] = 'E',
-    [0x13] = 'R', [0x14] = 'T', [0x15] = 'Y', [0x16] = 'U', [0x17] = 'I',
-    [0x18] = 'O', [0x19] = 'P', [0x1a] = '{', [0x1b] = '}', [0x1e] = 'A',
-    [0x1f] = 'S', [0x20] = 'D', [0x21] = 'F', [0x22] = 'G', [0x23] = 'H',
-    [0x24] = 'J', [0x25] = 'K', [0x26] = 'L', [0x27] = ':', [0x28] = '"',
-    [0x29] = '~', [0x2b] = '|', [0x2c] = 'Z', [0x2d] = 'X', [0x2e] = 'C',
-    [0x2f] = 'V', [0x30] = 'B', [0x31] = 'N', [0x32] = 'M', [0x33] = '<',
-    [0x34] = '>', [0x35] = '?', [0x39] = ' ',
-};
-
 #if defined(__x86_64__) || defined(__i386__)
 /* port_in8 / port_out8 moved to xscore/io.h */
 
-int xscore_xscore_ps2_wait_input_clear(void) {
+int xscore_ps2_wait_input_clear(void) {
     for (uint32_t attempt = 0; attempt < 100000; ++attempt) {
         if ((port_in8(0x64) & 2) == 0) return 1;
     }
     return 0;
 }
 
-int xscore_xscore_ps2_wait_output(uint8_t *value) {
+int xscore_ps2_wait_output(uint8_t *value) {
     for (uint32_t attempt = 0; attempt < 100000; ++attempt) {
         if (port_in8(0x64) & 1) {
             if (value) *value = port_in8(0x60);
@@ -129,47 +98,9 @@ int xscore_xscore_ps2_wait_output(uint8_t *value) {
     return 0;
 }
 
-static int ps2_mouse_write(uint8_t value) {
-    uint8_t response = 0;
-    if (!xscore_ps2_wait_input_clear()) return 0;
-    port_out8(0x64, 0xd4);
-    if (!xscore_ps2_wait_input_clear()) return 0;
-    port_out8(0x60, value);
-    return xscore_ps2_wait_output(&response) && response == 0xfa;
-}
-
-void xscore_xscore_ps2_flush_output(void) {
+void xscore_ps2_flush_output(void) {
     for (uint32_t attempt = 0; attempt < 256 && (port_in8(0x64) & 1); ++attempt)
         (void)port_in8(0x60);
-}
-
-static int ps2_write_controller_config(uint8_t config) {
-    if (!xscore_ps2_wait_input_clear()) return 0;
-    port_out8(0x64, 0x60);
-    if (!xscore_ps2_wait_input_clear()) return 0;
-    port_out8(0x60, config);
-    return xscore_ps2_wait_input_clear();
-}
-
-/* PS/2 Mouse logic moved to xscore/kernel/ps2_mouse.c */
-
-    if (relative_y != 0) {
-        xscore_input_publish(AKAOS_EV_REL, AKAOS_REL_Y, relative_y);
-    }
-    if ((buttons ^ ps2_mouse_buttons) & 1) {
-        xscore_input_publish(AKAOS_EV_KEY, AKAOS_BTN_LEFT,
-                             (buttons & 1) != 0);
-    }
-    if ((buttons ^ ps2_mouse_buttons) & 2) {
-        xscore_input_publish(AKAOS_EV_KEY, AKAOS_BTN_RIGHT,
-                             (buttons & 2) != 0);
-    }
-    if ((buttons ^ ps2_mouse_buttons) & 4) {
-        xscore_input_publish(AKAOS_EV_KEY, AKAOS_BTN_MIDDLE,
-                             (buttons & 4) != 0);
-    }
-    ps2_mouse_buttons = buttons;
-    xscore_input_publish(AKAOS_EV_SYN, AKAOS_SYN_REPORT, 0);
 }
 
 #endif
@@ -205,15 +136,6 @@ void xscore_tty_initialize(void) {
     tty_termios.c_cc[AKAOS_VTIME] = 0;
     tty_termios.c_cc[AKAOS_VSUSP] = 26;
     tty_initialized = 1;
-#if defined(__x86_64__) || defined(__i386__)
-    uintptr_t ps2_irq_state = xscore_irq_save();
-    int ps2_mouse_ready = ps2_mouse_initialize();
-    xscore_irq_restore(ps2_irq_state);
-    if (ps2_mouse_ready)
-        xscore_serial_write("[INFO] PS/2 mouse streaming enabled\n");
-    else
-        xscore_serial_write("[WARN] PS/2 mouse initialization failed\n");
-#endif
 }
 
 int xscore_tty_set_echo(int enabled) {

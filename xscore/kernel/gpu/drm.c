@@ -2,6 +2,15 @@
 #include <xscore/gpu.h>
 #include <xscore/serial.h>
 #include <xscore/heap.h>
+#include <xscore/memory.h>
+#include <xscore/vmm.h>
+#include <xscore/vfs.h>
+#include <xscore/pci.h>
+
+#define kmalloc(sz) xscore_heap_allocate(sz)
+#define kfree(ptr) xscore_heap_free(ptr)
+
+int xscore_drm_register_device(struct xscore_drm_device *drm);
 
 int xscore_drm_initialize(struct xscore_gpu_device *gpu) {
     xscore_serial_write("[DRM] Initializing DRM/KMS for GPU: ");
@@ -22,8 +31,6 @@ int xscore_drm_initialize(struct xscore_gpu_device *gpu) {
     return 0;
 }
 
-#include <xscore/heap.h>
-
 int xscore_gem_init(struct xscore_drm_device *drm) {
     // Initialize GEM manager for the DRM device
     drm->gem_manager = (struct xscore_gem_manager*)kmalloc(sizeof(struct xscore_gem_manager));
@@ -36,15 +43,13 @@ int xscore_gem_init(struct xscore_drm_device *drm) {
     return 0;
 }
 
-
-#include <xscore/memory.h> // Assuming this has PMM functions
-
 struct drm_gem_object* xscore_gem_create(struct xscore_drm_device *drm, uint64_t size, uint32_t flags) {
     struct drm_gem_object *obj = (struct drm_gem_object*)kmalloc(sizeof(struct drm_gem_object));
     if (!obj) return NULL;
     
     // Allocate physical pages
     uint64_t num_pages = (size + 4095) / 4096;
+    (void)num_pages;
     // Assuming for now simple single page allocation or pmm_allocate_pages
     // Need to find PMM API.
     // Based on previous rounds, xscore_pmm_allocate_page() exists.
@@ -126,12 +131,14 @@ int xscore_gem_map(struct drm_gem_object *obj, uintptr_t vaddr) {
 }
 
 int xscore_drm_ring_init(struct xscore_drm_device *drm) {
+    (void)drm;
     xscore_serial_write("[DRM] Initializing hardware command ring buffer...\n");
     // Allocate ring buffer memory
     return 0;
 }
 
 int xscore_drm_submit_command(struct xscore_drm_device *drm, uint32_t *cmds, size_t count, struct drm_fence *fence) {
+    (void)count;
     if (!drm || !cmds) return -1;
     
     xscore_serial_write("[DRM] Submitting command buffer to GPU ring...\n");
@@ -168,19 +175,14 @@ int xscore_drm_load_firmware(struct xscore_drm_device *drm, const char *fw_path)
     return 0;
 }
 
-void xscore_drm_handle_vblank(struct xscore_drm_device *drm) {
-    xscore_serial_write("[DRM] V-Blank interrupt received.\n");
-    // Handle V-Blank: update page flips, notify waiters
-}
-
-void xscore_drm_handle_command_completion(struct xscore_drm_device *drm, uint32_t seqno) {
+void xscore_drm_handle_command_completion(struct xscore_drm_device *drm __attribute__((unused)), uint32_t seqno __attribute__((unused))) {
     xscore_serial_write("[DRM] Command completion interrupt received (seqno: ");
     // Manually add seqno logging if needed, skipping for stub
     xscore_serial_write(").\n");
     // Handle command completion: signal fences
 }
 
-void xscore_drm_handle_error(struct xscore_drm_device *drm, uint32_t error_code) {
+void xscore_drm_handle_error(struct xscore_drm_device *drm __attribute__((unused)), uint32_t error_code __attribute__((unused))) {
     xscore_serial_write("[DRM] GPU error interrupt received (code: ");
     // Manually add error code logging if needed
     xscore_serial_write(").\n");
@@ -204,7 +206,7 @@ int xscore_drm_ioctl(struct xscore_drm_device *drm, uint32_t request, void *arg)
         }
             
         case DRM_IOCTL_GEM_MAP: {
-            struct drm_ioctl_gem_map *args = (struct drm_ioctl_gem_map *)arg;
+            struct drm_ioctl_gem_map *args __attribute__((unused)) = (struct drm_ioctl_gem_map *)arg;
             // Lookup object by handle and map
             // This is a stub for the lookup logic
             return 0;
@@ -219,7 +221,7 @@ int xscore_drm_ioctl(struct xscore_drm_device *drm, uint32_t request, void *arg)
     }
 }
 
-int xscore_drm_page_flip(struct xscore_drm_device *drm, uint32_t crtc_id, uint32_t fb_id, struct drm_fence *fence) {
+int xscore_drm_page_flip(struct xscore_drm_device *drm, uint32_t crtc_id, uint32_t fb_id, struct drm_fence *fence __attribute__((unused))) {
     if (!drm) return -1;
     
     xscore_serial_write("[DRM] Compositor: Page flip requested.\n");
@@ -245,7 +247,8 @@ void xscore_drm_register_irq_handler(void (*vblank)(struct xscore_drm_device *))
 // In the kernel's IRQ dispatch, I would call this.
 // For now, I'll add the registration function to the header.
 
-int xscore_drm_accel_fill_rect(struct xscore_drm_device *drm, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color) {
+int xscore_drm_accel_fill_rect(struct xscore_drm_device *drm, uint32_t x __attribute__((unused)), uint32_t y __attribute__((unused)), uint32_t width, uint32_t height, uint32_t color) {
+    (void)width; (void)height; (void)color;
     if (!drm || !drm->gpu) return -1;
     
     xscore_serial_write("[DRM] Executing hardware-accelerated 2D fill rect...\n");
@@ -258,6 +261,7 @@ int xscore_drm_accel_fill_rect(struct xscore_drm_device *drm, uint32_t x, uint32
 #define VIRTIO_GPU_REG_CURSOR_FIFO 0x04
 
 int xscore_drm_virtio_submit_cmd(struct xscore_drm_device *drm, uint32_t *cmd, size_t size) {
+    (void)size;
     if (!drm || !cmd) return -1;
     
     // Simulate writing to VirtIO-GPU control/command queue MMIO
@@ -280,6 +284,7 @@ int xscore_drm_register_device(struct xscore_drm_device *drm) {
 #define BGA_DATA_PORT 0x01CF
 
 int xscore_drm_bochs_fill_rect(struct xscore_drm_device *drm, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color) {
+    (void)x; (void)y; (void)width; (void)height; (void)color;
     if (!drm) return -1;
     
     // Simulate writing to Bochs BGA MMIO or I/O ports
@@ -306,12 +311,7 @@ void xscore_drm_trigger_vblank(struct xscore_drm_device *drm) {
 
 /* Atomic Mode Setting Stubs */
 int xscore_drm_atomic_check(struct xscore_drm_device *drm, struct drm_atomic_state *state) {
+    (void)drm; (void)state;
     xscore_serial_write("[DRM] Atomic mode setting check called.\n");
-    return 0; // Success
-}
-
-int xscore_drm_atomic_commit(struct xscore_drm_device *drm, struct drm_atomic_state *state) {
-    xscore_serial_write("[DRM] Atomic mode setting commit called.\n");
-    // Trigger display update / page flip logic
     return 0; // Success
 }

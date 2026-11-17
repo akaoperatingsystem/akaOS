@@ -9,6 +9,10 @@
 #define AKAOS_SECCOMP_MODE_STRICT   1U
 #define AKAOS_SECCOMP_MODE_FILTER   2U
 
+/* Seccomp syscall operations */
+#define AKAOS_SECCOMP_SET_MODE_STRICT 0U
+#define AKAOS_SECCOMP_SET_MODE_FILTER 1U
+
 /* Seccomp filter action masks and return codes */
 #define AKAOS_SECCOMP_RET_ACTION_FULL  0xffff0000U
 #define AKAOS_SECCOMP_RET_DATA         0x0000ffffU

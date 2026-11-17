@@ -19,6 +19,7 @@
 #include <akaos/display.h>
 #include <akaos/ioctl.h>
 #include <xscore/nvme.h>
+#include <xscore/ahci.h>
 #include <akaos/syscall.h>
 #include <akaos/signalfd.h>
 #include <akaos/termios.h>
@@ -589,9 +590,6 @@ int xscore_fd_directory_state(struct xscore_fd_table *table, int descriptor,
     uintptr_t operation_flags = file_operation_acquire(file);
     if ((file->flags & FILE_DIRECTORY) == 0) {
         file_operation_release(file, operation_flags);
-        return -AKAOS_EIO;
-    }
-
         file_put(file);
         return 0;
     }

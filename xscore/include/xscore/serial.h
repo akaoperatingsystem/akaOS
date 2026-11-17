@@ -1,6 +1,7 @@
 #ifndef XSCORE_SERIAL_H
 #define XSCORE_SERIAL_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 /*
@@ -19,5 +20,6 @@ void xscore_serial_write(const char *text);
 void xscore_serial_write_n(const char *text, uint64_t length);
 
 size_t xscore_kernel_log_read(char *buffer, size_t max_len, int clear);
+int xscore_dmesg_ioctl(uint32_t request, void *argument);
 
 #endif

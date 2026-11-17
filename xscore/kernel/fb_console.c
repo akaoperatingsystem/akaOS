@@ -202,23 +202,6 @@ static uint32_t shell_cursor_row;
 static int shell_reverse_video = 0;
 static uint32_t shell_fg_color = ANSI_DEFAULT_FG;
 static uint32_t shell_bg_color = ANSI_DEFAULT_BG;
-static uint32_t shell_fg_color = SHELL_TEXT;
-
-
-static uint32_t get_ansi_color(int code) {
-    switch (code) {
-        case 30: return 0x000000; // Black
-        case 31: return 0xff0000; // Red
-        case 32: return 0x00ff00; // Green
-        case 33: return 0xffff00; // Yellow
-        case 34: return 0x0000ff; // Blue
-        case 35: return 0xff00ff; // Magenta
-        case 36: return 0x00ffff; // Cyan
-        case 37: return 0xffffff; // White
-        default: return SHELL_TEXT;
-    }
-}
-
 
 static uint32_t get_ansi_color(int code) {
     switch (code) {
@@ -267,6 +250,7 @@ static void shell_scroll_if_needed(void) {
 }
 
 static void shell_draw_glyph(uint32_t x, uint32_t y, uint32_t color, unsigned char ch) {
+    (void)color;
     if (!g_boot_canvas_valid) return;
     if (x + SHELL_CELL_WIDTH > g_boot_canvas.width ||
         y + SHELL_CELL_HEIGHT > g_boot_canvas.height) return;

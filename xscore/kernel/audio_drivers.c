@@ -28,18 +28,18 @@ void xscore_sound_initialize(void) {
 
         if (dev->class_code == 0x04) {
             struct xscore_sound_device *snd = &g_sound_cards[g_sound_count++];
-            
-            if (dev->subclass == 0x03) {
-                str_copy(snd->driver_name, 32, "hda_driver");
-                // HDA init...
-            } else if (dev->subclass == 0x01) {
-                str_copy(snd->driver_name, 32, "ac97_driver");
-                // AC97 init...
-            }
-            
             snd->vendor_id = dev->vendor_id;
             snd->device_id = dev->device_id;
-        }    }
+            snd->is_active = 1;
+
+            for (int b = 0; b < 6; ++b) {
+                if (dev->bars[b]) {
+                    if (dev->bar_is_io[b] && !snd->io_base) {
+                        snd->io_base = dev->bars[b];
+                    } else if (!dev->bar_is_io[b] && !snd->mmio_base) {
+                        snd->mmio_base = dev->bars[b];
+                    }
+                }
             }
 
             if (dev->vendor_id == 0x8086 && dev->subclass == 0x03) {

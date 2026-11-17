@@ -10,7 +10,6 @@ get_initramfs_args() {
     if [[ "$dt" == "none" ]]; then
         args+=(
             --exclude-prefix "/bin/aurora"
-            --exclude-prefix "/bin/lumen"
             --exclude-prefix "/bin/openbox"
             --exclude-prefix "/bin/pcmanfm"
             --exclude-prefix "/bin/lxpanel"

@@ -893,6 +893,7 @@ build_user_cpp_program() {
         bash "$ROOT_DIR/tools/build-libunwind.sh" --arch x86_64
     fi
     clang++ --target=x86_64-unknown-none-elf \
+        -nostdlibinc \
         -std=c++17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fstack-protector-strong -fpie \
         -fexceptions -frtti \
@@ -1003,6 +1004,7 @@ build_cxx_shared_object() {
     local object="$BUILD_DIR/shared-cxx.o"
     local fini_object="$BUILD_DIR/shared-cxx-fini.o"
     clang++ --target=x86_64-unknown-none-elf \
+        -nostdlibinc \
         -std=c++17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
         -fno-exceptions -fno-rtti \
@@ -1048,6 +1050,7 @@ build_dynamic_cpp_program() {
     local runtime_dir="$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/x86_64"
     local object="$BUILD_DIR/user-cxx-dynamic-main.o"
     clang++ --target=x86_64-unknown-none-elf \
+        -nostdlibinc \
         -std=c++17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fstack-protector-strong -fpie \
         -fexceptions -frtti -D_LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE \
@@ -1905,33 +1908,9 @@ build_user_program deepin "$ROOT_DIR/userspace/bin/deepin/main.c" DEEPIN.ELF
 build_user_program pantheon "$ROOT_DIR/userspace/bin/pantheon/main.c" PANTHEON.ELF
 build_user_program ukui "$ROOT_DIR/userspace/bin/ukui/main.c" UKUI.ELF
 build_user_program enlightenment "$ROOT_DIR/userspace/bin/enlightenment/main.c" ENLIGHTENMENT.ELF
-build_user_program sway "$ROOT_DIR/userspace/bin/sway/main.c" SWAY.ELF
-build_user_program river "$ROOT_DIR/userspace/bin/river/main.c" RIVER.ELF
-build_user_program niri "$ROOT_DIR/userspace/bin/niri/main.c" NIRI.ELF
-build_user_program wayfire "$ROOT_DIR/userspace/bin/wayfire/main.c" WAYFIRE.ELF
-build_user_program labwc "$ROOT_DIR/userspace/bin/labwc/main.c" LABWC.ELF
-build_user_program weston "$ROOT_DIR/userspace/bin/weston/main.c" WESTON.ELF
-build_user_program qtile "$ROOT_DIR/userspace/bin/qtile/main.c" QTILE.ELF
-build_user_program awesome "$ROOT_DIR/userspace/bin/awesome/main.c" AWESOME.ELF
-build_user_program xmonad "$ROOT_DIR/userspace/bin/xmonad/main.c" XMONAD.ELF
-build_user_program herbstluftwm "$ROOT_DIR/userspace/bin/herbstluftwm/main.c" HERBSTLUFTWM.ELF
-build_user_program spectrwm "$ROOT_DIR/userspace/bin/spectrwm/main.c" SPECTRWM.ELF
-build_user_program fluxbox "$ROOT_DIR/userspace/bin/fluxbox/main.c" FLUXBOX.ELF
-build_user_program icewm "$ROOT_DIR/userspace/bin/icewm/main.c" ICEWM.ELF
-build_user_program jwm "$ROOT_DIR/userspace/bin/jwm/main.c" JWM.ELF
-build_user_program wmaker "$ROOT_DIR/userspace/bin/wmaker/main.c" WMAKER.ELF
-build_user_program fvwm "$ROOT_DIR/userspace/bin/fvwm/main.c" FVWM.ELF
-build_user_program budgie "$ROOT_DIR/userspace/bin/budgie/main.c" BUDGIE.ELF
-build_user_program cosmic "$ROOT_DIR/userspace/bin/cosmic/main.c" COSMIC.ELF
-build_user_program deepin "$ROOT_DIR/userspace/bin/deepin/main.c" DEEPIN.ELF
-build_user_program pantheon "$ROOT_DIR/userspace/bin/pantheon/main.c" PANTHEON.ELF
-build_user_program ukui "$ROOT_DIR/userspace/bin/ukui/main.c" UKUI.ELF
-build_user_program enlightenment "$ROOT_DIR/userspace/bin/enlightenment/main.c" ENLIGHTENMENT.ELF
 build_user_program comm "$ROOT_DIR/userspace/bin/comm/main.c" COMM.ELF
 build_user_program command "$ROOT_DIR/userspace/bin/command/main.c" COMMAND.ELF
 build_user_program continue "$ROOT_DIR/userspace/bin/continue/main.c" CONTINUE.ELF
-build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
-build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
 build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
 build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
@@ -1978,6 +1957,7 @@ build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
 build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
 build_user_program gunzip "$ROOT_DIR/userspace/bin/gunzip/main.c" GUNZIP.ELF
+build_user_program history "$ROOT_DIR/userspace/bin/history/main.c" HISTORY.ELF
 build_bzip2
 build_user_program route "$ROOT_DIR/userspace/bin/route/main.c" ROUTE.ELF
 build_user_program traceroute "$ROOT_DIR/userspace/bin/traceroute/main.c" TRACEROUTE.ELF
@@ -2364,7 +2344,7 @@ build_runtime_library libgtk-4.so 5
 build_runtime_library libQt6Core.so 6
 build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
-for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF VMSTAT.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
+for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF VMSTAT.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF HISTORY.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
     # ET_DYN hello-pie legitimately carries relative relocations; the kernel
     # applies those at its fixed native load base. Reject only relocation
     # kinds outside that bounded ABI instead of rejecting the section itself.
@@ -3647,6 +3627,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \
     --file "/bin/gunzip:$BUILD_DIR/GUNZIP.ELF:exec" \
+    --file "/bin/history:$BUILD_DIR/HISTORY.ELF:exec" \
     --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \
     --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \
@@ -3794,6 +3775,8 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/bufcache.c"
     "$ROOT_DIR/xscore/kernel/initramfs.c"
     "$ROOT_DIR/xscore/kernel/syscall.c"
+    "$ROOT_DIR/xscore/kernel/seccomp.c"
+    "$ROOT_DIR/xscore/kernel/kaslr.c"
     "$ROOT_DIR/xscore/kernel/usercopy.c"
     "$ROOT_DIR/xscore/kernel/user.c"
     "$ROOT_DIR/xscore/kernel/page_cache.c"
@@ -3808,14 +3791,15 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/kernel/cpu.c"
     "$ROOT_DIR/xscore/kernel/gpu.c"
     "$ROOT_DIR/xscore/kernel/gpu/drm.c"
-    "$ROOT_DIR/xscore/kernel/gpu/drm_pci.c" \
-    "$ROOT_DIR/xscore/kernel/firmware/runtime.c" \
-    "$ROOT_DIR/xscore/kernel/firmware/bios.c" \
+    "$ROOT_DIR/xscore/kernel/gpu/drm_pci.c"
+    "$ROOT_DIR/xscore/kernel/firmware/runtime.c"
+    "$ROOT_DIR/xscore/kernel/firmware/bios.c"
     "$ROOT_DIR/xscore/kernel/firmware/efivar.c"
+    "$ROOT_DIR/xscore/kernel/power.c"
+    "$ROOT_DIR/xscore/kernel/bios.c"
     "$ROOT_DIR/xscore/kernel/nvme.c"
     "$ROOT_DIR/xscore/kernel/audio_drivers.c"
     "$ROOT_DIR/xscore/kernel/virtio_blk.c"
-    "$ROOT_DIR/xscore/kernel/bios.c"
     "$ROOT_DIR/xscore/kernel/acpi.c"
     "$ROOT_DIR/xscore/kernel/usb.c"
     "$ROOT_DIR/xscore/kernel/ahci.c"
@@ -3833,7 +3817,7 @@ XSCORE_C_SOURCES=(
     "$ROOT_DIR/xscore/memory/physical.c"
     "$ROOT_DIR/xscore/memory/virtual.c"
     "$ROOT_DIR/xscore/memory/heap.c"
-    "$ROOT_DIR/xscore/memory/slab.c" \
+    "$ROOT_DIR/xscore/memory/slab.c"
     "$ROOT_DIR/xscore/kernel/drivers/block/floppy.c"
 )
 low_memory_cflags=()
@@ -3843,7 +3827,9 @@ if [[ "$low_memory_profile" -eq 1 ]]; then
 fi
 XSCORE_OBJECTS=()
 for source in "${XSCORE_C_SOURCES[@]}"; do
-    object="$BUILD_DIR/$(basename "${source%.c}").o"
+    rel_source="${source#$ROOT_DIR/}"
+    obj_name="${rel_source//\//_}"
+    object="$BUILD_DIR/${obj_name%.c}.o"
     clang --target=x86_64-unknown-none-elf \
         -std=c17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-stack-protector -fno-pic -fno-pie \

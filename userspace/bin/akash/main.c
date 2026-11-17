@@ -1088,7 +1088,585 @@ static int is_name_shell_builtin(const char *name) {
 }
 
 
+
+/* =========================================================================
+ * Shell Command History Subsystem & History Expansion Engine
+ * ========================================================================= */
+#define MAX_AKASH_HISTORY 1000
+struct akash_history_entry {
+    char cmd[1024];
+    time_t timestamp;
+    int modified;
+};
+static struct akash_history_entry akash_history[MAX_AKASH_HISTORY];
+static int akash_history_count = 0;
+static int akash_session_start_idx = 0;
+
+static const char *akash_get_histfile(void) {
+    const char *hf = get_shell_var("HISTFILE");
+    if (!hf || !*hf) hf = getenv("HISTFILE");
+    if (hf && *hf) return hf;
+    const char *home = get_shell_var("HOME");
+    if (!home || !*home) home = getenv("HOME");
+    static char path[256];
+    if (home && *home) {
+        snprintf(path, sizeof(path), "%s/.bash_history", home);
+    } else {
+        snprintf(path, sizeof(path), "/.bash_history");
+    }
+    return path;
+}
+
+static int akash_get_histsize(void) {
+    const char *sz = get_shell_var("HISTSIZE");
+    if (!sz || !*sz) sz = getenv("HISTSIZE");
+    if (sz && *sz) {
+        int n = atoi(sz);
+        if (n > 0) return (n > MAX_AKASH_HISTORY) ? MAX_AKASH_HISTORY : n;
+    }
+    return 500;
+}
+
+static int akash_get_histfilesize(void) {
+    const char *sz = get_shell_var("HISTFILESIZE");
+    if (!sz || !*sz) sz = getenv("HISTFILESIZE");
+    if (sz && *sz) {
+        int n = atoi(sz);
+        if (n > 0) return n;
+    }
+    return 500;
+}
+
+static void akash_add_history(const char *raw_cmd, int modified) {
+    if (!raw_cmd || !*raw_cmd) return;
+    const char *histcontrol = get_shell_var("HISTCONTROL");
+    if (!histcontrol || !*histcontrol) histcontrol = getenv("HISTCONTROL");
+
+    int ignore_space = 0, ignore_dups = 0, erase_dups = 0;
+    if (histcontrol) {
+        if (strstr(histcontrol, "ignorespace")) ignore_space = 1;
+        if (strstr(histcontrol, "ignoredups")) ignore_dups = 1;
+        if (strstr(histcontrol, "ignoreboth")) { ignore_space = 1; ignore_dups = 1; }
+        if (strstr(histcontrol, "erasedups")) erase_dups = 1;
+    }
+
+    if (ignore_space && (raw_cmd[0] == ' ' || raw_cmd[0] == '\t')) return;
+
+    if (ignore_dups && akash_history_count > 0) {
+        if (strcmp(akash_history[akash_history_count - 1].cmd, raw_cmd) == 0) return;
+    }
+
+    if (erase_dups) {
+        for (int i = 0; i < akash_history_count; ++i) {
+            if (strcmp(akash_history[i].cmd, raw_cmd) == 0) {
+                for (int j = i; j < akash_history_count - 1; ++j) {
+                    akash_history[j] = akash_history[j + 1];
+                }
+                akash_history_count--;
+                if (akash_session_start_idx > i) akash_session_start_idx--;
+                i--;
+            }
+        }
+    }
+
+    int limit = akash_get_histsize();
+    if (akash_history_count >= limit || akash_history_count >= MAX_AKASH_HISTORY) {
+        for (int i = 0; i < akash_history_count - 1; ++i) {
+            akash_history[i] = akash_history[i + 1];
+        }
+        akash_history_count--;
+        if (akash_session_start_idx > 0) akash_session_start_idx--;
+    }
+
+    struct akash_history_entry *e = &akash_history[akash_history_count++];
+    strncpy(e->cmd, raw_cmd, sizeof(e->cmd) - 1);
+    e->cmd[sizeof(e->cmd) - 1] = '\0';
+    e->timestamp = time(NULL);
+    e->modified = modified;
+}
+
+static int akash_read_history_file(const char *filename) {
+    int fd = open(filename, O_RDONLY);
+    if (fd < 0) return -1;
+    char buf[1024];
+    char line[1024];
+    int line_len = 0;
+    time_t cur_time = 0;
+    ssize_t n;
+    while ((n = read(fd, buf, sizeof(buf))) > 0) {
+        for (ssize_t i = 0; i < n; ++i) {
+            char c = buf[i];
+            if (c == '\n' || c == '\r') {
+                line[line_len] = '\0';
+                if (line_len > 0) {
+                    if (line[0] == '#' && isdigit((unsigned char)line[1])) {
+                        cur_time = (time_t)atol(line + 1);
+                    } else {
+                        akash_add_history(line, 0);
+                        if (akash_history_count > 0 && cur_time > 0) {
+                            akash_history[akash_history_count - 1].timestamp = cur_time;
+                        }
+                        cur_time = 0;
+                    }
+                }
+                line_len = 0;
+            } else if (line_len + 1 < (int)sizeof(line)) {
+                line[line_len++] = c;
+            }
+        }
+    }
+    if (line_len > 0) {
+        line[line_len] = '\0';
+        if (line[0] != '#') {
+            akash_add_history(line, 0);
+        }
+    }
+    close(fd);
+    return 0;
+}
+
+static int akash_write_history_file(const char *filename, int append_only, int start_idx) {
+    int flags = O_WRONLY | O_CREAT | (append_only ? O_APPEND : O_TRUNC);
+    int fd = open(filename, flags, 0600);
+    if (fd < 0) return -1;
+
+    int max_entries = akash_get_histfilesize();
+    int begin = start_idx;
+    if (!append_only && (akash_history_count - begin) > max_entries) {
+        begin = akash_history_count - max_entries;
+    }
+
+    char out_buf[128];
+    for (int i = begin; i < akash_history_count; ++i) {
+        if (akash_history[i].timestamp > 0) {
+            int slen = snprintf(out_buf, sizeof(out_buf), "#%ld\n", (long)akash_history[i].timestamp);
+            write(fd, out_buf, slen);
+        }
+        write(fd, akash_history[i].cmd, strlen(akash_history[i].cmd));
+        write(fd, "\n", 1);
+    }
+    close(fd);
+    return 0;
+}
+
+static int akash_expand_history(const char *in, char *out, size_t out_max) {
+    if (!in || !*in) {
+        if (out_max > 0) out[0] = '\0';
+        return 0;
+    }
+    size_t o = 0;
+    size_t len = strlen(in);
+    size_t i = 0;
+
+    if (in[0] == '^') {
+        const char *p2 = strchr(in + 1, '^');
+        if (p2) {
+            char old_str[128];
+            char new_str[128];
+            size_t old_len = (size_t)(p2 - (in + 1));
+            if (old_len >= sizeof(old_str)) old_len = sizeof(old_str) - 1;
+            strncpy(old_str, in + 1, old_len);
+            old_str[old_len] = '\0';
+
+            const char *p3 = strchr(p2 + 1, '^');
+            size_t new_len = p3 ? (size_t)(p3 - (p2 + 1)) : strlen(p2 + 1);
+            if (new_len >= sizeof(new_str)) new_len = sizeof(new_str) - 1;
+            strncpy(new_str, p2 + 1, new_len);
+            new_str[new_len] = '\0';
+
+            if (akash_history_count == 0) {
+                write_str(STDERR_FILENO, "akash: !!: event not found\n");
+                return -1;
+            }
+            const char *last_cmd = akash_history[akash_history_count - 1].cmd;
+            char *found = strstr(last_cmd, old_str);
+            if (!found) {
+                write_str(STDERR_FILENO, "akash: substitution failed\n");
+                return -1;
+            }
+            size_t prefix_len = (size_t)(found - last_cmd);
+            snprintf(out, out_max, "%.*s%s%s%s",
+                     (int)prefix_len, last_cmd,
+                     new_str,
+                     found + strlen(old_str),
+                     p3 ? p3 + 1 : "");
+            return 0;
+        }
+    }
+
+    while (i < len) {
+        if (in[i] == '\\' && i + 1 < len && in[i + 1] == '!') {
+            if (o + 1 < out_max) out[o++] = '!';
+            i += 2;
+            continue;
+        }
+        if (in[i] == '!' && i + 1 < len &&
+            in[i + 1] != ' ' && in[i + 1] != '\t' && in[i + 1] != '\n' &&
+            in[i + 1] != '=' && in[i + 1] != '(') {
+            i++;
+            const char *event_line = NULL;
+
+            if (in[i] == '!') {
+                if (akash_history_count == 0) {
+                    write_str(STDERR_FILENO, "akash: !!: event not found\n");
+                    return -1;
+                }
+                event_line = akash_history[akash_history_count - 1].cmd;
+                i++;
+            } else if (in[i] == '-') {
+                i++;
+                int n = 0;
+                while (i < len && isdigit((unsigned char)in[i])) {
+                    n = n * 10 + (in[i++] - '0');
+                }
+                if (n <= 0 || n > akash_history_count) {
+                    write_str(STDERR_FILENO, "akash: event not found\n");
+                    return -1;
+                }
+                event_line = akash_history[akash_history_count - n].cmd;
+            } else if (isdigit((unsigned char)in[i])) {
+                int n = 0;
+                while (i < len && isdigit((unsigned char)in[i])) {
+                    n = n * 10 + (in[i++] - '0');
+                }
+                if (n <= 0 || n > akash_history_count) {
+                    write_str(STDERR_FILENO, "akash: event not found\n");
+                    return -1;
+                }
+                event_line = akash_history[n - 1].cmd;
+            } else if (in[i] == '?') {
+                i++;
+                char pat[128];
+                int pat_len = 0;
+                while (i < len && in[i] != '?' && in[i] != '\n' && in[i] != ':' && in[i] != ' ') {
+                    if (pat_len < (int)sizeof(pat) - 1) pat[pat_len++] = in[i];
+                    i++;
+                }
+                pat[pat_len] = '\0';
+                if (i < len && in[i] == '?') i++;
+                for (int h = akash_history_count - 1; h >= 0; --h) {
+                    if (strstr(akash_history[h].cmd, pat)) {
+                        event_line = akash_history[h].cmd;
+                        break;
+                    }
+                }
+                if (!event_line) {
+                    write_str(STDERR_FILENO, "akash: event not found\n");
+                    return -1;
+                }
+            } else if (in[i] == '#') {
+                i++;
+                out[o] = '\0';
+                event_line = out;
+            } else {
+                char pat[128];
+                int pat_len = 0;
+                while (i < len && !isspace((unsigned char)in[i]) && in[i] != ':' &&
+                       in[i] != '^' && in[i] != '$' && in[i] != '*') {
+                    if (pat_len < (int)sizeof(pat) - 1) pat[pat_len++] = in[i];
+                    i++;
+                }
+                pat[pat_len] = '\0';
+                for (int h = akash_history_count - 1; h >= 0; --h) {
+                    if (strncmp(akash_history[h].cmd, pat, strlen(pat)) == 0) {
+                        event_line = akash_history[h].cmd;
+                        break;
+                    }
+                }
+                if (!event_line) {
+                    write_str(STDERR_FILENO, "akash: event not found\n");
+                    return -1;
+                }
+            }
+
+            char words[64][128];
+            int nwords = 0;
+            const char *src = event_line;
+            while (*src && nwords < 64) {
+                while (*src && isspace((unsigned char)*src)) src++;
+                if (!*src) break;
+                char *dst = words[nwords];
+                int wlen = 0;
+                int q = 0;
+                while (*src) {
+                    if ((*src == '\'' || *src == '"') && (!q || q == *src)) {
+                        q = q ? 0 : *src;
+                        src++;
+                        continue;
+                    }
+                    if (!q && isspace((unsigned char)*src)) break;
+                    if (wlen < 127) dst[wlen++] = *src;
+                    src++;
+                }
+                dst[wlen] = '\0';
+                nwords++;
+            }
+
+            int start_w = 0;
+            int end_w = nwords - 1;
+            int have_word_spec = 0;
+
+            if (i < len && in[i] == ':') {
+                i++;
+            }
+
+            if (i < len && (in[i] == '^' || in[i] == '$' || in[i] == '*' ||
+                            in[i] == '-' || isdigit((unsigned char)in[i]))) {
+                have_word_spec = 1;
+                if (in[i] == '^') {
+                    start_w = end_w = (nwords > 1 ? 1 : 0);
+                    i++;
+                } else if (in[i] == '$') {
+                    start_w = end_w = (nwords > 0 ? nwords - 1 : 0);
+                    i++;
+                } else if (in[i] == '*') {
+                    start_w = 1;
+                    end_w = nwords - 1;
+                    i++;
+                } else if (isdigit((unsigned char)in[i])) {
+                    int wnum = 0;
+                    while (i < len && isdigit((unsigned char)in[i])) {
+                        wnum = wnum * 10 + (in[i++] - '0');
+                    }
+                    start_w = end_w = wnum;
+                    if (i < len && in[i] == '-') {
+                        i++;
+                        if (i < len && isdigit((unsigned char)in[i])) {
+                            int wend = 0;
+                            while (i < len && isdigit((unsigned char)in[i])) {
+                                wend = wend * 10 + (in[i++] - '0');
+                            }
+                            end_w = wend;
+                        } else {
+                            end_w = nwords - 2;
+                        }
+                    } else if (i < len && in[i] == '*') {
+                        i++;
+                        end_w = nwords - 1;
+                    }
+                }
+            }
+
+            char expanded_event[1024];
+            size_t elen = 0;
+            expanded_event[0] = '\0';
+
+            if (start_w >= 0 && start_w < nwords) {
+                if (end_w >= nwords) end_w = nwords - 1;
+                for (int w = start_w; w <= end_w; ++w) {
+                    if (elen > 0 && elen + 1 < sizeof(expanded_event)) {
+                        expanded_event[elen++] = ' ';
+                    }
+                    size_t wl = strlen(words[w]);
+                    if (elen + wl < sizeof(expanded_event)) {
+                        memcpy(expanded_event + elen, words[w], wl);
+                        elen += wl;
+                    }
+                }
+                expanded_event[elen] = '\0';
+            } else if (!have_word_spec) {
+                strncpy(expanded_event, event_line, sizeof(expanded_event) - 1);
+                expanded_event[sizeof(expanded_event) - 1] = '\0';
+            }
+
+            while (i < len && in[i] == ':') {
+                i++;
+                char mod = in[i++];
+                if (mod == 'h') {
+                    char *slash = strrchr(expanded_event, '/');
+                    if (slash) *slash = '\0';
+                } else if (mod == 't') {
+                    char *slash = strrchr(expanded_event, '/');
+                    if (slash) {
+                        memmove(expanded_event, slash + 1, strlen(slash + 1) + 1);
+                    }
+                } else if (mod == 'r') {
+                    char *dot = strrchr(expanded_event, '.');
+                    if (dot) *dot = '\0';
+                } else if (mod == 'e') {
+                    char *dot = strrchr(expanded_event, '.');
+                    if (dot) {
+                        memmove(expanded_event, dot, strlen(dot) + 1);
+                    } else {
+                        expanded_event[0] = '\0';
+                    }
+                } else if (mod == 's') {
+                    char delim = (i < len) ? in[i++] : '/';
+                    char old_sub[128];
+                    char new_sub[128];
+                    int slen = 0;
+                    while (i < len && in[i] != delim) {
+                        if (slen < (int)sizeof(old_sub) - 1) old_sub[slen++] = in[i];
+                        i++;
+                    }
+                    old_sub[slen] = '\0';
+                    if (i < len && in[i] == delim) i++;
+                    slen = 0;
+                    while (i < len && in[i] != delim) {
+                        if (slen < (int)sizeof(new_sub) - 1) new_sub[slen++] = in[i];
+                        i++;
+                    }
+                    new_sub[slen] = '\0';
+                    if (i < len && in[i] == delim) i++;
+
+                    char *target = strstr(expanded_event, old_sub);
+                    if (target) {
+                        char tmp[1024];
+                        size_t pfx = (size_t)(target - expanded_event);
+                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
+                                 (int)pfx, expanded_event,
+                                 new_sub,
+                                 target + strlen(old_sub));
+                        strncpy(expanded_event, tmp, sizeof(expanded_event) - 1);
+                        expanded_event[sizeof(expanded_event) - 1] = '\0';
+                    }
+                }
+            }
+
+            size_t evl = strlen(expanded_event);
+            if (o + evl < out_max) {
+                memcpy(out + o, expanded_event, evl);
+                o += evl;
+            }
+            continue;
+        }
+
+        if (o + 1 < out_max) {
+            out[o++] = in[i++];
+        } else {
+            i++;
+        }
+    }
+    out[o] = '\0';
+    return 0;
+}
+
+static int builtin_history(int argc, char **argv) {
+    const char *histfile = akash_get_histfile();
+
+    if (argc == 1) {
+        for (int i = 0; i < akash_history_count; ++i) {
+            char num_str[32];
+            snprintf(num_str, sizeof(num_str), "%5d%c ", i + 1, akash_history[i].modified ? '*' : ' ');
+            write_str(STDOUT_FILENO, num_str);
+            write_str(STDOUT_FILENO, akash_history[i].cmd);
+            write_str(STDOUT_FILENO, "\n");
+        }
+        last_exit_status = 0;
+        return 1;
+    }
+
+    if (argc == 2 && isdigit((unsigned char)argv[1][0])) {
+        int n = atoi(argv[1]);
+        int start = (n > 0 && n < akash_history_count) ? akash_history_count - n : 0;
+        for (int i = start; i < akash_history_count; ++i) {
+            char num_str[32];
+            snprintf(num_str, sizeof(num_str), "%5d%c ", i + 1, akash_history[i].modified ? '*' : ' ');
+            write_str(STDOUT_FILENO, num_str);
+            write_str(STDOUT_FILENO, akash_history[i].cmd);
+            write_str(STDOUT_FILENO, "\n");
+        }
+        last_exit_status = 0;
+        return 1;
+    }
+
+    for (int i = 1; i < argc; ++i) {
+        char *arg = argv[i];
+        if (strcmp(arg, "-c") == 0) {
+            akash_history_count = 0;
+            akash_session_start_idx = 0;
+            continue;
+        }
+        if (strcmp(arg, "-d") == 0) {
+            if (i + 1 >= argc) {
+                write_str(STDERR_FILENO, "history: -d: option requires an argument\n");
+                last_exit_status = 2;
+                return 1;
+            }
+            int offset = atoi(argv[++i]);
+            if (offset < 1 || offset > akash_history_count) {
+                write_str(STDERR_FILENO, "history: history position out of range\n");
+                last_exit_status = 1;
+                return 1;
+            }
+            int idx = offset - 1;
+            for (int k = idx; k < akash_history_count - 1; ++k) {
+                akash_history[k] = akash_history[k + 1];
+            }
+            akash_history_count--;
+            continue;
+        }
+        if (strcmp(arg, "-a") == 0) {
+            const char *file = (i + 1 < argc && argv[i + 1][0] != '-') ? argv[++i] : histfile;
+            akash_write_history_file(file, 1, akash_session_start_idx);
+            akash_session_start_idx = akash_history_count;
+            continue;
+        }
+        if (strcmp(arg, "-n") == 0) {
+            const char *file = (i + 1 < argc && argv[i + 1][0] != '-') ? argv[++i] : histfile;
+            akash_read_history_file(file);
+            akash_session_start_idx = akash_history_count;
+            continue;
+        }
+        if (strcmp(arg, "-r") == 0) {
+            const char *file = (i + 1 < argc && argv[i + 1][0] != '-') ? argv[++i] : histfile;
+            akash_read_history_file(file);
+            akash_session_start_idx = akash_history_count;
+            continue;
+        }
+        if (strcmp(arg, "-w") == 0) {
+            const char *file = (i + 1 < argc && argv[i + 1][0] != '-') ? argv[++i] : histfile;
+            akash_write_history_file(file, 0, 0);
+            continue;
+        }
+        if (strcmp(arg, "-p") == 0) {
+            int had_err = 0;
+            for (int k = i + 1; k < argc; ++k) {
+                char exp_buf[1024];
+                if (akash_expand_history(argv[k], exp_buf, sizeof(exp_buf)) == 0) {
+                    write_str(STDOUT_FILENO, exp_buf);
+                    write_str(STDOUT_FILENO, "\n");
+                } else {
+                    had_err = 1;
+                }
+            }
+            last_exit_status = had_err ? 1 : 0;
+            return 1;
+        }
+        if (strcmp(arg, "-s") == 0) {
+            char combined[1024];
+            size_t c_len = 0;
+            combined[0] = '\0';
+            for (int k = i + 1; k < argc; ++k) {
+                if (c_len > 0 && c_len + 1 < sizeof(combined)) {
+                    combined[c_len++] = ' ';
+                }
+                size_t l = strlen(argv[k]);
+                if (c_len + l < sizeof(combined)) {
+                    memcpy(combined + c_len, argv[k], l);
+                    c_len += l;
+                }
+            }
+            combined[c_len] = '\0';
+            if (c_len > 0) {
+                akash_add_history(combined, 0);
+            }
+            last_exit_status = 0;
+            return 1;
+        }
+        write_str(STDERR_FILENO, "history: invalid option\n");
+        last_exit_status = 2;
+        return 1;
+    }
+    last_exit_status = 0;
+    return 1;
+}
+
 static int execute_builtin(int argc, char *argv[]) {
+    if (strcmp(argv[0], "history") == 0) {
+        return builtin_history(argc, argv);
+    }
+
     if (argc == 0) return 0;
 
     /* Variable assignment: VAR=VAL */
@@ -1476,7 +2054,11 @@ if (strcmp(argv[0], "exit") == 0) {
         return 1;
     }
 
-    if (strcmp(argv[0], "help") == 0) {
+        if (strcmp(argv[0], "history") == 0) {
+        return builtin_history(argc, argv);
+    }
+
+if (strcmp(argv[0], "help") == 0) {
         if (argc > 1) {
             const char *topic = argv[1];
             if (is_name_shell_builtin(topic)) {
@@ -1875,7 +2457,11 @@ if (strcmp(argv[0], "exit") == 0) {
                 if (WIFSTOPPED(process_status)) stopped = 1;
             }
         }
+        if (isatty(STDIN_FILENO)) {
+        if (isatty(STDIN_FILENO)) {
         (void)tcsetpgrp(STDIN_FILENO, getpgrp());
+    }
+    }
         if (stopped) {
             job->state = 2;
             job->seq = ++job_seq_counter;
@@ -2405,10 +2991,10 @@ static int execute_single_stage(struct command_stage *stage) {
 
     int pid = fork();
     if (pid == 0) {
-        (void)setpgid(0, 0);
-        if (!background) {
-            (void)tcsetpgrp(STDIN_FILENO, getpid());
-        }
+        if (isatty(STDIN_FILENO)) { (void)setpgid(0, 0); if (!background) (void)tcsetpgrp(STDIN_FILENO, getpid()); }
+
+
+
         shell_execvp(stage->argv[0], stage->argv);
         int exec_error = errno;
         write_str(STDERR_FILENO, stage->argv[0]);
@@ -2432,7 +3018,7 @@ static int execute_single_stage(struct command_stage *stage) {
             last_exit_status = 1;
         }
     } else if (background) {
-        (void)setpgid(pid, pid);
+        if (isatty(STDIN_FILENO)) (void)setpgid(pid, pid);
         int j = add_shell_job(pid, 1, stage->argv[0]);
         write_str(STDOUT_FILENO, "[");
         print_num(STDOUT_FILENO, j);
@@ -2441,11 +3027,11 @@ static int execute_single_stage(struct command_stage *stage) {
         write_str(STDOUT_FILENO, "\n");
         last_exit_status = 0;
     } else {
-        (void)setpgid(pid, pid);
-        (void)tcsetpgrp(STDIN_FILENO, pid);
+        if (isatty(STDIN_FILENO)) { (void)setpgid(pid, pid); (void)tcsetpgrp(STDIN_FILENO, pid); }
+
         int status = 0;
         waitpid(pid, &status, 0);
-        (void)tcsetpgrp(STDIN_FILENO, getpgrp());
+        if (isatty(STDIN_FILENO)) (void)tcsetpgrp(STDIN_FILENO, getpgrp());
         if (WIFSTOPPED(status)) {
             int j = add_shell_job(pid, 2, stage->argv[0]);
             write_str(STDOUT_FILENO, "\n[");
@@ -2586,7 +3172,7 @@ static int execute_pipeline(struct command_stage stages[], int num_stages) {
         return 1;
     }
 
-    if (pipeline_pgid > 0) {
+    if (pipeline_pgid > 0 && isatty(STDIN_FILENO)) {
         (void)tcsetpgrp(STDIN_FILENO, pipeline_pgid);
     }
 
@@ -2594,7 +3180,9 @@ static int execute_pipeline(struct command_stage stages[], int num_stages) {
     for (int i = 0; i < num_stages; ++i) {
         if (pids[i] > 0) {
             int st = 0;
+            write_str(STDERR_FILENO, "[DEBUG-AKASH] waiting for pid\n");
             waitpid(pids[i], &st, 0);
+            write_str(STDERR_FILENO, "[DEBUG-AKASH] waitpid finished\n");
             if (WIFSTOPPED(st)) pipeline_stopped = 1;
             if (i == num_stages - 1) {
                 last_exit_status = wait_status_exit_code(st);
@@ -2604,7 +3192,7 @@ static int execute_pipeline(struct command_stage stages[], int num_stages) {
         }
     }
 
-    (void)tcsetpgrp(STDIN_FILENO, getpgrp());
+    if (isatty(STDIN_FILENO)) (void)tcsetpgrp(STDIN_FILENO, getpgrp());
 
     if (pipeline_stopped) {
         int job = add_pipeline_job(pids, num_stages, pipeline_pgid, 2,
@@ -3404,6 +3992,7 @@ static void print_bash_help(void) {
 }
 
 int main(int argc, char **argv) {
+    write(STDERR_FILENO, "[DEBUG-AKASH-ENTRY] main started\n", 33);
     (void)signal(SIGINT, shell_sigint_handler);
 
     const char *progname = (argc > 0) ? argv[0] : "bash";

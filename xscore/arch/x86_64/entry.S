@@ -509,9 +509,9 @@ xscore_syscall_int80:
     cmpq %r10, %rax
     je .Lslow_path
     
-    /* Handled by fast path - exit immediately */
+    /* Handled by fast path - update user RAX and return */
     movq %rax, 112(%rbx)
-    jmp .Lsyscall_exit
+    jmp .Lsyscall_return_user
 
 .Lslow_path:
     movq %rsp, %rbx
@@ -520,259 +520,6 @@ xscore_syscall_int80:
     andq $-16, %rsp
     call xscore_process_capture_syscall_context
     movq %rbx, %rsp
-.Lsyscall_dispatch:
-    subq $64, %rsp
-    movq 112(%rbx), %rax       /* syscall number (user RAX) */
-    movq %rax, 0(%rsp)
-    movq 72(%rbx), %rax        /* argument 0 (user RDI) */
-    movq %rax, 8(%rsp)
-    movq 64(%rbx), %rax        /* argument 1 (user RSI) */
-    movq %rax, 16(%rsp)
-    movq 88(%rbx), %rax        /* argument 2 (user RDX) */
-    movq %rax, 24(%rsp)
-    movq 104(%rbx), %rax       /* argument 3 (user R10) */
-    movq %rax, 32(%rsp)
-    movq 96(%rbx), %rax        /* argument 4 (user R8) */
-    movq %rax, 40(%rsp)
-    movq 80(%rbx), %rax        /* argument 5 (user R9) */
-    movq %rax, 48(%rsp)
-    movq 120(%rbx), %rax       /* instruction pointer (user RIP) */
-    movq %rax, 56(%rsp)
-    
-    movq %rsp, %rdi            /* Frame pointer as first argument */
-    andq $-16, %rsp
-    call xscore_syscall_dispatch
-    addq $64, %rsp
-    movq %rbx, %rsp
-    movabsq $0x8000000000000000, %r10
-    cmpq %r10, %rax
-    je .Lsyscall_exit
-    movq %rax, 112(%rsp)       /* return value becomes user RAX */
-
-    /* SET_TP and scheduler returns both need the architectural FS base
-       updated before the register frame is popped and iretq executes. */
-    movq %rsp, %rbx
-    andq $-16, %rsp
-    call xscore_thread_current_user_transition
-    movq %rbx, %rsp
-    testq %rax, %rax
-    jz .Lsyscall_tp_ready
-    movq 48(%rax), %rdi
-    call xscore_arch_set_user_tp
-.Lsyscall_tp_ready:
-    popq %r15
-    popq %r14
-    popq %r13
-    popq %r12
-    popq %r11
-    popq %r10
-    popq %r9
-    popq %r8
-    popq %rsi
-    popq %rdi
-    popq %rbp
-    popq %rdx
-    popq %rcx
-    popq %rbx
-    popq %rax
-    addq $16, %rsp
-    iretq
-.size xscore_isr_common, .-xscore_isr_common
-
-/* ============================================================
- * Hardware IRQ stubs (vectors 32–47)
- * These push a dummy error code and the vector number,
- * then dispatch to xscore_irq_common which calls the
- * appropriate C handler.
- * ============================================================ */
-
-.macro IRQ_STUB irq_number
-.global xscore_irq_\irq_number
-xscore_irq_\irq_number:
-    pushq $0
-    pushq $(\irq_number + 32)
-    jmp xscore_irq_common
-.endm
-
-IRQ_STUB 0
-IRQ_STUB 1
-IRQ_STUB 2
-IRQ_STUB 3
-IRQ_STUB 4
-IRQ_STUB 5
-IRQ_STUB 6
-IRQ_STUB 7
-IRQ_STUB 8
-IRQ_STUB 9
-IRQ_STUB 10
-IRQ_STUB 11
-IRQ_STUB 12
-IRQ_STUB 13
-IRQ_STUB 14
-IRQ_STUB 15
-
-/* Local-APIC reschedule IPI. */
-.global xscore_irq_reschedule
-xscore_irq_reschedule:
-    pushq $0
-    pushq $254
-    jmp xscore_irq_common
-
-/* Local-APIC TLB shootdown IPI. */
-.global xscore_irq_tlb_shootdown
-xscore_irq_tlb_shootdown:
-    pushq $0
-    pushq $253
-    jmp xscore_irq_common
-
-.global xscore_irq_spurious
-xscore_irq_spurious:
-    iretq
-
-.type xscore_irq_common, @function
-xscore_irq_common:
-    cld
-    pushq %rax
-    pushq %rbx
-    pushq %rcx
-    pushq %rdx
-    pushq %rbp
-    pushq %rdi
-    pushq %rsi
-    pushq %r8
-    pushq %r9
-    pushq %r10
-    pushq %r11
-    pushq %r12
-    pushq %r13
-    pushq %r14
-    pushq %r15
-
-    /* RDI = vector number (on stack at offset 120) */
-    movq 120(%rsp), %rdi
-    movq %rsp, %rsi             /* frame pointer for preemption check */
-    movq %rsp, %rbx
-    andq $-16, %rsp
-    call xscore_irq_dispatch
-    movq %rbx, %rsp
-
-    /* Timer-driven scheduling may have selected another user TCB. */
-    movq %rsp, %rbx
-    andq $-16, %rsp
-    call xscore_thread_current_user_transition
-    movq %rbx, %rsp
-    testq %rax, %rax
-    jz .Lirq_tp_ready
-    movq 48(%rax), %rdi
-    call xscore_arch_set_user_tp
-.Lirq_tp_ready:
-
-    popq %r15
-    popq %r14
-    popq %r13
-    popq %r12
-    popq %r11
-    popq %r10
-    popq %r9
-    popq %r8
-    popq %rsi
-    popq %rdi
-    popq %rbp
-    popq %rdx
-    popq %rcx
-    popq %rbx
-    popq %rax
-    addq $16, %rsp
-    iretq
-.size xscore_irq_common, .-xscore_irq_common
-
-/* ============================================================
- * Ring 3 entry and int 0x80 system-call path
- * ============================================================ */
-
-.global xscore_user_enter
-.type xscore_user_enter, @function
-xscore_user_enter:
-    /*
-     * RDX points at the current TCB's xscore_user_transition. Preserve the
-     * kernel ABI state there so separate tasks never share return storage.
-     */
-    pushq %rbp
-    pushq %rbx
-    pushq %r12
-    pushq %r13
-    pushq %r14
-    pushq %r15
-    movq %rsp, 0(%rdx)
-    leaq .Luser_return(%rip), %rax
-    movq %rax, 8(%rdx)
-    movq $1, 24(%rdx)
-
-    /* iretq frame: SS, RSP, RFLAGS, CS, RIP. */
-    pushq $0x1b
-    pushq %rsi
-    pushq $0x202
-    pushq $0x23
-    pushq %rdi
-    /* Newly-created user threads receive their first argument in RDI. */
-    movq 40(%rdx), %r12
-    movq 48(%rdx), %rdi
-    call xscore_arch_set_user_tp
-    movq %r12, %rdi
-    iretq
-
-.Luser_return:
-    popq %r15
-    popq %r14
-    popq %r13
-    popq %r12
-    popq %rbx
-    popq %rbp
-    ret
-.size xscore_user_enter, .-xscore_user_enter
-
-.global xscore_syscall_int80
-.type xscore_syscall_int80, @function
-xscore_syscall_int80:
-    cld
-    pushq %rax
-    pushq %rbx
-    pushq %rcx
-    pushq %rdx
-    pushq %rbp
-    pushq %rdi
-    pushq %rsi
-    pushq %r8
-    pushq %r9
-    pushq %r10
-    pushq %r11
-    pushq %r12
-    pushq %r13
-    pushq %r14
-    pushq %r15
-
-    movq %rsp, %rbx
-    movq 112(%rbx), %rdi
-    movq %rbx, %rsi
-    andq $-16, %rsp
-    call xscore_process_capture_syscall_context
-    movq %rbx, %rsp
-
-    /* Fast path check */
-    movq 112(%rbx), %rdi       /* syscall number */
-    movq 72(%rbx), %rsi        /* argument 0 */
-    movq 64(%rbx), %rdx        /* argument 1 */
-    movq 88(%rbx), %rcx        /* argument 2 */
-    andq $-16, %rsp
-    call xscore_syscall_fast_dispatch
-    movq %rbx, %rsp
-    movabsq $0xFFFFFFFFFFFFFFFF, %r10
-    cmpq %r10, %rax
-    je .Lslow_path_dispatch
-    movq %rax, 112(%rbx)
-    jmp .Lsyscall_exit
-
-.Lslow_path_dispatch:
 .Lsyscall_dispatch:
     movq 112(%rbx), %rdi       /* syscall number (user RAX) */
     movq 72(%rbx), %rsi        /* argument 0 (user RDI) */
@@ -786,6 +533,7 @@ xscore_syscall_int80:
     je .Lsyscall_exit
     movq %rax, 112(%rsp)       /* return value becomes user RAX */
 
+.Lsyscall_return_user:
     /* SET_TP and scheduler returns both need the architectural FS base
        updated before the register frame is popped and iretq executes. */
     movq %rsp, %rbx
@@ -797,7 +545,6 @@ xscore_syscall_int80:
     movq 48(%rax), %rdi
     call xscore_arch_set_user_tp
 .Lsyscall_tp_ready:
-
     popq %r15
     popq %r14
     popq %r13

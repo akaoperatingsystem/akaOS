@@ -11,7 +11,15 @@
 #include <xscore/firmware.h>
 #include <xscore/serial.h>
 #include <stddef.h>
-#include <string.h>
+/* #include <string.h> */
+void *memcpy(void *dst, const void *src, size_t count);
+void *memset(void *dst, int val, size_t count);
+int memcmp(const void *s1, const void *s2, size_t n);
+size_t strlen(const char *s);
+int strcmp(const char *s1, const char *s2);
+int strncmp(const char *s1, const char *s2, size_t n);
+char *strcpy(char *dst, const char *src);
+char *strncpy(char *dst, const char *src, size_t n);
 
 #define BDA_PHYSICAL_ADDRESS 0x400U
 #define EBDA_PTR_ADDRESS     0x40EU
@@ -36,17 +44,21 @@ int xscore_bios_thunk(uint16_t interrupt, struct bios_regs *regs) {
     if (!regs) return -1;
 
     xscore_serial_write("[BIOS-THUNK] INT ");
-    char num_buf[8];
+    char num_buf[16];
     int n = 0;
     uint16_t val = interrupt;
-    if (val == 0) num_buf[n++] = '0';
+    char rev[16];
+    int r = 0;
+    if (val == 0) rev[r++] = '0';
     else {
         while (val > 0) {
-            num_buf[n++] = (char)('0' + (val % 10));
+            rev[r++] = (char)('0' + (val % 10));
             val /= 10;
         }
     }
-    while (n > 0) xscore_serial_putc(num_buf[--n]);
+    while (r > 0) num_buf[n++] = rev[--r];
+    num_buf[n] = '\0';
+    xscore_serial_write(num_buf);
     xscore_serial_write("h invoked\n");
 
     /* Emulate standard BIOS calls */

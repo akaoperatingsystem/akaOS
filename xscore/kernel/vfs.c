@@ -1,6 +1,7 @@
 #include <akaos/capability.h>
 #include <xscore/bufcache.h>
 #include <xscore/file.h>
+#include <xscore/heap.h>
 #include <xscore/memory.h>
 #include <xscore/process.h>
 #include <xscore/smp.h>
@@ -2036,7 +2037,7 @@ int64_t xscore_vfs_open_at(struct xscore_fd_table *table, uint32_t cwd_node,
         }
         if (target == proc_kmsg_node) {
             if ((flags & 3) != AKAOS_O_RDONLY) return -AKAOS_EACCES;
-            uint8_t *generated = (uint8_t *)xscore_heap_alloc(16384);
+            uint8_t *generated = (uint8_t *)xscore_heap_allocate(16384);
             if (!generated) return -AKAOS_ENOMEM;
             size_t size = xscore_kernel_log_read((char *)generated, 16384, 0);
             int64_t fd = xscore_fd_open_generated(table, generated, size);

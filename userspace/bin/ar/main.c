@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
     const char *ops = argv[1];
     if (*ops == '-') ops++;
 
-    int op_r = 0, op_c = 0, op_s = 0, op_t = 0, op_x = 0, op_d = 0, op_p = 0, op_v = 0;
+    int op_r = 0, op_c = 0, op_s = 0, op_t = 0, op_x = 0, op_d = 0, op_p = 0, op_v = 0; (void)op_c;
     for (const char *p = ops; *p; ++p) {
         if (*p == 'r') op_r = 1;
         else if (*p == 'c') op_c = 1;

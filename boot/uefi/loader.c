@@ -244,13 +244,8 @@ static EFI_STATUS load_elf(EFI_FILE_PROTOCOL *file, UINTN file_size,
     }
 
     EFI_STATUS result = EFI_SUCCESS;
-    for (uint16_t index = 0; index < header.phnum; ++index) { 
-    uint64_t slide = (get_uefi_entropy() % 32) * 0x200000;
-    serial_write_hex64("[KASLR] Kernel slide: 0x", slide);
-    header.entry += slide;
-
+    for (uint16_t index = 0; index < header.phnum; ++index) {
         struct elf64_program_header *segment = &segments[index];
-        segment->paddr += slide;
         if (segment->type != PT_LOAD || segment->memsz == 0) continue;
         if (segment->filesz > segment->memsz || segment->offset > file_size ||
             segment->filesz > file_size - segment->offset) {
@@ -411,13 +406,6 @@ static EFI_STATUS exit_boot_services(EFI_HANDLE image_handle) {
 }
 
 typedef void(__attribute__((sysv_abi)) *kernel_entry_t)(const struct akaos_boot_info *);
-
-
-static uint64_t get_uefi_entropy(void) {
-    UINT64 count = 0;
-    g_system_table->boot_services->get_next_monotonic_count(&count);
-    return count;
-}
 
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
     g_system_table = system_table;

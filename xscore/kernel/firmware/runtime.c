@@ -15,7 +15,15 @@
 #include <xscore/serial.h>
 #include <xscore/smp.h>
 #include <stddef.h>
-#include <string.h>
+/* #include <string.h> */
+void *memcpy(void *dst, const void *src, size_t count);
+void *memset(void *dst, int val, size_t count);
+int memcmp(const void *s1, const void *s2, size_t n);
+size_t strlen(const char *s);
+int strcmp(const char *s1, const char *s2);
+int strncmp(const char *s1, const char *s2, size_t n);
+char *strcpy(char *dst, const char *src);
+char *strncpy(char *dst, const char *src, size_t n);
 
 void *memset(void *dst, int val, size_t count);
 void *memcpy(void *dst, const void *src, size_t count);
@@ -148,6 +156,7 @@ int xscore_uefi_set_time(const struct efi_time *time) {
 
 int xscore_uefi_get_variable(const char *name, const struct efi_guid *guid,
                              uint32_t *attributes, uint64_t *data_size, void *data) {
+    (void)guid;
     if (!name || !data_size) return -1;
 
     uintptr_t flags = xscore_spin_lock_irqsave(&g_efivar_lock);

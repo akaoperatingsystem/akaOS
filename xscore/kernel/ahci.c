@@ -543,8 +543,22 @@ static int ahci_command_submit(uint8_t port_num, uint8_t command, uint8_t featur
     struct hba_cmd_tbl *cmdtbl = dev->cmd_table;
     memset(cmdtbl, 0, sizeof(struct hba_cmd_tbl));
     
+    uint64_t bounce_phys = 0;
+    uint8_t *bounce = 0;
     if (buffer && size > 0) {
-        cmdtbl->prdt_entry[0].dba = (uint32_t)xscore_vmm_get_phys((uintptr_t)buffer);
+        bounce_phys = xscore_pmm_allocate_page();
+        if (!bounce_phys) {
+            xscore_spin_unlock_irqrestore(&g_ahci_lock, flags);
+            return 0;
+        }
+        bounce = (uint8_t *)(uintptr_t)bounce_phys;
+        if (write) {
+            memcpy(bounce, buffer, size > 4096 ? 4096 : size);
+        } else {
+            memset(bounce, 0, 4096);
+        }
+        cmdtbl->prdt_entry[0].dba = (uint32_t)bounce_phys;
+        cmdtbl->prdt_entry[0].dbau = (uint32_t)(bounce_phys >> 32);
         cmdtbl->prdt_entry[0].dbc = (uint32_t)(size - 1);
         cmdtbl->prdt_entry[0].i = 1;
     }
@@ -577,9 +591,15 @@ static int ahci_command_submit(uint8_t port_num, uint8_t command, uint8_t featur
         }
     }
     
+    if (success && !write && buffer && size > 0 && bounce) {
+        memcpy(buffer, bounce, size > 4096 ? 4096 : size);
+    }
+    if (bounce_phys) {
+        xscore_pmm_free_page(bounce_phys);
+    }
+
     xscore_spin_unlock_irqrestore(&g_ahci_lock, flags);
     return success;
-}
 }
 
 
@@ -625,6 +645,7 @@ int xscore_ahci_set_power_mode(uint8_t port_num, uint8_t mode) {
 }
 
 int xscore_ahci_check_power_mode(uint8_t port_num, uint8_t *mode) {
+    (void)mode;
     return ahci_command_submit(port_num, ATA_CMD_CHECK_POWER_MD, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0);
 }
 

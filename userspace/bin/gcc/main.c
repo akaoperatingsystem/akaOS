@@ -65,6 +65,8 @@ int main(int argc, char *argv[]) {
             if (num_inputs < 64) input_files[num_inputs++] = argv[i];
         }
     }
+    (void)only_compile;
+    (void)out_file;
 
     if (num_inputs == 0) {
         fprintf(stderr, "%s: fatal error: no input files\ncompilation terminated.\n", prog_name);

@@ -643,6 +643,7 @@ build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
 build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
 build_user_program gunzip "$ROOT_DIR/userspace/bin/gunzip/main.c" GUNZIP.ELF
+build_user_program history "$ROOT_DIR/userspace/bin/history/main.c" HISTORY.ELF
 build_user_program route "$ROOT_DIR/userspace/bin/route/main.c" ROUTE.ELF
 build_user_program traceroute "$ROOT_DIR/userspace/bin/traceroute/main.c" TRACEROUTE.ELF
 build_user_program dig "$ROOT_DIR/userspace/bin/dig/main.c" DIG.ELF
@@ -908,6 +909,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/{INITRAMFS_NAME}" \\
     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \\
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \\
     --file "/bin/gunzip:$BUILD_DIR/GUNZIP.ELF:exec" \\
+    --file "/bin/history:$BUILD_DIR/HISTORY.ELF:exec" \\
     --file "/bin/route:$BUILD_DIR/ROUTE.ELF:exec" \\
     --file "/bin/traceroute:$BUILD_DIR/TRACEROUTE.ELF:exec" \\
     --file "/bin/dig:$BUILD_DIR/DIG.ELF:exec" \\
