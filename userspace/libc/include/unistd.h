@@ -84,6 +84,7 @@ int chdir(const char *path);
 int chroot(const char *path);
 int access(const char *path, int mode);
 int gethostname(char *name, size_t length);
+int sethostname(const char *name, size_t length);
 long sysconf(int name);
 int getpagesize(void);
 long pathconf(const char *path, int name);

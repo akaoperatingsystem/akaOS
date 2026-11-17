@@ -908,3 +908,8 @@ xserver --help
 echo "PASS_CMD_181_xserver"
 
 echo "ALL_181_COMMANDS_NATIVE_PASS"
+
+# hostname
+echo "RUN_CMD_hostname"
+hostname
+echo "PASS_CMD_hostname"

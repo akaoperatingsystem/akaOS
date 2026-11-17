@@ -220,13 +220,49 @@ int access(const char *path, int mode) {
     return 0;
 }
 
+
+int sethostname(const char *name, size_t length) {
+    if (!name || length == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (length > 64) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (geteuid() != 0) {
+        errno = EPERM;
+        return -1;
+    }
+    /* Write to /etc/hostname */
+    int fd = open("/etc/hostname", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd >= 0) {
+        write(fd, name, length);
+        write(fd, "\n", 1);
+        close(fd);
+    }
+    /* Also update /etc/akaos.conf HOSTNAME= line if possible */
+    return 0;
+}
+
 int gethostname(char *name, size_t length) {
     if (!name || length == 0) {
         errno = EINVAL;
         return -1;
     }
     char hostname[64] = "akaOS";
-    int descriptor = open("/etc/akaos.conf", O_RDONLY);
+    int hfd = open("/etc/hostname", O_RDONLY);
+    if (hfd >= 0) {
+        ssize_t count = read(hfd, hostname, sizeof(hostname) - 1U);
+        close(hfd);
+        if (count > 0) {
+            hostname[count] = '\0';
+            size_t idx = 0;
+            while (hostname[idx] && hostname[idx] != '\n' && hostname[idx] != '\r') idx++;
+            hostname[idx] = '\0';
+        }
+    } else {
+        int descriptor = open("/etc/akaos.conf", O_RDONLY);
     if (descriptor >= 0) {
         char config[512];
         ssize_t count = read(descriptor, config, sizeof(config) - 1U);
@@ -245,6 +281,7 @@ int gethostname(char *name, size_t length) {
                 hostname[index] = '\0';
             }
         }
+    }
     }
     size_t copy = strlen(hostname);
     if (copy >= length) {

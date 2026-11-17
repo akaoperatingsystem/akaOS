@@ -965,6 +965,24 @@ int xscore_user_process_self_test(void) {
     if (!p_akash_hist || !xscore_process_wait(p_akash_hist, &akash_hist_status) || akash_hist_status != 0 || !xscore_process_reap(p_akash_hist)) return 0;
     xscore_serial_write("[INFO] akash history expansion and builtin verified\n");
 
+    /* Verify standalone hostname utility /bin/hostname (get and set) */
+    const char *hostname_args[] = {"/bin/hostname", 0};
+    struct xscore_process *p_hostname = xscore_process_create_path_args("/bin/hostname", 1, hostname_args);
+    uint64_t hostname_status = UINT64_MAX;
+    if (!p_hostname || !xscore_process_wait(p_hostname, &hostname_status) || hostname_status != 0 || !xscore_process_reap(p_hostname)) return 0;
+
+    const char *hostname_set_args[] = {"/bin/hostname", "akaos-node1", 0};
+    struct xscore_process *p_hostname_set = xscore_process_create_path_args("/bin/hostname", 2, hostname_set_args);
+    uint64_t hostname_set_status = UINT64_MAX;
+    if (!p_hostname_set || !xscore_process_wait(p_hostname_set, &hostname_set_status) || hostname_set_status != 0 || !xscore_process_reap(p_hostname_set)) return 0;
+
+    const char *hostname_reset_args[] = {"/bin/hostname", "akaOS", 0};
+    struct xscore_process *p_hostname_reset = xscore_process_create_path_args("/bin/hostname", 2, hostname_reset_args);
+    uint64_t hostname_reset_status = UINT64_MAX;
+    if (!p_hostname_reset || !xscore_process_wait(p_hostname_reset, &hostname_reset_status) || hostname_reset_status != 0 || !xscore_process_reap(p_hostname_reset)) return 0;
+    xscore_serial_write("[INFO] Command hostname verified\n");
+
+
 
     const char *apropos_args[] = {"/bin/apropos", "zip", 0};
     struct xscore_process *p_apropos = xscore_process_create_path_args("/bin/apropos", 2, apropos_args);

@@ -227,6 +227,7 @@ grep -Fq "[INFO] Archiving & compression suite tar/gzip/gunzip verified" "$TEST_
 grep -Fq "[INFO] Archive tool cpio verified" "$TEST_LOG"
 grep -Fq "[INFO] Data transfer utility curl verified" "$TEST_LOG"
 grep -Fq "[INFO] Command history utility history verified" "$TEST_LOG"
+grep -Fq "[INFO] Command hostname verified" "$TEST_LOG"
 grep -Fq "[INFO] Advanced shell job control & pipelines in akash verified" "$TEST_LOG"
 grep -Fq "[INFO] Shell function macro engine verified" "$TEST_LOG"
 grep -Fq "[INFO] Search utility grep verified" "$TEST_LOG"

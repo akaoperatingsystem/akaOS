@@ -614,6 +614,7 @@ build_user_program crond "$ROOT_DIR/userspace/bin/crond/main.c" CROND.ELF
 build_user_program crontab "$ROOT_DIR/userspace/bin/crontab/main.c" CRONTAB.ELF
 build_user_program gzip "$ROOT_DIR/userspace/bin/gzip/main.c" GZIP.ELF
 build_user_program gunzip "$ROOT_DIR/userspace/bin/gunzip/main.c" GUNZIP.ELF
+build_user_program hostname "$ROOT_DIR/userspace/bin/hostname/main.c" HOSTNAME.ELF
 build_user_program history "$ROOT_DIR/userspace/bin/history/main.c" HISTORY.ELF
 build_user_program route "$ROOT_DIR/userspace/bin/route/main.c" ROUTE.ELF
 build_user_program traceroute "$ROOT_DIR/userspace/bin/traceroute/main.c" TRACEROUTE.ELF
@@ -876,6 +877,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_riscv64.img"
     --file "/bin/tar:$BUILD_DIR/TAR.ELF:exec"     --file "/bin/cpio:$BUILD_DIR/CPIO.ELF:exec"     --file "/bin/cron:$BUILD_DIR/CRON.ELF:exec"     --file "/bin/csplit:$BUILD_DIR/CSPLIT.ELF:exec"     --file "/bin/date:$BUILD_DIR/DATE.ELF:exec"     --file "/bin/declare:$BUILD_DIR/DECLARE.ELF:exec"     --file "/bin/typeset:$BUILD_DIR/DECLARE.ELF:exec"     --file "/bin/dc:$BUILD_DIR/DC.ELF:exec"     --file "/bin/dd:$BUILD_DIR/DD.ELF:exec"     --file "/bin/ddrescue:$BUILD_DIR/DDRESCUE.ELF:exec"     --file "/bin/ddrescuelog:$BUILD_DIR/DDRESCUELOG.ELF:exec"     --file "/bin/lsusb:$BUILD_DIR/LSUSB.ELF:exec"     --file "/bin/crond:$BUILD_DIR/CROND.ELF:exec"     --file "/bin/crontab:$BUILD_DIR/CRONTAB.ELF:exec" \
     --file "/bin/gzip:$BUILD_DIR/GZIP.ELF:exec" \
     --file "/bin/gunzip:$BUILD_DIR/GUNZIP.ELF:exec" \
+    --file "/bin/hostname:$BUILD_DIR/HOSTNAME.ELF:exec" \
     --file "/bin/history:$BUILD_DIR/HISTORY.ELF:exec" \
     --file "/bin/route:$BUILD_DIR/ROUTE.ELF:exec" \
     --file "/bin/traceroute:$BUILD_DIR/TRACEROUTE.ELF:exec" \

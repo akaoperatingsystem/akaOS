@@ -124,6 +124,7 @@ raw_files = [
     f"/bin/tar:{BUILD_DIR}/TAR.ELF:exec",
     f"/bin/gzip:{BUILD_DIR}/GZIP.ELF:exec",
     f"/bin/gunzip:{BUILD_DIR}/GUNZIP.ELF:exec",
+    f"/bin/hostname:{BUILD_DIR}/HOSTNAME.ELF:exec",
     f"/bin/history:{BUILD_DIR}/HISTORY.ELF:exec",
     f"/bin/route:{BUILD_DIR}/ROUTE.ELF:exec",
     f"/bin/traceroute:{BUILD_DIR}/TRACEROUTE.ELF:exec",
