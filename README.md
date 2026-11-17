@@ -54,16 +54,6 @@ akaOS runs entirely on its own microkernel, freestanding C runtime library (libc
 | **RISC-V64**| `XSCORE_RISCV64.ELF`| Direct | VirtIO |
 | **RISC-V32**| `XSCORE_RISCV32.ELF`| Direct | VirtIO |
 
----
-
-## Footprint Metrics
-
-Automated builds enforce extreme size minimization (`-Os`, stripping, ZSTD compression).
-
-| Component | Baseline (Before) | Optimized (After) | Reduction |
-| :--- | :--- | :--- | :--- |
-| **x64 ISO** | 330.68 MB | **27.00 MB** | **~91.8%** |
-| **x86 ISO** | 35.00 MB | **12.00 MB** | **~65.7%** |
 
 ---
 
