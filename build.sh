@@ -3537,6 +3537,9 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
     --file "/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
     --file "/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/xfce4-session:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/xfwm4:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/xfconfd:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
     --file "/bin/notepad:$BUILD_DIR/NOTEPAD.ELF:exec" \
     --file "/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec" \
     --file "/bin/webviewer:$BUILD_DIR/WEBVIEWER.ELF:exec" \

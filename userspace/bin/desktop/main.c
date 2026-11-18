@@ -31,6 +31,7 @@ static const char *resolve_desktop_binary(const char *env) {
     if (strcmp(env, "kde") == 0 || strcmp(env, "plasma") == 0) return "/bin/plasma";
     if (strcmp(env, "gnome") == 0 || strcmp(env, "shell") == 0) return "/bin/gnome-shell";
     if (strcmp(env, "xfce") == 0 || strcmp(env, "classic") == 0) return "/bin/xfce4-session";
+    if (strcmp(env, "openbox") == 0) return "/bin/openbox";
     return NULL;
 }
 
@@ -54,6 +55,8 @@ static const char *profile_label(const char *id) {
     if (strcmp(id, "lxqt") == 0) return "LXQt";
     if (strcmp(id, "gnome") == 0) return "GNOME";
     if (strcmp(id, "kde") == 0) return "KDE Plasma";
+    if (strcmp(id, "xfce") == 0) return "XFCE";
+    if (strcmp(id, "openbox") == 0) return "Openbox";
     return "Unknown";
 }
 
