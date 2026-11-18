@@ -62,6 +62,11 @@ int main(int argc, char **argv) {
         char name[AKAOS_ACCOUNT_NAME_MAX + 1];
         char password[AKAOS_PASSWORD_MAX + 1];
         struct akaos_account account;
+        if (check_autostart_desktop()) {
+            if (akaos_account_by_name("root", &account)) {
+                goto perform_authenticated_session;
+            }
+        }
         puts("akaOS tty1");
         if (!read_line("login: ", name, sizeof(name))) continue;
         int known = akaos_account_by_name(name, &account);
@@ -77,6 +82,7 @@ int main(int argc, char **argv) {
         }
         fail_count = 0;
         memset(password, 0, sizeof(password));
+perform_authenticated_session:
         if (setgid(account.gid) != 0 || setuid(account.uid) != 0) {
             puts("login: unable to establish credentials");
             return 1;
