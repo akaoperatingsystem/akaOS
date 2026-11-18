@@ -150,7 +150,7 @@ static int create_palette_surface_size(struct client_surface *surf, uint32_t pid
     header->stride_pixels = width;
     header->format = AKAOS_SURFACE_FORMAT_XRGB8888;
     header->pixel_offset = sizeof(*header);
-    header->byte_size = content_size;
+    header->byte_size = mapped_size;
 
     surf->header = header;
     surf->pixels = (uint32_t *)((uint8_t *)header + header->pixel_offset);

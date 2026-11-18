@@ -220,59 +220,6 @@ static inline void render_launcher(uint32_t *pixels, uint32_t width, uint32_t he
                      g_light_theme ? UINT32_C(0xFF0F172A) : UINT32_C(0xFFF8FAFC),
                      (int)width - 150);
     }
-};
-    int tab_x = 14;
-    int tab_y = 72;
-    int tab_w = ((int)width - 28) / CATEGORY_COUNT;
-    for (int c = 0; c < CATEGORY_COUNT; ++c) {
-        int active = (launcher->active_category == c);
-        fill_rounded_rect(pixels, width, height, tab_x, tab_y, tab_w - 4, 22, 5,
-                          active ? (g_light_theme ? UINT32_C(0xdbe9fb) : UINT32_C(0x2b3e59))
-                                 : (g_light_theme ? UINT32_C(0xe8edf4) : UINT32_C(0x192333)),
-                          active ? UINT32_C(0x628fd0) : UINT32_C(0x384a62));
-        draw_ui_text(pixels, width, height, tab_x + 6, tab_y + 4, 1, tabs[c],
-                     active ? (g_light_theme ? UINT32_C(0x19283d) : UINT32_C(0xffffff))
-                            : (g_light_theme ? UINT32_C(0x5a6a7e) : UINT32_C(0x94a4b8)),
-                     tab_w - 12);
-        tab_x += tab_w;
-    }
-
-    /* Application Item Rows */
-    unsigned matches = launcher_match_count(launcher);
-    if (matches == 0U) {
-        draw_ui_text(pixels, width, height, 20, 115, 1, "No matching applications",
-                     UINT32_C(0x9eacc0), (int)width - 40);
-        return;
-    }
-
-    int list_y_start = 100;
-    unsigned item_h = 36;
-    unsigned visible = (height > (unsigned)list_y_start + 10)
-                           ? (height - (unsigned)list_y_start - 10) / item_h
-                           : 0U;
-    if (visible > matches) visible = matches;
-    unsigned first = launcher->selected >= visible ? launcher->selected - visible + 1U : 0U;
-
-    for (unsigned row = 0; row < visible; ++row) {
-        unsigned match_index = first + row;
-        const struct aurora_app *app = launcher_match_at(launcher, match_index);
-        if (!app) break;
-        int y = list_y_start + (int)row * (int)item_h;
-        if (match_index == launcher->selected) {
-            fill_rounded_rect(pixels, width, height, 12, y, (int)width - 24, (int)item_h - 4, 8,
-                              g_light_theme ? UINT32_C(0xdbe9fb) : UINT32_C(0x2b3e59),
-                              g_light_theme ? UINT32_C(0x76a5da) : UINT32_C(0x4f79aa));
-        }
-        draw_app_icon(pixels, width, height, 18, y + 2, app->icon);
-        draw_ui_text(pixels, width, height, 54, y + 8, 1, app->name,
-                     g_light_theme ? UINT32_C(0x26364b) : UINT32_C(0xeaf0f8),
-                     (int)width - 130);
-
-        /* Category badge on the right */
-        const char *cname = category_name(app->category);
-        draw_ui_text(pixels, width, height, (int)width - 75, y + 9, 1, cname,
-                     UINT32_C(0x6e8098), 65);
-    }
 }
 
 #endif /* AURORA_LAUNCHER_H */

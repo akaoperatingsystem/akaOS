@@ -160,7 +160,7 @@ static int create_surface(struct notepad_state *np, uint32_t pid) {
     hdr->stride_pixels = NOTEPAD_WIDTH;
     hdr->format = AKAOS_SURFACE_FORMAT_XRGB8888;
     hdr->pixel_offset = sizeof(*hdr);
-    hdr->byte_size = content_size;
+    hdr->byte_size = mapped_size;
 
     np->header = hdr;
     np->pixels = (uint32_t *)((uint8_t *)hdr + hdr->pixel_offset);
