@@ -44,12 +44,14 @@ static void capabilities_refresh(struct aurora_capabilities *caps) {
 }
 
 static void render_context_menu(uint32_t *pixels, uint32_t width, uint32_t height) {
-    fill_rounded_rect(pixels, width, height, 0, 0, (int)width, (int)height, 11,
-                      g_light_theme ? UINT32_C(0xf5f7fa) : UINT32_C(0x17202e),
-                      g_light_theme ? UINT32_C(0xb9c4d2) : UINT32_C(0x52627a));
+    /* Frosted glass menu modal */
+    fill_rounded_rect(pixels, width, height, 0, 0, (int)width, (int)height, 12,
+                      g_light_theme ? UINT32_C(0xF0F8FAFC) : UINT32_C(0xF00F172A),
+                      g_light_theme ? UINT32_C(0x4064748B) : UINT32_C(0x4038BDF8));
 
-    fill_rounded_rect(pixels, width, height, 8, 8, (int)width - 16, 28, 6,
-                      UINT32_C(0x223047), UINT32_C(0x344a68));
+    /* Modern menu items: rounded pill hover states */
+    fill_rounded_rect(pixels, width, height, 6, 6, (int)width - 12, 32, 8,
+                      UINT32_C(0x2038BDF8), 0);
     draw_app_icon(pixels, width, height, 12, 8, "terminal");
     draw_ui_text(pixels, width, height, 48, 13, 1, "Open Terminal",
                  g_light_theme ? UINT32_C(0x25354a) : UINT32_C(0xecf2fa),

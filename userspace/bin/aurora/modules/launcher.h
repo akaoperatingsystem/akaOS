@@ -163,33 +163,64 @@ static inline void launch_application(const struct aurora_app *app) {
 
 static inline void render_launcher(uint32_t *pixels, uint32_t width, uint32_t height,
                                    const struct aurora_launcher *launcher) {
-    /* Modern unified application menu container */
-    fill_rounded_rect(pixels, width, height, 0, 0, (int)width, (int)height, 14,
-                      g_light_theme ? UINT32_C(0xf4f7fb) : UINT32_C(0x141c29),
-                      g_light_theme ? UINT32_C(0xbac5d3) : UINT32_C(0x50617a));
+    /* 1. Frosted Midnight Glass Modal */
+    fill_rounded_rect(pixels, width, height, 0, 0, (int)width, (int)height, 18,
+                      g_light_theme ? UINT32_C(0xF2F8FAFC) : UINT32_C(0xF20F172A),
+                      g_light_theme ? UINT32_C(0x5064748B) : UINT32_C(0x5038BDF8));
 
-    /* Header title */
-    draw_ui_text(pixels, width, height, 18, 12, 1, "Applications",
-                 g_light_theme ? UINT32_C(0x1c2a3e) : UINT32_C(0xf4f7fc),
-                 (int)width - 36);
-
-    /* Search Bar with Magnifier */
-    fill_rounded_rect(pixels, width, height, 14, 36, (int)width - 28, 30, 7,
-                      g_light_theme ? UINT32_C(0xffffff) : UINT32_C(0x202c3e),
-                      g_light_theme ? UINT32_C(0xc3cedc) : UINT32_C(0x465873));
-    fill_rounded_rect(pixels, width, height, 22, 44, 9, 9, 4,
-                      UINT32_C(0x202c3e), UINT32_C(0x9eacc0));
-    fill_rect(pixels, width, height, 30, 52, 6, 2, UINT32_C(0x9eacc0));
+    /* 2. Modern Glassmorphic Search Bar */
+    fill_rounded_rect(pixels, width, height, 16, 30, (int)width - 32, 38, 10,
+                      g_light_theme ? UINT32_C(0x40FFFFFF) : UINT32_C(0x401E293B),
+                      g_light_theme ? UINT32_C(0x8064748B) : UINT32_C(0x8064748B));
+    
+    /* Search Icon Placeholder */
+    fill_rect(pixels, width, height, 28, 42, 12, 12, UINT32_C(0x8094A3B8));
 
     const char *query = launcher->search_length ? launcher->search : "Search applications...";
-    draw_ui_text(pixels, width, height, 44, 43, 1, query,
+    draw_ui_text(pixels, width, height, 50, 41, 1, query,
                  launcher->search_length
-                     ? (g_light_theme ? UINT32_C(0x243348) : UINT32_C(0xf0f4fa))
-                     : UINT32_C(0x748298),
-                 (int)width - 64);
+                     ? (g_light_theme ? UINT32_C(0xFF0F172A) : UINT32_C(0xFFF8FAFC))
+                     : UINT32_C(0xFF64748B),
+                 (int)width - 70);
 
-    /* Category Filter Tabs: All | System | Utilities | Internet */
+    /* 3. Modern Category Pill Tabs */
     const char *tabs[CATEGORY_COUNT] = {"All", "System", "Utilities", "Internet"};
+    int tab_w = ((int)width - 40) / CATEGORY_COUNT;
+    for (int c = 0; c < CATEGORY_COUNT; ++c) {
+        int active = (launcher->active_category == c);
+        int tab_x = 20 + c * tab_w;
+        fill_rounded_rect(pixels, width, height, tab_x, 80, tab_w - 6, 28, 14,
+                          active ? UINT32_C(0xFF38BDF8) : (g_light_theme ? UINT32_C(0xFFE2E8F0) : UINT32_C(0xFF1E293B)),
+                          0);
+        draw_ui_text(pixels, width, height, tab_x + (tab_w / 2) - 15, 87, 1, tabs[c],
+                     active ? UINT32_C(0xFFF8FAFC) : (g_light_theme ? UINT32_C(0xFF475569) : UINT32_C(0xFF94A3B8)),
+                     tab_w - 12);
+    }
+
+    /* 4. Application Rows with Modern Hover */
+    unsigned matches = launcher_match_count(launcher);
+    if (matches == 0U) return;
+
+    int list_y = 120;
+    unsigned item_h = 44;
+    for (unsigned row = 0; row < 6 && row < matches; ++row) {
+        const struct aurora_app *app = launcher_match_at(launcher, row);
+        if (!app) break;
+        int y = list_y + (int)row * (int)item_h;
+        
+        /* Modern hover pill */
+        if (row == launcher->selected) {
+            fill_rounded_rect(pixels, width, height, 10, y, (int)width - 20, (int)item_h - 4, 12,
+                              g_light_theme ? UINT32_C(0x3038BDF8) : UINT32_C(0x3038BDF8),
+                              0);
+        }
+
+        draw_app_icon(pixels, width, height, 20, y + 6, app->icon);
+        draw_ui_text(pixels, width, height, 60, y + 14, 1, app->name,
+                     g_light_theme ? UINT32_C(0xFF0F172A) : UINT32_C(0xFFF8FAFC),
+                     (int)width - 150);
+    }
+};
     int tab_x = 14;
     int tab_y = 72;
     int tab_w = ((int)width - 28) / CATEGORY_COUNT;

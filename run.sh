@@ -922,6 +922,8 @@ fi
 QEMU_COMMON_ARGS+=(
     -netdev user,id=net0,hostfwd=tcp::8080-:80,hostfwd=tcp::2323-:23,hostfwd=udp::6969-:69
     -device virtio-net-pci,netdev=net0,disable-legacy=off
+    -device virtio-mouse-pci
+    -device virtio-keyboard-pci
 )
 
 run_headless() {

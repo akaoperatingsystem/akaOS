@@ -88,42 +88,37 @@ static inline void fill_rounded_rect(uint32_t *pixels, uint32_t width, uint32_t 
 
 static inline void draw_app_icon(uint32_t *pixels, uint32_t width, uint32_t height,
                                  int x, int y, const char *identity) {
-    fill_rounded_rect(pixels, width, height, x, y, 28, 28, 7,
-                      UINT32_C(0x27364d), UINT32_C(0x465b78));
+    /* Sleek icon background: Modern squircle, midnight blue to cyan accent */
+    fill_rounded_rect(pixels, width, height, x, y, 28, 28, 8,
+                      UINT32_C(0xFF1E293B), UINT32_C(0xFF334155));
+    
     if (identity && (strcmp(identity, "notepad") == 0 || strstr(identity, "Notepad") || strcmp(identity, "ted") == 0)) {
-        fill_rounded_rect(pixels, width, height, x + 7, y + 5, 15, 18, 2,
-                          UINT32_C(0xf4f7fb), UINT32_C(0xbcc9d9));
-        fill_rect(pixels, width, height, x + 10, y + 10, 9, 2, UINT32_C(0x4e93e6));
-        fill_rect(pixels, width, height, x + 10, y + 15, 9, 1, UINT32_C(0x8495a9));
-        fill_rect(pixels, width, height, x + 10, y + 19, 7, 1, UINT32_C(0x8495a9));
-    } else if (identity && (strcmp(identity, "taskmgr") == 0 || strcmp(identity, "sysmon") == 0 ||
-                            strstr(identity, "Task") || strstr(identity, "Manager"))) {
-        fill_rect(pixels, width, height, x + 7, y + 16, 3, 7, UINT32_C(0x65b8ff));
-        fill_rect(pixels, width, height, x + 12, y + 11, 3, 12, UINT32_C(0x75dfa9));
-        fill_rect(pixels, width, height, x + 17, y + 7, 3, 16, UINT32_C(0xc08cff));
+        fill_rounded_rect(pixels, width, height, x + 7, y + 5, 14, 18, 3,
+                          UINT32_C(0xFFF1F5F9), UINT32_C(0xFFCBD5E1));
+        fill_rect(pixels, width, height, x + 10, y + 10, 8, 2, UINT32_C(0xFF3B82F6));
+        fill_rect(pixels, width, height, x + 10, y + 14, 8, 2, UINT32_C(0xFF94A3B8));
+        fill_rect(pixels, width, height, x + 10, y + 18, 6, 2, UINT32_C(0xFF94A3B8));
     } else if (identity && (strcmp(identity, "terminal") == 0 || strstr(identity, "Terminal"))) {
-        fill_rounded_rect(pixels, width, height, x + 5, y + 6, 18, 16, 3,
-                          UINT32_C(0x10141b), UINT32_C(0x75859b));
-        draw_ui_text(pixels, width, height, x + 8, y + 5, 1, ">",
-                     UINT32_C(0x76e0ac), 8);
+        fill_rounded_rect(pixels, width, height, x + 4, y + 5, 20, 18, 4,
+                          UINT32_C(0xFF0F172A), UINT32_C(0xFF334155));
+        draw_ui_text(pixels, width, height, x + 8, y + 8, 1, ">_",
+                     UINT32_C(0xFF10B981), 20);
     } else if (identity && (strcmp(identity, "browser") == 0 || strcmp(identity, "webviewer") == 0 ||
                             strstr(identity, "Web") || strstr(identity, "Browser"))) {
-        fill_rounded_rect(pixels, width, height, x + 6, y + 6, 17, 17, 8,
-                          UINT32_C(0x4ba9ff), UINT32_C(0x8ac8ff));
-        fill_rect(pixels, width, height, x + 8, y + 13, 13, 2, UINT32_C(0xe7f4ff));
-        fill_rect(pixels, width, height, x + 13, y + 8, 2, 13, UINT32_C(0xe7f4ff));
+        fill_rounded_rect(pixels, width, height, x + 4, y + 4, 20, 20, 10,
+                          UINT32_C(0xFF3B82F6), UINT32_C(0xFF60A5FA));
+        fill_rect(pixels, width, height, x + 6, y + 12, 16, 2, UINT32_C(0xFFFFFFFF));
+        fill_rect(pixels, width, height, x + 12, y + 6, 2, 16, UINT32_C(0xFFFFFFFF));
     } else if (identity && (strcmp(identity, "akaos-config") == 0 || strcmp(identity, "akaosconfig") == 0 ||
                             strstr(identity, "Settings") || strstr(identity, "Config"))) {
-        /* Gear icon for settings */
-        fill_rounded_rect(pixels, width, height, x + 6, y + 6, 16, 16, 4,
-                          UINT32_C(0x3a4b66), UINT32_C(0x7d94b8));
-        fill_rounded_rect(pixels, width, height, x + 10, y + 10, 8, 8, 4,
-                          UINT32_C(0x27364d), UINT32_C(0x7d94b8));
+        fill_rounded_rect(pixels, width, height, x + 5, y + 5, 18, 18, 9,
+                          UINT32_C(0xFF475569), UINT32_C(0xFF64748B));
+        fill_rounded_rect(pixels, width, height, x + 9, y + 9, 10, 10, 5,
+                          UINT32_C(0xFF1E293B), UINT32_C(0xFF64748B));
     } else {
-        fill_rect(pixels, width, height, x + 7, y + 7, 6, 6, UINT32_C(0x61b7ff));
-        fill_rect(pixels, width, height, x + 15, y + 7, 6, 6, UINT32_C(0x79e0b2));
-        fill_rect(pixels, width, height, x + 7, y + 15, 6, 6, UINT32_C(0xffca72));
-        fill_rect(pixels, width, height, x + 15, y + 15, 6, 6, UINT32_C(0xc790ff));
+        /* Generic Modern Squircle Glyph */
+        fill_rounded_rect(pixels, width, height, x + 6, y + 6, 16, 16, 5,
+                          UINT32_C(0xFF38BDF8), UINT32_C(0xFF7DD3FC));
     }
 }
 

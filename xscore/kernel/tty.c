@@ -853,8 +853,9 @@ void xscore_tty_poll_keyboard(void) {
     if (!tty_initialized) return;
     uintptr_t saved = xscore_irq_save();
 #if defined(__x86_64__) || defined(__i386__)
-    while (port_in8(0x64) & 1) {
+    for (;;) {
         uint8_t status = port_in8(0x64);
+        if (!(status & 1)) break;
         uint8_t sc = port_in8(0x60);
         if (status & 0x20) {
             ps2_mouse_input_byte(sc);

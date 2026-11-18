@@ -1,3 +1,12 @@
+/*
+ * akaOS Aurora Desktop - Modern Glassmorphic Floating Dock & Status Pill
+ *
+ * Professional 2026 UI architecture:
+ * - Floating centered glassmorphic dock with rounded corners and ambient shadow
+ * - Running task indicators with active cyan glow pill
+ * - Floating right-aligned system status pill with network, audio, and clock
+ */
+
 #ifndef AURORA_PANEL_H
 #define AURORA_PANEL_H
 
@@ -34,117 +43,156 @@ static inline uint32_t panel_window_state(const struct akaos_compositor_channel 
 static inline uint32_t get_tray_width(const struct aurora_clock *clock,
                                       const struct aurora_capabilities *caps) {
     uint32_t icons = (caps ? (caps->net.available + caps->audio + caps->battery) : 1) * 32U;
-    uint32_t clock_width = (clock && clock->valid) ? 116U : 40U;
-    return icons + clock_width + 16U;
+    uint32_t clock_width = (clock && clock->valid) ? 120U : 44U;
+    return icons + clock_width + 20U;
 }
 
 static inline void render_panel(uint32_t *pixels, uint32_t width, uint32_t height,
                                 struct akaos_compositor_channel *channel,
                                 const struct aurora_clock *clock,
                                 const struct aurora_capabilities *caps) {
-    /* Full-width dark glass rail with subtle lighting */
-    for (uint32_t y = 0; y < height; ++y) {
-        uint32_t fade = (y * 6U) / (height ? height : 1U);
-        uint32_t panel_r = g_light_theme ? 0xf4U - fade : 0x14U - fade;
-        uint32_t panel_g = g_light_theme ? 0xf6U - fade : 0x1aU - fade;
-        uint32_t panel_b = g_light_theme ? 0xf9U - fade : 0x24U - fade;
-        uint32_t row_color = (panel_r << 16) | (panel_g << 8) | panel_b;
-        if (y == 0) row_color = g_light_theme ? UINT32_C(0xbcc8d6) : UINT32_C(0x2f3d52);
-        for (uint32_t x = 0; x < width; ++x) {
-            pixels[y * width + x] = row_color;
-        }
-    }
+    /* 1. Clear surface to 100% transparent so wallpaper shines through around floating dock */
+    size_t total_pixels = (size_t)width * height;
+    memset(pixels, 0, total_pixels * sizeof(uint32_t));
 
+    /* 2. Compute Floating Centered Dock Metrics */
     uint32_t tray_width = get_tray_width(clock, caps);
     uint32_t reserved = tray_width + 48U;
     uint32_t max_tasks = width > reserved + LAUNCHER_WIDTH
                              ? (width - reserved - LAUNCHER_WIDTH) / (TASK_WIDTH + TASK_GAP)
                              : 0U;
     uint32_t task_count = visible_window_count(channel, max_tasks);
-    uint32_t dock_width = LAUNCHER_WIDTH +
-                          (task_count ? 8U + task_count * (TASK_WIDTH + TASK_GAP) - TASK_GAP : 0U);
-    uint32_t dock_x = width > dock_width ? (width - dock_width) / 2U : 4U;
+    uint32_t dock_content_width = LAUNCHER_WIDTH +
+                                  (task_count ? 10U + task_count * (TASK_WIDTH + TASK_GAP) - TASK_GAP : 0U);
+    uint32_t dock_padding = 10U;
+    uint32_t dock_total_w = dock_content_width + dock_padding * 2U;
+    uint32_t dock_x = width > dock_total_w ? (width - dock_total_w) / 2U : 8U;
+    uint32_t dock_y = 4U;
+    uint32_t dock_h = height > 8U ? height - 8U : height;
 
     if (channel) {
-        channel->shell_launcher_x = dock_x;
+        channel->shell_launcher_x = dock_x + dock_padding;
         channel->shell_task_count = task_count;
     }
 
-    /* Launcher button container */
-    fill_rounded_rect(pixels, width, height, (int)dock_x, 6,
-                      (int)LAUNCHER_WIDTH, (int)height - 12, 9,
-                      g_light_theme ? UINT32_C(0xe1e8f2) : UINT32_C(0x222e42),
-                      g_light_theme ? UINT32_C(0xb4c2d4) : UINT32_C(0x3a4c68));
+    /* 3. Render Modern Floating Glass Dock */
+    /* Ambient Drop Shadow */
+    fill_rounded_rect(pixels, width, height, (int)dock_x, (int)dock_y + 2,
+                      (int)dock_total_w, (int)dock_h, 14,
+                      UINT32_C(0x40000000), UINT32_C(0x20000000));
 
-    /* Centered Aurora 4-quadrant emblem */
-    uint32_t mark_x = dock_x + 11U;
-    uint32_t mark_y = 15U;
-    uint32_t mark_colors[4] = {UINT32_C(0x38bdf8), UINT32_C(0x4ade80),
-                               UINT32_C(0xfbbf24), UINT32_C(0xc084fc)};
+    /* Frosted Glass Base: Midnight acrylic with crisp specular border */
+    uint32_t dock_fill = g_light_theme ? UINT32_C(0xE6F8FAFC) : UINT32_C(0xE60F172A);
+    uint32_t dock_border = g_light_theme ? UINT32_C(0x50000000) : UINT32_C(0x40FFFFFF);
+    fill_rounded_rect(pixels, width, height, (int)dock_x, (int)dock_y,
+                      (int)dock_total_w, (int)dock_h, 14,
+                      dock_fill, dock_border);
+
+    /* 4. Launcher Emblem Button */
+    uint32_t launcher_btn_x = dock_x + dock_padding;
+    uint32_t launcher_btn_y = dock_y + 4U;
+    uint32_t launcher_btn_w = LAUNCHER_WIDTH;
+    uint32_t launcher_btn_h = dock_h - 8U;
+
+    fill_rounded_rect(pixels, width, height, (int)launcher_btn_x, (int)launcher_btn_y,
+                      (int)launcher_btn_w, (int)launcher_btn_h, 10,
+                      g_light_theme ? UINT32_C(0x2038BDF8) : UINT32_C(0x2838BDF8),
+                      g_light_theme ? UINT32_C(0x6038BDF8) : UINT32_C(0x8038BDF8));
+
+    /* Centered Modern Aurora 4-quadrant emblem */
+    uint32_t mark_x = launcher_btn_x + 11U;
+    uint32_t mark_y = launcher_btn_y + 7U;
+    uint32_t mark_colors[4] = {UINT32_C(0xFF38BDF8), UINT32_C(0xFF34D399),
+                               UINT32_C(0xFFFBBF24), UINT32_C(0xFFA855F7)};
     for (uint32_t mark = 0; mark < 4; ++mark) {
         uint32_t mx = mark_x + (mark % 2U) * 11U;
         uint32_t my = mark_y + (mark / 2U) * 11U;
-        for (uint32_t yy = 0; yy < 8; ++yy)
-            for (uint32_t xx = 0; xx < 8; ++xx)
-                pixels[(my + yy) * width + mx + xx] = mark_colors[mark];
+        fill_rounded_rect(pixels, width, height, (int)mx, (int)my, 8, 8, 2,
+                          mark_colors[mark], mark_colors[mark]);
     }
 
-    /* Icon-only active task items in dock */
+    /* 5. Icon-Only Active Task Items in Dock */
     if (channel) {
-        uint32_t task_x = dock_x + LAUNCHER_WIDTH + 8U;
+        uint32_t task_x = launcher_btn_x + LAUNCHER_WIDTH + 10U;
         uint32_t drawn = 0;
         for (size_t i = 0; i < AKAOS_COMPOSITOR_MAX_SURFACES; ++i) {
             const struct akaos_compositor_slot *s = &channel->surfaces[i];
             if (!s->active ||
                 (s->flags & (AKAOS_SURFACE_FLAG_DESKTOP | AKAOS_SURFACE_FLAG_PANEL)) ||
                 drawn >= task_count) continue;
-            int focused = s->surface_id == channel->active_surface_id;
-            fill_rounded_rect(pixels, width, height, (int)task_x, 8,
-                              (int)TASK_WIDTH, (int)height - 16, 8,
-                              focused ? (g_light_theme ? UINT32_C(0xd4e4fa) : UINT32_C(0x2d3e58))
-                                      : (g_light_theme ? UINT32_C(0xe8edf4) : UINT32_C(0x1a2432)),
-                              focused ? UINT32_C(0x60a5fa)
-                                      : (g_light_theme ? UINT32_C(0xc2cdda) : UINT32_C(0x2d3b4e)));
-            draw_app_icon(pixels, width, height, (int)task_x + 7, 10,
+
+            int focused = (s->surface_id == channel->active_surface_id);
+            uint32_t task_btn_y = dock_y + 4U;
+            uint32_t task_btn_h = dock_h - 8U;
+
+            /* Squircle Icon Container */
+            uint32_t task_bg = focused
+                ? (g_light_theme ? UINT32_C(0x4038BDF8) : UINT32_C(0x3538BDF8))
+                : (g_light_theme ? UINT32_C(0x15000000) : UINT32_C(0x18FFFFFF));
+            uint32_t task_bdr = focused
+                ? UINT32_C(0xFF60A5FA)
+                : (g_light_theme ? UINT32_C(0x20000000) : UINT32_C(0x25FFFFFF));
+
+            fill_rounded_rect(pixels, width, height, (int)task_x, (int)task_btn_y,
+                              (int)TASK_WIDTH, (int)task_btn_h, 9,
+                              task_bg, task_bdr);
+
+            draw_app_icon(pixels, width, height, (int)task_x + 7, (int)task_btn_y + 3,
                           s->icon_name[0] ? s->icon_name :
                           (s->title[0] ? s->title : "Window"));
+
+            /* Active / Focused Glowing Indicator Dot / Pill */
             if (focused) {
-                fill_rounded_rect(pixels, width, height, (int)task_x + 15,
-                                  (int)height - 5, 12, 3, 1,
-                                  UINT32_C(0x38bdf8), UINT32_C(0x38bdf8));
+                fill_rounded_rect(pixels, width, height, (int)task_x + 13,
+                                  (int)dock_y + (int)dock_h - 3, 16, 2, 1,
+                                  UINT32_C(0xFF38BDF8), UINT32_C(0xFF38BDF8));
+            } else {
+                fill_rounded_rect(pixels, width, height, (int)task_x + 18,
+                                  (int)dock_y + (int)dock_h - 3, 6, 2, 1,
+                                  UINT32_C(0x8094A3B8), UINT32_C(0x8094A3B8));
             }
+
             task_x += TASK_WIDTH + TASK_GAP;
             ++drawn;
         }
     }
 
-    /* Tray Area (Right-aligned) */
-    if (width > tray_width + 16U) {
-        uint32_t status_x = width - tray_width - 16U;
-        fill_rounded_rect(pixels, width, height, (int)status_x, 7,
-                          (int)tray_width, (int)height - 14, 9,
-                          g_light_theme ? UINT32_C(0xe5eaf2) : UINT32_C(0x192230),
-                          g_light_theme ? UINT32_C(0xbac5d3) : UINT32_C(0x2d3c52));
-        uint32_t cursor_x = status_x + 16U;
+    /* 6. Floating Status Pill Tray (Right-Aligned) */
+    if (width > tray_width + 24U) {
+        uint32_t status_x = width - tray_width - 12U;
+        uint32_t status_y = dock_y;
+        uint32_t status_h = dock_h;
 
-        /* Network indicator */
+        /* Ambient Shadow */
+        fill_rounded_rect(pixels, width, height, (int)status_x, (int)status_y + 2,
+                          (int)tray_width, (int)status_h, 14,
+                          UINT32_C(0x40000000), UINT32_C(0x20000000));
+
+        /* Frosted Glass Tray Base */
+        fill_rounded_rect(pixels, width, height, (int)status_x, (int)status_y,
+                          (int)tray_width, (int)status_h, 14,
+                          dock_fill, dock_border);
+
+        uint32_t cursor_x = status_x + 14U;
+
+        /* Network Indicator: Emerald dot for connected */
         if (caps && caps->net.available) {
-            draw_wifi_icon(pixels, width, height, (int)cursor_x, 28,
+            draw_wifi_icon(pixels, width, height, (int)cursor_x + 12, (int)status_y + (int)status_h / 2,
                            caps->net.connected);
             cursor_x += 32U;
         }
 
-        /* Audio indicator */
+        /* Audio Indicator */
         if (caps && caps->audio) {
-            draw_audio_icon(pixels, width, height, (int)cursor_x, 24);
+            draw_audio_icon(pixels, width, height, (int)cursor_x + 6, (int)status_y + 10);
             cursor_x += 32U;
         }
 
-        /* Digital Clock */
+        /* Modern Digital Clock & Date */
         if (clock && clock->valid) {
             if (cursor_x > status_x + 16U) {
-                fill_rect(pixels, width, height, (int)cursor_x, 14, 1, 20,
-                          g_light_theme ? UINT32_C(0xbac6d5) : UINT32_C(0x334358));
+                fill_rect(pixels, width, height, (int)cursor_x, (int)status_y + 8, 1, status_h - 16U,
+                          g_light_theme ? UINT32_C(0x30000000) : UINT32_C(0x30FFFFFF));
                 cursor_x += 12U;
             }
             char time_text[8];
@@ -152,12 +200,13 @@ static inline void render_panel(uint32_t *pixels, uint32_t width, uint32_t heigh
             snprintf(time_text, sizeof(time_text), "%02d:%02d", clock->hour, clock->minute);
             snprintf(date_text, sizeof(date_text), "%02d/%02d/%02d",
                      clock->month, clock->day, clock->year % 100);
-            draw_ui_text(pixels, width, height, (int)cursor_x, 6, 1,
+
+            draw_ui_text(pixels, width, height, (int)cursor_x, (int)status_y + 5, 1,
                          time_text,
-                         g_light_theme ? UINT32_C(0x1e2c3e) : UINT32_C(0xf1f5f9), 58);
-            draw_ui_text(pixels, width, height, (int)cursor_x, 24, 1,
+                         g_light_theme ? UINT32_C(0xFF0F172A) : UINT32_C(0xFFF8FAFC), 58);
+            draw_ui_text(pixels, width, height, (int)cursor_x, (int)status_y + 20, 1,
                          date_text,
-                         g_light_theme ? UINT32_C(0x5a6a80) : UINT32_C(0x94a3b8), 104);
+                         g_light_theme ? UINT32_C(0xFF475569) : UINT32_C(0xFF94A3B8), 104);
         }
     }
 }

@@ -461,7 +461,7 @@ static int sync_client_surfaces(struct akaos_compositor_channel *channel,
                          hdr->format == AKAOS_SURFACE_FORMAT_ARGB8888) &&
                         hdr->pixel_offset >= sizeof(*hdr) &&
                         hdr->pixel_offset <= msize &&
-                        hdr->byte_size >= expected_bytes &&
+                        (hdr->byte_size >= expected_payload || hdr->byte_size >= expected_bytes) &&
                         hdr->byte_size <= (uint64_t)SIZE_MAX) {
                         m->surface_id = slot->surface_id;
                         strncpy(m->shm_name, slot->shm_name, sizeof(m->shm_name));
@@ -498,6 +498,9 @@ static int sync_client_surfaces(struct akaos_compositor_channel *channel,
                                 (unsigned)hdr->pixel_offset,
                                 (unsigned long long)hdr->byte_size);
                         fflush(stderr);
+                        if (hdr && hdr != MAP_FAILED) {
+                            munmap(hdr, msize);
+                        }
                         m->header = NULL;
                     }
                 } else {
@@ -1025,44 +1028,38 @@ static int render_composite_scene(const struct akaos_display_info *display,
             /* Title bar rendering for regular windows */
             if (is_window && (int)y >= title_y && (int)y < win_y) {
                 int focused = slot->surface_id == channel->active_surface_id;
-                uint32_t top_color = g_light_theme
-                                         ? (focused ? UINT32_C(0xfafcff) : UINT32_C(0xe8edf3))
-                                         : (focused ? UINT32_C(0x253c60) : UINT32_C(0x242a35));
-                uint32_t bottom_color = g_light_theme
-                                            ? (focused ? UINT32_C(0xe6edf7) : UINT32_C(0xdce2e9))
-                                            : (focused ? UINT32_C(0x192a47) : UINT32_C(0x1a1f28));
-                uint32_t blend = (uint32_t)((int)y - title_y);
-                uint32_t tb_r = ((top_color >> 16) * (TITLEBAR_HEIGHT - blend) +
-                                 (bottom_color >> 16) * blend) / TITLEBAR_HEIGHT;
-                uint32_t tb_g = (((top_color >> 8) & 0xffU) * (TITLEBAR_HEIGHT - blend) +
-                                 ((bottom_color >> 8) & 0xffU) * blend) / TITLEBAR_HEIGHT;
-                uint32_t tb_b = ((top_color & 0xffU) * (TITLEBAR_HEIGHT - blend) +
-                                 (bottom_color & 0xffU) * blend) / TITLEBAR_HEIGHT;
-                uint32_t tb_color = (tb_r << 16) | (tb_g << 8) | tb_b;
+                uint32_t acrylic_base = g_light_theme 
+                                         ? (focused ? UINT32_C(0xF0F8FAFC) : UINT32_C(0xF0E8EDF3))
+                                         : (focused ? UINT32_C(0xF01E293B) : UINT32_C(0xF0182232));
+                /* Subtle specular top-border highlight */
+                uint32_t tb_color = ((int)y == title_y) 
+                                    ? (g_light_theme ? UINT32_C(0x40FFFFFF) : UINT32_C(0x30FFFFFF))
+                                    : acrylic_base;
                 for (int x = win_x; x < win_x + win_w; ++x) {
                     if (x >= 0 && x < (int)display->width) {
                         uint32_t chrome = tb_color;
                         int close_left = win_x + win_w - 30;
                         int minimize_left = win_x + win_w - 58;
-                        int in_control_y = (int)y >= title_y + 4 &&
-                                           (int)y < title_y + TITLEBAR_HEIGHT - 4;
-                        int close_hover = pointer_x >= close_left &&
-                                          pointer_x < close_left + 24 &&
-                                          pointer_y >= title_y && pointer_y < win_y;
-                        int minimize_hover = pointer_x >= minimize_left &&
-                                             pointer_x < minimize_left + 24 &&
-                                             pointer_y >= title_y && pointer_y < win_y;
-                        if (in_control_y && x >= minimize_left && x < minimize_left + 24)
-                            chrome = minimize_hover ? UINT32_C(0x354b68) : UINT32_C(0x29374b);
-                        if (in_control_y && x >= close_left && x < close_left + 24)
-                            chrome = close_hover ? UINT32_C(0xb84755) : UINT32_C(0x40303d);
-                        if ((int)y == title_y + 15 && x >= minimize_left + 8 &&
-                            x <= minimize_left + 15) chrome = UINT32_C(0xdce6f3);
-                        int close_dx = x - (close_left + 12);
-                        int close_dy = (int)y - (title_y + 14);
-                        if ((close_dx == close_dy || close_dx == -close_dy) &&
-                            close_dx >= -4 && close_dx <= 4)
-                            chrome = UINT32_C(0xf7e8eb);
+                        /* Modern Rounded Pills */
+                        int in_pill_y = (int)y >= title_y + 6 && (int)y < title_y + 22;
+                        
+                        /* Check hover */
+                        int close_hover = pointer_x >= close_left && pointer_x < close_left + 24 && pointer_y >= title_y && pointer_y < win_y;
+                        int minimize_hover = pointer_x >= minimize_left && pointer_x < minimize_left + 24 && pointer_y >= title_y && pointer_y < win_y;
+                        
+                        /* Render Close Pill (Red) */
+                        if (in_pill_y && x >= close_left && x < close_left + 24) {
+                            int dx = x - (close_left + 12);
+                            int dy = (int)y - (title_y + 14);
+                            if (dx * dx + dy * dy < 80) chrome = close_hover ? UINT32_C(0xFFFF4444) : UINT32_C(0xFF800000);
+                        }
+                        
+                        /* Render Minimize Pill (Amber) */
+                        if (in_pill_y && x >= minimize_left && x < minimize_left + 24) {
+                            int dx = x - (minimize_left + 12);
+                            int dy = (int)y - (title_y + 14);
+                            if (dx * dx + dy * dy < 80) chrome = minimize_hover ? UINT32_C(0xFFFFCC00) : UINT32_C(0xFF806000);
+                        }
                         row[x] = display_pixel(display, chrome);
                     }
                 }
