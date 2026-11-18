@@ -97,17 +97,35 @@ perform_authenticated_session:
         (void)setenv("WAYLAND_DISPLAY", "wayland-0", 1);
         if (chdir(account.home) != 0) chdir("/");
         if (check_autostart_desktop()) {
-            puts("[desktop] Autostart enabled; launching desktop session...");
-            /* Use the kernel's spawn path directly.  A fork followed by an
-             * execve from the setuid login image can retain a stale user
-             * argument mapping during the very early boot handoff; spawn
-             * creates the child and copies argv atomically. */
-            char desktop_path[] = "/bin/desktop";
-            char desktop_option[] = "--apps";
-            char *dargs[] = {desktop_path, desktop_option, NULL};
-            pid_t dpid = spawn(desktop_path, dargs);
+            char env_buf[64] = "lxde";
+            int fd = open("/etc/akaos.conf", O_RDONLY);
+            if (fd >= 0) {
+                char conf_buf[512];
+                ssize_t n = read(fd, conf_buf, sizeof(conf_buf) - 1);
+                close(fd);
+                if (n > 0) {
+                    conf_buf[n] = '\0';
+                    char *p = strstr(conf_buf, "DESKTOP_ENV=");
+                    if (p) {
+                        p += 12;
+                        size_t idx = 0;
+                        while (*p && *p != '\n' && *p != '\r' && idx < sizeof(env_buf) - 1) {
+                            env_buf[idx++] = *p++;
+                        }
+                        env_buf[idx] = '\0';
+                    }
+                }
+            }
+            char session_path[64] = "/bin/startlxde";
+            if (strcmp(env_buf, "lxqt") == 0) strcpy(session_path, "/bin/startlxqt");
+            else if (strcmp(env_buf, "openbox") == 0) strcpy(session_path, "/bin/openbox");
+            else if (strcmp(env_buf, "xfce") == 0) strcpy(session_path, "/usr/local/bin/startxfce4");
+
+            printf("[session] Autostart enabled; launching %s (%s)...\n", env_buf, session_path);
+            char *dargs[] = {session_path, NULL};
+            pid_t dpid = spawn(session_path, dargs);
             if (dpid < 0) {
-                fprintf(2, "[desktop] Unable to launch desktop session (errno=%d)\n", errno);
+                fprintf(2, "[session] Unable to launch %s (errno=%d)\n", session_path, errno);
             }
         }
         char *shell_argv[] = {account.shell, NULL};

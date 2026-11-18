@@ -49,6 +49,21 @@ int main(int argc, char **argv) {
     set_default("XDG_CURRENT_DESKTOP", "LXDE");
     set_default("SAL_USE_VCLPLUGIN", "gtk");
 
+    /* Ensure display server & protocol bridge are active */
+    if (is_installed("/bin/lumen")) {
+        char lm_path[] = "/bin/lumen";
+        char *lm_args[] = {lm_path, NULL};
+        (void)spawn(lm_path, lm_args);
+        (void)poll(NULL, 0, 100);
+    }
+    if (is_installed("/bin/display-protocols")) {
+        char dp_path[] = "/bin/display-protocols";
+        char dp_opt[] = "--both";
+        char *dp_args[] = {dp_path, dp_opt, NULL};
+        (void)spawn(dp_path, dp_args);
+        (void)poll(NULL, 0, 100);
+    }
+
     /* Resolve official upstream Openbox */
     const char *openbox_bin = is_installed("/usr/local/bin/openbox") ? "/usr/local/bin/openbox" : "/bin/openbox";
     const char *pcmanfm_bin = is_installed("/usr/local/bin/pcmanfm") ? "/usr/local/bin/pcmanfm" : "/bin/pcmanfm";

@@ -64,6 +64,8 @@
  * until the remaining ports have equivalent loader and memory validation. */
 #if defined(XSCORE_LOW_MEMORY)
 #define USER_MAX_MMAP_PAGES 128U
+#elif defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64)
+#define USER_MAX_MMAP_PAGES 16384U
 #else
 #define USER_MAX_MMAP_PAGES 1024U
 #endif

@@ -77,7 +77,6 @@ raw_files = [
     f"/bin/telnetd:{BUILD_DIR}/TELNETD.ELF:exec",
     f"/bin/tftpd:{BUILD_DIR}/TFTPD.ELF:exec",
     f"/bin/tftp:{BUILD_DIR}/TFTP.ELF:exec",
-    f"/bin/desktop:{BUILD_DIR}/DESKTOP.ELF:exec",
     f"/bin/startlxde:{BUILD_DIR}/STARTLXDE.ELF:exec",
     f"/bin/startlxqt:{BUILD_DIR}/STARTLXQT.ELF:exec",
     f"/bin/notepad:{BUILD_DIR}/NOTEPAD.ELF:exec",

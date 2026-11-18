@@ -81,8 +81,26 @@ int main(void) {
         return 1;
     }
 
-    char session_path[] = "/bin/lxqt-session";
-    char *session_args[] = {session_path, NULL};
+    /* Ensure display server & protocol bridge are active */
+    if (access("/bin/lumen", F_OK) == 0) {
+        char lm_path[] = "/bin/lumen";
+        char *lm_args[] = {lm_path, NULL};
+        (void)spawn(lm_path, lm_args);
+    }
+    if (access("/bin/display-protocols", F_OK) == 0) {
+        char dp_path[] = "/bin/display-protocols";
+        char dp_opt[] = "--both";
+        char *dp_args[] = {dp_path, dp_opt, NULL};
+        (void)spawn(dp_path, dp_args);
+    }
+
+    const char *session_path = "/usr/local/bin/lxqt-session";
+    if (access(session_path, F_OK) != 0) session_path = "/bin/lxqt-session";
+    if (access(session_path, F_OK) != 0) {
+        session_path = access("/usr/local/bin/lxqt-panel", F_OK) == 0 ? "/usr/local/bin/lxqt-panel" : "/bin/lxqt-panel";
+    }
+
+    char *session_args[] = {(char *)session_path, NULL};
     execv(session_path, session_args);
     fprintf(stderr, "startlxqt: cannot execute %s (errno=%d)\n",
             session_path, errno);

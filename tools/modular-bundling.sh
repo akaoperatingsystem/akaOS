@@ -1,64 +1,100 @@
 #!/usr/bin/env bash
-# akaOS Modular Software Bundling Architecture
+# akaOS Modular Software Bundling Architecture - Strict Per-Environment Isolation
 
 get_initramfs_args() {
     local args=()
     local dt="${target_desktop:-${menu_desktop:-none}}"
     local sw="${menu_software:-all}"
 
-    # 1. No Desktop Profile (--desktop none only when minimal software is requested)
-    if [[ "$dt" == "none" && "$sw" != "all" && "$sw" != "desktop" ]]; then
+    # 1. No Desktop Profile (--desktop none): Exclude all desktop environments
+    if [[ "$dt" == "none" ]]; then
         args+=(
             --exclude-prefix "/bin/openbox"
             --exclude-prefix "/bin/pcmanfm"
             --exclude-prefix "/bin/lxpanel"
-            --exclude-prefix "/bin/xfwm4"
-            --exclude-prefix "/bin/xfce4-session"
-            --exclude-prefix "/bin/xfconfd"
             --exclude-prefix "/bin/startlxde"
             --exclude-prefix "/bin/startlxqt"
             --exclude-prefix "/bin/lxqt-panel"
             --exclude-prefix "/bin/pcmanfm-qt"
-            --exclude-prefix "/bin/gnome-shell"
-            --exclude-prefix "/bin/mutter"
-            --exclude-prefix "/bin/gnome-session"
-            --exclude-prefix "/bin/plasma"
-            --exclude-prefix "/bin/kwin"
-            --exclude-prefix "/bin/startplasma"
-            --exclude-prefix "/bin/hyprland"
-            --exclude-prefix "/bin/hyprctl"
-            --exclude-prefix "/usr/local/bin/hyprland"
-            --exclude-prefix "/usr/local/bin/hyprctl"
-            --exclude-prefix "/bin/xserver"
-            --exclude-prefix "/bin/x11-server"
-            --exclude-prefix "/bin/wayland-compositor"
-            --exclude-prefix "/bin/xsdisplay"
-            --exclude-prefix "/bin/display-protocols"
-            --exclude-prefix "/bin/desktop"
+            --exclude-prefix "/bin/xfwm4"
+            --exclude-prefix "/bin/xfce4-session"
+            --exclude-prefix "/bin/xfconfd"
+            --exclude-prefix "/usr/local/bin/openbox"
+            --exclude-prefix "/usr/local/bin/pcmanfm"
+            --exclude-prefix "/usr/local/bin/lxpanel"
+            --exclude-prefix "/usr/local/bin/startlxde"
+            --exclude-prefix "/usr/local/bin/startlxqt"
+            --exclude-prefix "/usr/local/bin/lxqt-panel"
+            --exclude-prefix "/usr/local/bin/lxqt-session"
+            --exclude-prefix "/usr/local/bin/xfwm4"
+            --exclude-prefix "/usr/local/bin/startxfce4"
+            --exclude-prefix "/usr/local/bin/xfce4-panel"
+            --exclude-prefix "/usr/local/bin/xfce4-session"
+            --exclude-prefix "/usr/local/share/themes"
+            --exclude-prefix "/etc/xdg/lxpanel"
+            --exclude-prefix "/etc/xdg/pcmanfm"
+            --exclude-prefix "/etc/xdg/openbox"
+            --exclude-prefix "/etc/xdg/lxqt"
         )
     fi
 
-    # 2. Specific Desktop Bundles (when not 'all' software and not 'none' desktop)
-    if [[ "$dt" != "none" && "$sw" != "all" ]]; then
-        if [[ "$dt" != "lxde" && "$dt" != "openbox" ]]; then
-            args+=(--exclude-prefix "/bin/openbox" --exclude-prefix "/bin/startlxde" --exclude-prefix "/bin/pcmanfm" --exclude-prefix "/bin/lxpanel")
+    # 2. Strict Per-Environment Isolation: Bundle ONLY the requested desktop environment
+    if [[ "$dt" != "none" ]]; then
+        # Exclude LXDE components if not chosen
+        if [[ "$dt" != "lxde" ]]; then
+            args+=(
+                --exclude-prefix "/bin/startlxde"
+                --exclude-prefix "/bin/lxpanel"
+                --exclude-prefix "/usr/local/bin/startlxde"
+                --exclude-prefix "/usr/local/bin/lxpanel"
+                --exclude-prefix "/usr/local/bin/lxpanelctl"
+                --exclude-prefix "/etc/xdg/lxpanel"
+            )
+            # If openbox was not chosen either, exclude openbox and pcmanfm
+            if [[ "$dt" != "openbox" ]]; then
+                args+=(
+                    --exclude-prefix "/bin/openbox"
+                    --exclude-prefix "/bin/pcmanfm"
+                    --exclude-prefix "/usr/local/bin/openbox"
+                    --exclude-prefix "/usr/local/bin/pcmanfm"
+                    --exclude-prefix "/usr/local/etc/openbox"
+                    --exclude-prefix "/usr/local/etc/xdg/openbox"
+                    --exclude-prefix "/etc/xdg/openbox"
+                    --exclude-prefix "/etc/xdg/pcmanfm"
+                )
+            fi
         fi
-        if [[ "$dt" != "xfce" ]]; then
-            args+=(--exclude-prefix "/bin/xfwm4" --exclude-prefix "/bin/xfce4-session" --exclude-prefix "/bin/xfconfd")
-        fi
+
+        # Exclude LXQt components if not chosen
         if [[ "$dt" != "lxqt" ]]; then
-            args+=(--exclude-prefix "/bin/startlxqt" --exclude-prefix "/bin/lxqt-panel" --exclude-prefix "/bin/pcmanfm-qt")
+            args+=(
+                --exclude-prefix "/bin/startlxqt"
+                --exclude-prefix "/bin/lxqt-panel"
+                --exclude-prefix "/bin/pcmanfm-qt"
+                --exclude-prefix "/usr/local/bin/startlxqt"
+                --exclude-prefix "/usr/local/bin/lxqt-panel"
+                --exclude-prefix "/usr/local/bin/lxqt-session"
+                --exclude-prefix "/etc/xdg/lxqt"
+                --exclude-prefix "/usr/share/lxqt"
+            )
         fi
-        if [[ "$dt" != "gnome" ]]; then
-            args+=(--exclude-prefix "/bin/gnome-shell" --exclude-prefix "/bin/mutter" --exclude-prefix "/bin/gnome-session")
-        fi
-        if [[ "$dt" != "kde" && "$dt" != "plasma" ]]; then
-            args+=(--exclude-prefix "/bin/plasma" --exclude-prefix "/bin/kwin" --exclude-prefix "/bin/startplasma")
+
+        # Exclude XFCE components if not chosen
+        if [[ "$dt" != "xfce" ]]; then
+            args+=(
+                --exclude-prefix "/bin/xfwm4"
+                --exclude-prefix "/bin/xfce4-session"
+                --exclude-prefix "/bin/xfconfd"
+                --exclude-prefix "/usr/local/bin/xfwm4"
+                --exclude-prefix "/usr/local/bin/startxfce4"
+                --exclude-prefix "/usr/local/bin/xfce4-panel"
+                --exclude-prefix "/usr/local/bin/xfce4-session"
+            )
         fi
     fi
 
-    # 3. Headless / Console Bundles (--software minimal, --software net, --software dev)
-    if [[ "$sw" == "minimal" || "$sw" == "net" || "$sw" == "dev" ]]; then
+    # 3. Minimal / Headless Base (--software minimal)
+    if [[ "$sw" == "minimal" ]]; then
         args+=(
             --exclude-prefix "/bin/notepad"
             --exclude-prefix "/bin/webviewer"
