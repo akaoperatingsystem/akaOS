@@ -404,12 +404,6 @@ Virtual RAM Memory  : $menu_mem"
         esac
     done
 
-# Sync command line arguments with menu variables
-menu_arch=${arch:-$menu_arch}
-menu_firmware=${firmware:-$menu_firmware}
-menu_disk=${disk_type:-$menu_disk}
-menu_desktop=${menu_desktop:-$menu_desktop}
-menu_software=${menu_software:-$menu_software}
 
 }
 
@@ -479,6 +473,17 @@ while [[ $# -gt 0 ]]; do
                 exit 2
             fi
             menu_desktop="$2"
+            if [[ "$menu_desktop" != "none" ]]; then
+                menu_session="desktop"
+            fi
+            shift 2
+            ;;
+        --session-mode)
+            if [[ $# -lt 2 ]]; then
+                echo "--session-mode requires console or desktop" >&2
+                exit 2
+            fi
+            menu_session="$2"
             shift 2
             ;;
         --software|--software-bundle)
@@ -526,7 +531,7 @@ while [[ $# -gt 0 ]]; do
             display_mode=headless
             shift
             ;;
-        --gui|--desktop)
+        --gui)
             display_mode=gui
             shift
             ;;
