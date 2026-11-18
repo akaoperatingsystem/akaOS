@@ -27,7 +27,6 @@ Desktop & Session Options:
                                  xfce    : XFCE 4.18 (Full desktop session, panel, xfwm4)
                                  lxde    : LXDE Suite (Openbox, LXPanel, PCManFM)
                                  openbox : Standalone Openbox 3.6.1 Window Manager
-                                 aurora  : akaOS native compositor & resident desktop
                                  lxqt    : Lightweight Qt6 Desktop Environment
                                  none    : None (No desktop environment / Headless console)
   --session-mode NAME          Default boot session mode:
