@@ -78,21 +78,8 @@ raw_files = [
     f"/bin/tftpd:{BUILD_DIR}/TFTPD.ELF:exec",
     f"/bin/tftp:{BUILD_DIR}/TFTP.ELF:exec",
     f"/bin/desktop:{BUILD_DIR}/DESKTOP.ELF:exec",
-    f"/bin/startlxde:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/openbox:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/pcmanfm:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/startlxqt:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/lxqt-panel:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/pcmanfm-qt:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/gnome-shell:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/mutter:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/gnome-session:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/plasma:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/kwin:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/startplasma:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/xfce4-session:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/xfwm4:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
-    f"/bin/xfconfd:{BUILD_DIR}/DESKTOP_COMPAT.ELF:exec",
+    f"/bin/startlxde:{BUILD_DIR}/STARTLXDE.ELF:exec",
+    f"/bin/startlxqt:{BUILD_DIR}/STARTLXQT.ELF:exec",
     f"/bin/notepad:{BUILD_DIR}/NOTEPAD.ELF:exec",
     f"/bin/taskmgr:{BUILD_DIR}/TASKMGR.ELF:exec",
     f"/bin/webviewer:{BUILD_DIR}/WEBVIEWER.ELF:exec",
@@ -173,7 +160,6 @@ if os.path.exists(f"{ROOT_DIR}/userspace/var/www/index.html"):
 
 raw_data = [
     "/etc/motd:akaOS XSCore initramfs\n",
-    "/etc/akaos-desktop-compat:shim:0444"
 ]
 
 args = ["python3", f"{ROOT_DIR}/tools/mkinitramfs.py", f"{BUILD_DIR}/initramfs.img", "--exclude-long-vfs-names"]

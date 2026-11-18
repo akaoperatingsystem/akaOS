@@ -201,6 +201,16 @@ static int is_wayland_socket_ready(void) {
     return ready;
 }
 
+static void ensure_display_protocols(void) {
+    if (is_binary_installed("/bin/display-protocols")) {
+        char dp_path[] = "/bin/display-protocols";
+        char dp_arg[] = "--both";
+        char *dp_args[] = {dp_path, dp_arg, NULL};
+        (void)spawn(dp_path, dp_args);
+        (void)poll(NULL, 0, 100);
+    }
+}
+
 static void ensure_wayland_bridge(void) {
     if (is_wayland_socket_ready() ||
         !is_binary_installed("/bin/wayland-bridge"))
@@ -356,6 +366,7 @@ int main(int argc, char **argv) {
     }
 
     ensure_wayland_bridge();
+    ensure_display_protocols();
 
     const char *bin = resolve_desktop_binary(desktop_env);
     if (!bin || !is_binary_installed(bin)) {
@@ -369,10 +380,13 @@ int main(int argc, char **argv) {
     desktop_path[sizeof(desktop_path) - 1] = '\0';
     /* Start a composed profile session: the profile shell owns the primary
      * surface and starts its window-manager/panel/session companions. */
-    char session_mode[] = "--session";
-    char once_mode[] = "--once";
-    char *desktop_args[] = {desktop_path, session_mode,
-                            once ? once_mode : NULL, NULL};
+    char *desktop_args[4];
+    int arg_idx = 0;
+    desktop_args[arg_idx++] = desktop_path;
+    if (once) {
+        desktop_args[arg_idx++] = "--once";
+    }
+    desktop_args[arg_idx] = NULL;
     pid_t apid = spawn(desktop_path, desktop_args);
     if (apid < 0) {
         fprintf(2, "[desktop] Error: unable to start %s desktop environment (errno=%d).\n", desktop_env, errno);

@@ -1823,8 +1823,8 @@ build_user_program telnetd "$ROOT_DIR/userspace/bin/telnetd/main.c" TELNETD.ELF
 build_user_program tftpd "$ROOT_DIR/userspace/bin/tftpd/main.c" TFTPD.ELF
 build_user_program tftp "$ROOT_DIR/userspace/bin/tftp/main.c" TFTP.ELF
 build_user_program desktop "$ROOT_DIR/userspace/bin/desktop/main.c" DESKTOP.ELF
+build_user_program startlxde "$ROOT_DIR/userspace/bin/startlxde/main.c" STARTLXDE.ELF
 build_user_program startlxqt "$ROOT_DIR/userspace/bin/startlxqt/main.c" STARTLXQT.ELF
-build_user_program desktop-compat "$ROOT_DIR/userspace/bin/desktop-compat/main.c" DESKTOP_COMPAT.ELF
 build_user_program notepad "$ROOT_DIR/userspace/bin/notepad/main.c" NOTEPAD.ELF
 build_user_program taskmgr "$ROOT_DIR/userspace/bin/taskmgr/main.c" TASKMGR.ELF
 build_user_program webviewer "$ROOT_DIR/userspace/bin/webviewer/main.c" WEBVIEWER.ELF
@@ -2362,7 +2362,7 @@ build_runtime_library libgtk-4.so 5
 build_runtime_library libQt6Core.so 6
 build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
-for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF VMSTAT.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF HISTORY.ELF HOSTNAME.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
+for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF STARTLXDE.ELF STARTLXQT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF VMSTAT.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF HISTORY.ELF HOSTNAME.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
     # ET_DYN hello-pie legitimately carries relative relocations; the kernel
     # applies those at its fixed native load base. Reject only relocation
     # kinds outside that bounded ABI instead of rejecting the section itself.
@@ -3527,21 +3527,17 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/bin/tftpd:$BUILD_DIR/TFTPD.ELF:exec" \
     --file "/bin/tftp:$BUILD_DIR/TFTP.ELF:exec" \
     --file "/bin/desktop:$BUILD_DIR/DESKTOP.ELF:exec" \
-    --file "/bin/startlxde:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/openbox:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/pcmanfm:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/startlxqt:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/lxqt-panel:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/pcmanfm-qt:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/gnome-shell:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/mutter:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/gnome-session:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/xfce4-session:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/xfwm4:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/xfconfd:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+    --file "/bin/startlxde:$BUILD_DIR/STARTLXDE.ELF:exec" \
+    --file "/bin/startlxqt:$BUILD_DIR/STARTLXQT.ELF:exec" \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]] && echo "--file /bin/openbox:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox:exec") \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" ]] && echo "--file /bin/pcmanfm:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm:exec") \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]] && echo "--file /bin/lxpanel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel:exec") \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel" ]] && echo "--file /bin/lxqt-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel:exec") \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session" ]] && echo "--file /bin/lxqt-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session:exec") \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm-qt" ]] && echo "--file /bin/pcmanfm-qt:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm-qt:exec") \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" ]] && echo "--file /bin/xfwm4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4:exec") \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel" ]] && echo "--file /bin/xfce4-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel:exec") \
+    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session" ]] && echo "--file /bin/xfce4-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session:exec") \
     --file "/bin/notepad:$BUILD_DIR/NOTEPAD.ELF:exec" \
     --file "/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec" \
     --file "/bin/webviewer:$BUILD_DIR/WEBVIEWER.ELF:exec" \
@@ -3770,7 +3766,6 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/var/www/cgi-bin/status:$BUILD_DIR/STATUS_CGI.ELF:exec" \
     --file "/var/www/index.html:$ROOT_DIR/userspace/var/www/index.html:0644" \
     --data "/etc/motd:akaOS XSCore initramfs\n" \
-    --data "/etc/akaos-desktop-compat:shim:0444" \
     --dir "/usr/share/man" \
     --file "/usr/share/man/whatis:$ROOT_DIR/userspace/share/man/whatis:0644" \
     --dir "/usr/share/aspell" \
