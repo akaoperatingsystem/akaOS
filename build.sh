@@ -1534,7 +1534,7 @@ build_upstream_x11_program() {
     local output="$BUILD_DIR/X11_CLIENT.ELF"
     local pkg_cflags=()
     local pkg_libs=()
-    local link_args=()
+    local link_args=("-L$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib")
     local pkg_env=(
         "PKG_CONFIG_LIBDIR=$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/pkgconfig"
         "PKG_CONFIG_SYSROOT_DIR=$UPSTREAM_GRAPHICS_SYSROOT"
@@ -1565,7 +1565,7 @@ build_upstream_x11_wm_program() {
     local output="$BUILD_DIR/X11_WM_CLIENT.ELF"
     local pkg_cflags=()
     local pkg_libs=()
-    local link_args=()
+    local link_args=("-L$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib")
     local pkg_env=(
         "PKG_CONFIG_LIBDIR=$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/pkgconfig:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/pkgconfig:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/pkgconfig"
         "PKG_CONFIG_SYSROOT_DIR=$UPSTREAM_GRAPHICS_SYSROOT"
@@ -2346,7 +2346,10 @@ fi
 
 # The upstream Openbox window manager is the window manager of the LXDE
 # desktop environment.
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
+    echo "[INFO] Upstream Openbox window manager is already staged: $UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox"
+elif [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" &&
+        -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpng16.so.16" ]]; then
     echo "[BUILD] Upstream Openbox window manager"
     bash "$ROOT_DIR/tools/build-upstream-openbox.sh"
 fi
@@ -3159,26 +3162,26 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
         --dir "/usr/local/share/lxpanel"
         --dir "/usr/local/share/lxpanel/images"
         --dir "/usr/local/share/lxpanel/ui"
-        --dir "/usr/local/share/libfm"
-        --dir "/usr/local/share/libfm/images"
-        --dir "/usr/local/share/libfm/ui"
         --dir "/usr/local/lib/lxpanel"
         --dir "/usr/local/lib/lxpanel/plugins"
-        --dir "/usr/local/lib/libfm"
-        --dir "/usr/local/lib/libfm/modules"
-        --dir "/usr/local/libexec"
-        --dir "/usr/local/libexec/menu-cache"
-        --file "/usr/local/libexec/menu-cache/menu-cached:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/libexec/menu-cache/menu-cached:exec"
-        --file "/usr/local/libexec/menu-cache/menu-cache-gen:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/libexec/menu-cache/menu-cache-gen:exec"
         --file "/usr/local/bin/lxpanel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel:exec"
-        --file "/usr/local/bin/lxpanelctl:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanelctl:exec"
-        --file "/lib/liblxpanel.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/lxpanel/liblxpanel.so.0.0.0:0444"
-        --file "/etc/xdg/lxpanel/default/config:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/default/config:0444"
-        --file "/etc/xdg/lxpanel/default/panels/panel:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/default/panels/panel:0444"
-        --file "/etc/xdg/lxpanel/two_panels/config:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/two_panels/config:0444"
-        --file "/etc/xdg/lxpanel/two_panels/panels/bottom:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/two_panels/panels/bottom:0444"
-        --file "/etc/xdg/lxpanel/two_panels/panels/top:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/two_panels/panels/top:0444"
     )
+    for maybe_file in \
+        "/usr/local/bin/lxpanelctl:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanelctl:exec" \
+        "/usr/local/libexec/menu-cache/menu-cached:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/libexec/menu-cache/menu-cached:exec" \
+        "/usr/local/libexec/menu-cache/menu-cache-gen:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/libexec/menu-cache/menu-cache-gen:exec" \
+        "/lib/liblxpanel.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/lxpanel/liblxpanel.so.0.0.0:0444" \
+        "/etc/xdg/lxpanel/default/config:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/default/config:0444" \
+        "/etc/xdg/lxpanel/default/panels/panel:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/default/panels/panel:0444" \
+        "/etc/xdg/lxpanel/two_panels/config:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/two_panels/config:0444" \
+        "/etc/xdg/lxpanel/two_panels/panels/bottom:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/two_panels/panels/bottom:0444" \
+        "/etc/xdg/lxpanel/two_panels/panels/top:$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/lxpanel/two_panels/panels/top:0444"; do
+        host_f="${maybe_file#*:}"
+        host_f="${host_f%:*}"
+        if [[ -f "$host_f" ]]; then
+            UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(--file "$maybe_file")
+        fi
+    done
     while IFS= read -r lxpanel_plugin; do
         plugin_name="${lxpanel_plugin##*/}"
         UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
@@ -3201,22 +3204,21 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
             --file "/usr/local/lib/$lxpanel_library:$library_path:0444"
         )
     done
-    while IFS= read -r data_file; do
-        relative_path="${data_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
-        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
-            --file "/usr/local/$relative_path:$data_file:0444"
-        )
-    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxpanel/images" \
-                  "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxpanel/ui" \
-                  "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/libfm" \
-                  -maxdepth 1 -type f | sort)
-    while IFS= read -r data_file; do
-        relative_path="${data_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
-        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
-        )
-    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/libfm/images" \
-                  "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/libfm/ui" \
-                  -maxdepth 1 -type f | sort)
+    for search_dir in \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxpanel/images" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxpanel/ui" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/libfm" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/libfm/images" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/libfm/ui"; do
+        if [[ -d "$search_dir" ]]; then
+            while IFS= read -r data_file; do
+                relative_path="${data_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
+                UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+                    --file "/usr/local/$relative_path:$data_file:0444"
+                )
+            done < <(find "$search_dir" -maxdepth 1 -type f | sort)
+        fi
+    done
     if [[ -d "$UPSTREAM_GRAPHICS_SYSROOT/etc/xdg/menus" ]]; then
         for menu_file in "$UPSTREAM_GRAPHICS_SYSROOT"/etc/xdg/menus/*.menu; do
             [[ -f "$menu_file" ]] || continue

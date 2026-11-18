@@ -24,17 +24,6 @@ static void print_usage(void) {
          "  -h, --help    Display this help and exit");
 }
 
-static const char *resolve_desktop_binary(const char *env) {
-    if (!env || env[0] == '\0' || strcmp(env, "lxde") == 0) return "/bin/startlxde";
-    if (strcmp(env, "lxde") == 0) return "/bin/startlxde";
-    if (strcmp(env, "lxqt") == 0) return "/bin/startlxqt";
-    if (strcmp(env, "kde") == 0 || strcmp(env, "plasma") == 0) return "/bin/plasma";
-    if (strcmp(env, "gnome") == 0 || strcmp(env, "shell") == 0) return "/bin/gnome-shell";
-    if (strcmp(env, "xfce") == 0 || strcmp(env, "classic") == 0) return "/bin/xfce4-session";
-    if (strcmp(env, "openbox") == 0) return "/bin/openbox";
-    return NULL;
-}
-
 static int is_binary_installed(const char *path) {
     if (!path) return 0;
     int fd = open(path, O_RDONLY);
@@ -43,6 +32,29 @@ static int is_binary_installed(const char *path) {
         return 1;
     }
     return 0;
+}
+
+static const char *resolve_desktop_binary(const char *env) {
+    if (!env || env[0] == '\0' || strcmp(env, "lxde") == 0) {
+        if (is_binary_installed("/usr/local/bin/startlxde")) return "/usr/local/bin/startlxde";
+        return "/bin/startlxde";
+    }
+    if (strcmp(env, "lxqt") == 0) {
+        if (is_binary_installed("/usr/local/bin/startlxqt")) return "/usr/local/bin/startlxqt";
+        return "/bin/startlxqt";
+    }
+    if (strcmp(env, "openbox") == 0) {
+        if (is_binary_installed("/usr/local/bin/openbox")) return "/usr/local/bin/openbox";
+        return "/bin/openbox";
+    }
+    if (strcmp(env, "xfce") == 0 || strcmp(env, "classic") == 0) {
+        if (is_binary_installed("/usr/local/bin/startxfce4")) return "/usr/local/bin/startxfce4";
+        if (is_binary_installed("/usr/local/bin/xfce4-session")) return "/usr/local/bin/xfce4-session";
+        return "/bin/xfce4-session";
+    }
+    if (strcmp(env, "kde") == 0 || strcmp(env, "plasma") == 0) return "/bin/plasma";
+    if (strcmp(env, "gnome") == 0 || strcmp(env, "shell") == 0) return "/bin/gnome-shell";
+    return NULL;
 }
 
 /* Keep readiness metadata in code rather than pointer tables.  akaOS user
@@ -315,6 +327,7 @@ int main(int argc, char **argv) {
         (void)setenv("DBUS_VERBOSE", "1", 1);
     (void)setenv("XDG_RUNTIME_DIR", "/run/user/0", 1);
     (void)setenv("WAYLAND_DISPLAY", "wayland-0", 1);
+    (void)setenv("DISPLAY", ":0", 1);
 
     if (!ensure_session_bus()) return 1;
 
