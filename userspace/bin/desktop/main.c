@@ -36,11 +36,9 @@ static int is_binary_installed(const char *path) {
 
 static const char *resolve_desktop_binary(const char *env) {
     if (!env || env[0] == '\0' || strcmp(env, "lxde") == 0) {
-        if (is_binary_installed("/usr/local/bin/startlxde")) return "/usr/local/bin/startlxde";
         return "/bin/startlxde";
     }
     if (strcmp(env, "lxqt") == 0) {
-        if (is_binary_installed("/usr/local/bin/startlxqt")) return "/usr/local/bin/startlxqt";
         return "/bin/startlxqt";
     }
     if (strcmp(env, "openbox") == 0) {
@@ -48,8 +46,7 @@ static const char *resolve_desktop_binary(const char *env) {
         return "/bin/openbox";
     }
     if (strcmp(env, "xfce") == 0 || strcmp(env, "classic") == 0) {
-        if (is_binary_installed("/usr/local/bin/startxfce4")) return "/usr/local/bin/startxfce4";
-        if (is_binary_installed("/usr/local/bin/xfce4-session")) return "/usr/local/bin/xfce4-session";
+        if (is_binary_installed("/usr/local/bin/xfwm4")) return "/usr/local/bin/xfwm4";
         return "/bin/xfce4-session";
     }
     if (strcmp(env, "kde") == 0 || strcmp(env, "plasma") == 0) return "/bin/plasma";
@@ -378,7 +375,7 @@ int main(int argc, char **argv) {
                             once ? once_mode : NULL, NULL};
     pid_t apid = spawn(desktop_path, desktop_args);
     if (apid < 0) {
-        fprintf(2, "[desktop] Error: unable to start %s desktop environment.\n", desktop_env);
+        fprintf(2, "[desktop] Error: unable to start %s desktop environment (errno=%d).\n", desktop_env, errno);
         return 1;
     }
 
