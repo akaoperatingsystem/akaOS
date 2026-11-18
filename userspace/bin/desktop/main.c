@@ -16,8 +16,8 @@ static void print_usage(void) {
     puts("Usage: desktop [options]\n"
          "akaOS Desktop Environment Launcher\n\n"
          "Options:\n"
-         "  --env <name>  Specify installed desktop environment (default: aurora)\n"
-         "                aurora, lxde, lxqt, gnome, kde/plasma\n"
+         "  --env <name>  Specify installed desktop environment (default: lxde)\n"
+         "                lxde (Recommended), lxqt, openbox, gnome, kde/plasma\n"
          "  --check       Report runtime readiness without launching a desktop\n"
          "  --apps        Launch default GUI applications (notepad, taskmgr)\n"
          "  --once        Run one composed session cycle and return\n"
@@ -25,7 +25,7 @@ static void print_usage(void) {
 }
 
 static const char *resolve_desktop_binary(const char *env) {
-    if (!env || env[0] == '\0' || strcmp(env, "aurora") == 0) return "/bin/aurora";
+    if (!env || env[0] == '\0' || strcmp(env, "lxde") == 0) return "/bin/startlxde";
     if (strcmp(env, "lxde") == 0) return "/bin/startlxde";
     if (strcmp(env, "lxqt") == 0) return "/bin/startlxqt";
     if (strcmp(env, "kde") == 0 || strcmp(env, "plasma") == 0) return "/bin/plasma";
@@ -50,7 +50,6 @@ static int is_binary_installed(const char *path) {
  * data table of absolute char pointers would fault when loaded at the native
  * user base. */
 static const char *profile_label(const char *id) {
-    if (strcmp(id, "aurora") == 0) return "Aurora";
     if (strcmp(id, "lxde") == 0) return "LXDE";
     if (strcmp(id, "lxqt") == 0) return "LXQt";
     if (strcmp(id, "gnome") == 0) return "GNOME";
@@ -66,7 +65,6 @@ static const char *profile_id(const char *id) {
 }
 
 static size_t profile_requirement_count(const char *id) {
-    if (strcmp(id, "aurora") == 0) return 2;
     if (strcmp(id, "lxde") == 0) return 10;
     if (strcmp(id, "lxqt") == 0) return 11;
     if (strcmp(id, "gnome") == 0) return 11;
@@ -75,10 +73,7 @@ static size_t profile_requirement_count(const char *id) {
 }
 
 static const char *profile_requirement(const char *id, size_t index) {
-    if (strcmp(id, "aurora") == 0) {
-        if (index == 0) return "/bin/lumen";
-        if (index == 1) return "/bin/aurora";
-    } else if (strcmp(id, "lxde") == 0) {
+    if (strcmp(id, "lxde") == 0) {
         if (index == 0) return "/bin/startlxde";
         if (index == 1) return "/bin/openbox";
         if (index == 2) return "/bin/pcmanfm";
@@ -138,12 +133,7 @@ static void print_profile_status(const char *id) {
         if (!is_binary_installed(profile_requirement(id, i))) ++missing;
     }
     if (missing == 0) {
-        if (strcmp(id, "aurora") != 0 &&
-            is_binary_installed("/etc/akaos-desktop-compat")) {
-            puts("COMPATIBILITY ONLY (upstream session not installed)");
-        } else {
-            puts("READY");
-        }
+        puts("READY");
         return;
     }
     printf("NOT READY (missing %d requirement%s)\n", (int)missing,
@@ -169,7 +159,6 @@ static void print_readiness(const char *requested) {
         print_profile_status(requested);
         return;
     }
-    print_profile_status("aurora");
     print_profile_status("lxde");
     print_profile_status("lxqt");
     print_profile_status("gnome");
@@ -259,7 +248,7 @@ static int ensure_session_bus(void) {
 }
 
 static void get_configured_desktop_env(char *dest, size_t max_len) {
-    strncpy(dest, "aurora", max_len - 1);
+    strncpy(dest, "lxde", max_len - 1);
     dest[max_len - 1] = '\0';
 
     int fd = open("/etc/akaos.conf", O_RDONLY);

@@ -9,7 +9,7 @@
 
 static void usage(void) {
     puts("Usage: notify [--app ID] [--title TITLE] [--timeout MS] MESSAGE\n"
-         "Post a desktop notification to the active Aurora session.");
+         "Post a desktop notification to the active desktop session.");
 }
 
 int main(int argc, char **argv) {

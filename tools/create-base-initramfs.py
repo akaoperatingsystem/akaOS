@@ -54,7 +54,6 @@ raw_files = [
     f"/bin/poweroff:{BUILD_DIR}/POWEROFF.ELF:exec",
     f"/bin/lumen:{BUILD_DIR}/LUMEN.ELF:exec",
     f"/bin/palette:{BUILD_DIR}/PALETTE.ELF:exec",
-    f"/bin/aurora:{BUILD_DIR}/AURORA.ELF:exec",
     f"/bin/terminal:{BUILD_DIR}/TERMINAL.ELF:exec",
     f"/bin/notify:{BUILD_DIR}/NOTIFY.ELF:exec",
     f"/bin/beep:{BUILD_DIR}/BEEP.ELF:exec",

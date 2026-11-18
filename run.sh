@@ -234,7 +234,6 @@ configure_run_interactively() {
                             "lxpanel" "LXDE desktop panel (0.11.1)" ON \
                             "pcmanfm" "PCManFM desktop & file manager" ON \
                             "lumen" "Native hardware compositor engine" ON \
-                            "aurora" "akaOS resident desktop shell" ON \
                             "xserver" "Native X11 display server" ON \
                             "dbus-daemon" "D-Bus IPC message broker" ON)"; then
                             menu_custom_packages="$selected_pkgs"
@@ -245,12 +244,11 @@ configure_run_interactively() {
             desktop)
                 if selection="$(akaos_ui_menu \
                     "Select Desktop Environment" "Choose desktop environment to bundle:" "$menu_desktop" \
-                    "none" "None (Pure Console / No GUI desktop installed)" \
+                    "none" "None (Pure Console / No GUI desktop installed) [Default]" \
+                    "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM) [Recommended]" \
+                    "lxqt" "LXQt (Qt6 based modern desktop session)" \
                     "xfce" "XFCE 4.18 (Full desktop session, panel, xfwm4)" \
-                    "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM)" \
-                    "openbox" "Openbox 3.6.1 (Clean lightweight window manager)" \
-                    "aurora" "Aurora (akaOS native resident desktop)" \
-                    "lxqt" "LXQt (Qt6 based modern desktop session)")"; then
+                    "openbox" "Openbox 3.6.1 (Clean lightweight window manager)")"; then
                     menu_desktop="$selection"
                     if [[ "$menu_desktop" == "none" && "$menu_session" == "desktop" ]]; then
                         menu_session="console"
@@ -469,7 +467,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires aurora, xfce, lxde, openbox, lxqt, kde, gnome, i3, dwm, bspwm, metacity, or none" >&2
+                echo "$1 requires lxde, lxqt, xfce, openbox, kde, gnome, or none" >&2
                 exit 2
             fi
             menu_desktop="$2"

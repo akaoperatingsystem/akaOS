@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Capture the live Aurora desktop as build/aurora-desktop.png.
+# Capture the live LXDE desktop as build/akaos-desktop.png.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT_DIR/tools/qemu-common.sh"
 
 BUILD_DIR="$ROOT_DIR/build"
-SCREEN_PPM="$BUILD_DIR/aurora-desktop.ppm"
-SCREEN_PNG="$BUILD_DIR/aurora-desktop.png"
-RUN_LOG="$BUILD_DIR/aurora-desktop-run.log"
+SCREEN_PPM="$BUILD_DIR/akaos-desktop.ppm"
+SCREEN_PNG="$BUILD_DIR/akaos-desktop.png"
+RUN_LOG="$BUILD_DIR/akaos-desktop-run.log"
 OVMF_CODE="$(find_ovmf_code)"
 OVMF_VARS_SOURCE="$(find_ovmf_vars)"
 OVMF_VARS="$BUILD_DIR/OVMF_VARS.desktop.fd"
@@ -102,4 +102,4 @@ Image.open(ppm).convert("RGB").save(png)
 print("saved", png)
 EOF
 
-echo "[PASS] Aurora desktop screenshot captured"
+echo "[PASS] LXDE desktop screenshot captured"

@@ -9,7 +9,6 @@ get_initramfs_args() {
     # 1. No Desktop Profile (--desktop none)
     if [[ "$dt" == "none" ]]; then
         args+=(
-            --exclude-prefix "/bin/aurora"
             --exclude-prefix "/bin/openbox"
             --exclude-prefix "/bin/pcmanfm"
             --exclude-prefix "/bin/lxpanel"
@@ -41,9 +40,6 @@ get_initramfs_args() {
 
     # 2. Specific Desktop Bundles (when not 'all' software and not 'none' desktop)
     if [[ "$dt" != "none" && "$sw" != "all" ]]; then
-        if [[ "$dt" != "aurora" ]]; then
-            args+=(--exclude-prefix "/bin/aurora")
-        fi
         if [[ "$dt" != "lxde" && "$dt" != "openbox" ]]; then
             args+=(--exclude-prefix "/bin/openbox" --exclude-prefix "/bin/startlxde" --exclude-prefix "/bin/pcmanfm" --exclude-prefix "/bin/lxpanel")
         fi

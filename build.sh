@@ -298,7 +298,6 @@ configure_build_interactively() {
                             "lxpanel" "LXDE desktop panel (0.11.1)" ON \
                             "pcmanfm" "PCManFM desktop & file manager" ON \
                             "lumen" "Native hardware compositor engine" ON \
-                            "aurora" "akaOS resident desktop shell" ON \
                             "xserver" "Native X11 display server" ON \
                             "dbus-daemon" "D-Bus IPC message broker" ON)"; then
                             menu_custom_packages="$selected_pkgs"
@@ -338,12 +337,11 @@ configure_build_interactively() {
             desktop)
                 if selection="$(akaos_ui_menu \
                     "Select Desktop Environment" "Choose desktop environment to bundle:" "$menu_desktop" \
-                    "none" "None (Pure Console / No GUI desktop installed)" \
+                    "none" "None (Pure Console / No GUI desktop installed) [Default]" \
+                    "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM) [Recommended]" \
+                    "lxqt" "LXQt (Qt6 based modern desktop session)" \
                     "xfce" "XFCE 4.18 (Full desktop session, panel, xfwm4)" \
-                    "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM)" \
-                    "openbox" "Openbox 3.6.1 (Clean lightweight window manager)" \
-                    "aurora" "Aurora (akaOS native resident desktop)" \
-                    "lxqt" "LXQt (Qt6 based modern desktop session)")"; then
+                    "openbox" "Openbox 3.6.1 (Clean lightweight window manager)")"; then
                     menu_desktop="$selection"
                     if [[ "$menu_desktop" == "none" && "$menu_session" == "desktop" ]]; then
                         menu_session="console"
@@ -504,7 +502,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires aurora, xfce, lxde, openbox, lxqt, kde, gnome, i3, dwm, bspwm, metacity, or none" >&2
+                echo "$1 requires lxde, lxqt, xfce, openbox, kde, gnome, or none" >&2
                 exit 2
             fi
             target_desktop="$2"
@@ -1801,7 +1799,6 @@ build_user_program reboot "$ROOT_DIR/userspace/bin/reboot/main.c" REBOOT.ELF
 build_user_program poweroff "$ROOT_DIR/userspace/bin/poweroff/main.c" POWEROFF.ELF
 build_user_program lumen "$ROOT_DIR/userspace/bin/lumen/main.c" LUMEN.ELF
 build_user_program palette "$ROOT_DIR/userspace/bin/palette/main.c" PALETTE.ELF
-build_user_program aurora "$ROOT_DIR/userspace/bin/aurora/main.c" AURORA.ELF
 build_user_program terminal "$ROOT_DIR/userspace/bin/terminal/main.c" TERMINAL.ELF
 build_user_program notify "$ROOT_DIR/userspace/bin/notify/main.c" NOTIFY.ELF
 build_user_program beep "$ROOT_DIR/userspace/bin/beep/main.c" BEEP.ELF
@@ -2239,37 +2236,54 @@ if [[ -f "$UPSTREAM_WAYLAND_BUILD/src/libwayland-client.so.0.26.0" &&
     echo "[BUILD] Upstream Wayland client/server and SHM protocol smoke application"
     build_upstream_wayland_program
     UPSTREAM_WAYLAND_ENABLED=1
-else
+elif [[ -f "$BUILD_DIR/libc.so.6" && -f "$BUILD_DIR/libm.so.6" &&
+        -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/pkgconfig/libffi.pc" &&
+        -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libffi.so.8" ]]; then
     echo "[BUILD] Upstream Wayland 1.26.0 prerequisites"
-    bash "$ROOT_DIR/tools/build-upstream-wayland.sh"
-    echo "[BUILD] Upstream Wayland client/server and SHM protocol smoke application"
-    build_upstream_wayland_program
-    UPSTREAM_WAYLAND_ENABLED=1
+    if bash "$ROOT_DIR/tools/build-upstream-wayland.sh"; then
+        echo "[BUILD] Upstream Wayland client/server and SHM protocol smoke application"
+        build_upstream_wayland_program
+        UPSTREAM_WAYLAND_ENABLED=1
+    fi
+else
+    echo "[INFO] Upstream Wayland prerequisites not complete; keeping akaOS Wayland compatibility libraries"
 fi
 
 UPSTREAM_WAYLAND_PROTOCOLS_ENABLED=0
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/pkgconfig/wayland-protocols.pc" &&
-      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml" ]]; then
-    run_upstream_refresh "Wayland protocols 1.46" \
-        bash "$ROOT_DIR/tools/build-upstream-wayland-protocols.sh"
+if [[ "$UPSTREAM_WAYLAND_ENABLED" -eq 1 ]]; then
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/pkgconfig/wayland-protocols.pc" &&
+          -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml" ]]; then
+        run_upstream_refresh "Wayland protocols 1.46" \
+            bash "$ROOT_DIR/tools/build-upstream-wayland-protocols.sh"
+        UPSTREAM_WAYLAND_PROTOCOLS_ENABLED=1
+    else
+        echo "[BUILD] Upstream Wayland protocol definitions required by GTK's native Wayland backend"
+        if bash "$ROOT_DIR/tools/build-upstream-wayland-protocols.sh"; then
+            UPSTREAM_WAYLAND_PROTOCOLS_ENABLED=1
+        fi
+    fi
 else
-    echo "[BUILD] Upstream Wayland protocol definitions required by GTK's native Wayland backend"
-    bash "$ROOT_DIR/tools/build-upstream-wayland-protocols.sh"
+    echo "[INFO] Skipping upstream Wayland protocols (requires upstream Wayland build)"
 fi
-UPSTREAM_WAYLAND_PROTOCOLS_ENABLED=1
 
 UPSTREAM_XKBCOMMON_ENABLED=0
 if [[ -f "$UPSTREAM_XKBCOMMON_BUILD/libxkbcommon.so.0.13.2" &&
       -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/pkgconfig/xkbcommon.pc" ]]; then
     run_upstream_refresh "xkbcommon 1.13.2" \
         bash "$ROOT_DIR/tools/build-upstream-xkbcommon.sh"
-else
+    echo "[BUILD] Upstream xkbcommon keymap/modifier smoke application"
+    build_upstream_xkbcommon_program
+    UPSTREAM_XKBCOMMON_ENABLED=1
+elif [[ -f "$BUILD_DIR/libc.so.6" && -f "$BUILD_DIR/libm.so.6" && -d "$UPSTREAM_GRAPHICS_SYSROOT" ]]; then
     echo "[BUILD] Upstream xkbcommon keyboard keymap library"
-    bash "$ROOT_DIR/tools/build-upstream-xkbcommon.sh"
+    if bash "$ROOT_DIR/tools/build-upstream-xkbcommon.sh"; then
+        echo "[BUILD] Upstream xkbcommon keymap/modifier smoke application"
+        build_upstream_xkbcommon_program
+        UPSTREAM_XKBCOMMON_ENABLED=1
+    fi
+else
+    echo "[INFO] Upstream xkbcommon build artifacts not complete; keeping akaOS compatibility libraries"
 fi
-echo "[BUILD] Upstream xkbcommon keymap/modifier smoke application"
-build_upstream_xkbcommon_program
-UPSTREAM_XKBCOMMON_ENABLED=1
 
 UPSTREAM_WAYLAND_BRIDGE_ENABLED=0
 if [[ "$UPSTREAM_WAYLAND_ENABLED" -eq 1 &&
@@ -2345,7 +2359,7 @@ build_runtime_library libgtk-4.so 5
 build_runtime_library libQt6Core.so 6
 build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
-for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF AURORA.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF VMSTAT.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF HISTORY.ELF HOSTNAME.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
+for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF DESKTOP.ELF DESKTOP_COMPAT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF VMSTAT.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF HISTORY.ELF HOSTNAME.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
     # ET_DYN hello-pie legitimately carries relative relocations; the kernel
     # applies those at its fixed native load base. Reject only relocation
     # kinds outside that bounded ABI instead of rejecting the section itself.
@@ -3481,7 +3495,6 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/bin/poweroff:$BUILD_DIR/POWEROFF.ELF:exec" \
     --file "/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec" \
     --file "/bin/palette:$BUILD_DIR/PALETTE.ELF:exec" \
-    --file "/bin/aurora:$BUILD_DIR/AURORA.ELF:exec" \
     --file "/bin/terminal:$BUILD_DIR/TERMINAL.ELF:exec" \
     --file "/bin/notify:$BUILD_DIR/NOTIFY.ELF:exec" \
     --file "/bin/beep:$BUILD_DIR/BEEP.ELF:exec" \
@@ -3733,7 +3746,6 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/etc/dbus-services.conf:$ROOT_DIR/userspace/etc/dbus-services.conf:0644" \
     --file "/etc/resolv.conf:$ROOT_DIR/userspace/etc/resolv.conf:0644" \
     --file "/etc/fstab:$ROOT_DIR/userspace/etc/fstab:0644" \
-    --file "/etc/aurora-apps:$ROOT_DIR/userspace/etc/aurora-apps:0644" \
     --file "/etc/os-release:$ROOT_DIR/userspace/etc/os-release:0644" \
     --file "/etc/hosts:$ROOT_DIR/userspace/etc/hosts:0644" \
     --file "/etc/hostname:$ROOT_DIR/userspace/etc/hostname:0644" \

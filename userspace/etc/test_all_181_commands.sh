@@ -67,10 +67,10 @@ echo "RUN_CMD_13_atrm"
 atrm --help
 echo "PASS_CMD_13_atrm"
 
-# [14/181] aurora
-echo "RUN_CMD_14_aurora"
-aurora --help
-echo "PASS_CMD_14_aurora"
+# [14/181] startlxde
+echo "RUN_CMD_14_startlxde"
+startlxde --help
+echo "PASS_CMD_14_startlxde"
 
 # [15/181] awk
 echo "RUN_CMD_15_awk"

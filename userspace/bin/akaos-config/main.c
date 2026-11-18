@@ -30,7 +30,6 @@ struct desktop_env_entry {
 };
 
 static const struct desktop_env_entry KNOWN_DESKTOPS[] = {
-    {"aurora", "Aurora", "akaOS Native Desktop Environment", "/bin/aurora"},
     {"xfce", "XFCE", "XFCE 4.18 Desktop Environment", "/bin/xfce4-session"},
     {"lxde", "LXDE", "GTK/Openbox Desktop Suite", "/bin/startlxde"},
     {"openbox", "Openbox", "Standalone Openbox Window Manager", "/bin/openbox"},
@@ -53,7 +52,6 @@ static int is_desktop_installed(const char *bin_path) {
 
 static const char *resolve_desktop_path(const char *id) {
     if (!id) return NULL;
-    if (strcmp(id, "aurora") == 0) return "/bin/aurora";
     if (strcmp(id, "xfce") == 0) return "/bin/xfce4-session";
     if (strcmp(id, "lxde") == 0) return "/bin/startlxde";
     if (strcmp(id, "openbox") == 0) return "/bin/openbox";
@@ -119,7 +117,7 @@ static void normalize_config(struct akaos_config *cfg) {
     cfg->audio_bell = cfg->audio_bell ? 1 : 0;
     cfg->autostart_desktop = cfg->autostart_desktop ? 1 : 0;
     if (!resolve_desktop_path(cfg->desktop_env)) {
-        strncpy(cfg->desktop_env, "aurora", sizeof(cfg->desktop_env) - 1);
+        strncpy(cfg->desktop_env, "lxde", sizeof(cfg->desktop_env) - 1);
         cfg->desktop_env[sizeof(cfg->desktop_env) - 1] = '\0';
     }
     if (strcmp(cfg->desktop_theme, "light") != 0 &&
@@ -140,7 +138,7 @@ static void init_default_config(struct akaos_config *cfg) {
     cfg->sshd_port = 22;
     cfg->audio_bell = 1;
     cfg->autostart_desktop = 0;
-    strncpy(cfg->desktop_env, "aurora", sizeof(cfg->desktop_env) - 1);
+    strncpy(cfg->desktop_env, "lxde", sizeof(cfg->desktop_env) - 1);
     cfg->desktop_env[sizeof(cfg->desktop_env) - 1] = '\0';
     strcpy(cfg->desktop_theme, "dark");
 }
@@ -281,8 +279,8 @@ static void print_usage(void) {
          "  --autostart-desktop <0|1>    Set desktop autostart on login (0=off, 1=on)\n"
          "  --enable-autostart-desktop   Enable desktop autostart on login\n"
          "  --disable-autostart-desktop  Disable desktop autostart on login\n"
-         "  --desktop-env <env>          Set installed desktop environment (default: aurora)\n"
-         "  --theme <dark|light>         Set the Aurora desktop theme\n"
+         "  --desktop-env <env>          Set installed desktop environment (default: lxde)\n"
+         "  --theme <dark|light>         Set desktop theme\n"
          "  --hostname <name>            Set system hostname\n"
          "  -h, --help                   Display this help and exit\n"
          "  -v, --version                Output version information and exit\n\n"
@@ -458,7 +456,7 @@ static __attribute__((noinline)) void configure_desktop(struct akaos_config *cfg
                 }
             }
         } else if (choice[0] == '3') {
-            draw_box_header("Aurora Desktop Theme", "Choose a theme for the next desktop session:");
+            draw_box_header("Desktop Theme", "Choose a theme for the next desktop session:");
             printf("   %s%s|   1 Dark                                                         |%s%s\n",
                    ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
             printf("   %s%s|   2 Light                                                        |%s%s\n",
@@ -700,7 +698,7 @@ static void show_about_info(void) {
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
     printf("   %s%s|   Compositor:   Lumen Shared-Memory Window Compositor            |%s%s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
-    printf("   %s%s|   Desktop:      Aurora Shell (akaOS Native Desktop)              |%s%s\n",
+    printf("   %s%s|   Desktop:      LXDE / LXQt Lightweight Desktop Suite           |%s%s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
     printf("   %s%s|   Network:      In-Kernel BSD TCP/UDP + VirtIO-Net Hardware      |%s%s\n",
            ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
@@ -721,7 +719,7 @@ static void interactive_menu(struct akaos_config *cfg) {
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
         printf("   %s%s|   2 Interface Options   Configure Web, Telnet, SSH, and TFTP     |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
-        printf("   %s%s|   3 Desktop Options     Select Desktop (XFCE/LXDE/Aurora/None)   |%s%s\n",
+        printf("   %s%s|   3 Desktop Options     Select Desktop (LXDE/LXQt/XFCE/None)     |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);
         printf("   %s%s|   4 Network Information View IP address, Gateway, DNS, MAC       |%s%s\n",
                ANSI_GRAY_BG, ANSI_BLACK_FG, ANSI_RESET, ANSI_BLUE_BG);

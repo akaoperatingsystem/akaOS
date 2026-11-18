@@ -919,7 +919,7 @@ static int render_composite_scene(const struct akaos_display_info *display,
          * input packet. */
         if (dirty && dirty->valid &&
             ((int)y < dirty->y || (int)y >= dirty->y + dirty->height)) continue;
-        /* Native Aurora wallpaper.  Lumen owns this full-screen layer so a
+        /* Native wallpaper.  Lumen owns this full-screen layer so a
          * 1280x800 desktop does not consume a multi-megabyte SHM object. */
         uint32_t safe_width = display->width ? display->width : 1U;
         uint32_t safe_height = display->height ? display->height : 1U;
