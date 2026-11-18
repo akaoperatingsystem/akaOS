@@ -3419,6 +3419,10 @@ echo "[BUILD] akaOS initramfs archive (Desktop: $target_desktop, Session: $sessi
 
 # Synthesize /etc/akaos.conf based on user selection
 autostart_val=0
+conf_desktop="$target_desktop"
+if [[ "$conf_desktop" == "none" ]]; then
+    conf_desktop="lxde"
+fi
 if [[ "$target_desktop" != "none" && "$session_mode" == "desktop" ]]; then
     autostart_val=1
 fi
@@ -3435,7 +3439,7 @@ SSHD_ENABLED=0
 SSHD_PORT=22
 AUDIO_BELL=1
 AUTOSTART_DESKTOP=$autostart_val
-DESKTOP_ENV=$target_desktop
+DESKTOP_ENV=$conf_desktop
 DESKTOP_THEME=dark
 EOF
 

@@ -6,8 +6,8 @@ get_initramfs_args() {
     local dt="${target_desktop:-${menu_desktop:-none}}"
     local sw="${menu_software:-all}"
 
-    # 1. No Desktop Profile (--desktop none)
-    if [[ "$dt" == "none" ]]; then
+    # 1. No Desktop Profile (--desktop none only when minimal software is requested)
+    if [[ "$dt" == "none" && "$sw" != "all" && "$sw" != "desktop" ]]; then
         args+=(
             --exclude-prefix "/bin/openbox"
             --exclude-prefix "/bin/pcmanfm"
