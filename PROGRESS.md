@@ -1,7 +1,7 @@
 # akaOS Development Progress & Hardware Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.9.11-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.8.11-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.9.12-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.8.12-green.svg)](sdk/include/akaos/version.h)
 [![Architecture Parity](https://img.shields.io/badge/Architectures-6%2F6%20Passed-brightgreen.svg)](tools/build-arch-smoke.sh)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
 

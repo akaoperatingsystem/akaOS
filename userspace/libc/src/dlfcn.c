@@ -823,7 +823,7 @@ static unsigned char *akaos_static_tls_address(const struct dl_object *object,
     return static_tls_object_address(&static_tls_threads[index], object, offset);
 }
 
-static int upstream_qtbase_enabled(void) {
+__attribute__((unused)) static int upstream_qtbase_enabled(void) {
     int saved_errno = errno;
     struct stat marker;
     int enabled = stat("/usr/local/lib/.upstream-qtbase", &marker) == 0;
@@ -831,7 +831,7 @@ static int upstream_qtbase_enabled(void) {
     return enabled;
 }
 
-static int upstream_library_exists(const char *name, size_t name_length) {
+__attribute__((unused)) static int upstream_library_exists(const char *name, size_t name_length) {
     static const char prefix[] = "/usr/local/lib/";
     char path[AKAOS_DSO_PATH_MAX];
     if (sizeof(prefix) - 1U + name_length >= sizeof(path)) return 0;
@@ -2765,19 +2765,9 @@ static void *dlopen_locked(const char *path, int mode) {
             close_dependencies(object); munmap(mapping, mapping_length); release_loader_image(image, file_size); reset_object(object);
             set_error("dlopen: malformed dependency name"); errno = EINVAL; return NULL;
         }
-        char dependency_path[AKAOS_DSO_PATH_MAX];
-        const char *dependency_prefix = "/lib/";
-        if (name[0] != '/' && upstream_qtbase_enabled() &&
-            upstream_library_exists(name, name_length))
-            dependency_prefix = "/usr/local/lib/";
-        size_t prefix_length = name[0] == '/' ? 0 : strlen(dependency_prefix);
-        if (prefix_length + name_length >= sizeof(dependency_path)) {
-            close_dependencies(object); munmap(mapping, mapping_length); release_loader_image(image, file_size); reset_object(object);
-            set_error("dlopen: dependency path too long"); errno = ENAMETOOLONG; return NULL;
-        }
-        if (prefix_length)
-            memcpy(dependency_path, dependency_prefix, prefix_length);
-        memcpy(dependency_path + prefix_length, name, name_length + 1);
+        char resolved_storage[AKAOS_DSO_PATH_MAX];
+        const char *dependency_path = resolve_dlopen_library_path(
+            name, resolved_storage, sizeof(resolved_storage));
         loader_trace_path("needed", dependency_path);
         void *dependency_handle = dlopen(dependency_path, RTLD_NOW | RTLD_GLOBAL);
         if (!dependency_handle) {

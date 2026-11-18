@@ -3121,13 +3121,28 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
         --file "/usr/local/etc/openbox/menu.xml:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/etc/xdg/openbox/menu.xml:0444"
     )
     for openbox_library in libobt.so.2 libobrender.so.32 libxml2.so.2 \
-        libpangoxft-1.0.so.0 libpango-1.0.so.0 libXft.so.2 libglib-2.0.so.0; do
+        libpangoxft-1.0.so.0 libpango-1.0.so.0 libXft.so.2 libglib-2.0.so.0 \
+        libX11.so.6 libXext.so.6 libXrender.so.1 libXcursor.so.1 libXrandr.so.2 \
+        libXinerama.so.1 libICE.so.6 libSM.so.6 libxcb.so.1 libpng16.so.16 \
+        libfm-gtk3.so.4 libfm.so.4 libfm-extra.so.4; do
         library_path="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" \
-            -maxdepth 1 -type f -name "${openbox_library}.*" -print | sort -V | tail -n 1)"
+            -maxdepth 1 \( -type f -o -type l \) -name "${openbox_library}*" -print | sort -V | tail -n 1)"
         [[ -n "$library_path" ]] || continue
         UPSTREAM_OPENBOX_INITRAMFS_ARGS+=(
             --file "/lib/$openbox_library:$library_path:0444"
             --file "/usr/local/lib/$openbox_library:$library_path:0444"
+        )
+    done
+    for lxqt_library in liblxqt.so.2 libKF6WindowSystem.so.6 libLayerShellQtInterface.so.6 \
+        liblxqt-globalkeys.so.2 liblxqt-globalkeys-ui.so.2 libdbusmenu-lxqt.so.0 \
+        libQt6Core.so.6 libQt6Gui.so.6 libQt6Widgets.so.6 libQt6DBus.so.6 \
+        libQt6Svg.so.6 libQt6Xml.so.6 libQt6Xdg.so.4 libQt6XdgIconLoader.so.4; do
+        library_path="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" \
+            -maxdepth 1 \( -type f -o -type l \) -name "${lxqt_library}*" -print | sort -V | tail -n 1)"
+        [[ -n "$library_path" ]] || continue
+        UPSTREAM_OPENBOX_INITRAMFS_ARGS+=(
+            --file "/lib/$lxqt_library:$library_path:0444"
+            --file "/usr/local/lib/$lxqt_library:$library_path:0444"
         )
     done
     if [[ -d "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" ]]; then
@@ -3198,7 +3213,7 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
     for lxpanel_library in libwnck-3.so.0 libfm-gtk3.so.4 libfm.so.4 \
         libfm-extra.so.4 libmenu-cache.so.3 libkeybinder-3.0.so.0; do
         library_path="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" \
-            -maxdepth 1 -type f -name "${lxpanel_library}.*" -print | sort -V | tail -n 1)"
+            -maxdepth 1 \( -type f -o -type l \) -name "${lxpanel_library}*" -print | sort -V | tail -n 1)"
         [[ -n "$library_path" ]] || continue
         UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
             --file "/lib/$lxpanel_library:$library_path:0444"
