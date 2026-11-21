@@ -2803,6 +2803,10 @@ if [[ "${UPSTREAM_GTK3_ENABLED:-0}" -eq 1 ]]; then
         UPSTREAM_GTK3_INITRAMFS_ARGS+=(
             --file "/lib/.upstream-gtk3/libatk-bridge-2.0.so.0:$GTK3_ATK_BRIDGE:0444"
             --file "/lib/.upstream-gtk3/libatspi.so.0:$GTK3_ATSPI:0444"
+            --file "/lib/libatk-bridge-2.0.so.0:$GTK3_ATK_BRIDGE:0444"
+            --file "/usr/local/lib/libatk-bridge-2.0.so.0:$GTK3_ATK_BRIDGE:0444"
+            --file "/lib/libatspi.so.0:$GTK3_ATSPI:0444"
+            --file "/usr/local/lib/libatspi.so.0:$GTK3_ATSPI:0444"
         )
     else
         echo "[ERROR] The upstream accessibility bridge is missing from the graphics sysroot" >&2
@@ -2813,6 +2817,7 @@ if [[ "${UPSTREAM_GTK3_ENABLED:-0}" -eq 1 ]]; then
     if [[ -f "$GTK3_DBUS_LIBRARY" ]]; then
         UPSTREAM_GTK3_INITRAMFS_ARGS+=(
             --file "/lib/libdbus-1.so.3:$GTK3_DBUS_LIBRARY:0444"
+            --file "/usr/local/lib/libdbus-1.so.3:$GTK3_DBUS_LIBRARY:0444"
         )
     fi
     cursor_files=(
@@ -3736,13 +3741,14 @@ UPSTREAM_X11_INITRAMFS_ARGS=()
 if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
     echo "[BUILD] Staging the upstream X11 client libraries"
     for x11_library in \
-        libX11.so.6 libXext.so.6 libXRes.so.1 libXrender.so.1 libXfixes.so.3 \
+        libX11.so.6 libX11-xcb.so.1 libSM.so.6 libICE.so.6 libXext.so.6 libXRes.so.1 libXrender.so.1 libXfixes.so.3 \
         libXdamage.so.1 libXcomposite.so.1 libXi.so.6 libXrandr.so.2 \
-        libXcursor.so.1 libXtst.so.6 libxcb.so.1 libXau.so.6 \
+        libXcursor.so.1 libXtst.so.6 libxcb.so.1 libxcb-render.so.0 libxcb-shm.so.0 libxcb-render-util.so.0 libXau.so.6 \
         libXdmcp.so.6 libXft.so.2 libXinerama.so.1 ; do
         if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/$x11_library" ]]; then
             UPSTREAM_X11_INITRAMFS_ARGS+=(
                 --file "/lib/$x11_library:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/$x11_library:0444"
+                --file "/usr/local/lib/$x11_library:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/$x11_library:0444"
             )
         fi
     done

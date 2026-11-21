@@ -640,8 +640,8 @@ static void request_get_property(struct x_server *server, struct x_client *clien
     memset(&reply, 0, sizeof(reply));
     reply.type = X_Reply;
     reply.format = format;
-    reply.sequenceNumber = (CARD16)client->sequence;
-    reply.length = (CARD32)(padded / 4U);
+    reply.sequenceNumber = (CARD16)client_u16(client, (uint16_t)client->sequence);
+    reply.length = (CARD32)client_u32(client, (uint32_t)(padded / 4U));
     reply.propertyType = (Atom)client_u32(client, found_type);
     reply.bytesAfter = (CARD32)client_u32(client, 0U);
     reply.nItems = (CARD32)client_u32(client, item_count);

@@ -39,6 +39,8 @@
 /* Upstream C++ ABI archives make otherwise small utility ELFs span well over
  * the old 128-page (512 KiB) image ceiling. Keep the cap below the 16 MiB
  * address window while allowing normal exception-enabled static executables. */
+extern void xscore_serial_number(const char *prefix, uint64_t value, const char *suffix);
+#define serial_number xscore_serial_number
 #define USER_IMAGE_MAX_PAGES 512U
 #define USER_IMAGE_LOAD_WINDOW UINT64_C(0x01000000)
 #define USER_DYNAMIC_RELOCATION_PAGE_COUNT \
@@ -65,7 +67,7 @@
 #if defined(XSCORE_LOW_MEMORY)
 #define USER_MAX_MMAP_PAGES 128U
 #elif defined(__x86_64__) || defined(__aarch64__) || (defined(__riscv) && __riscv_xlen == 64)
-#define USER_MAX_MMAP_PAGES 16384U
+#define USER_MAX_MMAP_PAGES 32768U
 #else
 #define USER_MAX_MMAP_PAGES 1024U
 #endif
@@ -85,7 +87,7 @@
  * Keep them above the executable, heap, and signal trampoline while leaving
  * a 256 MiB virtual window for the 64 MiB per-process mmap page budget. */
 #define USER_MMAP_START (USER_CODE_ADDRESS + UINT64_C(0x03000000))
-#define USER_MMAP_END   (USER_CODE_ADDRESS + UINT64_C(0x13000000))
+#define USER_MMAP_END   (USER_CODE_ADDRESS + UINT64_C(0x80000000))
 #else
 #define USER_MMAP_START (USER_CODE_ADDRESS + UINT64_C(0x02000000))
 #define USER_MMAP_END   (USER_CODE_ADDRESS + UINT64_C(0x03000000))
@@ -2229,6 +2231,7 @@ int xscore_process_handle_page_fault(uint64_t fault_address,
         }
         return 1;
     }
+    serial_process_status("[FAULT-REJECT] pid=", process->pid, "\n");
     return 0;
 }
 
@@ -5757,6 +5760,11 @@ int64_t xscore_process_mmap(const struct akaos_mmap_args *arguments) {
     uint64_t next_address = base + rounded_length;
     process->mmap_next_address = next_address >= USER_MMAP_END
                                     ? USER_MMAP_START : next_address;
+    if (process->pid == 8) {
+        serial_process_status("[MMAP] pid=", process->pid, " base=0x");
+        serial_number("", base, " len=0x");
+        serial_number("", rounded_length, "\n");
+    }
     return (int64_t)base;
 }
 

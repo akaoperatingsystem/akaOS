@@ -8,22 +8,29 @@ source "$ROOT_DIR/tools/qemu-common.sh"
 BUILD_DIR="$ROOT_DIR/build"
 SCREEN_PPM="$BUILD_DIR/akaos-desktop.ppm"
 SCREEN_PNG="$BUILD_DIR/akaos-desktop.png"
-RUN_LOG="${AKAOS_CAPTURE_RUN_LOG:-/tmp/akaos-desktop-run.log}"
+CACHE_DIR="${AKAOS_EXT4_CACHE:-/home/lessplum3393/.cache/akaos}"
+mkdir -p "$CACHE_DIR"
+RUN_LOG="$CACHE_DIR/desktop-run.log"
 OVMF_CODE="$(find_ovmf_code)"
 OVMF_VARS_SOURCE="$(find_ovmf_vars)"
-OVMF_VARS="$BUILD_DIR/OVMF_VARS.desktop.fd"
+OVMF_VARS="$CACHE_DIR/OVMF_VARS.desktop.fd"
+rm -f "$OVMF_VARS"
 prepare_ovmf_vars "$OVMF_VARS_SOURCE" "$OVMF_VARS"
+DISK_IMAGE="$CACHE_DIR/akaos.img"
+if [[ ! -f "$DISK_IMAGE" || "$BUILD_DIR/akaos.img" -nt "$DISK_IMAGE" ]]; then
+    cp -f "$BUILD_DIR/akaos.img" "$DISK_IMAGE"
+fi
 
 rm -f "$SCREEN_PPM" "$SCREEN_PNG" "$RUN_LOG"
 : > "$RUN_LOG"
 
-python3 - "$ROOT_DIR" "$OVMF_CODE" "$OVMF_VARS" "$SCREEN_PPM" "$SCREEN_PNG" "$RUN_LOG" <<'EOF'
+python3 - "$ROOT_DIR" "$OVMF_CODE" "$OVMF_VARS" "$SCREEN_PPM" "$SCREEN_PNG" "$RUN_LOG" "$DISK_IMAGE" <<'EOF'
 import subprocess
 import sys
 import time
 from PIL import Image
 
-root, ovmf_code, ovmf_vars, ppm, png, log = sys.argv[1:7]
+root, ovmf_code, ovmf_vars, ppm, png, log, disk_image = sys.argv[1:8]
 
 def keys(value):
     result = []
@@ -41,12 +48,12 @@ command = [
     "qemu-system-x86_64", "-machine", "q35", "-m", "1024M",
     "-drive", f"if=pflash,format=raw,readonly=on,file={ovmf_code}",
     "-drive", f"if=pflash,format=raw,file={ovmf_vars}",
-    "-drive", f"format=raw,file.locking=off,file={root}/build/akaos.img",
+    "-drive", f"format=raw,file.locking=off,file={disk_image}",
     "-serial", f"file:{log}", "-monitor", "stdio", "-display", "none",
     "-no-reboot"
 ]
 process = subprocess.Popen(command, stdin=subprocess.PIPE,
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                            text=True)
 
 for _ in range(3000):
@@ -63,7 +70,8 @@ else:
 time.sleep(0.4)
 process.stdin.write(keys("root") + keys("root"))
 process.stdin.flush()
-time.sleep(6.0)
+# Wait for desktop session to fully spawn components and map windows
+time.sleep(12.0)
 # Lumen now owns keyboard input exclusively while the graphical session is
 # active. Launch applications through Aurora, not through the hidden TTY.
 process.stdin.write("sendkey f1\n")

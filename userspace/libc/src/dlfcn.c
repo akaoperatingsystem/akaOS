@@ -578,7 +578,8 @@ static void close_dependencies(struct dl_object *object) {
  * Keep the temporary ELF-file copy page-backed so a normal C++ runtime can be
  * loaded without raising every process's allocator/heap reservation. */
 static void release_loader_image(unsigned char *image, size_t length) {
-    if (image && image != MAP_FAILED) (void)munmap(image, length);
+    (void)image;
+    (void)length;
 }
 
 static void set_error(const char *message) {
@@ -594,6 +595,20 @@ static void set_error(const char *message) {
     memcpy(state->last, message, length);
     state->last[length] = '\0';
     dlerror_table_release();
+    int cfd = open("/dev/tty1", O_WRONLY);
+    if (cfd >= 0) {
+        char err_msg[192];
+        int n = snprintf(err_msg, sizeof(err_msg), "[dlerror] %s\n", message);
+        if (n > 0) (void)write(cfd, err_msg, (size_t)n);
+        close(cfd);
+    }
+    int kfd = open("/dev/kmsg", O_WRONLY);
+    if (kfd >= 0) {
+        char err_msg[192];
+        int n = snprintf(err_msg, sizeof(err_msg), "[dlerror] %s\n", message);
+        if (n > 0) (void)write(kfd, err_msg, (size_t)n);
+        close(kfd);
+    }
 }
 
 static void clear_error(void) {
@@ -2582,10 +2597,15 @@ static void *dlopen_locked(const char *path, int mode) {
     if (mapping == MAP_FAILED) { release_loader_image(image, file_size); reset_object(object); set_error("dlopen: address space exhausted"); return NULL; }
     loader_trace_path("segment-map-allocated", path);
     object->mapping = mapping; object->mapping_length = mapping_length;
-    if (loader_trace_enabled()) {
-        printf("loader: mapped %s at %p length %zu\n", path, mapping,
-               mapping_length);
-        fflush(stdout);
+    if (1) {
+        char msg[256];
+        int n = snprintf(msg, sizeof(msg), "loader: mapped %s at %p length %zu\n", path, mapping, mapping_length);
+        if (n > 0) {
+            int kfd = open("/dev/kmsg", O_WRONLY);
+            if (kfd >= 0) { (void)write(kfd, msg, (size_t)n); close(kfd); }
+            int cfd = open("/dev/tty1", O_WRONLY);
+            if (cfd >= 0) { (void)write(cfd, msg, (size_t)n); close(cfd); }
+        }
     }
     object->min_vaddr = minimum; object->max_vaddr = maximum;
     object->load_bias = (uintptr_t)mapping - (uintptr_t)minimum;
@@ -2992,8 +3012,21 @@ static void *dl_entry_locked(void *handle) {
     }
     struct dl_object *object = (struct dl_object *)handle;
     for (int i = 0; i < DL_OBJECT_MAX; ++i) {
-        if (object == &objects[i] && object->used && object->entry != 0) {
-            return (void *)object->entry;
+        if (object == &objects[i] && object->used) {
+            if (object->entry != 0 && object->entry != object->load_bias) {
+                return (void *)object->entry;
+            }
+            uintptr_t entry_sym = 0;
+            if (symbol_value_by_name(object, "main", NULL, &entry_sym) && entry_sym != 0) {
+                return (void *)entry_sym;
+            }
+            if (symbol_value_by_name(object, "_Z4mainiPPc", NULL, &entry_sym) && entry_sym != 0) {
+                return (void *)entry_sym;
+            }
+            if (symbol_value_by_name(object, "_start", NULL, &entry_sym) && entry_sym != 0) {
+                return (void *)entry_sym;
+            }
+            if (object->entry != 0) return (void *)object->entry;
         }
     }
     set_error("akaos_dl_entry: invalid handle");

@@ -1,4 +1,5 @@
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -14,6 +15,16 @@
 static void loader_write(const char *message) {
     if (!message) return;
     (void)write(STDERR_FILENO, message, strlen(message));
+    int cfd = open("/dev/tty1", O_WRONLY);
+    if (cfd >= 0) {
+        (void)write(cfd, message, strlen(message));
+        close(cfd);
+    }
+    int kfd = open("/dev/kmsg", O_WRONLY);
+    if (kfd >= 0) {
+        (void)write(kfd, message, strlen(message));
+        close(kfd);
+    }
 }
 
 static int find_aux_value(int argc, char **argv, uintptr_t wanted,
@@ -108,6 +119,7 @@ int main(int argc, char **argv) {
         loader_write("akaos ld: executable has no entry point\n");
         return 127;
     }
+    (void)akaos_dl_static_tls_prepare();
     uintptr_t stack = (uintptr_t)(void *)argv - sizeof(uintptr_t);
     enter_object(entry, stack);
 }

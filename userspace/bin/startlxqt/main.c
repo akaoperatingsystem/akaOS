@@ -81,18 +81,7 @@ int main(void) {
         return 1;
     }
 
-    /* Ensure display server & protocol bridge are active */
-    if (access("/bin/lumen", F_OK) == 0) {
-        char lm_path[] = "/bin/lumen";
-        char *lm_args[] = {lm_path, NULL};
-        (void)spawn(lm_path, lm_args);
-    }
-    if (access("/bin/display-protocols", F_OK) == 0) {
-        char dp_path[] = "/bin/display-protocols";
-        char dp_opt[] = "--both";
-        char *dp_args[] = {dp_path, dp_opt, NULL};
-        (void)spawn(dp_path, dp_args);
-    }
+    /* Display servers are initialized by login before session launch */
 
     const char *session_path = "/usr/local/bin/lxqt-session";
     if (access(session_path, F_OK) != 0) session_path = "/bin/lxqt-session";

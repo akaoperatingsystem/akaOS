@@ -202,7 +202,8 @@ static char *append_u64(char *out, uint64_t value) {
 }
 
 
-static void serial_number(const char *prefix, uint64_t value, const char *suffix) {
+void xscore_serial_number(const char *prefix, uint64_t value, const char *suffix) {
+#define serial_number xscore_serial_number
     char line[96];
     char *cursor = line;
     while (*prefix) *cursor++ = *prefix++;
@@ -275,7 +276,10 @@ void xscore_exception_handler(uint64_t vector, uint64_t error_code, const uint64
 
         struct xscore_process *process = xscore_process_current();
         if (process) {
-            serial_number("[WARN] User process ", xscore_process_pid(process), " terminated by page fault\n");
+            serial_number("[WARN] User process ", xscore_process_pid(process), " terminated by page fault");
+            serial_number(" at CR2=", fault_address, "");
+            serial_number(" err=", error_code, "");
+            serial_number(" RIP=", frame[2], "\n");
             xscore_process_record_termination_signal(AKAOS_SIGSEGV);
             xscore_thread_record_user_exit(UINT64_C(128) + AKAOS_SIGSEGV);
             xscore_thread_exit();

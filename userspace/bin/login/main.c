@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -105,20 +106,6 @@ perform_authenticated_session:
         (void)setenv("SHELL", account.shell[0] ? account.shell : "/bin/akash", 1);
         if (chdir(account.home) != 0) chdir("/");
         if (check_autostart_desktop()) {
-            /* Start display server & protocol bridge if not already running */
-            if (access("/bin/lumen", X_OK) == 0) {
-                char lm_path[] = "/bin/lumen";
-                char *lm_args[] = {lm_path, NULL};
-                (void)spawn(lm_path, lm_args);
-                (void)usleep(250000);
-            }
-            if (access("/bin/display-protocols", X_OK) == 0) {
-                char dp_path[] = "/bin/display-protocols";
-                char dp_opt[] = "--both";
-                char *dp_args[] = {dp_path, dp_opt, NULL};
-                (void)spawn(dp_path, dp_args);
-                (void)usleep(250000);
-            }
             char env_buf[64] = "lxde";
             int fd = open("/etc/akaos.conf", O_RDONLY);
             if (fd >= 0) {
@@ -138,16 +125,51 @@ perform_authenticated_session:
                     }
                 }
             }
+            if (strcmp(env_buf, "lxqt") == 0) {
+                (void)setenv("GDK_BACKEND", "wayland", 1);
+                (void)setenv("QT_QPA_PLATFORM", "wayland", 1);
+            } else {
+                (void)setenv("GDK_BACKEND", "x11,wayland", 1);
+            }
+            (void)mkdir("/run", 0755);
+            (void)mkdir("/run/user", 0755);
+            (void)mkdir("/run/user/0", 0700);
+            /* Start display compositor (lumen) */
+            if (access("/bin/lumen", X_OK) == 0) {
+                char lm_path[] = "/bin/lumen";
+                char *lm_args[] = {lm_path, NULL};
+                (void)spawn(lm_path, lm_args);
+                (void)usleep(300000);
+            }
+            /* Start Wayland server bridge */
+            if (access("/bin/wayland-bridge", X_OK) == 0) {
+                char wb_path[] = "/bin/wayland-bridge";
+                char *wb_args[] = {wb_path, NULL};
+                (void)spawn(wb_path, wb_args);
+                (void)usleep(300000);
+            }
+            /* Start native X11 server */
+            if (access("/bin/xserver", X_OK) == 0) {
+                char xs_path[] = "/bin/xserver";
+                char *xs_args[] = {xs_path, NULL};
+                (void)spawn(xs_path, xs_args);
+                (void)usleep(300000);
+            }
+            /* Fallback protocol bridge if full servers absent */
+            if (access("/bin/wayland-bridge", X_OK) != 0 && access("/bin/xserver", X_OK) != 0 &&
+                access("/bin/display-protocols", X_OK) == 0) {
+                char dp_path[] = "/bin/display-protocols";
+                char dp_opt[] = "--both";
+                char *dp_args[] = {dp_path, dp_opt, NULL};
+                (void)spawn(dp_path, dp_args);
+                (void)usleep(250000);
+            }
             const char *session_path = NULL;
             char *dargs[8] = {NULL};
             if (strcmp(env_buf, "lxde") == 0) {
-                session_path = access("/usr/local/bin/lxsession", X_OK) == 0 ? "/usr/local/bin/lxsession" : "/bin/lxsession";
+                session_path = access("/usr/local/bin/startlxde", X_OK) == 0 ? "/usr/local/bin/startlxde" : "/bin/startlxde";
                 dargs[0] = (char *)session_path;
-                dargs[1] = "-s";
-                dargs[2] = "LXDE";
-                dargs[3] = "-e";
-                dargs[4] = "LXDE";
-                dargs[5] = NULL;
+                dargs[1] = NULL;
             } else if (strcmp(env_buf, "lxqt") == 0) {
                 session_path = access("/bin/startlxqt", X_OK) == 0 ? "/bin/startlxqt" : "/usr/local/bin/startlxqt";
                 dargs[0] = (char *)session_path;

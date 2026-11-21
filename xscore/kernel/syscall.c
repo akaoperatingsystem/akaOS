@@ -1507,6 +1507,9 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
         if (!xscore_copy_string_from_user(kpath, sizeof(kpath), argument0, 0)) {
             return (uint64_t)-AKAOS_EFAULT;
         }
+        xscore_serial_write("[EXECVE] path=");
+        xscore_serial_write(kpath);
+        xscore_serial_write("\n");
 
         char (*kargv_storage)[256] = xscore_heap_allocate(32 * 256);
         char (*kenv_storage)[256] = xscore_heap_allocate(32 * 256);

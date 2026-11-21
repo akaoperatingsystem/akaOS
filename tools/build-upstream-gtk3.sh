@@ -15,15 +15,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$ROOT_DIR/build"
 SYSROOT="$BUILD_DIR/upstream-sysroot/graphics-x86_64"
 SOURCE_DIR="$BUILD_DIR/upstream-source/gtk-3.24.52"
-PROJECT_SOURCE_TREE="$SOURCE_DIR/extracted"
+WORKROOT="${AKAOS_GTK3_WORKROOT:-$HOME/.cache/akaos/gtk3}"
+SOURCE_TREE="$WORKROOT/source"
+BUILD_TREE="$WORKROOT/build"
 PROJECT_BUILD_TREE="$BUILD_DIR/upstream-build/gtk-3.24.52/x86_64-akaos-wayland"
-if [[ -n "${AKAOS_GTK3_WORKROOT:-}" ]]; then
-    SOURCE_TREE="$AKAOS_GTK3_WORKROOT/source"
-    BUILD_TREE="$AKAOS_GTK3_WORKROOT/build"
-else
-    SOURCE_TREE="$PROJECT_SOURCE_TREE"
-    BUILD_TREE="$PROJECT_BUILD_TREE"
-fi
 HOST_GLIB_TOOLS="$BUILD_DIR/host-tools/glib-2.88"
 HOST_GLIB_PKGCONFIG="$BUILD_DIR/host-tools/gtk4-glib-pkgconfig"
 WAYLAND_HOST_PREFIX="$BUILD_DIR/host-tools/wayland-1.26.0"
@@ -42,12 +37,12 @@ for command_name in curl sha256sum tar clang meson ninja pkg-config patch python
     fi
 done
 
-bash "$ROOT_DIR/tools/build-upstream-atk.sh"
-# The X11 backend of GTK 3 links against the accessibility bridge, which
-# at-spi2-core provides.  It also vendors its own ATK, and the bridge needs
-# the symbols that ATK only grew later, so it has to be built after the
-# standalone ATK package.
-bash "$ROOT_DIR/tools/build-upstream-at-spi2-core.sh"
+if [[ ! -f "$SYSROOT/usr/local/lib/pkgconfig/atk.pc" ]]; then
+    bash "$ROOT_DIR/tools/build-upstream-atk.sh"
+fi
+if [[ ! -f "$SYSROOT/usr/local/lib/pkgconfig/atspi-2.pc" ]]; then
+    bash "$ROOT_DIR/tools/build-upstream-at-spi2-core.sh"
+fi
 mkdir -p "$SOURCE_DIR" "$SOURCE_TREE" "$BUILD_TREE"
 if [[ ! -f "$SOURCE_DIR/gtk-3.24.52.tar.xz" ]]; then
     curl -fL --retry 2 \
@@ -140,12 +135,14 @@ meson_args=(
     -Dgtk_doc=false -Dman=false -Dintrospection=false
     -Ddemos=false -Dexamples=false -Dtests=false -Dinstalled_tests=false
     -Dbuiltin_immodules=all
+    -Db_lundef=false
 )
 if [[ -f "$BUILD_TREE/meson-private/coredata.dat" && -f "$BUILD_TREE/build.ninja" ]]; then
     meson setup --reconfigure "${meson_args[@]}" "$BUILD_TREE" "$SOURCE_TREE"
 else
     meson setup "${meson_args[@]}" "$BUILD_TREE" "$SOURCE_TREE"
 fi
+grep -q "HAVE_XSYNC" "$BUILD_TREE/config.h" || echo "#define HAVE_XSYNC 1" >> "$BUILD_TREE/config.h"
 
 meson compile -C "$BUILD_TREE" --jobs "$GTK_BUILD_JOBS"
 DESTDIR="$SYSROOT" meson install -C "$BUILD_TREE"

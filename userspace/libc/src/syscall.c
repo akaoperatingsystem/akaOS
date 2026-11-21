@@ -1759,6 +1759,46 @@ int setgid(gid_t gid) {
     return (int)translate_result(syscall3(AKAOS_SYSCALL_SETGID, gid, 0, 0));
 }
 
+int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
+    uid_t u = getuid();
+    uid_t eu = geteuid();
+    if (ruid) *ruid = u;
+    if (euid) *euid = eu;
+    if (suid) *suid = eu;
+    return 0;
+}
+
+int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid) {
+    gid_t g = getgid();
+    gid_t eg = getegid();
+    if (rgid) *rgid = g;
+    if (egid) *egid = eg;
+    if (sgid) *sgid = eg;
+    return 0;
+}
+
+int setresuid(uid_t ruid, uid_t euid, uid_t suid) {
+    (void)suid;
+    (void)ruid;
+    return setuid(euid);
+}
+
+int setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
+    (void)sgid;
+    (void)rgid;
+    return setgid(egid);
+}
+
+int setreuid(uid_t ruid, uid_t euid) {
+    (void)ruid;
+    return setuid(euid);
+}
+
+int setregid(gid_t rgid, gid_t egid) {
+    (void)rgid;
+    return setgid(egid);
+}
+
 int setpgid(pid_t pid, pid_t pgid) {
     return (int)translate_result(syscall3(AKAOS_SYSCALL_SETPGID, (uint64_t)pid, (uint64_t)pgid, 0));
 }

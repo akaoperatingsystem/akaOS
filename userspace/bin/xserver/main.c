@@ -30,7 +30,7 @@ static char root_shm_name[32];
 
 /* The trace of the requests and replies is only written when it is asked for,
  * because the console of the guest is slow. */
-int server_trace_enabled = 0;
+int server_trace_enabled = 1;
 
 static int create_root_surface(struct x_server *state) {
     size_t pixel_bytes = (size_t)state->width * (size_t)state->height *
@@ -89,6 +89,12 @@ static int publish_root_surface(struct x_server *state) {
     }
     state->surface_id = 1;
     state->published = 1;
+    for (size_t i = 0; i < AKAOS_COMPOSITOR_MAX_SURFACES; ++i) {
+        if (state->channel->surfaces[i].active && state->channel->surfaces[i].surface_id == 1U) {
+            state->channel->surfaces[i].flags |= AKAOS_SURFACE_FLAG_DESKTOP;
+            break;
+        }
+    }
     return 1;
 }
 
@@ -221,6 +227,10 @@ int main(int argc, char **argv) {
     if (toolkit_rc != 0) {
         fprintf(stderr, "xserver: cannot reach the compositor channel (rc=%d, errno=%d)\n", toolkit_rc, errno);
         return 1;
+    }
+    if (server.channel && server.channel->display_width > 0 && server.channel->display_height > 0) {
+        server.width = (int)server.channel->display_width;
+        server.height = (int)server.channel->display_height;
     }
     /* Fault in the compositor request queue.
      *
