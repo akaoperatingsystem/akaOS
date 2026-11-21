@@ -514,8 +514,6 @@ build_user_program umount "$ROOT_DIR/userspace/bin/umount/main.c" UMOUNT.ELF
 build_user_program telnetd "$ROOT_DIR/userspace/bin/telnetd/main.c" TELNETD.ELF
 build_user_program tftpd "$ROOT_DIR/userspace/bin/tftpd/main.c" TFTPD.ELF
 build_user_program tftp "$ROOT_DIR/userspace/bin/tftp/main.c" TFTP.ELF
-build_user_program desktop "$ROOT_DIR/userspace/bin/desktop/main.c" DESKTOP.ELF
-build_user_program desktop-compat "$ROOT_DIR/userspace/bin/desktop-compat/main.c" DESKTOP_COMPAT.ELF
 build_user_program notepad "$ROOT_DIR/userspace/bin/notepad/main.c" NOTEPAD.ELF
 build_user_program taskmgr "$ROOT_DIR/userspace/bin/taskmgr/main.c" TASKMGR.ELF
 build_user_program webviewer "$ROOT_DIR/userspace/bin/webviewer/main.c" WEBVIEWER.ELF
@@ -563,33 +561,6 @@ build_user_program chgrp "$ROOT_DIR/userspace/bin/chgrp/main.c" CHGRP.ELF
 build_user_program chpasswd "$ROOT_DIR/userspace/bin/chpasswd/main.c" CHPASSWD.ELF
 build_user_program chroot "$ROOT_DIR/userspace/bin/chroot/main.c" CHROOT.ELF
 build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFIG.ELF
-build_user_program cksum "$ROOT_DIR/userspace/bin/cksum/main.c" CKSUM.ELF
-build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
-build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
-build_user_program sway "$ROOT_DIR/userspace/bin/sway/main.c" SWAY.ELF
-build_user_program river "$ROOT_DIR/userspace/bin/river/main.c" RIVER.ELF
-build_user_program niri "$ROOT_DIR/userspace/bin/niri/main.c" NIRI.ELF
-build_user_program wayfire "$ROOT_DIR/userspace/bin/wayfire/main.c" WAYFIRE.ELF
-build_user_program labwc "$ROOT_DIR/userspace/bin/labwc/main.c" LABWC.ELF
-build_user_program weston "$ROOT_DIR/userspace/bin/weston/main.c" WESTON.ELF
-build_user_program qtile "$ROOT_DIR/userspace/bin/qtile/main.c" QTILE.ELF
-build_user_program awesome "$ROOT_DIR/userspace/bin/awesome/main.c" AWESOME.ELF
-build_user_program xmonad "$ROOT_DIR/userspace/bin/xmonad/main.c" XMONAD.ELF
-build_user_program herbstluftwm "$ROOT_DIR/userspace/bin/herbstluftwm/main.c" HERBSTLUFTWM.ELF
-build_user_program spectrwm "$ROOT_DIR/userspace/bin/spectrwm/main.c" SPECTRWM.ELF
-build_user_program fluxbox "$ROOT_DIR/userspace/bin/fluxbox/main.c" FLUXBOX.ELF
-build_user_program icewm "$ROOT_DIR/userspace/bin/icewm/main.c" ICEWM.ELF
-build_user_program jwm "$ROOT_DIR/userspace/bin/jwm/main.c" JWM.ELF
-build_user_program wmaker "$ROOT_DIR/userspace/bin/wmaker/main.c" WMAKER.ELF
-build_user_program fvwm "$ROOT_DIR/userspace/bin/fvwm/main.c" FVWM.ELF
-build_user_program budgie "$ROOT_DIR/userspace/bin/budgie/main.c" BUDGIE.ELF
-build_user_program cosmic "$ROOT_DIR/userspace/bin/cosmic/main.c" COSMIC.ELF
-build_user_program deepin "$ROOT_DIR/userspace/bin/deepin/main.c" DEEPIN.ELF
-build_user_program pantheon "$ROOT_DIR/userspace/bin/pantheon/main.c" PANTHEON.ELF
-build_user_program ukui "$ROOT_DIR/userspace/bin/ukui/main.c" UKUI.ELF
-build_user_program enlightenment "$ROOT_DIR/userspace/bin/enlightenment/main.c" ENLIGHTENMENT.ELF
-build_bzip2
-build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
 build_user_program vmstat "$ROOT_DIR/userspace/bin/vmstat/main.c" VMSTAT.ELF
@@ -627,23 +598,22 @@ build_user_program sndinfo "$ROOT_DIR/userspace/bin/sndinfo/main.c" SNDINFO.ELF
 build_user_program acpi "$ROOT_DIR/userspace/bin/acpi/main.c" ACPI.ELF
 build_user_program xsdisplay "$ROOT_DIR/userspace/bin/xsdisplay/main.c" XSDISPLAY.ELF
 build_xserver
-# wayland-bridge compatibility binary for headless/generic architecture profiles
-build_user_program wayland-bridge "$ROOT_DIR/userspace/bin/desktop-compat/main.c" WAYLAND_BRIDGE.ELF
-build_user_program x11-client "$ROOT_DIR/userspace/bin/desktop-compat/main.c" X11_CLIENT.ELF
-build_user_program x11-wm-client "$ROOT_DIR/userspace/bin/desktop-compat/main.c" X11_WM_CLIENT.ELF
-build_user_program cairo-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" CAIRO_UPSTREAM_TEST.ELF
-build_user_program fontconfig-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" FONTCONFIG_UPSTREAM_TEST.ELF
-build_user_program freetype-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" FREETYPE_UPSTREAM_TEST.ELF
-build_user_program fribidi-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" FRIBIDI_UPSTREAM_TEST.ELF
-build_user_program glib-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" GLIB_UPSTREAM_TEST.ELF
-build_user_program graphene-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" GRAPHENE_UPSTREAM_TEST.ELF
-build_user_program gtk-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" GTK_UPSTREAM_TEST.ELF
-build_user_program gtk3-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" GTK3_UPSTREAM_TEST.ELF
-build_user_program harfbuzz-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" HARFBUZZ_UPSTREAM_TEST.ELF
-build_user_program pango-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" PANGO_UPSTREAM_TEST.ELF
-build_user_program wayland-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" WAYLAND_UPSTREAM_TEST.ELF
-build_user_program xkbcommon-upstream-test "$ROOT_DIR/userspace/bin/desktop-compat/main.c" XKBCOMMON_UPSTREAM_TEST.ELF
-build_user_program qtquick-wayland-smoke "$ROOT_DIR/userspace/bin/desktop-compat/main.c" QT_QUICK_WAYLAND_SMOKE.ELF
+build_user_program wayland-bridge "$ROOT_DIR/userspace/bin/wayland-bridge/main.c" WAYLAND_BRIDGE.ELF
+build_user_program x11-client "$ROOT_DIR/userspace/bin/x11-client/main.c" X11_CLIENT.ELF
+build_user_program x11-wm-client "$ROOT_DIR/userspace/bin/x11-wm-client/main.c" X11_WM_CLIENT.ELF
+build_user_program cairo-upstream-test "$ROOT_DIR/userspace/bin/cairo-upstream-test/main.c" CAIRO_UPSTREAM_TEST.ELF
+build_user_program fontconfig-upstream-test "$ROOT_DIR/userspace/bin/fontconfig-upstream-test/main.c" FONTCONFIG_UPSTREAM_TEST.ELF
+build_user_program freetype-upstream-test "$ROOT_DIR/userspace/bin/freetype-upstream-test/main.c" FREETYPE_UPSTREAM_TEST.ELF
+build_user_program fribidi-upstream-test "$ROOT_DIR/userspace/bin/fribidi-upstream-test/main.c" FRIBIDI_UPSTREAM_TEST.ELF
+build_user_program glib-upstream-test "$ROOT_DIR/userspace/bin/glib-upstream-test/main.c" GLIB_UPSTREAM_TEST.ELF
+build_user_program graphene-upstream-test "$ROOT_DIR/userspace/bin/graphene-upstream-test/main.c" GRAPHENE_UPSTREAM_TEST.ELF
+build_user_program gtk-upstream-test "$ROOT_DIR/userspace/bin/gtk-upstream-test/main.c" GTK_UPSTREAM_TEST.ELF
+build_user_program gtk3-upstream-test "$ROOT_DIR/userspace/bin/gtk3-upstream-test/main.c" GTK3_UPSTREAM_TEST.ELF
+build_user_program harfbuzz-upstream-test "$ROOT_DIR/userspace/bin/harfbuzz-upstream-test/main.c" HARFBUZZ_UPSTREAM_TEST.ELF
+build_user_program pango-upstream-test "$ROOT_DIR/userspace/bin/pango-upstream-test/main.c" PANGO_UPSTREAM_TEST.ELF
+build_user_program wayland-upstream-test "$ROOT_DIR/userspace/bin/wayland-upstream-test/main.c" WAYLAND_UPSTREAM_TEST.ELF
+build_user_program xkbcommon-upstream-test "$ROOT_DIR/userspace/bin/xkbcommon-upstream-test/main.c" XKBCOMMON_UPSTREAM_TEST.ELF
+build_dynamic_cpp_program "$ROOT_DIR/userspace/bin/qtquick-wayland-smoke/main.cpp" QT_QUICK_WAYLAND_SMOKE.ELF
 build_user_program dbus-daemon "$ROOT_DIR/userspace/bin/dbus-daemon/main.c" DBUS_DAEMON.ELF
 build_user_program dltest "$ROOT_DIR/userspace/bin/dltest/main.c" DLTEST.ELF
 build_user_program display-protocols "$ROOT_DIR/userspace/bin/display-protocols/main.c" DISPLAY_PROTOCOLS.ELF
@@ -755,19 +725,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_arm32.img" \
     --file "/bin/telnetd:$BUILD_DIR/TELNETD.ELF:exec" \
     --file "/bin/tftpd:$BUILD_DIR/TFTPD.ELF:exec" \
     --file "/bin/tftp:$BUILD_DIR/TFTP.ELF:exec" \
-    --file "/bin/desktop:$BUILD_DIR/DESKTOP.ELF:exec" \
-    --file "/bin/startlxde:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/openbox:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/pcmanfm:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/startlxqt:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/lxqt-panel:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/pcmanfm-qt:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/gnome-shell:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/mutter:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/gnome-session:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+
     --file "/bin/notepad:$BUILD_DIR/NOTEPAD.ELF:exec" \
     --file "/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec" \
     --file "/bin/webviewer:$BUILD_DIR/WEBVIEWER.ELF:exec" \
@@ -815,58 +773,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_arm32.img" \
     --file "/bin/cd:$BUILD_DIR/CD.ELF:exec" \
     --file "/bin/cfdisk:$BUILD_DIR/CFDISK.ELF:exec" \
     --file "/bin/chattr:$BUILD_DIR/CHATTR.ELF:exec" \
-    --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec"     --file "/bin/chpasswd:$BUILD_DIR/CHPASSWD.ELF:exec"     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec"     --file "/bin/chkconfig:$BUILD_DIR/CHKCONFIG.ELF:exec"     --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec"     --file "/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"     --file "/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec"     --file "/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"     --file "/usr/local/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \
-    --file "/bin/sway:$BUILD_DIR/SWAY.ELF:exec" \
-    --file "/usr/local/bin/sway:$BUILD_DIR/SWAY.ELF:exec" \
-    --file "/bin/river:$BUILD_DIR/RIVER.ELF:exec" \
-    --file "/usr/local/bin/river:$BUILD_DIR/RIVER.ELF:exec" \
-    --file "/bin/niri:$BUILD_DIR/NIRI.ELF:exec" \
-    --file "/usr/local/bin/niri:$BUILD_DIR/NIRI.ELF:exec" \
-    --file "/bin/wayfire:$BUILD_DIR/WAYFIRE.ELF:exec" \
-    --file "/usr/local/bin/wayfire:$BUILD_DIR/WAYFIRE.ELF:exec" \
-    --file "/bin/labwc:$BUILD_DIR/LABWC.ELF:exec" \
-    --file "/usr/local/bin/labwc:$BUILD_DIR/LABWC.ELF:exec" \
-    --file "/bin/weston:$BUILD_DIR/WESTON.ELF:exec" \
-    --file "/usr/local/bin/weston:$BUILD_DIR/WESTON.ELF:exec" \
-    --file "/bin/qtile:$BUILD_DIR/QTILE.ELF:exec" \
-    --file "/usr/local/bin/qtile:$BUILD_DIR/QTILE.ELF:exec" \
-    --file "/bin/awesome:$BUILD_DIR/AWESOME.ELF:exec" \
-    --file "/usr/local/bin/awesome:$BUILD_DIR/AWESOME.ELF:exec" \
-    --file "/bin/xmonad:$BUILD_DIR/XMONAD.ELF:exec" \
-    --file "/usr/local/bin/xmonad:$BUILD_DIR/XMONAD.ELF:exec" \
-    --file "/bin/herbstluftwm:$BUILD_DIR/HERBSTLUFTWM.ELF:exec" \
-    --file "/usr/local/bin/herbstluftwm:$BUILD_DIR/HERBSTLUFTWM.ELF:exec" \
-    --file "/bin/spectrwm:$BUILD_DIR/SPECTRWM.ELF:exec" \
-    --file "/usr/local/bin/spectrwm:$BUILD_DIR/SPECTRWM.ELF:exec" \
-    --file "/bin/fluxbox:$BUILD_DIR/FLUXBOX.ELF:exec" \
-    --file "/usr/local/bin/fluxbox:$BUILD_DIR/FLUXBOX.ELF:exec" \
-    --file "/bin/icewm:$BUILD_DIR/ICEWM.ELF:exec" \
-    --file "/usr/local/bin/icewm:$BUILD_DIR/ICEWM.ELF:exec" \
-    --file "/bin/jwm:$BUILD_DIR/JWM.ELF:exec" \
-    --file "/usr/local/bin/jwm:$BUILD_DIR/JWM.ELF:exec" \
-    --file "/bin/wmaker:$BUILD_DIR/WMAKER.ELF:exec" \
-    --file "/usr/local/bin/wmaker:$BUILD_DIR/WMAKER.ELF:exec" \
-    --file "/bin/fvwm:$BUILD_DIR/FVWM.ELF:exec" \
-    --file "/usr/local/bin/fvwm:$BUILD_DIR/FVWM.ELF:exec" \
-    --file "/bin/budgie:$BUILD_DIR/BUDGIE.ELF:exec" \
-    --file "/usr/local/bin/budgie:$BUILD_DIR/BUDGIE.ELF:exec" \
-    --file "/bin/cosmic:$BUILD_DIR/COSMIC.ELF:exec" \
-    --file "/usr/local/bin/cosmic:$BUILD_DIR/COSMIC.ELF:exec" \
-    --file "/bin/deepin:$BUILD_DIR/DEEPIN.ELF:exec" \
-    --file "/usr/local/bin/deepin:$BUILD_DIR/DEEPIN.ELF:exec" \
-    --file "/bin/pantheon:$BUILD_DIR/PANTHEON.ELF:exec" \
-    --file "/usr/local/bin/pantheon:$BUILD_DIR/PANTHEON.ELF:exec" \
-    --file "/bin/ukui:$BUILD_DIR/UKUI.ELF:exec" \
-    --file "/usr/local/bin/ukui:$BUILD_DIR/UKUI.ELF:exec" \
-    --file "/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec" \
-    --file "/usr/local/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec" \
-    --file "/bin/bzip2:$BUILD_DIR/BZIP2.ELF:exec" \
-    --file "/bin/bunzip2:$BUILD_DIR/BZIP2.ELF:exec" \
-    --file "/bin/bzcat:$BUILD_DIR/BZIP2.ELF:exec" \
-    --dir "/var/spool" \
-    --dir "/var/spool/at" \
-    --dir "/var/spool/at/spool" \
-    --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \
+    --file "/bin/chgrp:$BUILD_DIR/CHGRP.ELF:exec"     --file "/bin/chpasswd:$BUILD_DIR/CHPASSWD.ELF:exec"     --file "/bin/chroot:$BUILD_DIR/CHROOT.ELF:exec"     --file "/bin/chkconfig:$BUILD_DIR/CHKCONFIG.ELF:exec"     --file "/bin/cksum:$BUILD_DIR/CKSUM.ELF:exec"     --file "/bin/pkill:$BUILD_DIR/PKILL.ELF:exec" \
     --file "/bin/uptime:$BUILD_DIR/UPTIME.ELF:exec" \
     --file "/bin/free:$BUILD_DIR/FREE.ELF:exec"     --file "/bin/vmstat:$BUILD_DIR/VMSTAT.ELF:exec" \
     --file "/bin/watch:$BUILD_DIR/WATCH.ELF:exec" \
@@ -914,8 +821,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$ROOT_DIR/build/initramfs_arm32.img" \
     --file "/bin/qtwayland-smoke:$BUILD_DIR/QT_QUICK_WAYLAND_SMOKE.ELF:exec" \
     --file "/bin/qtquick-wayland-smoke:$BUILD_DIR/QT_QUICK_WAYLAND_SMOKE.ELF:exec" \
     --file "/bin/dbus-update-activation-environment:$BUILD_DIR/DBUS_DAEMON.ELF:exec" \
-    --file "/bin/lxqt-leave:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    --file "/bin/lxqt-session:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
+
     --file "/etc/test_all_181_commands.sh:$ROOT_DIR/userspace/etc/test_all_181_commands.sh:0755" \
     --dir "/lib" \
     --file "/lib/ld-akaos.so:$BUILD_DIR/LD_AKAOS.ELF:exec" \

@@ -87,7 +87,7 @@ perform_authenticated_session:
             puts("login: unable to establish credentials");
             return 1;
         }
-        /* Standard desktop clients inherit these conventional D-Bus and
+        /* Standard desktop clients inherit these conventional D-Bus, X11, and
          * XDG locations from the authenticated login session. */
         (void)setenv("DBUS_SYSTEM_BUS_ADDRESS",
                      "unix:path=/run/dbus/system_bus_socket", 1);
@@ -95,8 +95,30 @@ perform_authenticated_session:
                      "unix:path=/run/user/0/bus", 1);
         (void)setenv("XDG_RUNTIME_DIR", "/run/user/0", 1);
         (void)setenv("WAYLAND_DISPLAY", "wayland-0", 1);
+        (void)setenv("DISPLAY", ":0", 1);
+        (void)setenv("XDG_DATA_DIRS", "/usr/local/share:/usr/share", 1);
+        (void)setenv("XDG_CONFIG_DIRS", "/etc/xdg:/usr/local/etc/xdg", 1);
+        (void)setenv("PATH", "/usr/local/bin:/usr/bin:/bin", 1);
+        (void)setenv("HOME", account.home[0] ? account.home : "/root", 1);
+        (void)setenv("USER", account.name[0] ? account.name : "root", 1);
+        (void)setenv("LOGNAME", account.name[0] ? account.name : "root", 1);
+        (void)setenv("SHELL", account.shell[0] ? account.shell : "/bin/akash", 1);
         if (chdir(account.home) != 0) chdir("/");
         if (check_autostart_desktop()) {
+            /* Start display server & protocol bridge if not already running */
+            if (access("/bin/lumen", X_OK) == 0) {
+                char lm_path[] = "/bin/lumen";
+                char *lm_args[] = {lm_path, NULL};
+                (void)spawn(lm_path, lm_args);
+                (void)usleep(250000);
+            }
+            if (access("/bin/display-protocols", X_OK) == 0) {
+                char dp_path[] = "/bin/display-protocols";
+                char dp_opt[] = "--both";
+                char *dp_args[] = {dp_path, dp_opt, NULL};
+                (void)spawn(dp_path, dp_args);
+                (void)usleep(250000);
+            }
             char env_buf[64] = "lxde";
             int fd = open("/etc/akaos.conf", O_RDONLY);
             if (fd >= 0) {
@@ -116,16 +138,36 @@ perform_authenticated_session:
                     }
                 }
             }
-            char session_path[64] = "/bin/startlxde";
-            if (strcmp(env_buf, "lxqt") == 0) strcpy(session_path, "/bin/startlxqt");
-            else if (strcmp(env_buf, "openbox") == 0) strcpy(session_path, "/bin/openbox");
-            else if (strcmp(env_buf, "xfce") == 0) strcpy(session_path, "/usr/local/bin/startxfce4");
-
-            printf("[session] Autostart enabled; launching %s (%s)...\n", env_buf, session_path);
-            char *dargs[] = {session_path, NULL};
-            pid_t dpid = spawn(session_path, dargs);
-            if (dpid < 0) {
-                fprintf(2, "[session] Unable to launch %s (errno=%d)\n", session_path, errno);
+            const char *session_path = NULL;
+            char *dargs[8] = {NULL};
+            if (strcmp(env_buf, "lxde") == 0) {
+                session_path = access("/usr/local/bin/lxsession", X_OK) == 0 ? "/usr/local/bin/lxsession" : "/bin/lxsession";
+                dargs[0] = (char *)session_path;
+                dargs[1] = "-s";
+                dargs[2] = "LXDE";
+                dargs[3] = "-e";
+                dargs[4] = "LXDE";
+                dargs[5] = NULL;
+            } else if (strcmp(env_buf, "lxqt") == 0) {
+                session_path = access("/bin/startlxqt", X_OK) == 0 ? "/bin/startlxqt" : "/usr/local/bin/startlxqt";
+                dargs[0] = (char *)session_path;
+                dargs[1] = NULL;
+            } else if (strcmp(env_buf, "openbox") == 0) {
+                session_path = access("/usr/local/bin/openbox", X_OK) == 0 ? "/usr/local/bin/openbox" : "/bin/openbox";
+                dargs[0] = (char *)session_path;
+                dargs[1] = NULL;
+            } else if (strcmp(env_buf, "xfce") == 0) {
+                session_path = access("/usr/local/bin/xfce4-session", X_OK) == 0 ? "/usr/local/bin/xfce4-session" : "/bin/xfce4-session";
+                dargs[0] = (char *)session_path;
+                dargs[1] = NULL;
+            }
+            if (!session_path || access(session_path, X_OK) != 0) {
+                fprintf(2, "[session] Official %s session is not installed; refusing an imitation.\n", env_buf);
+            } else {
+                printf("[session] Autostart enabled; launching official %s (%s)...\n", env_buf, session_path);
+                pid_t dpid = spawn(session_path, dargs);
+                if (dpid < 0)
+                    fprintf(2, "[session] Unable to launch %s (errno=%d)\n", session_path, errno);
             }
         }
         char *shell_argv[] = {account.shell, NULL};

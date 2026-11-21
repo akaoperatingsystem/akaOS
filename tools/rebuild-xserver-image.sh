@@ -715,33 +715,7 @@ ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-cksum-main.o" \
     -o "$BUILD_DIR/CKSUM.ELF"
 
-echo "[BUILD] user hyprland"
-clang --target=x86_64-unknown-none-elf \
-    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
-    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
-    -mno-red-zone -mcmodel=small \
-    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
-    -c "$ROOT_DIR/userspace/bin/hyprland/main.c" -o "$BUILD_DIR/user-hyprland-main.o"
-ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
-    -T "$ROOT_DIR/userspace/linker/user.ld" \
-    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-hyprland-main.o" \
-    -o "$BUILD_DIR/HYPRLAND.ELF"
 
-echo "[BUILD] user hyprctl"
-clang --target=x86_64-unknown-none-elf \
-    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
-    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
-    -mno-red-zone -mcmodel=small \
-    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
-    -c "$ROOT_DIR/userspace/bin/hyprctl/main.c" -o "$BUILD_DIR/user-hyprctl-main.o"
-ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
-    -T "$ROOT_DIR/userspace/linker/user.ld" \
-    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-hyprctl-main.o" \
-    -o "$BUILD_DIR/HYPRCTL.ELF"
-
-echo "[BUILD] user lumen"
 clang --target=x86_64-unknown-none-elf \
     -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
     -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -754,68 +728,8 @@ ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
     "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-lumen-main.o" \
     -o "$BUILD_DIR/LUMEN.ELF"
 
-clang --target=x86_64-unknown-none-elf \
-    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
-    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
-    -mno-red-zone -mcmodel=small \
-    -DXSCORE_BUILD_TIMESTAMP="\"\$BUILD_TIMESTAMP\"" \
-    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
-ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
-    -T "$ROOT_DIR/userspace/linker/user.ld" \
-
-echo "[BUILD] user desktop launcher"
-clang --target=x86_64-unknown-none-elf \
-    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
-    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
-    -mno-red-zone -mcmodel=small \
-    -DXSCORE_BUILD_TIMESTAMP="\"\$BUILD_TIMESTAMP\"" \
-    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
-    -c "$ROOT_DIR/userspace/bin/desktop/main.c" -o "$BUILD_DIR/user-desktop-main.o"
-ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
-    -T "$ROOT_DIR/userspace/linker/user.ld" \
-    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-desktop-main.o" \
-    -o "$BUILD_DIR/DESKTOP.ELF"
-
-echo "[BUILD] user desktop applications (notepad, taskmgr)"
-clang --target=x86_64-unknown-none-elf \
-    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
-    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
-    -mno-red-zone -mcmodel=small \
-    -DXSCORE_BUILD_TIMESTAMP="\"\$BUILD_TIMESTAMP\"" \
-    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
-    -c "$ROOT_DIR/userspace/bin/notepad/main.c" -o "$BUILD_DIR/user-notepad-main.o"
-ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
-    -T "$ROOT_DIR/userspace/linker/user.ld" \
-    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-notepad-main.o" \
-    -o "$BUILD_DIR/NOTEPAD.ELF"
-
-clang --target=x86_64-unknown-none-elf \
-    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
-    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
-    -mno-red-zone -mcmodel=small \
-    -DXSCORE_BUILD_TIMESTAMP="\"\$BUILD_TIMESTAMP\"" \
-    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
-    -c "$ROOT_DIR/userspace/bin/taskmgr/main.c" -o "$BUILD_DIR/user-taskmgr-main.o"
-ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
-    -T "$ROOT_DIR/userspace/linker/user.ld" \
-    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-taskmgr-main.o" \
-    -o "$BUILD_DIR/TASKMGR.ELF"
-
-echo "[BUILD] user desktop-compat"
-clang --target=x86_64-unknown-none-elf \
-    -std=c17 -Os -Wall -Wextra -Werror -ffunction-sections -fdata-sections \
-    -ffreestanding -fno-builtin -fno-stack-protector -fpie \
-    -mno-red-zone -mcmodel=small \
-    -DXSCORE_BUILD_TIMESTAMP="\"$BUILD_TIMESTAMP\"" \
-    -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" \
-    -c "$ROOT_DIR/userspace/bin/desktop-compat/main.c" -o "$BUILD_DIR/user-desktop-compat-main.o"
-ld.lld -nostdlib -pie -static --gc-sections -s -z max-page-size=0x1000 \
-    -T "$ROOT_DIR/userspace/linker/user.ld" \
-    "$BUILD_DIR/user-crt0.o" "${user_libc_objects[@]}" "$BUILD_DIR/user-desktop-compat-main.o" \
-    -o "$BUILD_DIR/DESKTOP_COMPAT.ELF"
 
 echo "[BUILD] user wayland-bridge"
-PROTOCOL_DIR="$BUILD_DIR/wayland-bridge-protocol"
 clang --target=x86_64-unknown-none-elf \
     -std=gnu17 -O2 -Wall -Wextra -Werror \
     -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -837,64 +751,8 @@ ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
 
 initramfs_files+=(
     "--file=/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec"
-    "--file=/bin/desktop:$BUILD_DIR/DESKTOP.ELF:exec"
     "--file=/bin/notepad:$BUILD_DIR/NOTEPAD.ELF:exec"
-    "--file=/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec"
-    "--file=/bin/desktop-compat:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
-    "--file=/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
-    "--file=/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
-    "--file=/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
-    "--file=/usr/local/bin/plasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
-    "--file=/usr/local/bin/kwin:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec"
-    "--file=/usr/local/bin/startplasma:$BUILD_DIR/DESKTOP_COMPAT.ELF:exec" \
-    "--file=/bin/sway:$BUILD_DIR/SWAY.ELF:exec" 
-    "--file=/usr/local/bin/sway:$BUILD_DIR/SWAY.ELF:exec"
-    "--file=/bin/river:$BUILD_DIR/RIVER.ELF:exec" 
-    "--file=/usr/local/bin/river:$BUILD_DIR/RIVER.ELF:exec"
-    "--file=/bin/niri:$BUILD_DIR/NIRI.ELF:exec" 
-    "--file=/usr/local/bin/niri:$BUILD_DIR/NIRI.ELF:exec"
-    "--file=/bin/wayfire:$BUILD_DIR/WAYFIRE.ELF:exec" 
-    "--file=/usr/local/bin/wayfire:$BUILD_DIR/WAYFIRE.ELF:exec"
-    "--file=/bin/labwc:$BUILD_DIR/LABWC.ELF:exec" 
-    "--file=/usr/local/bin/labwc:$BUILD_DIR/LABWC.ELF:exec"
-    "--file=/bin/weston:$BUILD_DIR/WESTON.ELF:exec" 
-    "--file=/usr/local/bin/weston:$BUILD_DIR/WESTON.ELF:exec"
-    "--file=/bin/qtile:$BUILD_DIR/QTILE.ELF:exec" 
-    "--file=/usr/local/bin/qtile:$BUILD_DIR/QTILE.ELF:exec"
-    "--file=/bin/awesome:$BUILD_DIR/AWESOME.ELF:exec" 
-    "--file=/usr/local/bin/awesome:$BUILD_DIR/AWESOME.ELF:exec"
-    "--file=/bin/xmonad:$BUILD_DIR/XMONAD.ELF:exec" 
-    "--file=/usr/local/bin/xmonad:$BUILD_DIR/XMONAD.ELF:exec"
-    "--file=/bin/herbstluftwm:$BUILD_DIR/HERBSTLUFTWM.ELF:exec" 
-    "--file=/usr/local/bin/herbstluftwm:$BUILD_DIR/HERBSTLUFTWM.ELF:exec"
-    "--file=/bin/spectrwm:$BUILD_DIR/SPECTRWM.ELF:exec" 
-    "--file=/usr/local/bin/spectrwm:$BUILD_DIR/SPECTRWM.ELF:exec"
-    "--file=/bin/fluxbox:$BUILD_DIR/FLUXBOX.ELF:exec" 
-    "--file=/usr/local/bin/fluxbox:$BUILD_DIR/FLUXBOX.ELF:exec"
-    "--file=/bin/icewm:$BUILD_DIR/ICEWM.ELF:exec" 
-    "--file=/usr/local/bin/icewm:$BUILD_DIR/ICEWM.ELF:exec"
-    "--file=/bin/jwm:$BUILD_DIR/JWM.ELF:exec" 
-    "--file=/usr/local/bin/jwm:$BUILD_DIR/JWM.ELF:exec"
-    "--file=/bin/wmaker:$BUILD_DIR/WMAKER.ELF:exec" 
-    "--file=/usr/local/bin/wmaker:$BUILD_DIR/WMAKER.ELF:exec"
-    "--file=/bin/fvwm:$BUILD_DIR/FVWM.ELF:exec" 
-    "--file=/usr/local/bin/fvwm:$BUILD_DIR/FVWM.ELF:exec"
-    "--file=/bin/budgie:$BUILD_DIR/BUDGIE.ELF:exec" 
-    "--file=/usr/local/bin/budgie:$BUILD_DIR/BUDGIE.ELF:exec"
-    "--file=/bin/cosmic:$BUILD_DIR/COSMIC.ELF:exec" 
-    "--file=/usr/local/bin/cosmic:$BUILD_DIR/COSMIC.ELF:exec"
-    "--file=/bin/deepin:$BUILD_DIR/DEEPIN.ELF:exec" 
-    "--file=/usr/local/bin/deepin:$BUILD_DIR/DEEPIN.ELF:exec"
-    "--file=/bin/pantheon:$BUILD_DIR/PANTHEON.ELF:exec" 
-    "--file=/usr/local/bin/pantheon:$BUILD_DIR/PANTHEON.ELF:exec"
-    "--file=/bin/ukui:$BUILD_DIR/UKUI.ELF:exec" 
-    "--file=/usr/local/bin/ukui:$BUILD_DIR/UKUI.ELF:exec"
-    "--file=/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec" 
-    "--file=/usr/local/bin/enlightenment:$BUILD_DIR/ENLIGHTENMENT.ELF:exec"
-    "--file=/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"
-    "--file=/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec"
-    "--file=/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec"
-    "--file=/usr/local/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec"
+    "--file=/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec" \
     "--file=/bin/at:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atq:$BUILD_DIR/AT.ELF:exec"
     "--file=/bin/atrm:$BUILD_DIR/AT.ELF:exec"

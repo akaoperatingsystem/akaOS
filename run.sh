@@ -23,12 +23,12 @@ Target Architecture & Firmware:
 
 Desktop & Session Options:
   --desktop, --desktop-env NAME
-                               Desktop environment to launch in QEMU:
-                                 xfce    : XFCE 4.18 (Full desktop session, panel, xfwm4)
-                                 lxde    : LXDE Suite (Openbox, LXPanel, PCManFM)
-                                 openbox : Standalone Openbox 3.6.1 Window Manager
-                                 lxqt    : Lightweight Qt6 Desktop Environment
-                                 none    : None (No desktop environment / Headless console)
+                               Upstream desktop selection (official profiles are rejected until fully integrated):
+                                 lxde    : Official LXDE
+                                 lxqt    : Official LXQt
+                                 xfce    : Official XFCE
+                                 openbox : Official Openbox window manager
+                                 none    : No upstream desktop (headless/console)
   --session-mode NAME          Default boot session mode:
                                  console : Direct tty1 shell login
                                  desktop : Autostart graphical desktop environment
@@ -466,10 +466,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires lxde, lxqt, xfce, openbox, kde, gnome, or none" >&2
+                echo "$1 requires lxde, lxqt, xfce, openbox, or none" >&2
                 exit 2
             fi
             menu_desktop="$2"
+            case "$menu_desktop" in
+                none|lxde|lxqt|xfce|openbox) ;;
+                *) echo "Unsupported official desktop '$menu_desktop'; supported: none, lxde, lxqt, xfce, openbox" >&2; exit 2 ;;
+            esac
             if [[ "$menu_desktop" != "none" ]]; then
                 menu_session="desktop"
             fi
@@ -597,6 +601,10 @@ case "$arch" in
         exit 2
         ;;
 esac
+if [[ "$menu_desktop" != "none" && "$arch" != "x86_64" ]]; then
+    echo "Official upstream desktop profiles are currently supported only on x86_64; refusing $arch." >&2
+    exit 2
+fi
 
 case "$firmware" in
     uefi|bios) ;;
@@ -816,23 +824,55 @@ if [[ "$firmware" == "bios" && "$disk_type" == "fat32" ]]; then
     # but choose the ISO fallback as the actual boot medium.
     boot_disk_type=iso
 fi
+profile_stamp="$ROOT_DIR/build/AKAOS_BUILD_PROFILE"
+selected_profile="$arch|$firmware|$boot_disk_type|$menu_desktop|$menu_session|$menu_software|$boot_mode|$test_mode"
+if [[ "$menu_desktop" != "none" && "$arch" != "x86_64" ]]; then
+    echo "Official upstream desktop profiles are currently buildable only on x86_64; refusing $arch." >&2
+    exit 2
+fi
+image_profile_matches() {
+    local image="$1"
+    [[ -f "$image" && -f "$profile_stamp" ]] || return 1
+    local stamp saved_hash image_hash
+    stamp="$(<"$profile_stamp")"
+    [[ "${stamp%|*}" == "$selected_profile" ]] || return 1
+    saved_hash="${stamp##*|}"
+    image_hash="$(sha256sum "$image" | awk '{print $1}')"
+    [[ -n "$saved_hash" && "$image_hash" == "$saved_hash" ]]
+}
+build_selected_image() {
+    local kind="$1"
+    local build_args=(--arch "$arch" --firmware "$firmware" --disk-type "$kind"
+                      --software "$menu_software" --boot-mode "$boot_mode"
+                      --desktop "$menu_desktop" --session-mode "$menu_session")
+    if ! "$ROOT_DIR/build.sh" "${build_args[@]}"; then
+        echo "[ERROR] Selected-profile build failed; keeping existing media uncertified." >&2
+        return 1
+    fi
+    if [[ "$kind" == "iso" && ! -f "$ROOT_DIR/build/akaos.iso" ]]; then
+        echo "[ERROR] Build completed without producing the requested ISO." >&2
+        return 1
+    fi
+    if [[ "$kind" == "fat32" && ! -f "$ROOT_DIR/build/akaos.img" ]]; then
+        echo "[ERROR] Build completed without producing the requested disk image." >&2
+        return 1
+    fi
+    if [[ "$kind" == "iso" ]]; then
+        image="$ROOT_DIR/build/akaos.iso"
+    else
+        image="$ROOT_DIR/build/akaos.img"
+    fi
+    printf "%s|%s\n" "$selected_profile" "$(sha256sum "$image" | awk '{print $1}')" > "$profile_stamp"
+}
 if [[ "$boot_disk_type" == "iso" ]]; then
-    if [[ ! -f "$ROOT_DIR/build/akaos.iso" ]]; then
-        # BIOS/FAT32 transparently boots the ISO fallback; build only the
-        # medium this QEMU instance will actually boot.
-        build_args=(--arch x86_64 --firmware "$firmware" --disk-type iso --software "$menu_software" --boot-mode "$boot_mode")
-        if [[ "$menu_desktop" != "none" ]]; then
-            build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
-        fi
-        "$ROOT_DIR/build.sh" "${build_args[@]}"
+    if ! image_profile_matches "$ROOT_DIR/build/akaos.iso"; then
+        echo "[INFO] Building ISO for selected desktop=$menu_desktop, software=$menu_software"
+        build_selected_image iso
     fi
 elif [[ "$firmware" == "uefi" ]]; then
-    if [[ ! -f "$ROOT_DIR/build/akaos.img" ]]; then
-        build_args=(--arch x86_64 --firmware uefi --disk-type fat32 --software "$menu_software" --boot-mode "$boot_mode")
-        if [[ "$menu_desktop" != "none" ]]; then
-            build_args+=(--desktop "$menu_desktop" --session-mode "$menu_session")
-        fi
-        "$ROOT_DIR/build.sh" "${build_args[@]}"
+    if ! image_profile_matches "$ROOT_DIR/build/akaos.img"; then
+        echo "[INFO] Building disk image for selected desktop=$menu_desktop, software=$menu_software"
+        build_selected_image fat32
     fi
 fi
 

@@ -12,7 +12,7 @@ compile_port() {
     local -a arch_flags=("$@")
 
     for unit in math fenv stdio malloc string time setjmp tgmath dlfcn syscall eventfd \
-        timerfd pthread hello desktop login; do
+        timerfd pthread hello login; do
         local -a unit_flags=("${arch_flags[@]}")
         if [[ "$port" == "x86_32" && ( "$unit" == "stdio" || "$unit" == "malloc" || "$unit" == "string" || "$unit" == "hello" ) ]]; then
             unit_flags+=( -m80387 )
@@ -22,8 +22,6 @@ compile_port() {
             source="$ROOT_DIR/userspace/libc/tests/desktop_tgmath.c"
         elif [[ "$unit" == "hello" ]]; then
             source="$ROOT_DIR/userspace/bin/hello/main.c"
-        elif [[ "$unit" == "desktop" ]]; then
-            source="$ROOT_DIR/userspace/bin/desktop/main.c"
         elif [[ "$unit" == "login" ]]; then
             source="$ROOT_DIR/userspace/bin/login/main.c"
         fi

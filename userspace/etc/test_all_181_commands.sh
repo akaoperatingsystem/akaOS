@@ -1,913 +1,908 @@
 #!/bin/akash
-# Native akaOS validation script for all 181 runnable commands
-echo "STARTING_NATIVE_181_COMMAND_TEST"
+# Native akaOS validation script for all 180 runnable commands
+echo "STARTING_NATIVE_180_COMMAND_TEST"
 
-# [1/181] [
+# [1/180] [
 echo "RUN_CMD_1_["
 [ 1 -eq 1 ]
 echo "PASS_CMD_1_["
 
-# [2/181] about
+# [2/180] about
 echo "RUN_CMD_2_about"
 about
 echo "PASS_CMD_2_about"
 
-# [3/181] acpi
+# [3/180] acpi
 echo "RUN_CMD_3_acpi"
 acpi
 echo "PASS_CMD_3_acpi"
 
-# [4/181] akafetch
+# [4/180] akafetch
 echo "RUN_CMD_4_akafetch"
 akafetch
 echo "PASS_CMD_4_akafetch"
 
-# [5/181] akaos-config
+# [5/180] akaos-config
 echo "RUN_CMD_5_akaos-config"
 akaos-config --status
 echo "PASS_CMD_5_akaos-config"
 
-# [6/181] akash
+# [6/180] akash
 echo "RUN_CMD_6_akash"
 akash -c 'echo SHELL_OK'
 echo "PASS_CMD_6_akash"
 
-# [7/181] alias
+# [7/180] alias
 echo "RUN_CMD_7_alias"
 alias
 echo "PASS_CMD_7_alias"
 
-# [8/181] apropos
+# [8/180] apropos
 echo "RUN_CMD_8_apropos"
 apropos zip
 echo "PASS_CMD_8_apropos"
 
-# [9/181] arp
+# [9/180] arp
 echo "RUN_CMD_9_arp"
 arp
 echo "PASS_CMD_9_arp"
 
-# [10/181] aspell
+# [10/180] aspell
 echo "RUN_CMD_10_aspell"
 aspell --help
 echo "PASS_CMD_10_aspell"
 
-# [11/181] at
+# [11/180] at
 echo "RUN_CMD_11_at"
 at --help
 echo "PASS_CMD_11_at"
 
-# [12/181] atq
+# [12/180] atq
 echo "RUN_CMD_12_atq"
 atq
 echo "PASS_CMD_12_atq"
 
-# [13/181] atrm
+# [13/180] atrm
 echo "RUN_CMD_13_atrm"
 atrm --help
 echo "PASS_CMD_13_atrm"
 
-# [14/181] startlxde
+# [14/180] startlxde
 echo "RUN_CMD_14_startlxde"
 startlxde --help
 echo "PASS_CMD_14_startlxde"
 
-# [15/181] awk
+# [15/180] awk
 echo "RUN_CMD_15_awk"
 awk --help
 echo "PASS_CMD_15_awk"
 
-# [16/181] base32
+# [16/180] base32
 echo "RUN_CMD_16_base32"
 base32 --help
 echo "PASS_CMD_16_base32"
 
-# [17/181] base64
+# [17/180] base64
 echo "RUN_CMD_17_base64"
 base64 --help
 echo "PASS_CMD_17_base64"
 
-# [18/181] basename
+# [18/180] basename
 echo "RUN_CMD_18_basename"
 basename /bin/ls
 echo "PASS_CMD_18_basename"
 
-# [19/181] bash
+# [19/180] bash
 echo "RUN_CMD_19_bash"
 bash -c 'echo SHELL_OK'
 echo "PASS_CMD_19_bash"
 
-# [20/181] batch
+# [20/180] batch
 echo "RUN_CMD_20_batch"
 batch --help
 echo "PASS_CMD_20_batch"
 
-# [21/181] bc
+# [21/180] bc
 echo "RUN_CMD_21_bc"
 bc -h
 echo "PASS_CMD_21_bc"
 
-# [22/181] beep
+# [22/180] beep
 echo "RUN_CMD_22_beep"
 beep -h
 echo "PASS_CMD_22_beep"
 
-# [23/181] bg
+# [23/180] bg
 echo "RUN_CMD_23_bg"
 bg --help
 echo "PASS_CMD_23_bg"
 
-# [24/181] bind
+# [24/180] bind
 echo "RUN_CMD_24_bind"
 bind -p
 echo "PASS_CMD_24_bind"
 
-# [25/181] break
+# [25/180] break
 echo "RUN_CMD_25_break"
 /bin/break
 echo "PASS_CMD_25_break"
 
-# [26/181] builtin
+# [26/180] builtin
 echo "RUN_CMD_26_builtin"
 builtin echo BUILTIN_OK
 echo "PASS_CMD_26_builtin"
 
-# [27/181] bunzip2
+# [27/180] bunzip2
 echo "RUN_CMD_27_bunzip2"
 bunzip2 --help
 echo "PASS_CMD_27_bunzip2"
 
-# [28/181] bzcat
+# [28/180] bzcat
 echo "RUN_CMD_28_bzcat"
 bzcat --help
 echo "PASS_CMD_28_bzcat"
 
-# [29/181] bzip2
+# [29/180] bzip2
 echo "RUN_CMD_29_bzip2"
 bzip2 --help
 echo "PASS_CMD_29_bzip2"
 
-# [30/181] cairo-upstream-test
+# [30/180] cairo-upstream-test
 echo "RUN_CMD_30_cairo-upstream-test"
 cairo-upstream-test --help
 echo "PASS_CMD_30_cairo-upstream-test"
 
-# [31/181] cal
+# [31/180] cal
 echo "RUN_CMD_31_cal"
 cal
 echo "PASS_CMD_31_cal"
 
-# [32/181] caller
+# [32/180] caller
 echo "RUN_CMD_32_caller"
 caller
 echo "PASS_CMD_32_caller"
 
-# [33/181] case
+# [33/180] case
 echo "RUN_CMD_33_case"
 /bin/case
 echo "PASS_CMD_33_case"
 
-# [34/181] cat
+# [34/180] cat
 echo "RUN_CMD_34_cat"
 cat /etc/motd
 echo "PASS_CMD_34_cat"
 
-# [35/181] cd
+# [35/180] cd
 echo "RUN_CMD_35_cd"
 cd /root
 echo "PASS_CMD_35_cd"
 
-# [36/181] chmod
+# [36/180] chmod
 echo "RUN_CMD_36_chmod"
 chmod --help
 echo "PASS_CMD_36_chmod"
 
-# [37/181] chown
+# [37/180] chown
 echo "RUN_CMD_37_chown"
 chown --help
 echo "PASS_CMD_37_chown"
 
-# [38/181] clear
+# [38/180] clear
 echo "RUN_CMD_38_clear"
 clear
 echo "PASS_CMD_38_clear"
 
-# [39/181] cmp
+# [39/180] cmp
 echo "RUN_CMD_39_cmp"
 cmp --help
 echo "PASS_CMD_39_cmp"
 
-# [40/181] cp
+# [40/180] cp
 echo "RUN_CMD_40_cp"
 cp --help
 echo "PASS_CMD_40_cp"
 
-# [41/181] curl
+# [41/180] curl
 echo "RUN_CMD_41_curl"
 curl --help
 echo "PASS_CMD_41_curl"
 
-# [42/181] cut
+# [42/180] cut
 echo "RUN_CMD_42_cut"
 cut --help
 echo "PASS_CMD_42_cut"
 
-# [43/181] cxx-dynamic-test
+# [43/180] cxx-dynamic-test
 echo "RUN_CMD_43_cxx-dynamic-test"
 cxx-dynamic-test --help
 echo "PASS_CMD_43_cxx-dynamic-test"
 
-# [44/181] cxxabi-test
+# [44/180] cxxabi-test
 echo "RUN_CMD_44_cxxabi-test"
 cxxabi-test --help
 echo "PASS_CMD_44_cxxabi-test"
 
-# [45/181] dbus-daemon
+# [45/180] dbus-daemon
 echo "RUN_CMD_45_dbus-daemon"
 dbus-daemon --help
 echo "PASS_CMD_45_dbus-daemon"
 
-# [46/181] dbus-update-activation-environment
+# [46/180] dbus-update-activation-environment
 echo "RUN_CMD_46_dbus-update-activation-environment"
 dbus-update-activation-environment --help
 echo "PASS_CMD_46_dbus-update-activation-environment"
 
-# [47/181] desktop
-echo "RUN_CMD_47_desktop"
-desktop --help
-echo "PASS_CMD_47_desktop"
-
-# [48/181] df
+# [48/180] df
 echo "RUN_CMD_48_df"
 df -h
 echo "PASS_CMD_48_df"
 
-# [49/181] diff
+# [49/180] diff
 echo "RUN_CMD_49_diff"
 diff --help
 echo "PASS_CMD_49_diff"
 
-# [50/181] dig
+# [50/180] dig
 echo "RUN_CMD_50_dig"
 dig --help
 echo "PASS_CMD_50_dig"
 
-# [51/181] display-protocols
+# [51/180] display-protocols
 echo "RUN_CMD_51_display-protocols"
 display-protocols --help
 echo "PASS_CMD_51_display-protocols"
 
-# [52/181] dltest
+# [52/180] dltest
 echo "RUN_CMD_52_dltest"
 dltest --help
 echo "PASS_CMD_52_dltest"
 
-# [53/181] du
+# [53/180] du
 echo "RUN_CMD_53_du"
 du -h
 echo "PASS_CMD_53_du"
 
-# [54/181] dynamic-hello
+# [54/180] dynamic-hello
 echo "RUN_CMD_54_dynamic-hello"
 dynamic-hello --help
 echo "PASS_CMD_54_dynamic-hello"
 
-# [55/181] echo
+# [55/180] echo
 echo "RUN_CMD_55_echo"
 echo ECHO_OK
 echo "PASS_CMD_55_echo"
 
-# [56/181] env
+# [56/180] env
 echo "RUN_CMD_56_env"
 env
 echo "PASS_CMD_56_env"
 
-# [57/181] exit
+# [57/180] exit
 echo "RUN_CMD_57_exit"
 builtin true
 echo "PASS_CMD_57_exit"
 
-# [58/181] export
+# [58/180] export
 echo "RUN_CMD_58_export"
 export
 echo "PASS_CMD_58_export"
 
-# [59/181] fg
+# [59/180] fg
 echo "RUN_CMD_59_fg"
 fg --help
 echo "PASS_CMD_59_fg"
 
-# [60/181] find
+# [60/180] find
 echo "RUN_CMD_60_find"
 find /etc -name motd
 echo "PASS_CMD_60_find"
 
-# [61/181] fontconfig-upstream-test
+# [61/180] fontconfig-upstream-test
 echo "RUN_CMD_61_fontconfig-upstream-test"
 fontconfig-upstream-test --help
 echo "PASS_CMD_61_fontconfig-upstream-test"
 
-# [62/181] free
+# [62/180] free
 echo "RUN_CMD_62_free"
 free -h
 echo "PASS_CMD_62_free"
 
-# [63/181] freetype-upstream-test
+# [63/180] freetype-upstream-test
 echo "RUN_CMD_63_freetype-upstream-test"
 freetype-upstream-test --help
 echo "PASS_CMD_63_freetype-upstream-test"
 
-# [64/181] fribidi-upstream-test
+# [64/180] fribidi-upstream-test
 echo "RUN_CMD_64_fribidi-upstream-test"
 fribidi-upstream-test --help
 echo "PASS_CMD_64_fribidi-upstream-test"
 
-# [65/181] gawk
+# [65/180] gawk
 echo "RUN_CMD_65_gawk"
 gawk --help
 echo "PASS_CMD_65_gawk"
 
-# [66/181] glib-upstream-test
+# [66/180] glib-upstream-test
 echo "RUN_CMD_66_glib-upstream-test"
 glib-upstream-test --help
 echo "PASS_CMD_66_glib-upstream-test"
 
-# [67/181] gnome-session
+# [67/180] gnome-session
 echo "RUN_CMD_67_gnome-session"
 gnome-session --help
 echo "PASS_CMD_67_gnome-session"
 
-# [68/181] gnome-shell
+# [68/180] gnome-shell
 echo "RUN_CMD_68_gnome-shell"
 gnome-shell --help
 echo "PASS_CMD_68_gnome-shell"
 
-# [69/181] gpuinfo
+# [69/180] gpuinfo
 echo "RUN_CMD_69_gpuinfo"
 gpuinfo
 echo "PASS_CMD_69_gpuinfo"
 
-# [70/181] graphene-upstream-test
+# [70/180] graphene-upstream-test
 echo "RUN_CMD_70_graphene-upstream-test"
 graphene-upstream-test --help
 echo "PASS_CMD_70_graphene-upstream-test"
 
-# [71/181] grep
+# [71/180] grep
 echo "RUN_CMD_71_grep"
 grep /etc/motd
 echo "PASS_CMD_71_grep"
 
-# [72/181] gtk-upstream-test
+# [72/180] gtk-upstream-test
 echo "RUN_CMD_72_gtk-upstream-test"
 gtk-upstream-test --help
 echo "PASS_CMD_72_gtk-upstream-test"
 
-# [73/181] gtk3-upstream-test
+# [73/180] gtk3-upstream-test
 echo "RUN_CMD_73_gtk3-upstream-test"
 gtk3-upstream-test --help
 echo "PASS_CMD_73_gtk3-upstream-test"
 
-# [74/181] gtk3-x11-upstream-test
+# [74/180] gtk3-x11-upstream-test
 echo "RUN_CMD_74_gtk3-x11-upstream-test"
 gtk3-x11-upstream-test --help
 echo "PASS_CMD_74_gtk3-x11-upstream-test"
 
-# [75/181] gunzip
+# [75/180] gunzip
 echo "RUN_CMD_75_gunzip"
 gunzip --help
 echo "PASS_CMD_75_gunzip"
 
-# [76/181] gzip
+# [76/180] gzip
 echo "RUN_CMD_76_gzip"
 gzip --help
 echo "PASS_CMD_76_gzip"
 
-# [77/181] harfbuzz-upstream-test
+# [77/180] harfbuzz-upstream-test
 echo "RUN_CMD_77_harfbuzz-upstream-test"
 harfbuzz-upstream-test --help
 echo "PASS_CMD_77_harfbuzz-upstream-test"
 
-# [78/181] head
+# [78/180] head
 echo "RUN_CMD_78_head"
 head /etc/motd
 echo "PASS_CMD_78_head"
 
-# [79/181] hello
+# [79/180] hello
 echo "RUN_CMD_79_hello"
 hello --help
 echo "PASS_CMD_79_hello"
 
-# [80/181] hello-pi
+# [80/180] hello-pi
 echo "RUN_CMD_80_hello-pi"
 hello-pi --help
 echo "PASS_CMD_80_hello-pi"
 
-# [81/181] hello-pie
+# [81/180] hello-pie
 echo "RUN_CMD_81_hello-pie"
 hello-pie --help
 echo "PASS_CMD_81_hello-pie"
 
-# [82/181] help
+# [82/180] help
 echo "RUN_CMD_82_help"
 help
 echo "PASS_CMD_82_help"
 
-# [83/181] hostname
+# [83/180] hostname
 echo "RUN_CMD_83_hostname"
 hostname
 echo "PASS_CMD_83_hostname"
 
-# [84/181] httpd
+# [84/180] httpd
 echo "RUN_CMD_84_httpd"
 httpd --status
 echo "PASS_CMD_84_httpd"
 
-# [85/181] id
+# [85/180] id
 echo "RUN_CMD_85_id"
 id
 echo "PASS_CMD_85_id"
 
-# [86/181] init
+# [86/180] init
 echo "RUN_CMD_86_init"
 init --help
 echo "PASS_CMD_86_init"
 
-# [87/181] ip
+# [87/180] ip
 echo "RUN_CMD_87_ip"
 ip
 echo "PASS_CMD_87_ip"
 
-# [88/181] jobs
+# [88/180] jobs
 echo "RUN_CMD_88_jobs"
 jobs
 echo "PASS_CMD_88_jobs"
 
-# [89/181] kill
+# [89/180] kill
 echo "RUN_CMD_89_kill"
 kill -l
 echo "PASS_CMD_89_kill"
 
-# [90/181] kwin
+# [90/180] kwin
 echo "RUN_CMD_90_kwin"
 kwin --help
 echo "PASS_CMD_90_kwin"
 
-# [91/181] less
+# [91/180] less
 echo "RUN_CMD_91_less"
 less --help
 echo "PASS_CMD_91_less"
 
-# [92/181] login
+# [92/180] login
 echo "RUN_CMD_92_login"
 login --help
 echo "PASS_CMD_92_login"
 
-# [93/181] ls
+# [93/180] ls
 echo "RUN_CMD_93_ls"
 ls
 echo "PASS_CMD_93_ls"
 
-# [94/181] lscpu
+# [94/180] lscpu
 echo "RUN_CMD_94_lscpu"
 lscpu
 echo "PASS_CMD_94_lscpu"
 
-# [95/181] lspci
+# [95/180] lspci
 echo "RUN_CMD_95_lspci"
 lspci
 echo "PASS_CMD_95_lspci"
 
-# [96/181] lumen
+# [96/180] lumen
 echo "RUN_CMD_96_lumen"
 lumen --help
 echo "PASS_CMD_96_lumen"
 
-# [97/181] lxqt-leave
+# [97/180] lxqt-leave
 echo "RUN_CMD_97_lxqt-leave"
 lxqt-leave --help
 echo "PASS_CMD_97_lxqt-leave"
 
-# [98/181] lxqt-panel
+# [98/180] lxqt-panel
 echo "RUN_CMD_98_lxqt-panel"
 lxqt-panel --help
 echo "PASS_CMD_98_lxqt-panel"
 
-# [99/181] lxqt-session
+# [99/180] lxqt-session
 echo "RUN_CMD_99_lxqt-session"
 lxqt-session --help
 echo "PASS_CMD_99_lxqt-session"
 
-# [100/181] mkdir
+# [100/180] mkdir
 echo "RUN_CMD_100_mkdir"
 mkdir --help
 echo "PASS_CMD_100_mkdir"
 
-# [101/181] more
+# [101/180] more
 echo "RUN_CMD_101_more"
 more --help
 echo "PASS_CMD_101_more"
 
-# [102/181] mount
+# [102/180] mount
 echo "RUN_CMD_102_mount"
 mount -h
 echo "PASS_CMD_102_mount"
 
-# [103/181] mutter
+# [103/180] mutter
 echo "RUN_CMD_103_mutter"
 mutter --help
 echo "PASS_CMD_103_mutter"
 
-# [104/181] mv
+# [104/180] mv
 echo "RUN_CMD_104_mv"
 mv --help
 echo "PASS_CMD_104_mv"
 
-# [105/181] ncal
+# [105/180] ncal
 echo "RUN_CMD_105_ncal"
 cal
 echo "PASS_CMD_105_ncal"
 
-# [106/181] netstat
+# [106/180] netstat
 echo "RUN_CMD_106_netstat"
 netstat
 echo "PASS_CMD_106_netstat"
 
-# [107/181] notepad
+# [107/180] notepad
 echo "RUN_CMD_107_notepad"
 notepad --help
 echo "PASS_CMD_107_notepad"
 
-# [108/181] notify
+# [108/180] notify
 echo "RUN_CMD_108_notify"
 notify -h
 echo "PASS_CMD_108_notify"
 
-# [109/181] nslookup
+# [109/180] nslookup
 echo "RUN_CMD_109_nslookup"
 nslookup --help
 echo "PASS_CMD_109_nslookup"
 
-# [110/181] openbox
+# [110/180] openbox
 echo "RUN_CMD_110_openbox"
 openbox --help
 echo "PASS_CMD_110_openbox"
 
-# [111/181] palette
+# [111/180] palette
 echo "RUN_CMD_111_palette"
 palette --help
 echo "PASS_CMD_111_palette"
 
-# [112/181] pango-upstream-test
+# [112/180] pango-upstream-test
 echo "RUN_CMD_112_pango-upstream-test"
 pango-upstream-test --help
 echo "PASS_CMD_112_pango-upstream-test"
 
-# [113/181] passwd
+# [113/180] passwd
 echo "RUN_CMD_113_passwd"
 passwd --help
 echo "PASS_CMD_113_passwd"
 
-# [114/181] patch
+# [114/180] patch
 echo "RUN_CMD_114_patch"
 patch --help
 echo "PASS_CMD_114_patch"
 
-# [115/181] pcmanfm
+# [115/180] pcmanfm
 echo "RUN_CMD_115_pcmanfm"
 pcmanfm --help
 echo "PASS_CMD_115_pcmanfm"
 
-# [116/181] pcmanfm-qt
+# [116/180] pcmanfm-qt
 echo "RUN_CMD_116_pcmanfm-qt"
 pcmanfm-qt --help
 echo "PASS_CMD_116_pcmanfm-qt"
 
-# [117/181] ping
+# [117/180] ping
 echo "RUN_CMD_117_ping"
 ping --help
 echo "PASS_CMD_117_ping"
 
-# [118/181] pkg
+# [118/180] pkg
 echo "RUN_CMD_118_pkg"
 pkg list
 echo "PASS_CMD_118_pkg"
 
-# [119/181] pkill
+# [119/180] pkill
 echo "RUN_CMD_119_pkill"
 kill -l
 echo "PASS_CMD_119_pkill"
 
-# [120/181] plasma
+# [120/180] plasma
 echo "RUN_CMD_120_plasma"
 plasma --help
 echo "PASS_CMD_120_plasma"
 
-# [121/181] poweroff
+# [121/180] poweroff
 echo "RUN_CMD_121_poweroff"
 poweroff --help
 echo "PASS_CMD_121_poweroff"
 
-# [122/181] ps
+# [122/180] ps
 echo "RUN_CMD_122_ps"
 ps
 echo "PASS_CMD_122_ps"
 
-# [123/181] pwd
+# [123/180] pwd
 echo "RUN_CMD_123_pwd"
 pwd
 echo "PASS_CMD_123_pwd"
 
-# [124/181] qtquick-wayland-smoke
+# [124/180] qtquick-wayland-smoke
 echo "RUN_CMD_124_qtquick-wayland-smoke"
 qtquick-wayland-smoke --help
 echo "PASS_CMD_124_qtquick-wayland-smoke"
 
-# [125/181] qtwayland-smoke
+# [125/180] qtwayland-smoke
 echo "RUN_CMD_125_qtwayland-smoke"
 qtwayland-smoke --help
 echo "PASS_CMD_125_qtwayland-smoke"
 
-# [126/181] rbash
+# [126/180] rbash
 echo "RUN_CMD_126_rbash"
 rbash -c 'echo SHELL_OK'
 echo "PASS_CMD_126_rbash"
 
-# [127/181] reboot
+# [127/180] reboot
 echo "RUN_CMD_127_reboot"
 reboot --help
 echo "PASS_CMD_127_reboot"
 
-# [128/181] rm
+# [128/180] rm
 echo "RUN_CMD_128_rm"
 rm --help
 echo "PASS_CMD_128_rm"
 
-# [129/181] route
+# [129/180] route
 echo "RUN_CMD_129_route"
 route
 echo "PASS_CMD_129_route"
 
-# [130/181] sed
+# [130/180] sed
 echo "RUN_CMD_130_sed"
 sed --help
 echo "PASS_CMD_130_sed"
 
-# [131/181] sh
+# [131/180] sh
 echo "RUN_CMD_131_sh"
 sh -c 'echo SHELL_OK'
 echo "PASS_CMD_131_sh"
 
-# [132/181] shutdown
+# [132/180] shutdown
 echo "RUN_CMD_132_shutdown"
 shutdown --help
 echo "PASS_CMD_132_shutdown"
 
-# [133/181] sleep
+# [133/180] sleep
 echo "RUN_CMD_133_sleep"
 sleep 0.01
 echo "PASS_CMD_133_sleep"
 
-# [134/181] sndinfo
+# [134/180] sndinfo
 echo "RUN_CMD_134_sndinfo"
 sndinfo
 echo "PASS_CMD_134_sndinfo"
 
-# [135/181] sort
+# [135/180] sort
 echo "RUN_CMD_135_sort"
 sort /etc/motd
 echo "PASS_CMD_135_sort"
 
-# [136/181] ssh
+# [136/180] ssh
 echo "RUN_CMD_136_ssh"
 ssh --help
 echo "PASS_CMD_136_ssh"
 
-# [137/181] sshd
+# [137/180] sshd
 echo "RUN_CMD_137_sshd"
 sshd --status
 echo "PASS_CMD_137_sshd"
 
-# [138/181] startlxde
+# [138/180] startlxde
 echo "RUN_CMD_138_startlxde"
 startlxde --help
 echo "PASS_CMD_138_startlxde"
 
-# [139/181] startlxqt
+# [139/180] startlxqt
 echo "RUN_CMD_139_startlxqt"
 startlxqt --help
 echo "PASS_CMD_139_startlxqt"
 
-# [140/181] startplasma
+# [140/180] startplasma
 echo "RUN_CMD_140_startplasma"
 startplasma --help
 echo "PASS_CMD_140_startplasma"
 
-# [141/181] status_cgi
+# [141/180] status_cgi
 echo "RUN_CMD_141_status_cgi"
 status_cgi
 echo "PASS_CMD_141_status_cgi"
 
-# [142/181] stty
+# [142/180] stty
 echo "RUN_CMD_142_stty"
 stty -a
 echo "PASS_CMD_142_stty"
 
-# [143/181] su
+# [143/180] su
 echo "RUN_CMD_143_su"
 su --help
 echo "PASS_CMD_143_su"
 
-# [144/181] sudo
+# [144/180] sudo
 echo "RUN_CMD_144_sudo"
 sudo whoami
 echo "PASS_CMD_144_sudo"
 
-# [145/181] sync
+# [145/180] sync
 echo "RUN_CMD_145_sync"
 sync
 echo "PASS_CMD_145_sync"
 
-# [146/181] sysmon
+# [146/180] sysmon
 echo "RUN_CMD_146_sysmon"
 sysmon --help
 echo "PASS_CMD_146_sysmon"
 
-# [147/181] tail
+# [147/180] tail
 echo "RUN_CMD_147_tail"
 tail /etc/motd
 echo "PASS_CMD_147_tail"
 
-# [148/181] tar
+# [148/180] tar
 echo "RUN_CMD_148_tar"
 tar --help
 echo "PASS_CMD_148_tar"
 
-# [149/181] taskmgr
+# [149/180] taskmgr
 echo "RUN_CMD_149_taskmgr"
 taskmgr --help
 echo "PASS_CMD_149_taskmgr"
 
-# [150/181] ted
+# [150/180] ted
 echo "RUN_CMD_150_ted"
 ted --help
 echo "PASS_CMD_150_ted"
 
-# [151/181] telnetd
+# [151/180] telnetd
 echo "RUN_CMD_151_telnetd"
 telnetd --status
 echo "PASS_CMD_151_telnetd"
 
-# [152/181] terminal
+# [152/180] terminal
 echo "RUN_CMD_152_terminal"
 terminal --help
 echo "PASS_CMD_152_terminal"
 
-# [153/181] test
+# [153/180] test
 echo "RUN_CMD_153_test"
 test 1 -eq 1
 echo "PASS_CMD_153_test"
 
-# [154/181] tftp
+# [154/180] tftp
 echo "RUN_CMD_154_tftp"
 tftp --help
 echo "PASS_CMD_154_tftp"
 
-# [155/181] tftpd
+# [155/180] tftpd
 echo "RUN_CMD_155_tftpd"
 tftpd --status
 echo "PASS_CMD_155_tftpd"
 
-# [156/181] touch
+# [156/180] touch
 echo "RUN_CMD_156_touch"
 touch /tmp/test_touch.tmp
 echo "PASS_CMD_156_touch"
 
-# [157/181] tr
+# [157/180] tr
 echo "RUN_CMD_157_tr"
 tr --help
 echo "PASS_CMD_157_tr"
 
-# [158/181] traceroute
+# [158/180] traceroute
 echo "RUN_CMD_158_traceroute"
 traceroute --help
 echo "PASS_CMD_158_traceroute"
 
-# [159/181] tty
+# [159/180] tty
 echo "RUN_CMD_159_tty"
 tty
 echo "PASS_CMD_159_tty"
 
-# [160/181] umount
+# [160/180] umount
 echo "RUN_CMD_160_umount"
 umount -h
 echo "PASS_CMD_160_umount"
 
-# [161/181] unalias
+# [161/180] unalias
 echo "RUN_CMD_161_unalias"
 unalias
 echo "PASS_CMD_161_unalias"
 
-# [162/181] uname
+# [162/180] uname
 echo "RUN_CMD_162_uname"
 uname
 echo "PASS_CMD_162_uname"
 
-# [163/181] uniq
+# [163/180] uniq
 echo "RUN_CMD_163_uniq"
 uniq /etc/motd
 echo "PASS_CMD_163_uniq"
 
-# [164/181] uptime
+# [164/180] uptime
 echo "RUN_CMD_164_uptime"
 uptime -h
 echo "PASS_CMD_164_uptime"
 
-# [165/181] version
+# [165/180] version
 echo "RUN_CMD_165_version"
 version
 echo "PASS_CMD_165_version"
 
-# [166/181] watch
+# [166/180] watch
 echo "RUN_CMD_166_watch"
 watch --help
 echo "PASS_CMD_166_watch"
 
-# [167/181] wayland-bridge
+# [167/180] wayland-bridge
 echo "RUN_CMD_167_wayland-bridge"
 wayland-bridge --help
 echo "PASS_CMD_167_wayland-bridge"
 
-# [168/181] wayland-compositor
+# [168/180] wayland-compositor
 echo "RUN_CMD_168_wayland-compositor"
 wayland-compositor --help
 echo "PASS_CMD_168_wayland-compositor"
 
-# [169/181] wayland-upstream-test
+# [169/180] wayland-upstream-test
 echo "RUN_CMD_169_wayland-upstream-test"
 wayland-upstream-test --help
 echo "PASS_CMD_169_wayland-upstream-test"
 
-# [170/181] wc
+# [170/180] wc
 echo "RUN_CMD_170_wc"
 wc /etc/motd
 echo "PASS_CMD_170_wc"
 
-# [171/181] webviewer
+# [171/180] webviewer
 echo "RUN_CMD_171_webviewer"
 webviewer --help
 echo "PASS_CMD_171_webviewer"
 
-# [172/181] wget
+# [172/180] wget
 echo "RUN_CMD_172_wget"
 wget --help
 echo "PASS_CMD_172_wget"
 
-# [173/181] which
+# [173/180] which
 echo "RUN_CMD_173_which"
 which ls
 echo "PASS_CMD_173_which"
 
-# [174/181] whoami
+# [174/180] whoami
 echo "RUN_CMD_174_whoami"
 whoami
 echo "PASS_CMD_174_whoami"
 
-# [175/181] x11-client
+# [175/180] x11-client
 echo "RUN_CMD_175_x11-client"
 x11-client --help
 echo "PASS_CMD_175_x11-client"
 
-# [176/181] x11-server
+# [176/180] x11-server
 echo "RUN_CMD_176_x11-server"
 x11-server --help
 echo "PASS_CMD_176_x11-server"
 
-# [177/181] x11-wm-client
+# [177/180] x11-wm-client
 echo "RUN_CMD_177_x11-wm-client"
 x11-wm-client --help
 echo "PASS_CMD_177_x11-wm-client"
 
-# [178/181] xargs
+# [178/180] xargs
 echo "RUN_CMD_178_xargs"
 xargs --help
 echo "PASS_CMD_178_xargs"
 
-# [179/181] xkbcommon-upstream-test
+# [179/180] xkbcommon-upstream-test
 echo "RUN_CMD_179_xkbcommon-upstream-test"
 xkbcommon-upstream-test --help
 echo "PASS_CMD_179_xkbcommon-upstream-test"
 
-# [180/181] xsdisplay
+# [180/180] xsdisplay
 echo "RUN_CMD_180_xsdisplay"
 xsdisplay --help
 echo "PASS_CMD_180_xsdisplay"
 
-# [181/181] xserver
-echo "RUN_CMD_181_xserver"
+# [180/180] xserver
+echo "RUN_CMD_180_xserver"
 xserver --help
-echo "PASS_CMD_181_xserver"
+echo "PASS_CMD_180_xserver"
 
-echo "ALL_181_COMMANDS_NATIVE_PASS"
+echo "ALL_180_COMMANDS_NATIVE_PASS"
 
 # hostname
 echo "RUN_CMD_hostname"

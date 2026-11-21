@@ -87,6 +87,17 @@ run_upstream_refresh() {
     "$@"
 }
 
+akaos_find_lib() {
+    local pattern="$1"
+    shift
+    local dir
+    for dir in "$@"; do
+        if [[ -d "$dir" ]]; then
+            find "$dir" -maxdepth 1 \( -type f -o -type l \) -name "$pattern" 2>/dev/null
+        fi
+    done | sort -V | tail -n 1 || true
+}
+
 usage() {
     cat <<'EOF'
 Usage: ./build.sh [options]
@@ -106,13 +117,12 @@ Target Architecture & Firmware:
 
 Desktop & Session Configuration:
   --desktop, --desktop-env NAME
-                               Default desktop environment:
-                                 xfce    : XFCE 4.18 Desktop Session (xfwm4, xfconf, panel)
-                                 lxde    : LXDE Desktop Suite (Openbox, LXPanel, PCManFM)
-                                 openbox : Standalone Openbox 3.6.1 Window Manager
-                                 aurora  : akaOS native compositor & resident desktop
-                                 lxqt    : Lightweight Qt Desktop Environment
-                                 none    : None (No desktop environment / Headless server)
+                               Upstream desktop selection (official profiles are rejected until fully integrated):
+                                 lxde    : Official LXDE
+                                 lxqt    : Official LXQt
+                                 xfce    : Official XFCE
+                                 openbox : Official Openbox window manager
+                                 none    : No upstream desktop (headless/console)
   --session-mode NAME          Default boot session mode:
                                  console : Direct tty1 shell login (default)
                                  desktop : Autostart graphical desktop environment
@@ -502,10 +512,17 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires lxde, lxqt, xfce, openbox, kde, gnome, or none" >&2
+                echo "$1 requires lxde, lxqt, xfce, openbox, or none" >&2
                 exit 2
             fi
             target_desktop="$2"
+            case "$target_desktop" in
+                none|lxde|lxqt|xfce|openbox) ;;
+                *) echo "Unsupported official desktop '$target_desktop'; supported: none, lxde, lxqt, xfce, openbox" >&2; exit 2 ;;
+            esac
+            if [[ "$target_desktop" != "none" ]]; then
+                session_mode="desktop"
+            fi
             shift 2
             ;;
         --software|--software-bundle)
@@ -614,6 +631,67 @@ case "$arch" in
         exit 2
         ;;
 esac
+if [[ "$target_desktop" != "none" && "$arch" != "x86_64" ]]; then
+    echo "Official upstream desktop '$target_desktop' is currently supported only for x86_64; rejecting $arch rather than packaging incompatible binaries." >&2
+    exit 2
+fi
+if [[ "$target_desktop" == "none" ]]; then
+    :
+elif [[ "$target_desktop" == "openbox" ]]; then
+    for required in \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libobt.so.2" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libobrender.so.32" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxml2.so.2" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpangoxft-1.0.so.0" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpango-1.0.so.0" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libXft.so.2" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6"; do
+        [[ -f "$required" ]] || { echo "[ERROR] Official Openbox runtime missing: $required" >&2; exit 2; }
+    done
+elif [[ "$target_desktop" == "lxde" ]]; then
+    for required in \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgtk-3.so.0" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk-3.so.0" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk_pixbuf-2.0.so.0" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libfm-gtk3.so.4" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxml2.so.2" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libglib-2.0.so.0"; do
+        [[ -f "$required" ]] || { echo "[ERROR] Official LXDE runtime missing: $required" >&2; exit 2; }
+    done
+elif [[ "$target_desktop" == "lxqt" ]]; then
+    for required in \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libQt6Core.so.6" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libQt6Gui.so.6" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libQt6Widgets.so.6" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/liblxqt.so.2" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libKF6WindowSystem.so.6"; do
+        [[ -f "$required" ]] || { echo "[ERROR] Official LXQt runtime missing: $required" >&2; exit 2; }
+    done
+elif [[ "$target_desktop" == "xfce" ]]; then
+    for required in \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startxfce4" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxfce4ui-2.so.0" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxfce4util.so.7" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxfconf-0.so.3" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgtk-3.so.0" \
+        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk-3.so.0"; do
+        [[ -f "$required" ]] || { echo "[ERROR] Official XFCE runtime missing: $required" >&2; exit 2; }
+    done
+else
+    echo "[ERROR] Unsupported official desktop '$target_desktop'; supported: none, lxde, lxqt, xfce, openbox" >&2
+    exit 2
+fi
 
 case "$disk_type" in
     auto) ;;
@@ -741,8 +819,12 @@ fi
 FONT_FILE="$(akaos_find_dejavu_font)"
 GENERATED_DIR="$BUILD_DIR/generated"
 mkdir -p "$GENERATED_DIR"
-python3 "$ROOT_DIR/tools/generate_font.py" "$FONT_FILE" "$GENERATED_DIR/font_data.h"
-python3 "$ROOT_DIR/tools/generate_vga_font.py" "$GENERATED_DIR/font8x16_data.h"
+if [[ ! -f "$GENERATED_DIR/font_data.h" || "$FONT_FILE" -nt "$GENERATED_DIR/font_data.h" ]]; then
+    python3 "$ROOT_DIR/tools/generate_font.py" "$FONT_FILE" "$GENERATED_DIR/font_data.h"
+fi
+if [[ ! -f "$GENERATED_DIR/font8x16_data.h" ]]; then
+    python3 "$ROOT_DIR/tools/generate_vga_font.py" "$GENERATED_DIR/font8x16_data.h"
+fi
 
 mkdir -p "$BUILD_DIR"
 if [[ "$need_uefi_payload" -eq 1 ]]; then
@@ -784,6 +866,10 @@ USER_LIBC_SOURCES=(
 USER_LIBC_OBJECTS=()
 for source in "${USER_LIBC_SOURCES[@]}"; do
     object="$BUILD_DIR/user-libc-$(basename "${source%.c}").o"
+    if [[ "${AKAOS_REBUILD_LIBC:-0}" != "1" && -f "$object" && "$object" -nt "$source" ]]; then
+        USER_LIBC_OBJECTS+=("$object")
+        continue
+    fi
     clang --target=x86_64-unknown-none-elf \
         -std=c17 -Os -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -794,21 +880,37 @@ for source in "${USER_LIBC_SOURCES[@]}"; do
         -c "$source" -o "$object"
     USER_LIBC_OBJECTS+=("$object")
 done
-llvm-ar rcs "$BUILD_DIR/libc.a" "${USER_LIBC_OBJECTS[@]}"
-clang --target=x86_64-unknown-none-elf \
-    -ffreestanding -fpie -mno-red-zone -mcmodel=small \
-    -c "$ROOT_DIR/userspace/libc/crt/x86_64/crt0.S" \
-    -o "$BUILD_DIR/user-crt0.o"
-clang --target=x86_64-unknown-none-elf \
-    -ffreestanding -fpie -mno-red-zone -mcmodel=small \
-    -c "$ROOT_DIR/userspace/libc/crt/x86_64/crt0.S" \
-    -o "$BUILD_DIR/user-dynamic-crt0.o"
+needs_libc_ar=0
+for obj in "${USER_LIBC_OBJECTS[@]}"; do
+    if [[ ! -f "$BUILD_DIR/libc.a" || "$obj" -nt "$BUILD_DIR/libc.a" ]]; then
+        needs_libc_ar=1
+        break
+    fi
+done
+if [[ "$needs_libc_ar" -eq 1 ]]; then
+    llvm-ar rcs "$BUILD_DIR/libc.a" "${USER_LIBC_OBJECTS[@]}"
+fi
+if [[ ! -f "$BUILD_DIR/user-crt0.o" || "$ROOT_DIR/userspace/libc/crt/x86_64/crt0.S" -nt "$BUILD_DIR/user-crt0.o" ]]; then
+    clang --target=x86_64-unknown-none-elf \
+        -ffreestanding -fpie -mno-red-zone -mcmodel=small \
+        -c "$ROOT_DIR/userspace/libc/crt/x86_64/crt0.S" \
+        -o "$BUILD_DIR/user-crt0.o"
+fi
+if [[ ! -f "$BUILD_DIR/user-dynamic-crt0.o" || "$ROOT_DIR/userspace/libc/crt/x86_64/crt0.S" -nt "$BUILD_DIR/user-dynamic-crt0.o" ]]; then
+    clang --target=x86_64-unknown-none-elf \
+        -ffreestanding -fpie -mno-red-zone -mcmodel=small \
+        -c "$ROOT_DIR/userspace/libc/crt/x86_64/crt0.S" \
+        -o "$BUILD_DIR/user-dynamic-crt0.o"
+fi
 
 build_user_program() {
     local name="$1"
     local source="$2"
     local output="$3"
     local main_object="$BUILD_DIR/user-$name-main.o"
+    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/$output" && "$BUILD_DIR/$output" -nt "$source" && "$BUILD_DIR/$output" -nt "$BUILD_DIR/libc.a" ]]; then
+        return 0
+    fi
     clang --target=x86_64-unknown-none-elf \
         -std=c17 -Os -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -829,6 +931,9 @@ build_xserver() {
     local name="xserver"
     local source_dir="$ROOT_DIR/userspace/bin/xserver"
     local output="XSERVER.ELF"
+    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/$output" && "$BUILD_DIR/$output" -nt "$source_dir/main.c" && "$BUILD_DIR/$output" -nt "$BUILD_DIR/libc.a" ]]; then
+        return 0
+    fi
     local objects=()
     for unit in main client window events draw resource input setup xcore; do
         local object="$BUILD_DIR/user-$name-$unit.o"
@@ -852,6 +957,9 @@ build_xserver() {
 
 build_bzip2() {
     local source_dir="$ROOT_DIR/userspace/bin/bzip2"
+    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/BZIP2.ELF" && "$BUILD_DIR/BZIP2.ELF" -nt "$source_dir/bzip2.c" && "$BUILD_DIR/BZIP2.ELF" -nt "$BUILD_DIR/libc.a" ]]; then
+        return 0
+    fi
     local objects=()
     for unit in blocksort huffman crctable randtable compress decompress bzlib bzip2; do
         local object="$BUILD_DIR/bzip2-$unit.o"
@@ -878,6 +986,9 @@ build_user_cpp_program() {
     local source="$2"
     local output="$3"
     local main_object="$BUILD_DIR/user-$name-main.o"
+    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/$output" && "$BUILD_DIR/$output" -nt "$source" ]]; then
+        return 0
+    fi
     local cxx_runtime_dir="$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/x86_64"
     if [[ "${AKAOS_SKIP_CXX_RUNTIME_REFRESH:-0}" == "1" ]]; then
         for runtime_file in libc++.so.1 libc++abi.so.1 libunwind.so.1; do
@@ -912,6 +1023,9 @@ build_user_pie_program() {
     local source="$2"
     local output="$3"
     local main_object="$BUILD_DIR/user-$name-main.o"
+    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/$output" && "$BUILD_DIR/$output" -nt "$source" && "$BUILD_DIR/$output" -nt "$BUILD_DIR/libc.a" ]]; then
+        return 0
+    fi
     clang --target=x86_64-unknown-none-elf \
         -std=c17 -Os \
         -ffunction-sections -fdata-sections -Wall -Wextra -Werror \
@@ -933,6 +1047,9 @@ build_account_program() {
     local source="$2"
     local output="$3"
     local main_object="$BUILD_DIR/user-$name-main.o"
+    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/$output" && "$BUILD_DIR/$output" -nt "$source" && "$BUILD_DIR/$output" -nt "$BUILD_DIR/libc.a" ]]; then
+        return 0
+    fi
     clang --target=x86_64-unknown-none-elf \
         -std=c17 -Os -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -966,6 +1083,10 @@ build_shared_libc() {
     for source in "${USER_LIBC_SOURCES[@]}"; do
         local base="$(basename "$source" .c)"
         local object="$BUILD_DIR/shared-libc-$base.o"
+        if [[ "${AKAOS_REBUILD_LIBC:-0}" != "1" && -f "$object" && "$object" -nt "$source" ]]; then
+            shared_objects+=("$object")
+            continue
+        fi
         clang --target=x86_64-unknown-none-elf \
             -std=c17 -O2 -Wall -Wextra -Werror \
             -ffreestanding -fno-builtin -fno-stack-protector -fPIC \
@@ -1022,7 +1143,10 @@ build_cxx_shared_object() {
 
 build_shared_cxx_runtime() {
     local runtime_dir="$ROOT_DIR/build/cxx-runtime/llvm-21.1.8/x86_64"
-    bash "$ROOT_DIR/tools/build-compiler-builtins.sh" --arch x86_64
+    if [[ "${AKAOS_SKIP_UPSTREAM_REFRESH:-0}" != "1" && "${AKAOS_SKIP_CXX_RUNTIME_REFRESH:-0}" != "1" ]] ||
+       [[ ! -f "$runtime_dir/libakaos-compiler-builtins.a" || ! -f "$BUILD_DIR/libc++.so.1" ]]; then
+        bash "$ROOT_DIR/tools/build-compiler-builtins.sh" --arch x86_64
+    fi
     local compiler_builtins="$runtime_dir/libakaos-compiler-builtins.a"
     ld.lld -m elf_x86_64 -nostdlib -shared --eh-frame-hdr -soname libunwind.so.1 \
         --hash-style=gnu -z max-page-size=0x1000 --no-undefined \
@@ -1138,10 +1262,10 @@ build_loader_fanout_objects() {
 build_runtime_library() {
     local output="$1"
     local runtime_id="$2"
-    # A library that the upstream builds find under the name of a real library
-    # must not carry the compatibility surface, because the first library that
-    # answers for an entry point wins.
     local source="${3:-$ROOT_DIR/userspace/libc/tests/desktop_runtime.c}"
+    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/$output" && "$BUILD_DIR/$output" -nt "$source" ]]; then
+        return 0
+    fi
     local object="$BUILD_DIR/runtime-${runtime_id}.o"
     clang --target=x86_64-unknown-none-elf \
         -std=c17 -Os -Wall -Wextra -Werror \
@@ -1201,10 +1325,10 @@ build_upstream_glib_program() {
         -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
         "$BUILD_DIR/user-dynamic-crt0.o" "$object" \
         --no-as-needed \
-        "$UPSTREAM_GLIB_BUILD/gio/libgio-2.0.so.0.9000.0" \
-        "$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0" \
-        "$UPSTREAM_GLIB_BUILD/gmodule/libgmodule-2.0.so.0.9000.0" \
-        "$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0" \
+        "$(akaos_find_lib 'libgio-2.0.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib" "$UPSTREAM_GLIB_BUILD/gio")" \
+        "$(akaos_find_lib 'libgobject-2.0.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib" "$UPSTREAM_GLIB_BUILD/gobject")" \
+        "$(akaos_find_lib 'libgmodule-2.0.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib" "$UPSTREAM_GLIB_BUILD/gmodule")" \
+        "$(akaos_find_lib 'libglib-2.0.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib" "$UPSTREAM_GLIB_BUILD/glib")" \
         "$BUILD_DIR/libc.so.6" -o "$output"
 }
 
@@ -1254,20 +1378,20 @@ build_upstream_cairo_program() {
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     local -a cairo_glib_libs=()
-    if [[ -f "$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0" ]]; then
-        cairo_glib_libs+=("$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0")
-    fi
-    if [[ -f "$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0" ]]; then
-        cairo_glib_libs+=("$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0")
-    fi
+    local g_obj="$(akaos_find_lib 'libgobject-2.0.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib" "$UPSTREAM_GLIB_BUILD/gobject")"
+    local g_lib="$(akaos_find_lib 'libglib-2.0.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib" "$UPSTREAM_GLIB_BUILD/glib")"
+    [[ -n "$g_obj" ]] && cairo_glib_libs+=("$g_obj")
+    [[ -n "$g_lib" ]] && cairo_glib_libs+=("$g_lib")
+    local cairo_lib="$(akaos_find_lib 'libcairo.so.2.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_CAIRO_BUILD/src")"
+    local pixman_lib="$(akaos_find_lib 'libpixman-1.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_PIXMAN_BUILD/pixman")"
     ld.lld -m elf_x86_64 -nostdlib -pie --eh-frame-hdr -z max-page-size=0x1000 \
         --dynamic-linker /lib/ld-akaos.so \
         -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
         "$BUILD_DIR/user-dynamic-crt0.o" "$object" \
         --no-as-needed \
         "${gobject_libraries[@]}" \
-        "$UPSTREAM_CAIRO_BUILD/src/libcairo.so.2.11806.6" \
-        "$UPSTREAM_PIXMAN_BUILD/pixman/libpixman-1.so.0.46.4" \
+        "$cairo_lib" \
+        "$pixman_lib" \
         "${cairo_glib_libs[@]}" \
         "${font_libraries[@]}" \
         "$BUILD_DIR/libm.so.6" "$BUILD_DIR/libc.so.6" \
@@ -1277,6 +1401,7 @@ build_upstream_cairo_program() {
 build_upstream_freetype_program() {
     local source="$ROOT_DIR/userspace/bin/freetype-upstream-test/main.c"
     local object="$BUILD_DIR/freetype-upstream-test.o"
+    local freetype_lib="$(akaos_find_lib 'libfreetype.so.6.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_FREETYPE_BUILD")"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -1288,7 +1413,7 @@ build_upstream_freetype_program() {
         --dynamic-linker /lib/ld-akaos.so \
         -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
         "$BUILD_DIR/user-dynamic-crt0.o" "$object" \
-        --no-as-needed "$UPSTREAM_FREETYPE_BUILD/libfreetype.so.6.20.6" \
+        --no-as-needed "$freetype_lib" \
         "$BUILD_DIR/libc.so.6" -o "$BUILD_DIR/FREETYPE_UPSTREAM_TEST.ELF"
 }
 
@@ -1296,6 +1421,9 @@ build_upstream_harfbuzz_program() {
     local source="$ROOT_DIR/userspace/bin/harfbuzz-upstream-test/main.c"
     local object="$BUILD_DIR/harfbuzz-upstream-test.o"
     local output="$BUILD_DIR/HARFBUZZ_UPSTREAM_TEST.ELF"
+    local hb_subset="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_HARFBUZZ_BUILD/src" -name 'libharfbuzz-subset.so.0.*' 2>/dev/null | sort -V | tail -n 1)"
+    local hb_lib="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_HARFBUZZ_BUILD/src" -name 'libharfbuzz.so.0.*' 2>/dev/null | sort -V | tail -n 1)"
+    local freetype_lib="$(akaos_find_lib 'libfreetype.so.6.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_FREETYPE_BUILD")"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -1309,9 +1437,9 @@ build_upstream_harfbuzz_program() {
         -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
         "$BUILD_DIR/user-dynamic-crt0.o" "$object" \
         --no-as-needed \
-        "$UPSTREAM_HARFBUZZ_BUILD/src/libharfbuzz-subset.so.0.61450.0" \
-        "$UPSTREAM_HARFBUZZ_BUILD/src/libharfbuzz.so.0.61450.0" \
-        "$UPSTREAM_FREETYPE_BUILD/libfreetype.so.6.20.6" \
+        "$hb_subset" \
+        "$hb_lib" \
+        "$freetype_lib" \
         "$BUILD_DIR/libm.so.6" "$BUILD_DIR/libc.so.6" -o "$output"
 }
 
@@ -1319,6 +1447,9 @@ build_upstream_fontconfig_program() {
     local source="$ROOT_DIR/userspace/bin/fontconfig-upstream-test/main.c"
     local object="$BUILD_DIR/fontconfig-upstream-test.o"
     local output="$BUILD_DIR/FONTCONFIG_UPSTREAM_TEST.ELF"
+    local fc_lib="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_FONTCONFIG_BUILD" -name 'libfontconfig.so.1.*' 2>/dev/null | sort -V | tail -n 1)"
+    local expat_lib="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_EXPAT_BUILD" -name 'libexpat.so.1.*' 2>/dev/null | sort -V | tail -n 1)"
+    local freetype_lib="$(akaos_find_lib 'libfreetype.so.6.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_FREETYPE_BUILD")"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -1331,9 +1462,9 @@ build_upstream_fontconfig_program() {
         -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
         "$BUILD_DIR/user-dynamic-crt0.o" "$object" \
         --no-as-needed \
-        "$UPSTREAM_FONTCONFIG_BUILD/libfontconfig.so.1.17.0" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libexpat.so.1.12.5" \
-        "$UPSTREAM_FREETYPE_BUILD/libfreetype.so.6.20.6" \
+        "$fc_lib" \
+        "$expat_lib" \
+        "$freetype_lib" \
         "$BUILD_DIR/libm.so.6" "$BUILD_DIR/libc.so.6" -o "$output"
 }
 
@@ -1341,6 +1472,7 @@ build_upstream_fribidi_program() {
     local source="$ROOT_DIR/userspace/bin/fribidi-upstream-test/main.c"
     local object="$BUILD_DIR/fribidi-upstream-test.o"
     local output="$BUILD_DIR/FRIBIDI_UPSTREAM_TEST.ELF"
+    local fribidi_lib="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_FRIBIDI_BUILD/lib" -name 'libfribidi.so.0.*' 2>/dev/null | sort -V | tail -n 1)"
     clang --target=x86_64-unknown-none-elf \
         -std=gnu17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-builtin -fno-stack-protector -fpie \
@@ -1353,7 +1485,7 @@ build_upstream_fribidi_program() {
         -T "$ROOT_DIR/userspace/linker/user-dynamic.ld" \
         "$BUILD_DIR/user-dynamic-crt0.o" "$object" \
         --no-as-needed \
-        "$UPSTREAM_FRIBIDI_BUILD/lib/libfribidi.so.0.4.0" \
+        "$fribidi_lib" \
         "$BUILD_DIR/libc.so.6" -o "$output"
 }
 
@@ -1666,8 +1798,8 @@ build_upstream_wayland_bridge_program() {
         "$BUILD_DIR/user-dynamic-crt0.o" "$object" "$protocol_object" \
         "$layer_protocol_object" "$foreign_toplevel_protocol_object" \
         --no-as-needed \
-        "$UPSTREAM_WAYLAND_BUILD/src/libwayland-server.so.0.26.0" \
-        "$UPSTREAM_XKBCOMMON_BUILD/libxkbcommon.so.0.13.2" \
+        "$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_WAYLAND_BUILD/src" -name 'libwayland-server.so.0.*' 2>/dev/null | sort -V | tail -n 1)" \
+        "$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_XKBCOMMON_BUILD" -name 'libxkbcommon.so.0.*' 2>/dev/null | sort -V | tail -n 1)" \
         "$BUILD_DIR/libm.so.6" "$BUILD_DIR/libc.so.6" -o "$output"
 }
 
@@ -1751,8 +1883,8 @@ build_upstream_wayland_program() {
         "$BUILD_DIR/user-dynamic-crt0.o" "$object" "$protocol_object" \
         "$foreign_protocol_object" \
         --no-as-needed \
-        "$UPSTREAM_WAYLAND_BUILD/src/libwayland-client.so.0.26.0" \
-        "$UPSTREAM_WAYLAND_BUILD/src/libwayland-server.so.0.26.0" \
+        "$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_WAYLAND_BUILD/src" -name 'libwayland-client.so.0.*' 2>/dev/null | sort -V | tail -n 1)" \
+        "$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_WAYLAND_BUILD/src" -name 'libwayland-server.so.0.*' 2>/dev/null | sort -V | tail -n 1)" \
         "$BUILD_DIR/libm.so.6" "$BUILD_DIR/libc.so.6" -o "$output"
 }
 
@@ -1822,7 +1954,6 @@ build_user_program umount "$ROOT_DIR/userspace/bin/umount/main.c" UMOUNT.ELF
 build_user_program telnetd "$ROOT_DIR/userspace/bin/telnetd/main.c" TELNETD.ELF
 build_user_program tftpd "$ROOT_DIR/userspace/bin/tftpd/main.c" TFTPD.ELF
 build_user_program tftp "$ROOT_DIR/userspace/bin/tftp/main.c" TFTP.ELF
-build_user_program startlxde "$ROOT_DIR/userspace/bin/startlxde/main.c" STARTLXDE.ELF
 build_user_program startlxqt "$ROOT_DIR/userspace/bin/startlxqt/main.c" STARTLXQT.ELF
 build_user_program notepad "$ROOT_DIR/userspace/bin/notepad/main.c" NOTEPAD.ELF
 build_user_program taskmgr "$ROOT_DIR/userspace/bin/taskmgr/main.c" TASKMGR.ELF
@@ -1882,33 +2013,9 @@ build_user_program chpasswd "$ROOT_DIR/userspace/bin/chpasswd/main.c" CHPASSWD.E
 build_user_program chroot "$ROOT_DIR/userspace/bin/chroot/main.c" CHROOT.ELF
 build_user_program chkconfig "$ROOT_DIR/userspace/bin/chkconfig/main.c" CHKCONFIG.ELF
 build_user_program cksum "$ROOT_DIR/userspace/bin/cksum/main.c" CKSUM.ELF
-build_user_program sway "$ROOT_DIR/userspace/bin/sway/main.c" SWAY.ELF
-build_user_program river "$ROOT_DIR/userspace/bin/river/main.c" RIVER.ELF
-build_user_program niri "$ROOT_DIR/userspace/bin/niri/main.c" NIRI.ELF
-build_user_program wayfire "$ROOT_DIR/userspace/bin/wayfire/main.c" WAYFIRE.ELF
-build_user_program labwc "$ROOT_DIR/userspace/bin/labwc/main.c" LABWC.ELF
-build_user_program weston "$ROOT_DIR/userspace/bin/weston/main.c" WESTON.ELF
-build_user_program qtile "$ROOT_DIR/userspace/bin/qtile/main.c" QTILE.ELF
-build_user_program awesome "$ROOT_DIR/userspace/bin/awesome/main.c" AWESOME.ELF
-build_user_program xmonad "$ROOT_DIR/userspace/bin/xmonad/main.c" XMONAD.ELF
-build_user_program herbstluftwm "$ROOT_DIR/userspace/bin/herbstluftwm/main.c" HERBSTLUFTWM.ELF
-build_user_program spectrwm "$ROOT_DIR/userspace/bin/spectrwm/main.c" SPECTRWM.ELF
-build_user_program fluxbox "$ROOT_DIR/userspace/bin/fluxbox/main.c" FLUXBOX.ELF
-build_user_program icewm "$ROOT_DIR/userspace/bin/icewm/main.c" ICEWM.ELF
-build_user_program jwm "$ROOT_DIR/userspace/bin/jwm/main.c" JWM.ELF
-build_user_program wmaker "$ROOT_DIR/userspace/bin/wmaker/main.c" WMAKER.ELF
-build_user_program fvwm "$ROOT_DIR/userspace/bin/fvwm/main.c" FVWM.ELF
-build_user_program budgie "$ROOT_DIR/userspace/bin/budgie/main.c" BUDGIE.ELF
-build_user_program cosmic "$ROOT_DIR/userspace/bin/cosmic/main.c" COSMIC.ELF
-build_user_program deepin "$ROOT_DIR/userspace/bin/deepin/main.c" DEEPIN.ELF
-build_user_program pantheon "$ROOT_DIR/userspace/bin/pantheon/main.c" PANTHEON.ELF
-build_user_program ukui "$ROOT_DIR/userspace/bin/ukui/main.c" UKUI.ELF
-build_user_program enlightenment "$ROOT_DIR/userspace/bin/enlightenment/main.c" ENLIGHTENMENT.ELF
 build_user_program comm "$ROOT_DIR/userspace/bin/comm/main.c" COMM.ELF
 build_user_program command "$ROOT_DIR/userspace/bin/command/main.c" COMMAND.ELF
 build_user_program continue "$ROOT_DIR/userspace/bin/continue/main.c" CONTINUE.ELF
-build_user_program hyprland "$ROOT_DIR/userspace/bin/hyprland/main.c" HYPRLAND.ELF
-build_user_program hyprctl "$ROOT_DIR/userspace/bin/hyprctl/main.c" HYPRCTL.ELF
 build_user_program pkill "$ROOT_DIR/userspace/bin/pkill/main.c" PKILL.ELF
 build_user_program uptime "$ROOT_DIR/userspace/bin/uptime/main.c" UPTIME.ELF
 build_user_program free "$ROOT_DIR/userspace/bin/free/main.c" FREE.ELF
@@ -2042,7 +2149,12 @@ fi
 
 if [[ "$need_upstream_gui" -eq 1 ]]; then
 UPSTREAM_GLIB_ENABLED=0
-if [[ -f "$UPSTREAM_GLIB_BUILD/gio/libgio-2.0.so.0.9000.0" &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libglib-2.0.so.0.9000.0" &&
+      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgobject-2.0.so.0.9000.0" &&
+      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgio-2.0.so.0.9000.0" ]]; then
+    UPSTREAM_GLIB_ENABLED=1
+    echo "[INFO] Using installed upstream GLib 2.90.0 runtime from graphics sysroot"
+elif [[ -f "$UPSTREAM_GLIB_BUILD/gio/libgio-2.0.so.0.9000.0" &&
       -f "$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0" &&
       -f "$UPSTREAM_GLIB_BUILD/gmodule/libgmodule-2.0.so.0.9000.0" &&
       -f "$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0" &&
@@ -2080,7 +2192,10 @@ else
 fi
 
 UPSTREAM_FREETYPE_ENABLED=0
-if [[ -f "$UPSTREAM_FREETYPE_BUILD/build.ninja" &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libfreetype.so.6.20.6" ]]; then
+    UPSTREAM_FREETYPE_ENABLED=1
+    echo "[INFO] Using installed upstream FreeType runtime from graphics sysroot"
+elif [[ -f "$UPSTREAM_FREETYPE_BUILD/build.ninja" &&
       -f "$UPSTREAM_FREETYPE_BUILD/meson-private/coredata.dat" &&
       -f "$UPSTREAM_FREETYPE_BUILD/libfreetype.so.6.20.6" ]]; then
     if [[ "${AKAOS_SKIP_UPSTREAM_REFRESH:-0}" != "1" ]] &&
@@ -2107,14 +2222,20 @@ fi
 UPSTREAM_CAIRO_ENABLED=0
 UPSTREAM_CAIRO_FREETYPE_ENABLED=0
 UPSTREAM_CAIRO_BUILD="$UPSTREAM_CAIRO_IMAGE_BUILD"
-if [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libcairo.so.2.11806.6" &&
+      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpixman-1.so.0.46.4" ]]; then
+    UPSTREAM_CAIRO_ENABLED=1
+    UPSTREAM_CAIRO_FREETYPE_ENABLED=1
+    echo "[INFO] Using installed upstream Cairo/Pixman runtime from graphics sysroot"
+elif [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 &&
       -f "$UPSTREAM_CAIRO_FREETYPE_BUILD/build.ninja" &&
       -f "$UPSTREAM_CAIRO_FREETYPE_BUILD/meson-private/coredata.dat" &&
       -f "$UPSTREAM_CAIRO_FREETYPE_BUILD/src/libcairo.so.2.11806.6" ]]; then
     UPSTREAM_CAIRO_BUILD="$UPSTREAM_CAIRO_FREETYPE_BUILD"
     UPSTREAM_CAIRO_FREETYPE_ENABLED=1
 fi
-if [[ -f "$UPSTREAM_PIXMAN_BUILD/build.ninja" &&
+if [[ "$UPSTREAM_CAIRO_ENABLED" -eq 0 &&
+      -f "$UPSTREAM_PIXMAN_BUILD/build.ninja" &&
       -f "$UPSTREAM_PIXMAN_BUILD/meson-private/coredata.dat" &&
       -f "$UPSTREAM_PIXMAN_BUILD/pixman/libpixman-1.so.0.46.4" &&
       -f "$UPSTREAM_CAIRO_BUILD/build.ninja" &&
@@ -2141,12 +2262,13 @@ if [[ -f "$UPSTREAM_PIXMAN_BUILD/build.ninja" &&
     echo "[BUILD] Upstream Cairo/Pixman smoke application"
     build_upstream_cairo_program
     UPSTREAM_CAIRO_ENABLED=1
-else
-    echo "[INFO] Upstream Cairo/Pixman build artifacts are not complete"
 fi
 
 UPSTREAM_HARFBUZZ_ENABLED=0
-if [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libharfbuzz.so.0.61450.0" ]]; then
+    UPSTREAM_HARFBUZZ_ENABLED=1
+    echo "[INFO] Using installed upstream HarfBuzz runtime from graphics sysroot"
+elif [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 &&
       -f "$UPSTREAM_HARFBUZZ_BUILD/build.ninja" &&
       -f "$UPSTREAM_HARFBUZZ_BUILD/meson-private/coredata.dat" &&
       -f "$UPSTREAM_HARFBUZZ_BUILD/src/libharfbuzz.so.0.61450.0" ]]; then
@@ -2169,7 +2291,11 @@ else
 fi
 
 UPSTREAM_FONTCONFIG_ENABLED=0
-if [[ -f "$UPSTREAM_FONTCONFIG_BUILD/build.ninja" &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libfontconfig.so.1.17.0" &&
+      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libexpat.so.1.12.5" ]]; then
+    UPSTREAM_FONTCONFIG_ENABLED=1
+    echo "[INFO] Using installed upstream Fontconfig runtime from graphics sysroot"
+elif [[ -f "$UPSTREAM_FONTCONFIG_BUILD/build.ninja" &&
       -f "$UPSTREAM_FONTCONFIG_BUILD/meson-private/coredata.dat" &&
       -f "$UPSTREAM_FONTCONFIG_BUILD/libfontconfig.so.1.17.0" &&
       -f "$UPSTREAM_EXPAT_BUILD/libexpat.so.1.12.5" ]]; then
@@ -2183,19 +2309,11 @@ else
     echo "[INFO] Upstream Fontconfig build artifacts are not complete"
 fi
 
-if [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 && "$UPSTREAM_FONTCONFIG_ENABLED" -eq 1 ]]; then
-    echo "[BUILD] Enabling upstream Cairo Fontconfig/FreeType font backend for Pango"
-    run_upstream_refresh "Cairo Fontconfig/FreeType backend" \
-        bash "$ROOT_DIR/tools/build-upstream-cairo-freetype.sh"
-    UPSTREAM_CAIRO_BUILD="$UPSTREAM_CAIRO_FREETYPE_BUILD"
-    UPSTREAM_CAIRO_FREETYPE_ENABLED=1
-    UPSTREAM_CAIRO_ENABLED=1
-    echo "[BUILD] Refreshing upstream Cairo glyph/rendering smoke application"
-    build_upstream_cairo_program
-fi
-
 UPSTREAM_FRIBIDI_ENABLED=0
-if [[ -f "$UPSTREAM_FRIBIDI_BUILD/build.ninja" &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libfribidi.so.0.4.0" ]]; then
+    UPSTREAM_FRIBIDI_ENABLED=1
+    echo "[INFO] Using installed upstream FriBidi runtime from graphics sysroot"
+elif [[ -f "$UPSTREAM_FRIBIDI_BUILD/build.ninja" &&
       -f "$UPSTREAM_FRIBIDI_BUILD/meson-private/coredata.dat" &&
       -f "$UPSTREAM_FRIBIDI_BUILD/lib/libfribidi.so.0.4.0" ]]; then
     echo "[BUILD] Refreshing upstream FriBidi against the current akaOS libc"
@@ -2209,7 +2327,11 @@ else
 fi
 
 UPSTREAM_PANGO_ENABLED=0
-if [[ "$UPSTREAM_GLIB_ENABLED" -eq 1 &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpango-1.0.so.0.5800.2" &&
+      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpangocairo-1.0.so.0.5800.2" ]]; then
+    UPSTREAM_PANGO_ENABLED=1
+    echo "[INFO] Using installed upstream Pango runtime from graphics sysroot"
+elif [[ "$UPSTREAM_GLIB_ENABLED" -eq 1 &&
       "$UPSTREAM_CAIRO_FREETYPE_ENABLED" -eq 1 &&
       "$UPSTREAM_FONTCONFIG_ENABLED" -eq 1 &&
       "$UPSTREAM_FRIBIDI_ENABLED" -eq 1 &&
@@ -2226,7 +2348,11 @@ else
 fi
 
 UPSTREAM_WAYLAND_ENABLED=0
-if [[ -f "$UPSTREAM_WAYLAND_BUILD/src/libwayland-client.so.0.26.0" &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libwayland-client.so.0.26.0" &&
+      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libwayland-server.so.0.26.0" ]]; then
+    UPSTREAM_WAYLAND_ENABLED=1
+    echo "[INFO] Using installed upstream Wayland runtime from graphics sysroot"
+elif [[ -f "$UPSTREAM_WAYLAND_BUILD/src/libwayland-client.so.0.26.0" &&
       -f "$UPSTREAM_WAYLAND_BUILD/src/libwayland-server.so.0.26.0" &&
       -f "$UPSTREAM_WAYLAND_BUILD/cursor/libwayland-cursor.so.0.26.0" &&
       -f "$UPSTREAM_WAYLAND_BUILD/egl/libwayland-egl.so.1.26.0" ]]; then
@@ -2252,6 +2378,8 @@ UPSTREAM_WAYLAND_PROTOCOLS_ENABLED=0
 if [[ "$UPSTREAM_WAYLAND_ENABLED" -eq 1 ]]; then
     if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/pkgconfig/wayland-protocols.pc" &&
           -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml" ]]; then
+        UPSTREAM_WAYLAND_PROTOCOLS_ENABLED=1
+    elif [[ -f "$UPSTREAM_WAYLAND_PROTOCOLS_BUILD/stable/xdg-shell/xdg-shell.xml" ]]; then
         run_upstream_refresh "Wayland protocols 1.46" \
             bash "$ROOT_DIR/tools/build-upstream-wayland-protocols.sh"
         UPSTREAM_WAYLAND_PROTOCOLS_ENABLED=1
@@ -2266,7 +2394,10 @@ else
 fi
 
 UPSTREAM_XKBCOMMON_ENABLED=0
-if [[ -f "$UPSTREAM_XKBCOMMON_BUILD/libxkbcommon.so.0.13.2" &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxkbcommon.so.0.13.2" ]]; then
+    UPSTREAM_XKBCOMMON_ENABLED=1
+    echo "[INFO] Using installed upstream xkbcommon from graphics sysroot"
+elif [[ -f "$UPSTREAM_XKBCOMMON_BUILD/libxkbcommon.so.0.13.2" &&
       -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/pkgconfig/xkbcommon.pc" ]]; then
     run_upstream_refresh "xkbcommon 1.13.2" \
         bash "$ROOT_DIR/tools/build-upstream-xkbcommon.sh"
@@ -2294,7 +2425,10 @@ if [[ "$UPSTREAM_WAYLAND_ENABLED" -eq 1 &&
 fi
 
 UPSTREAM_GTK_ENABLED=0
-if [[ "$UPSTREAM_PANGO_ENABLED" -eq 1 &&
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgtk-4.so.1.2200.5" ]]; then
+    UPSTREAM_GTK_ENABLED=1
+    echo "[INFO] Using installed upstream GTK 4 from graphics sysroot"
+elif [[ "$UPSTREAM_PANGO_ENABLED" -eq 1 &&
       "$UPSTREAM_WAYLAND_ENABLED" -eq 1 &&
       "$UPSTREAM_WAYLAND_PROTOCOLS_ENABLED" -eq 1 &&
       "$UPSTREAM_XKBCOMMON_ENABLED" -eq 1 ]]; then
@@ -2316,7 +2450,11 @@ else
 fi
 
 UPSTREAM_GTK3_ENABLED=0
-if [[ "$UPSTREAM_GTK_ENABLED" -eq 1 ]]; then
+if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgtk-3.so.0.2420.32" &&
+      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk-3.so.0.2420.32" ]]; then
+    UPSTREAM_GTK3_ENABLED=1
+    echo "[INFO] Using installed upstream GTK 3 runtime from graphics sysroot"
+elif [[ "$UPSTREAM_GTK_ENABLED" -eq 1 ]]; then
     echo "[BUILD] Upstream GTK 3.24.52 Wayland backend for LXDE compatibility"
     if [[ "${AKAOS_SKIP_UPSTREAM_REFRESH:-0}" != "1" ||
           ! -f "$UPSTREAM_GTK3_BUILD/.akaos-wayland-enabled" ]]; then
@@ -2361,7 +2499,7 @@ build_runtime_library libgtk-4.so 5
 build_runtime_library libQt6Core.so 6
 build_runtime_library libQt6Gui.so 7
 build_runtime_library libQt6Widgets.so 8
-for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF STARTLXDE.ELF STARTLXQT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF VMSTAT.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF HISTORY.ELF HOSTNAME.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
+for image in HELLO.ELF HELLO_PIE.ELF CAT.ELF LS.ELF DIR.ELF DIRCOLORS.ELF DIRNAME.ELF GREP.ELF HEAD.ELF TAIL.ELF WC.ELF UNAME.ELF AKAFETCH.ELF WHOAMI.ELF TOUCH.ELF MKDIR.ELF RM.ELF CP.ELF MV.ELF PWD.ELF ECHO.ELF CLEAR.ELF SYNC.ELF CHMOD.ELF CHOWN.ELF TED.ELF INIT.ELF LOGIN.ELF SU.ELF PASSWD.ELF REBOOT.ELF POWEROFF.ELF LUMEN.ELF PALETTE.ELF TERMINAL.ELF BEEP.ELF PING.ELF NETSTAT.ELF TTY.ELF STTY.ELF PS.ELF AKASH.ELF NSLOOKUP.ELF CURL.ELF PKG.ELF WGET.ELF HTTPD.ELF AKAOS_CONFIG.ELF SYSMON.ELF IP.ELF MOUNT.ELF UMOUNT.ELF TELNETD.ELF TFTPD.ELF TFTP.ELF STARTLXQT.ELF NOTEPAD.ELF TASKMGR.ELF WEBVIEWER.ELF STATUS_CGI.ELF LESS.ELF MORE.ELF FIND.ELF SORT.ELF UNIQ.ELF XARGS.ELF TEST.ELF SSHD.ELF SSH.ELF SLEEP.ELF WHICH.ELF ENV.ELF CUT.ELF TR.ELF DF.ELF DU.ELF KILL.ELF PKILL.ELF UPTIME.ELF FREE.ELF VMSTAT.ELF WATCH.ELF SED.ELF DIFF.ELF DIFF3.ELF CMP.ELF PATCH.ELF TAR.ELF CPIO.ELF CRON.ELF CROND.ELF CRONTAB.ELF CSPLIT.ELF DATE.ELF DC.ELF DECLARE.ELF DD.ELF DDRESCUE.ELF DDRESCUELOG.ELF GZIP.ELF GUNZIP.ELF HISTORY.ELF HOSTNAME.ELF ROUTE.ELF TRACEROUTE.ELF DIG.ELF ARP.ELF LSCPU.ELF LSPCI.ELF GPUINFO.ELF SNDINFO.ELF ACPI.ELF DLTEST.ELF DISPLAY_PROTOCOLS.ELF; do
     # ET_DYN hello-pie legitimately carries relative relocations; the kernel
     # applies those at its fixed native load base. Reject only relocation
     # kinds outside that bounded ABI instead of rejecting the section itself.
@@ -2380,35 +2518,85 @@ GOBJECT_SONAME_IMAGE="$BUILD_DIR/libglib.so"
 GIO_SONAME_IMAGE="$BUILD_DIR/libgio.so"
 UPSTREAM_GLIB_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_GLIB_ENABLED" -eq 1 ]]; then
-    GLIB_SONAME_IMAGE="$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0"
-    GOBJECT_SONAME_IMAGE="$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0"
-    GIO_SONAME_IMAGE="$UPSTREAM_GLIB_BUILD/gio/libgio-2.0.so.0.9000.0"
-    UPSTREAM_GLIB_INITRAMFS_ARGS=(
-        --file "/bin/glib-upstream-test:$BUILD_DIR/GLIB_UPSTREAM_TEST.ELF:exec"
-        --data "/lib/.upstream-glib:enabled:0444"
-        --file "/lib/libgmodule-2.0.so.0:$UPSTREAM_GLIB_BUILD/gmodule/libgmodule-2.0.so.0.9000.0:0444"
-        --file "/lib/libgthread-2.0.so.0:$UPSTREAM_GLIB_BUILD/gthread/libgthread-2.0.so.0.9000.0:0444"
-        --file "/lib/libffi.so.8:$UPSTREAM_GLIB_BUILD/subprojects/libffi-3.5.2/src/libffi.so.8.2.0:0444"
-        --file "/lib/libintl.so.8:$UPSTREAM_GLIB_BUILD/subprojects/proxy-libintl-0.5/libintl.so.8:0444"
-        --file "/lib/libz.so.1:$UPSTREAM_GLIB_BUILD/subprojects/zlib-1.3.1/libz.so.1.3.1:0444"
-        --file "/lib/libpcre2-8.so.0:$ROOT_DIR/build/upstream-sysroot/pcre2-10.49-x86_64/usr/lib/libpcre2-8.so.0.16.1:0444"
-    )
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libglib-2.0.so.0.9000.0" ]]; then
+        GLIB_SONAME_IMAGE="$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libglib-2.0.so.0.9000.0"
+        GOBJECT_SONAME_IMAGE="$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgobject-2.0.so.0.9000.0"
+        GIO_SONAME_IMAGE="$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgio-2.0.so.0.9000.0"
+        UPSTREAM_GLIB_INITRAMFS_ARGS=(
+            --data "/lib/.upstream-glib:enabled:0444"
+            --file "/lib/libglib-2.0.so.0:$GLIB_SONAME_IMAGE:0444"
+            --file "/lib/libglib.so:$BUILD_DIR/libglib.so:0444"
+            --file "/usr/lib/libglib-2.0.so.0:$GLIB_SONAME_IMAGE:0444"
+            --file "/usr/local/lib/libglib-2.0.so.0:$GLIB_SONAME_IMAGE:0444"
+            --file "/lib/libgobject-2.0.so.0:$GOBJECT_SONAME_IMAGE:0444"
+            --file "/lib/libgobject.so:$BUILD_DIR/libglib.so:0444"
+            --file "/usr/lib/libgobject-2.0.so.0:$GOBJECT_SONAME_IMAGE:0444"
+            --file "/usr/local/lib/libgobject-2.0.so.0:$GOBJECT_SONAME_IMAGE:0444"
+            --file "/lib/libgio-2.0.so.0:$GIO_SONAME_IMAGE:0444"
+            --file "/lib/libgio.so:$BUILD_DIR/libgio.so:0444"
+            --file "/usr/lib/libgio-2.0.so.0:$GIO_SONAME_IMAGE:0444"
+            --file "/usr/local/lib/libgio-2.0.so.0:$GIO_SONAME_IMAGE:0444"
+            --file "/lib/libgmodule-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgmodule-2.0.so.0.9000.0:0444"
+            --file "/usr/lib/libgmodule-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgmodule-2.0.so.0.9000.0:0444"
+            --file "/usr/local/lib/libgmodule-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgmodule-2.0.so.0.9000.0:0444"
+            --file "/lib/libgthread-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgthread-2.0.so.0.9000.0:0444"
+            --file "/usr/lib/libgthread-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libgthread-2.0.so.0.9000.0:0444"
+            --file "/lib/libffi.so.8:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libffi.so.8.2.0:0444"
+            --file "/usr/lib/libffi.so.8:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libffi.so.8.2.0:0444"
+            --file "/lib/libintl.so.8:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libintl.so.8:0444"
+            --file "/usr/lib/libintl.so.8:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libintl.so.8:0444"
+            --file "/lib/libintl.so:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libintl.so.8:0444"
+            --file "/usr/lib/libintl.so:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libintl.so.8:0444"
+            --file "/usr/local/lib/libintl.so:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libintl.so.8:0444"
+            --file "/lib/libz.so.1:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libz.so.1.3.1:0444"
+            --file "/usr/lib/libz.so.1:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libz.so.1.3.1:0444"
+            --file "/lib/libpcre2-8.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libpcre2-8.so.0.16.1:0444"
+            --file "/usr/lib/libpcre2-8.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libpcre2-8.so.0.16.1:0444"
+            --file "/usr/local/lib/libpcre2-8.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libpcre2-8.so.0.16.1:0444"
+        )
+    else
+        GLIB_SONAME_IMAGE="$UPSTREAM_GLIB_BUILD/glib/libglib-2.0.so.0.9000.0"
+        GOBJECT_SONAME_IMAGE="$UPSTREAM_GLIB_BUILD/gobject/libgobject-2.0.so.0.9000.0"
+        GIO_SONAME_IMAGE="$UPSTREAM_GLIB_BUILD/gio/libgio-2.0.so.0.9000.0"
+        UPSTREAM_GLIB_INITRAMFS_ARGS=(
+            --file "/bin/glib-upstream-test:$BUILD_DIR/GLIB_UPSTREAM_TEST.ELF:exec"
+            --data "/lib/.upstream-glib:enabled:0444"
+            --file "/lib/libgmodule-2.0.so.0:$UPSTREAM_GLIB_BUILD/gmodule/libgmodule-2.0.so.0.9000.0:0444"
+            --file "/lib/libgthread-2.0.so.0:$UPSTREAM_GLIB_BUILD/gthread/libgthread-2.0.so.0.9000.0:0444"
+            --file "/lib/libffi.so.8:$UPSTREAM_GLIB_BUILD/subprojects/libffi-3.5.2/src/libffi.so.8.2.0:0444"
+            --file "/lib/libintl.so.8:$UPSTREAM_GLIB_BUILD/subprojects/proxy-libintl-0.5/libintl.so.8:0444"
+            --file "/lib/libz.so.1:$UPSTREAM_GLIB_BUILD/subprojects/zlib-1.3.1/libz.so.1.3.1:0444"
+            --file "/lib/libpcre2-8.so.0:$ROOT_DIR/build/upstream-sysroot/pcre2-10.49-x86_64/usr/lib/libpcre2-8.so.0.16.1:0444"
+        )
+    fi
 fi
 UPSTREAM_HARFBUZZ_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_HARFBUZZ_ENABLED" -eq 1 ]]; then
-    UPSTREAM_HARFBUZZ_INITRAMFS_ARGS=(
-        --file "/bin/harfbuzz-upstream-test:$BUILD_DIR/HARFBUZZ_UPSTREAM_TEST.ELF:exec"
-        --file "/lib/libharfbuzz.so.0:$UPSTREAM_HARFBUZZ_BUILD/src/libharfbuzz.so.0.61450.0:0444"
-        --file "/lib/libharfbuzz-subset.so.0:$UPSTREAM_HARFBUZZ_BUILD/src/libharfbuzz-subset.so.0.61450.0:0444"
-    )
+    harfbuzz_source="$(akaos_find_lib 'libharfbuzz.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_HARFBUZZ_BUILD/src")"
+    harfbuzz_subset_source="$(akaos_find_lib 'libharfbuzz-subset.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_HARFBUZZ_BUILD/src")"
+    UPSTREAM_HARFBUZZ_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/HARFBUZZ_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_HARFBUZZ_INITRAMFS_ARGS+=(--file "/bin/harfbuzz-upstream-test:$BUILD_DIR/HARFBUZZ_UPSTREAM_TEST.ELF:exec")
+    fi
+    if [[ -n "$harfbuzz_source" && -f "$harfbuzz_source" ]]; then
+        UPSTREAM_HARFBUZZ_INITRAMFS_ARGS+=(
+            --file "/lib/libharfbuzz.so.0:$harfbuzz_source:0444"
+            --file "/usr/local/lib/libharfbuzz.so.0:$harfbuzz_source:0444"
+        )
+    fi
+    if [[ -n "$harfbuzz_subset_source" && -f "$harfbuzz_subset_source" ]]; then
+        UPSTREAM_HARFBUZZ_INITRAMFS_ARGS+=(
+            --file "/lib/libharfbuzz-subset.so.0:$harfbuzz_subset_source:0444"
+            --file "/usr/local/lib/libharfbuzz-subset.so.0:$harfbuzz_subset_source:0444"
+        )
+    fi
 fi
 UPSTREAM_FONTCONFIG_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_FONTCONFIG_ENABLED" -eq 1 ]]; then
+    fontconfig_source="$(akaos_find_lib 'libfontconfig.so.1.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_FONTCONFIG_BUILD")"
+    expat_source="$(akaos_find_lib 'libexpat.so.1.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_EXPAT_BUILD")"
     FONTCONFIG_DTD="$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xml/fontconfig/fonts.dtd"
     UPSTREAM_FONTCONFIG_INITRAMFS_ARGS=(
-        --file "/bin/fontconfig-upstream-test:$BUILD_DIR/FONTCONFIG_UPSTREAM_TEST.ELF:exec"
-        --file "/lib/libfontconfig.so.1:$UPSTREAM_FONTCONFIG_BUILD/libfontconfig.so.1.17.0:0444"
-        --file "/lib/libexpat.so.1:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libexpat.so.1.12.5:0444"
         --dir "/etc/fonts"
         --file "/etc/fonts/fonts.conf:$UPSTREAM_GRAPHICS_SYSROOT/etc/fonts/fonts.conf:0444"
         --dir "/etc/fonts/conf.d"
@@ -2422,6 +2610,18 @@ if [[ "$UPSTREAM_FONTCONFIG_ENABLED" -eq 1 ]]; then
         --file "/usr/local/share/xml/fontconfig/fonts.dtd:$FONTCONFIG_DTD:0444"
         --dir "/tmp/fontconfig-cache"
     )
+    if [[ -n "$fontconfig_source" && -f "$fontconfig_source" ]]; then
+        UPSTREAM_FONTCONFIG_INITRAMFS_ARGS+=(
+            --file "/lib/libfontconfig.so.1:$fontconfig_source:0444"
+            --file "/usr/local/lib/libfontconfig.so.1:$fontconfig_source:0444"
+        )
+    fi
+    if [[ -n "$expat_source" && -f "$expat_source" ]]; then
+        UPSTREAM_FONTCONFIG_INITRAMFS_ARGS+=(
+            --file "/lib/libexpat.so.1:$expat_source:0444"
+            --file "/usr/local/lib/libexpat.so.1:$expat_source:0444"
+        )
+    fi
     for config_link in "$UPSTREAM_GRAPHICS_SYSROOT"/etc/fonts/conf.d/*.conf; do
         [[ -e "$config_link" ]] || continue
         config_target="$(readlink -f "$config_link")"
@@ -2433,17 +2633,26 @@ if [[ "$UPSTREAM_FONTCONFIG_ENABLED" -eq 1 ]]; then
 fi
 UPSTREAM_FRIBIDI_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_FRIBIDI_ENABLED" -eq 1 ]]; then
-    UPSTREAM_FRIBIDI_INITRAMFS_ARGS=(
-        --file "/bin/fribidi-upstream-test:$BUILD_DIR/FRIBIDI_UPSTREAM_TEST.ELF:exec"
-        --file "/lib/libfribidi.so.0:$UPSTREAM_FRIBIDI_BUILD/lib/libfribidi.so.0.4.0:0444"
-        --dir "/usr/share/licenses/FriBidi"
-        --file "/usr/share/licenses/FriBidi/COPYING:$UPSTREAM_FRIBIDI_SOURCE/COPYING:0444"
-    )
+    fribidi_source="$(akaos_find_lib 'libfribidi.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_FRIBIDI_BUILD/lib")"
+    UPSTREAM_FRIBIDI_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/FRIBIDI_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_FRIBIDI_INITRAMFS_ARGS+=(--file "/bin/fribidi-upstream-test:$BUILD_DIR/FRIBIDI_UPSTREAM_TEST.ELF:exec")
+    fi
+    if [[ -n "$fribidi_source" && -f "$fribidi_source" ]]; then
+        UPSTREAM_FRIBIDI_INITRAMFS_ARGS+=(
+            --file "/lib/libfribidi.so.0:$fribidi_source:0444"
+            --file "/usr/local/lib/libfribidi.so.0:$fribidi_source:0444"
+        )
+    fi
+    if [[ -f "$UPSTREAM_FRIBIDI_SOURCE/COPYING" ]]; then
+        UPSTREAM_FRIBIDI_INITRAMFS_ARGS+=(
+            --dir "/usr/share/licenses/FriBidi"
+            --file "/usr/share/licenses/FriBidi/COPYING:$UPSTREAM_FRIBIDI_SOURCE/COPYING:0444"
+        )
+    fi
 fi
 UPSTREAM_PANGO_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_PANGO_ENABLED" -eq 1 ]]; then
-    # The libraries are staged from the sysroot they were installed into, so
-    # the image does not depend on where the build tree happens to live.
     UPSTREAM_PANGO_LIBPANGO="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" \
         -maxdepth 1 -type f -name 'libpango-1.0.so.0.*' -print | sort -V | tail -n 1)"
     UPSTREAM_PANGO_LIBPANGOFT2="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" \
@@ -2455,37 +2664,65 @@ if [[ "$UPSTREAM_PANGO_ENABLED" -eq 1 ]]; then
         echo "[ERROR] Upstream Pango shared libraries are missing from the graphics sysroot" >&2
         exit 1
     fi
-    UPSTREAM_PANGO_INITRAMFS_ARGS=(
-        --file "/bin/pango-upstream-test:$BUILD_DIR/PANGO_UPSTREAM_TEST.ELF:exec"
+    UPSTREAM_PANGO_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/PANGO_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_PANGO_INITRAMFS_ARGS+=(--file "/bin/pango-upstream-test:$BUILD_DIR/PANGO_UPSTREAM_TEST.ELF:exec")
+    fi
+    UPSTREAM_PANGO_INITRAMFS_ARGS+=(
         --file "/lib/libpango-1.0.so.0:$UPSTREAM_PANGO_LIBPANGO:0444"
+        --file "/usr/local/lib/libpango-1.0.so.0:$UPSTREAM_PANGO_LIBPANGO:0444"
         --file "/lib/libpangoft2-1.0.so.0:$UPSTREAM_PANGO_LIBPANGOFT2:0444"
+        --file "/usr/local/lib/libpangoft2-1.0.so.0:$UPSTREAM_PANGO_LIBPANGOFT2:0444"
         --file "/lib/libpangocairo-1.0.so.0:$UPSTREAM_PANGO_LIBPANGOCAIRO:0444"
-        --dir "/usr/share/licenses/Pango"
-        --file "/usr/share/licenses/Pango/COPYING:$UPSTREAM_PANGO_SOURCE/COPYING:0444"
+        --file "/usr/local/lib/libpangocairo-1.0.so.0:$UPSTREAM_PANGO_LIBPANGOCAIRO:0444"
     )
+    if [[ -f "$UPSTREAM_PANGO_SOURCE/COPYING" ]]; then
+        UPSTREAM_PANGO_INITRAMFS_ARGS+=(
+            --dir "/usr/share/licenses/Pango"
+            --file "/usr/share/licenses/Pango/COPYING:$UPSTREAM_PANGO_SOURCE/COPYING:0444"
+        )
+    fi
 fi
 UPSTREAM_GRAPHENE_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_GRAPHENE_ENABLED" -eq 1 ]]; then
-    UPSTREAM_GRAPHENE_INITRAMFS_ARGS=(
-        --file "/bin/graphene-upstream-test:$BUILD_DIR/GRAPHENE_UPSTREAM_TEST.ELF:exec"
-        --file "/lib/libgraphene-1.0.so.0:$UPSTREAM_GRAPHENE_BUILD/src/libgraphene-1.0.so.0.1000.8:0444"
-        --dir "/usr/share/licenses/Graphene"
-        --file "/usr/share/licenses/Graphene/LICENSE.txt:$UPSTREAM_GRAPHENE_SOURCE/LICENSE.txt:0444"
-    )
+    graphene_source="$(akaos_find_lib 'libgraphene-1.0.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_GRAPHENE_BUILD/src")"
+    UPSTREAM_GRAPHENE_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/GRAPHENE_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_GRAPHENE_INITRAMFS_ARGS+=(--file "/bin/graphene-upstream-test:$BUILD_DIR/GRAPHENE_UPSTREAM_TEST.ELF:exec")
+    fi
+    if [[ -n "$graphene_source" && -f "$graphene_source" ]]; then
+        UPSTREAM_GRAPHENE_INITRAMFS_ARGS+=(
+            --file "/lib/libgraphene-1.0.so.0:$graphene_source:0444"
+            --file "/usr/local/lib/libgraphene-1.0.so.0:$graphene_source:0444"
+        )
+    fi
 fi
 UPSTREAM_GTK_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_GTK_ENABLED" -eq 1 ]]; then
+    gtk4_source="$(akaos_find_lib 'libgtk-4.so.1.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_GTK_BUILD/gtk")"
     UPSTREAM_GTK_INITRAMFS_ARGS=(
-        --file "/bin/gtk-upstream-test:$BUILD_DIR/GTK_UPSTREAM_TEST.ELF:exec"
         --dir "/lib/.upstream-gtk"
-        --file "/lib/.upstream-gtk/libgtk-4.so.1:$UPSTREAM_GTK_BUILD/gtk/libgtk-4.so.1.2200.5:0444"
-        --file "/lib/libgdk_pixbuf-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk_pixbuf-2.0.so.0.4303.0:0444"
-        --file "/lib/libepoxy.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libepoxy.so.0.0.0:0444"
-        --file "/lib/libpng16.so.16:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpng16.so.16.49.0:0444"
-        --file "/lib/libtiff.so.6:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libtiff.so.6.1.0:0444"
-        --file "/lib/libjpeg.so.8.3.2:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libjpeg.so.8.3.2:0444"
-        --dir "/usr/local/share/gtk-4.0"
     )
+    if [[ -f "$BUILD_DIR/GTK_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_GTK_INITRAMFS_ARGS+=(--file "/bin/gtk-upstream-test:$BUILD_DIR/GTK_UPSTREAM_TEST.ELF:exec")
+    fi
+    if [[ -n "$gtk4_source" && -f "$gtk4_source" ]]; then
+        UPSTREAM_GTK_INITRAMFS_ARGS+=(
+            --file "/lib/.upstream-gtk/libgtk-4.so.1:$gtk4_source:0444"
+        )
+    fi
+    for gtk_asset in \
+        "/lib/libgdk_pixbuf-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk_pixbuf-2.0.so.0.4303.0:0444" \
+        "/lib/libepoxy.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libepoxy.so.0.0.0:0444" \
+        "/lib/libpng16.so.16:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpng16.so.16.49.0:0444" \
+        "/lib/libtiff.so.6:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libtiff.so.6.1.0:0444" \
+        "/lib/libjpeg.so.8.3.2:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libjpeg.so.8.3.2:0444"; do
+        asset_source="${gtk_asset#*:}"
+        asset_source="${asset_source%:*}"
+        if [[ -f "$asset_source" ]]; then
+            UPSTREAM_GTK_INITRAMFS_ARGS+=(--file "$gtk_asset")
+        fi
+    done
 fi
 UPSTREAM_GTK3_INITRAMFS_ARGS=()
 if [[ "${UPSTREAM_GTK3_ENABLED:-0}" -eq 1 ]]; then
@@ -2520,13 +2757,38 @@ if [[ "${UPSTREAM_GTK3_ENABLED:-0}" -eq 1 ]]; then
         echo "[ERROR] Upstream GTK 3 shared libraries are missing from the graphics sysroot" >&2
         exit 1
     fi
-    UPSTREAM_GTK3_INITRAMFS_ARGS=(
-        --file "/bin/gtk3-upstream-test:$BUILD_DIR/GTK3_UPSTREAM_TEST.ELF:exec"
-        --file "/bin/gtk3-x11-upstream-test:$BUILD_DIR/GTK3_X11_UPSTREAM_TEST.ELF:exec"
+    UPSTREAM_GTK3_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/GTK3_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_GTK3_INITRAMFS_ARGS+=(--file "/bin/gtk3-upstream-test:$BUILD_DIR/GTK3_UPSTREAM_TEST.ELF:exec")
+    fi
+    if [[ -f "$BUILD_DIR/GTK3_X11_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_GTK3_INITRAMFS_ARGS+=(--file "/bin/gtk3-x11-upstream-test:$BUILD_DIR/GTK3_X11_UPSTREAM_TEST.ELF:exec")
+    fi
+    UPSTREAM_GTK3_INITRAMFS_ARGS+=(
         --dir "/lib/.upstream-gtk3"
         --file "/lib/.upstream-gtk3/libgtk-3.so.0:$GTK3_LIBGTK:0444"
         --file "/lib/.upstream-gtk3/libgdk-3.so.0:$GTK3_LIBGDK:0444"
         --file "/lib/.upstream-gtk3/libatk-1.0.so.0:$GTK3_LIBATK:0444"
+        --file "/lib/libgtk-3.so.0:$GTK3_LIBGTK:0444"
+        --file "/lib/libgdk-3.so.0:$GTK3_LIBGDK:0444"
+        --file "/usr/local/lib/libgtk-3.so.0:$GTK3_LIBGTK:0444"
+        --file "/usr/local/lib/libgdk-3.so.0:$GTK3_LIBGDK:0444"
+        --file "/lib/libatk-1.0.so.0:$GTK3_LIBATK:0444"
+        --file "/usr/local/lib/libatk-1.0.so.0:$GTK3_LIBATK:0444"
+        --file "/lib/libgdk_pixbuf-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk_pixbuf-2.0.so.0.4303.0:0444"
+        --file "/usr/local/lib/libgdk_pixbuf-2.0.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk_pixbuf-2.0.so.0.4303.0:0444"
+        --file "/lib/libepoxy.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libepoxy.so.0.0.0:0444"
+        --file "/usr/local/lib/libepoxy.so.0:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libepoxy.so.0.0.0:0444"
+        --file "/lib/libjpeg.so.8.3.2:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libjpeg.so.8.3.2:0444"
+        --file "/usr/local/lib/libjpeg.so.8.3.2:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libjpeg.so.8.3.2:0444"
+        --file "/lib/libjpeg.so.8:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libjpeg.so.8:0444"
+        --file "/usr/local/lib/libjpeg.so.8:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libjpeg.so.8:0444"
+        --file "/lib/libjpeg.so:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libjpeg.so:0444"
+        --file "/usr/local/lib/libjpeg.so:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libjpeg.so:0444"
+        --file "/lib/libpng16.so.16:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpng16.so.16.49.0:0444"
+        --file "/usr/local/lib/libpng16.so.16:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpng16.so.16.49.0:0444"
+        --file "/lib/libtiff.so.6:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libtiff.so.6.1.0:0444"
+        --file "/usr/local/lib/libtiff.so.6:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libtiff.so.6.1.0:0444"
         --dir "/usr/share/icons"
         --dir "/usr/share/icons/default"
         --dir "/usr/share/icons/default/cursors"
@@ -2590,13 +2852,38 @@ if [[ "${UPSTREAM_GTK3_ENABLED:-0}" -eq 1 ]]; then
 fi
 UPSTREAM_WAYLAND_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_WAYLAND_ENABLED" -eq 1 ]]; then
-    UPSTREAM_WAYLAND_INITRAMFS_ARGS=(
-        --file "/bin/wayland-upstream-test:$BUILD_DIR/WAYLAND_UPSTREAM_TEST.ELF:exec"
-        --file "/lib/libwayland-client.so.0:$UPSTREAM_WAYLAND_BUILD/src/libwayland-client.so.0.26.0:0444"
-        --file "/lib/libwayland-server.so.0:$UPSTREAM_WAYLAND_BUILD/src/libwayland-server.so.0.26.0:0444"
-        --file "/lib/libwayland-cursor.so.0:$UPSTREAM_WAYLAND_BUILD/cursor/libwayland-cursor.so.0.26.0:0444"
-        --file "/lib/libwayland-egl.so.1:$UPSTREAM_WAYLAND_BUILD/egl/libwayland-egl.so.1.26.0:0444"
-    )
+    wl_client="$(akaos_find_lib 'libwayland-client.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_WAYLAND_BUILD/src")"
+    wl_server="$(akaos_find_lib 'libwayland-server.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_WAYLAND_BUILD/src")"
+    wl_cursor="$(akaos_find_lib 'libwayland-cursor.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_WAYLAND_BUILD/cursor")"
+    wl_egl="$(akaos_find_lib 'libwayland-egl.so.1.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_WAYLAND_BUILD/egl")"
+    UPSTREAM_WAYLAND_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/WAYLAND_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_WAYLAND_INITRAMFS_ARGS+=(--file "/bin/wayland-upstream-test:$BUILD_DIR/WAYLAND_UPSTREAM_TEST.ELF:exec")
+    fi
+    if [[ -n "$wl_client" && -f "$wl_client" ]]; then
+        UPSTREAM_WAYLAND_INITRAMFS_ARGS+=(
+            --file "/lib/libwayland-client.so.0:$wl_client:0444"
+            --file "/usr/local/lib/libwayland-client.so.0:$wl_client:0444"
+        )
+    fi
+    if [[ -n "$wl_server" && -f "$wl_server" ]]; then
+        UPSTREAM_WAYLAND_INITRAMFS_ARGS+=(
+            --file "/lib/libwayland-server.so.0:$wl_server:0444"
+            --file "/usr/local/lib/libwayland-server.so.0:$wl_server:0444"
+        )
+    fi
+    if [[ -n "$wl_cursor" && -f "$wl_cursor" ]]; then
+        UPSTREAM_WAYLAND_INITRAMFS_ARGS+=(
+            --file "/lib/libwayland-cursor.so.0:$wl_cursor:0444"
+            --file "/usr/local/lib/libwayland-cursor.so.0:$wl_cursor:0444"
+        )
+    fi
+    if [[ -n "$wl_egl" && -f "$wl_egl" ]]; then
+        UPSTREAM_WAYLAND_INITRAMFS_ARGS+=(
+            --file "/lib/libwayland-egl.so.1:$wl_egl:0444"
+            --file "/usr/local/lib/libwayland-egl.so.1:$wl_egl:0444"
+        )
+    fi
     if [[ "${UPSTREAM_WAYLAND_BRIDGE_ENABLED:-0}" -eq 1 ]]; then
         UPSTREAM_WAYLAND_INITRAMFS_ARGS+=(
             --file "/bin/wayland-bridge:$BUILD_DIR/WAYLAND_BRIDGE.ELF:exec"
@@ -2626,7 +2913,8 @@ if [[ -f "$UPSTREAM_DBUS_UPDATE_ENV" ]]; then
         --file "/bin/dbus-update-activation-environment:$UPSTREAM_DBUS_UPDATE_ENV:exec"
     )
 fi
-if [[ -f "$UPSTREAM_QT_PREFIX/lib/libQt6Core.so.6.12.0" &&
+if [[ "$target_desktop" == "lxqt" &&
+      -f "$UPSTREAM_QT_PREFIX/lib/libQt6Core.so.6.12.0" &&
       -f "$UPSTREAM_QT_PREFIX/lib/libQt6DBus.so.6.12.0" &&
       -f "$UPSTREAM_QT_PREFIX/lib/libQt6Concurrent.so.6.12.0" &&
       -f "$UPSTREAM_QT_PREFIX/lib/libQt6Gui.so.6.12.0" &&
@@ -2648,6 +2936,7 @@ if [[ -f "$UPSTREAM_QT_PREFIX/lib/libQt6Core.so.6.12.0" &&
     for qt_library in Qt6Core Qt6DBus Qt6Concurrent Qt6Gui Qt6Widgets Qt6WaylandClient; do
         qt_library_source="$UPSTREAM_QT_PREFIX/lib/lib${qt_library}.so.6.12.0"
         UPSTREAM_QT_INITRAMFS_ARGS+=(
+            --file "/lib/lib${qt_library}.so.6:$qt_library_source:0444"
             --file "/usr/local/lib/lib${qt_library}.so:$qt_library_source:0444"
             --file "/usr/local/lib/lib${qt_library}.so.6:$qt_library_source:0444"
             --file "/usr/local/lib/lib${qt_library}.so.6.12.0:$qt_library_source:0444"
@@ -2680,7 +2969,8 @@ if [[ -f "$UPSTREAM_QT_PREFIX/lib/libQt6Core.so.6.12.0" &&
             --file "/usr/local/plugins/wayland-decoration-client/libbradient.so:$UPSTREAM_QT_PREFIX/plugins/wayland-decoration-client/libbradient.so:0444"
         )
     fi
-    if [[ -f "$UPSTREAM_LXQT_PREFIX/lib/libQt6Xml.so.6.12.0" &&
+    if [[ "$target_desktop" == "lxqt" &&
+          -f "$UPSTREAM_LXQT_PREFIX/lib/libQt6Xml.so.6.12.0" &&
           -f "$UPSTREAM_LXQT_PREFIX/lib/libQt6Svg.so.6.12.0" &&
           -f "$UPSTREAM_LXQT_PREFIX/lib/libQt6SvgWidgets.so.6.12.0" &&
           -f "$UPSTREAM_LXQT_PREFIX/lib/libQt6Xdg.so.4.4.0" &&
@@ -2731,6 +3021,7 @@ if [[ -f "$UPSTREAM_QT_PREFIX/lib/libQt6Core.so.6.12.0" &&
             IFS=: read -r library_name library_version library_soname <<<"$lxqt_library"
             library_source="$UPSTREAM_LXQT_PREFIX/lib/lib${library_name}.so.${library_version}"
             UPSTREAM_LXQT_INITRAMFS_ARGS+=(
+                --file "/lib/lib${library_name}.so.${library_soname}:$library_source:0444"
                 --file "/usr/local/lib/lib${library_name}.so:$library_source:0444"
                 --file "/usr/local/lib/lib${library_name}.so.${library_soname}:$library_source:0444"
                 --file "/usr/local/lib/lib${library_name}.so.${library_version}:$library_source:0444"
@@ -3015,12 +3306,23 @@ if [[ -n "$UPSTREAM_QT_DECLARATIVE_BUILD_DIR" ]]; then
 fi
 UPSTREAM_XKBCOMMON_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_XKBCOMMON_ENABLED" -eq 1 ]]; then
-    UPSTREAM_XKBCOMMON_INITRAMFS_ARGS=(
-        --file "/bin/xkbcommon-upstream-test:$BUILD_DIR/XKBCOMMON_UPSTREAM_TEST.ELF:exec"
-        --file "/lib/libxkbcommon.so.0:$UPSTREAM_XKBCOMMON_BUILD/libxkbcommon.so.0.13.2:0444"
-        --dir "/usr/share/licenses/xkbcommon"
-        --file "/usr/share/licenses/xkbcommon/LICENSE:$UPSTREAM_XKBCOMMON_SOURCE/LICENSE:0444"
-    )
+    xkbcommon_source="$(akaos_find_lib 'libxkbcommon.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_XKBCOMMON_BUILD")"
+    UPSTREAM_XKBCOMMON_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/XKBCOMMON_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_XKBCOMMON_INITRAMFS_ARGS+=(--file "/bin/xkbcommon-upstream-test:$BUILD_DIR/XKBCOMMON_UPSTREAM_TEST.ELF:exec")
+    fi
+    if [[ -n "$xkbcommon_source" && -f "$xkbcommon_source" ]]; then
+        UPSTREAM_XKBCOMMON_INITRAMFS_ARGS+=(
+            --file "/lib/libxkbcommon.so.0:$xkbcommon_source:0444"
+            --file "/usr/local/lib/libxkbcommon.so.0:$xkbcommon_source:0444"
+        )
+    fi
+    if [[ -f "$UPSTREAM_XKBCOMMON_SOURCE/LICENSE" ]]; then
+        UPSTREAM_XKBCOMMON_INITRAMFS_ARGS+=(
+            --dir "/usr/share/licenses/xkbcommon"
+            --file "/usr/share/licenses/xkbcommon/LICENSE:$UPSTREAM_XKBCOMMON_SOURCE/LICENSE:0444"
+        )
+    fi
 fi
 UPSTREAM_XKB_DATA_INITRAMFS_ARGS=()
 if [[ "${UPSTREAM_WAYLAND_BRIDGE_ENABLED:-0}" -eq 1 ]]; then
@@ -3085,11 +3387,18 @@ if [[ "$UPSTREAM_CAIRO_ENABLED" -eq 1 ]]; then
         echo "[ERROR] The upstream Cairo shared library is missing from the graphics sysroot" >&2
         exit 1
     fi
-    UPSTREAM_CAIRO_INITRAMFS_ARGS=(
-        --file "/bin/cairo-upstream-test:$BUILD_DIR/CAIRO_UPSTREAM_TEST.ELF:exec"
+    UPSTREAM_PIXMAN_LIB="$(akaos_find_lib 'libpixman-1.so.0.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_PIXMAN_BUILD/pixman")"
+    UPSTREAM_CAIRO_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/CAIRO_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_CAIRO_INITRAMFS_ARGS+=(--file "/bin/cairo-upstream-test:$BUILD_DIR/CAIRO_UPSTREAM_TEST.ELF:exec")
+    fi
+    UPSTREAM_CAIRO_INITRAMFS_ARGS+=(
         --file "/lib/libcairo.so.2:$UPSTREAM_CAIRO_LIBRARY:0444"
-        --file "/lib/libpixman-1.so.0:$UPSTREAM_PIXMAN_BUILD/pixman/libpixman-1.so.0.46.4:0444"
+        --file "/usr/local/lib/libcairo.so.2:$UPSTREAM_CAIRO_LIBRARY:0444"
+        --file "/lib/libpixman-1.so.0:$UPSTREAM_PIXMAN_LIB:0444"
+        --file "/usr/local/lib/libpixman-1.so.0:$UPSTREAM_PIXMAN_LIB:0444"
         --file "/lib/libz.so.1:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libz.so.1.3.1:0444"
+        --file "/usr/lib/libz.so.1:$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libz.so.1.3.1:0444"
     )
     if [[ -n "$UPSTREAM_CAIRO_SCRIPT" ]]; then
         UPSTREAM_CAIRO_INITRAMFS_ARGS+=(
@@ -3103,7 +3412,7 @@ if [[ "$UPSTREAM_CAIRO_ENABLED" -eq 1 ]]; then
     fi
 fi
 UPSTREAM_OPENBOX_INITRAMFS_ARGS=()
-if [[ "$need_upstream_gui" -eq 1 ]]; then
+if [[ "$target_desktop" == "openbox" || "$target_desktop" == "lxde" ]]; then
 if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
     echo "[BUILD] Staging the upstream Openbox window manager"
     # The window manager and the libraries it needs travel in the local
@@ -3122,26 +3431,12 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
     for openbox_library in libobt.so.2 libobrender.so.32 libxml2.so.2 \
         libpangoxft-1.0.so.0 libpango-1.0.so.0 libXft.so.2 libglib-2.0.so.0 \
         libX11.so.6 libXext.so.6 libXrender.so.1 libXcursor.so.1 libXrandr.so.2 \
-        libXinerama.so.1 libICE.so.6 libSM.so.6 libxcb.so.1 libpng16.so.16 \
-        libfm-gtk3.so.4 libfm.so.4 libfm-extra.so.4; do
-        library_path="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" \
-            -maxdepth 1 \( -type f -o -type l \) -name "${openbox_library}*" -print | sort -V | tail -n 1)"
+        libXinerama.so.1 libICE.so.6 libSM.so.6 libxcb.so.1 libpng16.so.16; do
+        library_path="$(akaos_find_lib "${openbox_library}*" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib")"
         [[ -n "$library_path" ]] || continue
         UPSTREAM_OPENBOX_INITRAMFS_ARGS+=(
             --file "/lib/$openbox_library:$library_path:0444"
             --file "/usr/local/lib/$openbox_library:$library_path:0444"
-        )
-    done
-    for lxqt_library in liblxqt.so.2 libKF6WindowSystem.so.6 libLayerShellQtInterface.so.6 \
-        liblxqt-globalkeys.so.2 liblxqt-globalkeys-ui.so.2 libdbusmenu-lxqt.so.0 \
-        libQt6Core.so.6 libQt6Gui.so.6 libQt6Widgets.so.6 libQt6DBus.so.6 \
-        libQt6Svg.so.6 libQt6Xml.so.6 libQt6Xdg.so.4 libQt6XdgIconLoader.so.4; do
-        library_path="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" \
-            -maxdepth 1 \( -type f -o -type l \) -name "${lxqt_library}*" -print | sort -V | tail -n 1)"
-        [[ -n "$library_path" ]] || continue
-        UPSTREAM_OPENBOX_INITRAMFS_ARGS+=(
-            --file "/lib/$lxqt_library:$library_path:0444"
-            --file "/usr/local/lib/$lxqt_library:$library_path:0444"
         )
     done
     if [[ -d "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" ]]; then
@@ -3150,18 +3445,19 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
             UPSTREAM_OPENBOX_INITRAMFS_ARGS+=(
                 --dir "/usr/local/share/$relative_path"
             )
-        done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -type d | sort)
+        done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -path "*/openbox-3*" -type d | sort)
         while IFS= read -r theme_file; do
             relative_path="${theme_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/"}"
             UPSTREAM_OPENBOX_INITRAMFS_ARGS+=(
                 --file "/usr/local/share/$relative_path:$theme_file:0444"
             )
-        done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -type f | sort)
+        done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -path "*/openbox-3*" -type f | sort)
     fi
+fi
 fi
 
 UPSTREAM_LXPANEL_INITRAMFS_ARGS=()
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
+if [[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
     echo "[BUILD] Staging the upstream LXDE panel and its runtime libraries"
     UPSTREAM_LXPANEL_INITRAMFS_ARGS=(
         --dir "/etc"
@@ -3209,10 +3505,9 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
             --file "/usr/local/lib/libfm/modules/$mod_name:$fm_module:0444"
         )
     done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libfm/modules" -maxdepth 1 -type f -name '*.so' -print 2>/dev/null | sort)
-    for lxpanel_library in libwnck-3.so.0 libfm-gtk3.so.4 libfm.so.4 \
+    for lxpanel_library in liblxpanel.so.0 libwnck-3.so.0 libfm-gtk3.so.4 libfm.so.4 \
         libfm-extra.so.4 libmenu-cache.so.3 libkeybinder-3.0.so.0; do
-        library_path="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" \
-            -maxdepth 1 \( -type f -o -type l \) -name "${lxpanel_library}*" -print | sort -V | tail -n 1)"
+        library_path="$(akaos_find_lib "${lxpanel_library}*" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib")"
         [[ -n "$library_path" ]] || continue
         UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
             --file "/lib/$lxpanel_library:$library_path:0444"
@@ -3252,7 +3547,7 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]]; then
     fi
 fi
 
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" ]]; then
+if [[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" ]]; then
     echo "[BUILD] Staging upstream PCManFM file manager"
     UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
         --file "/usr/local/bin/pcmanfm:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm:exec"
@@ -3280,7 +3575,7 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" ]]; then
     done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/pcmanfm/ui" -maxdepth 1 -type f 2>/dev/null | sort)
 fi
 
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde" ]]; then
+if [[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde" ]]; then
     echo "[BUILD] Staging upstream LXDE common session scripts & config"
     UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
         --file "/usr/local/bin/startlxde:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde:exec"
@@ -3319,10 +3614,15 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde" ]]; then
         UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
             --file "/usr/local/$relative_path:$share_file:0444"
         )
-    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxde" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xsessions" -type f 2>/dev/null | sort)
+    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxde" -type f 2>/dev/null | sort)
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xsessions/LXDE.desktop" ]]; then
+        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            --file "/usr/local/share/xsessions/LXDE.desktop:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xsessions/LXDE.desktop:0444"
+        )
+    fi
 fi
 
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" ]]; then
+if [[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" ]]; then
     echo "[BUILD] Staging upstream LXSession binaries"
     UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
         --file "/usr/local/bin/lxsession:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession:exec"
@@ -3346,48 +3646,76 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" ]]; then
     done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/lxsession" -type f 2>/dev/null | sort)
 fi
 
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" ]]; then
-    echo "[BUILD] Staging upstream XFCE components & xfwm4"
-    UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
-        --file "/usr/local/bin/xfwm4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4:exec"
+UPSTREAM_XFCE_INITRAMFS_ARGS=()
+if [[ "$target_desktop" == "xfce" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session" ]]; then
+    echo "[BUILD] Staging official XFCE 4.18 desktop session"
+    UPSTREAM_XFCE_INITRAMFS_ARGS=(
+        --dir "/usr/local/bin"
+        --dir "/usr/local/etc"
+        --dir "/usr/local/etc/xdg"
+        --dir "/etc/xdg/xfce4"
+        --dir "/etc/xdg/xfce4/xfconf"
+        --dir "/etc/xdg/xfce4/xfconf/xfce-perchannel-xml"
+        --dir "/usr/local/share/xfce4"
         --dir "/usr/local/share/xfwm4"
         --dir "/usr/local/share/themes"
+        --dir "/usr/local/lib/xfce4"
+        --dir "/usr/local/lib/xfce4/xfconf"
+        --file "/usr/local/bin/xfwm4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4:exec"
+        --file "/usr/local/bin/xfce4-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session:exec"
+        --file "/usr/local/bin/xfce4-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel:exec"
+        --file "/usr/local/bin/startxfce4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startxfce4:exec"
+        --file "/bin/xfwm4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4:exec"
+        --file "/bin/xfce4-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session:exec"
+        --file "/bin/xfce4-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel:exec"
     )
-    for xfce_library in libxfce4util.so.7 libxfconf-0.so.3 libxfce4ui-2.so.0 libxfce4kbd-private-3.so.0; do
-        library_path="$(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib"             -maxdepth 1 -type f -name "${xfce_library}.*" -print | sort -V | tail -n 1)"
+    for xfce_library in libxfce4kbd-private-3.so.0 libxfce4ui-2.so.0 \
+        libxfce4util.so.7 libxfconf-0.so.3 libxfce4panel-2.0.so.4 \
+        libexo-2.so.0 libgarcon-1.so.0 libgarcon-gtk3-1.so.0 libwnck-3.so.0; do
+        library_path="$(akaos_find_lib "${xfce_library}*" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib")"
         [[ -n "$library_path" ]] || continue
-        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+        UPSTREAM_XFCE_INITRAMFS_ARGS+=(
             --file "/lib/$xfce_library:$library_path:0444"
             --file "/usr/local/lib/$xfce_library:$library_path:0444"
         )
     done
     if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfconf-query" ]]; then
-        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+        UPSTREAM_XFCE_INITRAMFS_ARGS+=(
             --file "/usr/local/bin/xfconf-query:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfconf-query:exec"
             --file "/usr/local/lib/xfce4/xfconf/xfconfd:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/xfce4/xfconf/xfconfd:exec"
-            --dir "/usr/local/lib/xfce4"
-            --dir "/usr/local/lib/xfce4/xfconf"
             --dir "/usr/local/share/dbus-1"
             --dir "/usr/local/share/dbus-1/services"
         )
         if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/dbus-1/services/org.xfce.Xfconf.service" ]]; then
-            UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+            UPSTREAM_XFCE_INITRAMFS_ARGS+=(
                 --file "/usr/local/share/dbus-1/services/org.xfce.Xfconf.service:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/dbus-1/services/org.xfce.Xfconf.service:0444"
             )
         fi
     fi
+    while IFS= read -r theme_dir; do
+        relative_path="${theme_dir#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/"}"
+        UPSTREAM_XFCE_INITRAMFS_ARGS+=(
+            --dir "/usr/local/share/$relative_path"
+        )
+    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -path "*/xfwm4*" -type d 2>/dev/null | sort)
     while IFS= read -r share_file; do
         relative_path="${share_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
-        UPSTREAM_LXPANEL_INITRAMFS_ARGS+=(
+        UPSTREAM_XFCE_INITRAMFS_ARGS+=(
+            --file "/usr/local/$relative_path:$share_file:0444"
         )
-    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xfwm4" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -type f 2>/dev/null | sort)
+    done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/xfwm4" "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/themes" -path "*/xfwm4*" -type f 2>/dev/null | sort)
 fi
 
 UPSTREAM_FREETYPE_INITRAMFS_ARGS=()
 if [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 ]]; then
-    UPSTREAM_FREETYPE_INITRAMFS_ARGS=(
-        --file "/bin/freetype-upstream-test:$BUILD_DIR/FREETYPE_UPSTREAM_TEST.ELF:exec"
-        --file "/lib/libfreetype.so.6:$UPSTREAM_FREETYPE_BUILD/libfreetype.so.6.20.6:0444"
+    UPSTREAM_FREETYPE_LIB="$(akaos_find_lib 'libfreetype.so.6.*' "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib" "$UPSTREAM_FREETYPE_BUILD")"
+    UPSTREAM_FREETYPE_INITRAMFS_ARGS=()
+    if [[ -f "$BUILD_DIR/FREETYPE_UPSTREAM_TEST.ELF" ]]; then
+        UPSTREAM_FREETYPE_INITRAMFS_ARGS+=(--file "/bin/freetype-upstream-test:$BUILD_DIR/FREETYPE_UPSTREAM_TEST.ELF:exec")
+    fi
+    UPSTREAM_FREETYPE_INITRAMFS_ARGS+=(
+        --file "/lib/libfreetype.so.6:$UPSTREAM_FREETYPE_LIB:0444"
+        --file "/usr/local/lib/libfreetype.so.6:$UPSTREAM_FREETYPE_LIB:0444"
         --dir "/usr"
         --dir "/usr/share"
         --dir "/usr/share/fonts"
@@ -3430,8 +3758,6 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
     fi
 fi
 
-
-fi
 echo "[BUILD] akaOS initramfs archive (Desktop: $target_desktop, Session: $session_mode, Software: $menu_software)"
 
 # Synthesize /etc/akaos.conf based on user selection
@@ -3439,8 +3765,7 @@ autostart_val=0
 conf_desktop="$target_desktop"
 if [[ "$conf_desktop" == "none" ]]; then
     conf_desktop="lxde"
-fi
-if [[ "$target_desktop" != "none" && "$session_mode" == "desktop" ]]; then
+elif [[ "$session_mode" == "desktop" || "$target_desktop" != "none" ]]; then
     autostart_val=1
 fi
 cat > "$BUILD_DIR/akaos.conf" <<EOF
@@ -3541,17 +3866,17 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/bin/telnetd:$BUILD_DIR/TELNETD.ELF:exec" \
     --file "/bin/tftpd:$BUILD_DIR/TFTPD.ELF:exec" \
     --file "/bin/tftp:$BUILD_DIR/TFTP.ELF:exec" \
-    --file "/bin/startlxde:$BUILD_DIR/STARTLXDE.ELF:exec" \
-    --file "/bin/startlxqt:$BUILD_DIR/STARTLXQT.ELF:exec" \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]] && echo "--file /bin/openbox:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox:exec") \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" ]] && echo "--file /bin/pcmanfm:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm:exec") \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]] && echo "--file /bin/lxpanel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel:exec") \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel" ]] && echo "--file /bin/lxqt-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel:exec") \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session" ]] && echo "--file /bin/lxqt-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session:exec") \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm-qt" ]] && echo "--file /bin/pcmanfm-qt:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm-qt:exec") \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" ]] && echo "--file /bin/xfwm4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4:exec") \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel" ]] && echo "--file /bin/xfce4-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel:exec") \
-    $([[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session" ]] && echo "--file /bin/xfce4-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session:exec") \
+    $([[ "$target_desktop" == "lxqt" && -f "$BUILD_DIR/STARTLXQT.ELF" ]] && echo "--file /bin/startlxqt:$BUILD_DIR/STARTLXQT.ELF:exec") \
+    $([[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde" ]] && echo "--file /usr/local/bin/startlxde:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde:exec") \
+    $([[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" ]] && echo "--file /usr/local/bin/lxsession:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession:exec") \
+    $([[ ( "$target_desktop" == "openbox" || "$target_desktop" == "lxde" ) && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]] && echo "--file /bin/openbox:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox:exec") \
+    $([[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" ]] && echo "--file /bin/pcmanfm:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm:exec") \
+    $([[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]] && echo "--file /bin/lxpanel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel:exec") \
+    $([[ "$target_desktop" == "lxqt" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel" ]] && echo "--file /bin/lxqt-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel:exec") \
+    $([[ "$target_desktop" == "lxqt" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session" ]] && echo "--file /bin/lxqt-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session:exec") \
+    $([[ "$target_desktop" == "xfce" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" ]] && echo "--file /bin/xfwm4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4:exec") \
+    $([[ "$target_desktop" == "xfce" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel" ]] && echo "--file /bin/xfce4-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel:exec") \
+    $([[ "$target_desktop" == "xfce" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session" ]] && echo "--file /bin/xfce4-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session:exec") \
     --file "/bin/notepad:$BUILD_DIR/NOTEPAD.ELF:exec" \
     --file "/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec" \
     --file "/bin/webviewer:$BUILD_DIR/WEBVIEWER.ELF:exec" \
@@ -3612,10 +3937,6 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/bin/comm:$BUILD_DIR/COMM.ELF:exec" \
     --file "/bin/command:$BUILD_DIR/COMMAND.ELF:exec" \
     --file "/bin/continue:$BUILD_DIR/CONTINUE.ELF:exec" \
-    --file "/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
-    --file "/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \
-    --file "/usr/local/bin/hyprland:$BUILD_DIR/HYPRLAND.ELF:exec" \
-    --file "/usr/local/bin/hyprctl:$BUILD_DIR/HYPRCTL.ELF:exec" \
     --dir "/var/spool" \
     --dir "/var/spool/at" \
     --dir "/var/spool/at/spool" \
@@ -3703,6 +4024,8 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/lib/libakaos-loader-dep-2.so:$BUILD_DIR/libakaos-loader-dep-2.so:0444" \
     --file "/lib/libakaos-loader-dep-3.so:$BUILD_DIR/libakaos-loader-dep-3.so:0444" \
     --file "/lib/libakaos-loader-dep-4.so:$BUILD_DIR/libakaos-loader-dep-4.so:0444" \
+    --file "/lib/libgtk.so:$BUILD_DIR/libgtk.so:0444" \
+    --file "/lib/libgtk-4.so:$BUILD_DIR/libgtk-4.so:0444" \
     "${UPSTREAM_GLIB_INITRAMFS_ARGS[@]}" \
     "${UPSTREAM_HARFBUZZ_INITRAMFS_ARGS[@]}" \
     "${UPSTREAM_CAIRO_INITRAMFS_ARGS[@]}" \
@@ -3718,6 +4041,7 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     "${UPSTREAM_X11_INITRAMFS_ARGS[@]}" \
     "${UPSTREAM_OPENBOX_INITRAMFS_ARGS[@]}" \
     "${UPSTREAM_LXPANEL_INITRAMFS_ARGS[@]}" \
+    "${UPSTREAM_XFCE_INITRAMFS_ARGS[@]}" \
     "${UPSTREAM_DBUS_INITRAMFS_ARGS[@]}" \
     "${UPSTREAM_LXQT_INITRAMFS_ARGS[@]}" \
     "${UPSTREAM_LXQT_PANEL_INITRAMFS_ARGS[@]}" \
@@ -3738,23 +4062,21 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/lib/libakaos-capacity-11.so:$BUILD_DIR/libakaos-versioned.so:0444" \
     --file "/lib/libpthread.so:$BUILD_DIR/libpthread.so:0444" \
     --file "/lib/libpthread.so.0:$BUILD_DIR/libpthread.so:0444" \
-    --file "/lib/libglib.so:$BUILD_DIR/libglib.so:0444" \
-    --file "/lib/libglib-2.0.so.0:$GLIB_SONAME_IMAGE:0444" \
-    --file "/lib/libgobject-2.0.so.0:$GOBJECT_SONAME_IMAGE:0444" \
-    --file "/lib/libgio.so:$BUILD_DIR/libgio.so:0444" \
-    --file "/lib/libgio-2.0.so.0:$GIO_SONAME_IMAGE:0444" \
-    --file "/lib/libgtk.so:$BUILD_DIR/libgtk.so:0444" \
-    --file "/lib/libgtk-3.so.0:$BUILD_DIR/libgtk.so:0444" \
-    --file "/lib/libgdk-3.so.0:$BUILD_DIR/libgtk.so:0444" \
-    --file "/lib/libgtk-4.so:$BUILD_DIR/libgtk-4.so:0444" \
-    --file "/lib/libgtk-4.so.1:$BUILD_DIR/libgtk-4.so:0444" \
-    --file "/lib/libgdk-4.so.1:$BUILD_DIR/libgtk-4.so:0444" \
-    --file "/lib/libQt6Core.so:$BUILD_DIR/libQt6Core.so:0444" \
-    --file "/lib/libQt6Core.so.6:$BUILD_DIR/libQt6Core.so:0444" \
-    --file "/lib/libQt6Gui.so:$BUILD_DIR/libQt6Gui.so:0444" \
-    --file "/lib/libQt6Gui.so.6:$BUILD_DIR/libQt6Gui.so:0444" \
-    --file "/lib/libQt6Widgets.so:$BUILD_DIR/libQt6Widgets.so:0444" \
-    --file "/lib/libQt6Widgets.so.6:$BUILD_DIR/libQt6Widgets.so:0444" \
+    $([[ "$target_desktop" == "none" && "$menu_software" != "minimal" ]] && echo "
+    --file /lib/libglib.so:$BUILD_DIR/libglib.so:0444
+    --file /lib/libglib-2.0.so.0:$BUILD_DIR/libglib.so:0444
+    --file /lib/libgobject-2.0.so.0:$BUILD_DIR/libglib.so:0444
+    --file /lib/libgio.so:$BUILD_DIR/libgio.so:0444
+    --file /lib/libgio-2.0.so.0:$BUILD_DIR/libgio.so:0444
+    --file /lib/libgtk.so:$BUILD_DIR/libgtk.so:0444
+    --file /lib/libgtk-3.so.0:$BUILD_DIR/libgtk.so:0444
+    --file /lib/libgdk-3.so.0:$BUILD_DIR/libgtk.so:0444
+    --file /lib/libQt6Core.so:$BUILD_DIR/libQt6Core.so:0444
+    --file /lib/libQt6Core.so.6:$BUILD_DIR/libQt6Core.so:0444
+    --file /lib/libQt6Gui.so:$BUILD_DIR/libQt6Gui.so:0444
+    --file /lib/libQt6Gui.so.6:$BUILD_DIR/libQt6Gui.so:0444
+    --file /lib/libQt6Widgets.so:$BUILD_DIR/libQt6Widgets.so:0444
+    --file /lib/libQt6Widgets.so.6:$BUILD_DIR/libQt6Widgets.so:0444") \
         --file "/etc/test_all_181_commands.sh:$ROOT_DIR/userspace/etc/test_all_181_commands.sh:0755" \
 --file "/etc/passwd:$ROOT_DIR/userspace/etc/passwd:0644" \
     --file "/etc/group:$ROOT_DIR/userspace/etc/group:0644" \
@@ -3862,6 +4184,10 @@ for source in "${XSCORE_C_SOURCES[@]}"; do
     rel_source="${source#$ROOT_DIR/}"
     obj_name="${rel_source//\//_}"
     object="$BUILD_DIR/${obj_name%.c}.o"
+    if [[ "${AKAOS_REBUILD_KERNEL:-0}" != "1" && -f "$object" && "$object" -nt "$source" ]]; then
+        XSCORE_OBJECTS+=("$object")
+        continue
+    fi
     clang --target=x86_64-unknown-none-elf \
         -std=c17 -O2 -Wall -Wextra -Werror \
         -ffreestanding -fno-stack-protector -fno-pic -fno-pie \

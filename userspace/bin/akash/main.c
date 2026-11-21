@@ -4271,8 +4271,9 @@ int main(int argc, char **argv) {
         char input[64];
         ssize_t n = read(STDIN_FILENO, input, sizeof(input));
         if (n < 0) {
-            /* A caught terminal signal interrupts the blocking TTY read.
-             * Discard the partial command and redraw a clean prompt. */
+            if (errno == EINTR) {
+                continue;
+            }
             raw_used = 0;
             prompt_needed = 1;
             continue;

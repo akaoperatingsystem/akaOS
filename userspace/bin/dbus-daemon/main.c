@@ -38,6 +38,7 @@ static size_t align8(size_t value);
 static void dbus_close_fds(int *fds, size_t *fd_count);
 
 static char dbus_guid[33] = "00000000000000000000000000000001";
+static char dbus_machine_id[33] = "akaos000000000000000000000000001";
 
 static void initialize_dbus_guid(int session) {
     struct timespec now = {0};
@@ -2167,7 +2168,7 @@ static int handle_binary_client(struct dbus_client_context *context) {
         } else if (strcmp(member, "GetId") == 0) {
             sent = send_string_return(client, serial, dbus_guid);
         } else if (strcmp(member, "GetMachineId") == 0) {
-            sent = send_string_return(client, serial, dbus_guid);
+            sent = send_string_return(client, serial, dbus_machine_id);
         } else if (strcmp(member, "RequestName") == 0 &&
                    (strcmp(signature, "s") == 0 ||
                     strcmp(signature, "su") == 0)) {

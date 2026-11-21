@@ -131,9 +131,7 @@ commands = [
     "akaos-config --port 0",
     "akaos-config --autostart-desktop 1 --hostname akaOS-test",
     "akaos-config --status",
-    "aurora --once",
-    "desktop --check",
-    "desktop --help"
+    "aurora --once"
 ]
 
 for cmd in commands:

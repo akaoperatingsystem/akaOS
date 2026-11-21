@@ -97,7 +97,8 @@ int main(void) {
     const char *session_path = "/usr/local/bin/lxqt-session";
     if (access(session_path, F_OK) != 0) session_path = "/bin/lxqt-session";
     if (access(session_path, F_OK) != 0) {
-        session_path = access("/usr/local/bin/lxqt-panel", F_OK) == 0 ? "/usr/local/bin/lxqt-panel" : "/bin/lxqt-panel";
+        fprintf(stderr, "startlxqt: official lxqt-session is not installed; refusing panel-only fallback\n");
+        return 127;
     }
 
     char *session_args[] = {(char *)session_path, NULL};

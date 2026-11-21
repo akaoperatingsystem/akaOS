@@ -956,6 +956,7 @@ static const char *canonical_library_path(const char *path) {
             return "/lib/libgio.so";
         return "/lib/libglib.so";
     }
+
     if (strcmp(path, "/lib/libgtk-3.so.0") == 0 ||
         strcmp(path, "/lib/libgdk-3.so.0") == 0) {
         int saved_errno = errno;

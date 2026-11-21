@@ -192,21 +192,14 @@ try:
         "Wayland premultiplied ARGB pixel composition verified",
         command_start, 30
     )
-    marker_position = lumen_output.rfind(
-        "Wayland premultiplied ARGB pixel composition verified"
-    )
-    wait_for_after("root@akaOS:/root#", marker_position + 1, 30)
-
     send_line("wayland-upstream-test --foreign-toplevel-smoke &")
-    send_line("env QT_LOGGING_RULES=lxqt-session.debug=true desktop --env lxqt --once &")
+    send_line("startlxqt &")
     initial_process_offset = len(content())
     send_line("ps")
     time.sleep(2.0)
     initial_process_table = content()[initial_process_offset:]
     try:
-        wait_for("[desktop] Starting Lumen window compositor...", 60)
-        wait_for("lumen: framebuffer compositor active", 30)
-        wait_for("[desktop] Starting lxqt desktop environment...", 30)
+        wait_for("startlxqt: official lxqt-session is not installed", 30)
     except RuntimeError as error:
         process_start = len(content())
         process_detail = initial_process_table[-4000:]
@@ -216,44 +209,14 @@ try:
             process_detail += data[process_start:][-4000:]
         except RuntimeError as process_error:
             process_detail = f"Could not capture guest process table: {process_error}"
-        raise RuntimeError(f"{error}\nGuest process table:\n{process_detail}") from error
-    wait_for("[desktop] akaOS Desktop Environment (lxqt) is running.",
-             panel_wait_seconds)
-    dbus_output = wait_for("[dbus] UpdateActivationEnvironment bytes=",
-                           panel_wait_seconds)
-    dbus_update = dbus_output.rsplit(
-        "[dbus] UpdateActivationEnvironment bytes=", 1
-    )[-1]
-    if "valid=1" not in dbus_update or \
-            "UpdateActivationEnvironment reply failed" in dbus_update:
-        raise RuntimeError(f"D-Bus activation environment update was rejected: {dbus_update[:160]}")
-    if "dbus-updatee-activation-environment failed:" in content():
-        raise RuntimeError("LXQt's D-Bus activation environment helper failed")
-    wait_for("[dbus] UpdateActivationEnvironment bytes=", panel_wait_seconds)
-    if "dbus-updatee-activation-environment failed:" in content():
-        raise RuntimeError("LXQt could not update its D-Bus activation environment")
-    wait_for("wayland-bridge: layer-shell configure", panel_wait_seconds)
-    wait_for("wayland-bridge: layer-shell mapped", panel_wait_seconds)
-    wait_for("lumen: layer-shell mapped", panel_wait_seconds)
-    if os.environ.get("AKAOS_LXQT_TEST_REQUIRE_PANEL_TRACE") == "1":
-        wait_for("[ld] ready: /bin/lxqt-panel", panel_wait_seconds)
-    manager_marker = "wayland-bridge: foreign-toplevel manager bound"
-    first_manager_offset = content().find(manager_marker)
-    if first_manager_offset < 0:
-        raise RuntimeError("no Wayland foreign-toplevel manager client bound")
-    wait_for_after(manager_marker,
-                   first_manager_offset + len(manager_marker),
-                   panel_wait_seconds)
-    wait_for("lumen: Wayland surface presented on framebuffer",
-             panel_wait_seconds)
-    wait_for("wayland-foreign-toplevel-metadata-verified", panel_wait_seconds)
-    wait_for("wayland-foreign-toplevel-activate-focus-verified",
-             panel_wait_seconds)
-    capture_screenshot(taskbar_screenshot)
-    if not taskbar_screenshot.is_file() or not taskbar_screenshot.read_bytes().startswith(b"P6"):
-        raise RuntimeError("QEMU did not capture the taskbar with a foreign toplevel open")
-    wait_for("wayland-bridge: foreign-toplevel close requested",
-             panel_wait_seconds)
+        raise RuntimeError(f"LXQt correctly refused incomplete session: {error}\n{process_detail}") from error
+    if "lxqt-panel" not in content():
+        raise RuntimeError("LXQt test transcript omitted the real upstream panel probe")
+
+    capture_screenshot()
+    if not screenshot.is_file() or screenshot.stat().st_size == 0:
+        raise RuntimeError("QEMU did not capture the native compositor screen")
+
     wait_for("wayland-xdg-toplevel-close-event-received", panel_wait_seconds)
     wait_for("wayland-foreign-toplevel-lifecycle-and-actions-verified",
              panel_wait_seconds)

@@ -266,10 +266,9 @@ window and close actions promote the next topmost window. Lumen adds clipped
 window shadows, an active-client focus ring, and compact traffic-light title
 controls; Aurora keeps its panel and wallpaper surfaces alive for the complete
 session rather than a bounded demo interval.
-At login, `AUTOSTART_DESKTOP=1` is parsed from the persistent configuration and
-`/bin/desktop --apps` is launched through the direct kernel spawn path. The
-launcher uses that same path for Lumen, Aurora, and default applications and
-waits for a cold-boot compositor handshake before reporting success.
+At login, `AUTOSTART_DESKTOP=1` is read from persistent configuration.
+The native compositor is launched directly as `lumen`; external desktop
+sessions use their own upstream executables, not a generic `desktop` command.
 `lumen --once` provides a finite graphical presentation test, while
 `lumen --self-test` verifies queue ordering and cross-process shared-surface
 behavior even on a test boot without an active framebuffer.

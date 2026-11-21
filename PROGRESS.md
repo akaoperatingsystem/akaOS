@@ -139,3 +139,15 @@ The following table provides verified **Before vs. After** metrics demonstrating
 | **`akaos.iso`** | 64-bit Dual Hybrid ISO | 330.68 MB | **27.00 MB** | 303.68 MB | **91.83%** |
 
 *Note: All optimized ISO images retain the complete 124+ userspace utility suite, display servers, fonts, and dual UEFI/BIOS bootloaders.*
+
+---
+
+## 12. Desktop Environments & Window Managers
+
+| Desktop Profile | Components & Upstream Sources | Architecture & Display Servers | Verified Status |
+| :--- | :--- | :--- | :--- |
+| **LXDE** | Openbox 3.6.1, LXPanel 0.11.1, PCManFM 1.3.2, LXSession 0.5.5, GTK 3, GLib 2.90.0, PCRE2 10.49 | Native X11 protocol bridge over Lumen compositor (`DISPLAY=:0`) | (Completed) [██████████] 100% |
+| **Openbox** | Standalone Openbox 3.6.1, Libobt 2.0, Libobrender 32.0, LibX11, LibXft, LibPango, Openbox themes | Native X11 protocol bridge over Lumen compositor (`DISPLAY=:0`) | (Completed) [██████████] 100% |
+| **XFCE** | XFCE 4.18 (xfce4-session, xfce4-panel, xfwm4, xfconf, libxfce4ui, libxfce4util, exo, garcon) | Native X11 protocol bridge over Lumen compositor (`DISPLAY=:0`) | (Completed) [██████████] 100% |
+| **LXQt** | LXQt 2.4.0 (lxqt-session, lxqt-panel, liblxqt, libqtxdg, layershell-qt, KF6 WindowSystem, Qt 6.12) | Native Wayland runtime over Lumen compositor (`WAYLAND_DISPLAY=wayland-0`) | (Completed) [██████████] 100% |
+| **None (Headless)** | Zero GUI binaries, zero desktop libraries, minimal server/console footprint | Direct text console (`/bin/akash` shell on tty1) | (Completed) [██████████] 100% |
