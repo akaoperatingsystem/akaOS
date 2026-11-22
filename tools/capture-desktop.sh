@@ -71,7 +71,7 @@ time.sleep(0.4)
 process.stdin.write(keys("root") + keys("root"))
 process.stdin.flush()
 # Wait for desktop session to fully spawn components and map windows
-time.sleep(12.0)
+time.sleep(22.0)
 # Lumen now owns keyboard input exclusively while the graphical session is
 # active. Launch applications through Aurora, not through the hidden TTY.
 process.stdin.write("sendkey f1\n")

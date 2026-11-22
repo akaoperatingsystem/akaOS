@@ -571,10 +571,13 @@ void x_server_repaint_rect(struct x_server *server, int16_t x, int16_t y,
 
     int root = x_window_index(server, X_ROOT_WINDOW_ID);
     uint32_t background = root >= 0 ? server->windows[root].background_pixel : 0U;
+    const uint32_t *root_backing = (root >= 0 && server->windows[root].backing) ?
+                                  server->windows[root].backing : NULL;
     for (int32_t row = start_y; row < end_y; ++row) {
         uint32_t *line = server->screen + (size_t)row * server->width;
+        const uint32_t *source_line = root_backing ? root_backing + (size_t)row * server->width : NULL;
         for (int32_t column = start_x; column < end_x; ++column) {
-            line[column] = background;
+            line[column] = source_line ? source_line[column] : background;
         }
     }
     if (root >= 0) {

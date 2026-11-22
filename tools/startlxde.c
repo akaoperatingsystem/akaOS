@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
         _exit(127);
     }
 
-    usleep(300000);
+    usleep(400000);
 
     /* 2. Launch PCManFM Desktop Manager (draws wallpaper and desktop shortcuts) */
     pid_t fm_pid = fork();
@@ -35,9 +35,19 @@ int main(int argc, char **argv) {
         _exit(127);
     }
 
-    usleep(300000);
+    usleep(400000);
 
-    /* 3. Launch LXPanel (draws taskbar, start menu, system tray, and clock) */
+    /* 3. Launch an authentic PCManFM window showing /root */
+    pid_t win_pid = fork();
+    if (win_pid == 0) {
+        usleep(600000);
+        char *win_argv[] = {"pcmanfm", "/root", NULL};
+        execv("/usr/local/bin/pcmanfm", win_argv);
+        execv("/bin/pcmanfm", win_argv);
+        _exit(127);
+    }
+
+    /* 4. Launch LXPanel in foreground (draws taskbar, start menu, system tray, and clock) */
     char *panel_argv[] = {"lxpanel", "--profile", "LXDE", NULL};
     execv("/usr/local/bin/lxpanel", panel_argv);
     execv("/bin/lxpanel", panel_argv);

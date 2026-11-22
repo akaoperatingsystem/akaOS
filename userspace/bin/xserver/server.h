@@ -314,6 +314,7 @@ void x_server_repaint_rect(struct x_server *server, int16_t x, int16_t y,
 void x_server_damage(struct x_server *server, int window_index, int16_t x,
                      int16_t y, int16_t width, int16_t height);
 void x_window_fill_backing(struct x_server *server, int index, uint32_t pixel);
+void x_render_authentic_desktop(struct x_server *server, const char *desktop_env);
 void x_window_absolute_origin(struct x_server *server, int index,
                               int16_t *out_x, int16_t *out_y);
 int x_window_find_at(struct x_server *server, int16_t x, int16_t y);

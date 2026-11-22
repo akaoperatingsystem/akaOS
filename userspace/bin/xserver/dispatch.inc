@@ -265,8 +265,8 @@ static void request_change_window_attributes(struct x_server *server,
     read_window_values(server, client, reader, value_mask, index);
 
     window->all_event_masks = x_window_all_event_masks(server, index);
-    if (window->parent < 0) {
-        /* The root window paints its background into its own backing store. */
+    if (window->parent >= 0 && (value_mask & (1U << 1))) {
+        /* Child windows paint their background into their own backing store. */
         x_window_fill_backing(server, index, window->background_pixel);
     }
     x_server_repaint(server);
