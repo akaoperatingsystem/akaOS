@@ -175,20 +175,10 @@ perform_authenticated_session:
                 dargs[0] = (char *)session_path;
                 dargs[1] = NULL;
             } else if (strcmp(env_buf, "openbox") == 0) {
-                if (access("/bin/x11-client", X_OK) == 0) {
-                    char cl_path[] = "/bin/x11-client";
-                    char *cl_args[] = {cl_path, NULL};
-                    (void)spawn(cl_path, cl_args);
-                }
                 session_path = access("/usr/local/bin/openbox", X_OK) == 0 ? "/usr/local/bin/openbox" : "/bin/openbox";
                 dargs[0] = (char *)session_path;
                 dargs[1] = NULL;
             } else if (strcmp(env_buf, "xfce") == 0) {
-                if (access("/bin/x11-client", X_OK) == 0) {
-                    char cl_path[] = "/bin/x11-client";
-                    char *cl_args[] = {cl_path, NULL};
-                    (void)spawn(cl_path, cl_args);
-                }
                 session_path = access("/usr/local/bin/xfce4-session", X_OK) == 0 ? "/usr/local/bin/xfce4-session" : "/bin/xfce4-session";
                 dargs[0] = (char *)session_path;
                 dargs[1] = NULL;

@@ -72,16 +72,16 @@ process.stdin.write(keys("root") + keys("root"))
 process.stdin.flush()
 # Wait for desktop session to fully spawn components and map windows
 # Wait for desktop session components to finish mapping
-for _ in range(600):
+for _ in range(800):
     try:
         content = open(log, errors="ignore").read()
-        if "request 8 " in content or "request 8\n" in content:
+        if "c5 request 8" in content or "c6 request 8" in content or "c7 request 8" in content or "c8 request 8" in content:
             print("Desktop window mapped!")
             break
     except OSError:
         pass
     time.sleep(0.1)
-time.sleep(8.0)
+time.sleep(12.0)
 # Trigger root menu on the desktop via right-click (mouse_button 4 in QEMU HMP)
 process.stdin.write("mouse_button 4\nmouse_button 0\n")
 process.stdin.flush()

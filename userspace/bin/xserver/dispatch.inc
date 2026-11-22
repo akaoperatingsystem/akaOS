@@ -1220,8 +1220,7 @@ static void request_put_image(struct x_server *server, struct x_client *client,
         return;
     }
     if (!drawable_exists(server, drawable)) {
-        x_reply_error(client, BadDrawable, 0, drawable);
-        return;
+        drawable = X_ROOT_WINDOW_ID;
     }
     uint8_t format = client->request_minor;
     size_t bytes = 0U;

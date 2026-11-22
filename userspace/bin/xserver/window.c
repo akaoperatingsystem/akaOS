@@ -157,7 +157,7 @@ int x_window_create(struct x_server *server, struct x_client *client,
     window->next_sibling = -1;
     window->prev_sibling = -1;
 
-    if (width && height) {
+    if (input_class != InputOnly && width && height) {
         window->backing = allocate_backing(server, width, height);
         window->backing_bytes = (size_t)width * (size_t)height *
                                 sizeof(uint32_t);
@@ -503,7 +503,7 @@ static void blit_window(struct x_server *server, int index, int16_t clip_x,
                         int16_t clip_y, uint16_t clip_width,
                         uint16_t clip_height) {
     struct x_window *window = &server->windows[index];
-    if (!window->backing) return;
+    if (window->input_class == InputOnly || !window->backing) return;
     int16_t origin_x = 0;
     int16_t origin_y = 0;
     x_window_absolute_origin(server, index, &origin_x, &origin_y);

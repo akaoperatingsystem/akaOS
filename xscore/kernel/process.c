@@ -56,7 +56,7 @@ extern void xscore_serial_number(const char *prefix, uint64_t value, const char 
 #if defined(XSCORE_LOW_MEMORY)
 #define USER_MAX_HEAP_PAGES 128U
 #else
-#define USER_MAX_HEAP_PAGES 1024U
+#define USER_MAX_HEAP_PAGES 8192U
 #endif
 #else
 #define USER_MAX_HEAP_PAGES 256U
@@ -1984,7 +1984,7 @@ static int process_resolve_cow(struct xscore_process *process,
     uint64_t old_physical = *physical_slot;
     if (xscore_pmm_refcount_get(old_physical) == 1) {
         if (!process_remap_page(process, virtual_address, old_physical,
-                                writable_flags | XSCORE_PAGE_WRITABLE)) return 0;
+                                writable_flags | XSCORE_PAGE_PRESENT | XSCORE_PAGE_WRITABLE)) return 0;
         *cow_slot = 0;
         if (!(process_runtime_flags & PROCESS_RUNTIME_COW_REPORTED)) {
             xscore_serial_write("[INFO] Copy-on-Write user fault resolved\n");
@@ -2001,7 +2001,7 @@ static int process_resolve_cow(struct xscore_process *process,
         destination[word] = source[word];
     }
     if (!process_remap_page(process, virtual_address, new_physical,
-                            writable_flags | XSCORE_PAGE_WRITABLE)) {
+                            writable_flags | XSCORE_PAGE_PRESENT | XSCORE_PAGE_WRITABLE)) {
         xscore_pmm_free_page(new_physical);
         return 0;
     }
@@ -2043,7 +2043,7 @@ int xscore_process_handle_page_fault(uint64_t fault_address,
                     process, fault_page,
                     &process->heap_physical_pages[heap_index],
                     &process->heap_page_cow[heap_index],
-                    XSCORE_PAGE_USER | XSCORE_PAGE_NO_EXECUTE);
+                    XSCORE_PAGE_PRESENT | XSCORE_PAGE_USER | XSCORE_PAGE_NO_EXECUTE);
             }
         }
         for (uint32_t index = 0; index < process->mmap_page_count; ++index) {
@@ -4241,7 +4241,7 @@ int64_t xscore_process_fork(uint64_t *out_pid) {
         child->heap_page_cow[i] = 0;
         child->heap_page_count = i + 1;
         if (!src_paddr) continue;
-        uint64_t shared_flags = XSCORE_PAGE_USER | XSCORE_PAGE_NO_EXECUTE;
+        uint64_t shared_flags = XSCORE_PAGE_PRESENT | XSCORE_PAGE_USER | XSCORE_PAGE_NO_EXECUTE;
         if (!parent->heap_page_cow[i]) {
             if (!process_remap_page(parent, vaddr, src_paddr, shared_flags)) {
                 goto fork_failed;

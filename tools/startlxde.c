@@ -37,16 +37,7 @@ int main(int argc, char **argv) {
 
     usleep(400000);
 
-    /* 3. Launch an authentic X11 client window */
-    pid_t win_pid = fork();
-    if (win_pid == 0) {
-        usleep(500000);
-        char *win_argv[] = {"x11-client", NULL};
-        execv("/bin/x11-client", win_argv);
-        _exit(127);
-    }
-
-    /* 4. Launch LXPanel in foreground (draws taskbar, start menu, system tray, and clock) */
+    /* 3. Launch LXPanel in foreground (draws taskbar, start menu, system tray, and clock) */
     char *panel_argv[] = {"lxpanel", "--profile", "LXDE", NULL};
     execv("/usr/local/bin/lxpanel", panel_argv);
     execv("/bin/lxpanel", panel_argv);
