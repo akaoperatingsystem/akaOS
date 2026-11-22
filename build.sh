@@ -55,6 +55,23 @@ UPSTREAM_WAYLAND_BUILD="$BUILD_DIR/upstream-build/wayland-1.26.0/x86_64-akaos-wa
 UPSTREAM_WAYLAND_SOURCE="$BUILD_DIR/upstream-source/wayland-1.26.0/extracted"
 UPSTREAM_WAYLAND_HOST_PREFIX="$BUILD_DIR/host-tools/wayland-1.26.0"
 UPSTREAM_WAYLAND_PROTOCOLS_BUILD="$BUILD_DIR/upstream-build/wayland-protocols-1.46/native-data"
+
+ensure_wayland_scanner() {
+    if [[ -x "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner" ]]; then
+        return 0
+    fi
+    local host_scanner
+    host_scanner="$(command -v wayland-scanner || true)"
+    if [[ -n "$host_scanner" && -x "$host_scanner" ]]; then
+        mkdir -p "$UPSTREAM_WAYLAND_HOST_PREFIX/bin"
+        ln -sf "$host_scanner" "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner"
+        return 0
+    fi
+    if [[ -f "$ROOT_DIR/tools/build-upstream-wayland.sh" ]]; then
+        echo "[BUILD] Building host wayland-scanner from upstream sources..."
+        bash "$ROOT_DIR/tools/build-upstream-wayland.sh"
+    fi
+}
 UPSTREAM_XKBCOMMON_BUILD="$BUILD_DIR/upstream-build/libxkbcommon-1.13.2/x86_64-akaos"
 UPSTREAM_XKBCOMMON_SOURCE="$BUILD_DIR/upstream-source/libxkbcommon-1.13.2/extracted"
 UPSTREAM_GRAPHICS_SYSROOT="$BUILD_DIR/upstream-sysroot/graphics-x86_64"
@@ -1571,6 +1588,7 @@ build_upstream_gtk_program() {
         -I"$INCLUDE_DIR" -I"$USER_INCLUDE_DIR" -I"$ROOT_DIR/xscore/include" \
         -c "$source" -o "$object"
     mkdir -p "$BUILD_DIR/gtk-wayland-test"
+    ensure_wayland_scanner
     "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner" server-header \
         "$protocol_xml" "$protocol_header"
     "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner" private-code \
@@ -1752,6 +1770,7 @@ build_upstream_wayland_bridge_program() {
         return 1
     fi
     mkdir -p "$protocol_dir"
+    ensure_wayland_scanner
     "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner" server-header \
         "$protocol_xml" "$protocol_header"
     "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner" private-code \
@@ -1848,6 +1867,7 @@ build_upstream_wayland_program() {
     local output="$BUILD_DIR/WAYLAND_UPSTREAM_TEST.ELF"
     local include_dir="$UPSTREAM_GRAPHICS_SYSROOT/usr/local/include"
     mkdir -p "$protocol_dir"
+    ensure_wayland_scanner
     "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner" client-header \
         "$protocol_xml" "$protocol_header"
     "$UPSTREAM_WAYLAND_HOST_PREFIX/bin/wayland-scanner" private-code \

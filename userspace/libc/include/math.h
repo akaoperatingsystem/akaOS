@@ -56,11 +56,18 @@
 #ifndef M_SQRT1_2
 #define M_SQRT1_2 0.707106781186547524400844362104849039
 #endif
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnan-infinity-disabled"
+#endif
 #ifndef INFINITY
 #define INFINITY __builtin_inff()
 #endif
 #ifndef NAN
 #define NAN __builtin_nanf("")
+#endif
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 #define fpclassify(value) __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, \
