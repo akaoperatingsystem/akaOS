@@ -274,27 +274,7 @@ int main(int argc, char **argv) {
     server.windows[root_index].border_pixel = 0U;
     /* The root window keeps its own backing store so a client that draws
      * straight into the root still reaches the screen. */
-    char env_buf[64] = "lxde";
-    int conf_fd = open("/etc/akaos.conf", O_RDONLY);
-    if (conf_fd >= 0) {
-        char conf_buf[512];
-        ssize_t n = read(conf_fd, conf_buf, sizeof(conf_buf) - 1);
-        close(conf_fd);
-        if (n > 0) {
-            conf_buf[n] = '\0';
-            char *p = strstr(conf_buf, "DESKTOP_ENV=");
-            if (p) {
-                p += 12;
-                size_t idx = 0;
-                while (*p && *p != '\n' && *p != '\r' && idx < sizeof(env_buf) - 1) {
-                    env_buf[idx++] = *p++;
-                }
-                env_buf[idx] = '\0';
-            }
-        }
-    }
-    x_render_authentic_desktop(&server, env_buf);
-    x_server_repaint(&server);
+    x_window_fill_backing(&server, root_index, 0x00202020U);
     /* The stacking order starts empty and holds the root window at the
      * bottom.  Every free slot has to read as empty, otherwise a newly
      * mapped window never reaches the stacking order. */

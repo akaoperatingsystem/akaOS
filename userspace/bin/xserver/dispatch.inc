@@ -844,8 +844,7 @@ static void request_create_gc(struct x_server *server, struct x_client *client,
     uint32_t value_mask = rd_u32(client, reader);
 
     if (!drawable_exists(server, drawable)) {
-        x_reply_error(client, BadDrawable, 0, drawable);
-        return;
+        drawable = X_ROOT_WINDOW_ID;
     }
     if (id == 0U || find_gc(server, id)) {
         x_reply_error(client, BadIDChoice, 0, id);

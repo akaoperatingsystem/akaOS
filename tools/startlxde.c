@@ -37,13 +37,12 @@ int main(int argc, char **argv) {
 
     usleep(400000);
 
-    /* 3. Launch an authentic PCManFM window showing /root */
+    /* 3. Launch an authentic X11 client window */
     pid_t win_pid = fork();
     if (win_pid == 0) {
-        usleep(600000);
-        char *win_argv[] = {"pcmanfm", "/root", NULL};
-        execv("/usr/local/bin/pcmanfm", win_argv);
-        execv("/bin/pcmanfm", win_argv);
+        usleep(500000);
+        char *win_argv[] = {"x11-client", NULL};
+        execv("/bin/x11-client", win_argv);
         _exit(127);
     }
 

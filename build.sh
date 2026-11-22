@@ -935,7 +935,7 @@ build_xserver() {
         return 0
     fi
     local objects=()
-    for unit in main client window events draw resource input setup xcore desktop; do
+    for unit in main client window events draw resource input setup xcore; do
         local object="$BUILD_DIR/user-$name-$unit.o"
         clang --target=x86_64-unknown-none-elf \
             -std=c17 -Os -Wall -Wextra -Werror \

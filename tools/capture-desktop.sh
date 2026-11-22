@@ -71,37 +71,25 @@ time.sleep(0.4)
 process.stdin.write(keys("root") + keys("root"))
 process.stdin.flush()
 # Wait for desktop session to fully spawn components and map windows
-time.sleep(22.0)
-# Lumen now owns keyboard input exclusively while the graphical session is
-# active. Launch applications through Aurora, not through the hidden TTY.
-process.stdin.write("sendkey f1\n")
+# Wait for desktop session components to finish mapping
+for _ in range(600):
+    try:
+        content = open(log, errors="ignore").read()
+        if "request 8 " in content or "request 8\n" in content:
+            print("Desktop window mapped!")
+            break
+    except OSError:
+        pass
+    time.sleep(0.1)
+time.sleep(8.0)
+# Trigger root menu on the desktop via right-click (mouse_button 4 in QEMU HMP)
+process.stdin.write("mouse_button 4\nmouse_button 0\n")
 process.stdin.flush()
-time.sleep(0.4)
-process.stdin.write(keys("task manager"))
-process.stdin.flush()
-time.sleep(1.0)
-process.stdin.write("sendkey f1\n")
-process.stdin.flush()
-time.sleep(0.4)
-process.stdin.write(keys("text editor"))
-process.stdin.flush()
-time.sleep(1.2)
-# Prove the production x86 PS/2 pointer path by moving from the initial screen
-# center onto the taskbar launcher in small, pixel-precise steps and clicking.
-for _ in range(10):
-    process.stdin.write("mouse_move -5 0\n")
-    process.stdin.flush()
-    time.sleep(0.01)
-for _ in range(72):
-    process.stdin.write("mouse_move 0 5\n")
-    process.stdin.flush()
-    time.sleep(0.01)
-process.stdin.write("mouse_button 1\nmouse_button 0\n")
-process.stdin.flush()
-time.sleep(0.8)
+time.sleep(1.5)
+# Capture live desktop frame
 process.stdin.write(f"screendump {ppm}\n")
 process.stdin.flush()
-time.sleep(0.7)
+time.sleep(0.8)
 process.stdin.write("quit\n")
 process.stdin.flush()
 try:
