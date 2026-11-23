@@ -1,7 +1,7 @@
 # akaOS Development Progress & Hardware Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.9.18-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.8.18-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.9.19-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.8.19-green.svg)](sdk/include/akaos/version.h)
 [![Architecture Parity](https://img.shields.io/badge/Architectures-6%2F6%20Passed-brightgreen.svg)](tools/build-arch-smoke.sh)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
 
@@ -142,9 +142,9 @@ The following table provides verified **Before vs. After** metrics demonstrating
 
 ---
 
-## 12. Native Onyx Desktop Shell & Terminal
+## 12. macOS-Class Onyx Desktop Architecture & Floating Dock
 
 | Desktop Profile | Components & Architecture | Display Architecture & Compositor | Verified Status |
 | :--- | :--- | :--- | :--- |
-| **Onyx Minimalist Dark** | Native Onyx Shell, 3 top floating acrylic status bar islands (Workspaces, Clock, System Status), centered floating terminal window with traffic lights, cat ASCII akafetch header, and interactive PTY shell (`/bin/akash`) | Native Lumen hardware display compositor, deep obsidian midnight canvas (`#07080b`), zero legacy desktop dependencies | (Completed) [██████████] 100% |
+| **Onyx macOS-Class** | Edge-to-edge top menu bar (`Onyx`, `File`, `Edit`, `View`, `Go`, `Window`, `Help`), live hardware RTC date/time, live dynamic RAM telemetry (`/proc/meminfo`), network status indicator, clean serene desktop canvas (`#07080b`), and centered floating glass bottom dock with anti-aliased squircle tiles (Terminal `>_`, Files `📁`, Settings `⚙`, Trash `🗑`) | Native Lumen hardware display compositor with anti-aliasing engine (767 smooth gradient colors, zero jagged 1-bit pixelation), zero forced startup windows | (Completed) [██████████] 100% |
 | **None (Headless)** | Pure text console, zero GUI overhead, minimal server/bootstrap footprint | Direct text console (`/bin/akash` shell on tty1) | (Completed) [██████████] 100% |

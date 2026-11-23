@@ -136,17 +136,6 @@ perform_authenticated_session:
                 (void)spawn(lm_path, lm_args);
                 (void)usleep(200000);
             }
-
-            /* Launch native Onyx minimalist desktop terminal window */
-            if (access("/bin/terminal", X_OK) == 0) {
-                char tm_path[] = "/bin/terminal";
-                char *tm_args[] = {tm_path, NULL};
-                printf("[session] Autostart enabled; launching native Onyx desktop (Lumen + Terminal)...\n");
-                pid_t dpid = spawn(tm_path, tm_args);
-                if (dpid < 0) {
-                    fprintf(2, "[session] Unable to launch Onyx terminal (errno=%d)\n", errno);
-                }
-            }
         }
         char *shell_argv[] = {account.shell, NULL};
 

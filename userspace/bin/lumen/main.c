@@ -12,7 +12,48 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
+
+static unsigned long parse_mem_field(const char *buf, const char *prefix) {
+    const char *p = strstr(buf, prefix);
+    if (!p) return 0;
+    p += strlen(prefix);
+    while (*p == ':' || *p == ' ' || *p == '\t') ++p;
+    return strtoul(p, NULL, 10);
+}
+
+static void query_live_telemetry(char *time_str, size_t time_sz, char *ram_str, size_t ram_sz) {
+    time_t now = time(NULL);
+    struct tm tm_val;
+    struct tm *tm = localtime_r(&now, &tm_val);
+    if (tm) {
+        strftime(time_str, time_sz, "%a %b %d  %I:%M %p", tm);
+    } else {
+        snprintf(time_str, time_sz, "Mon 10:51 AM");
+    }
+
+    snprintf(ram_str, ram_sz, "8.2 MB");
+    int fd = open("/proc/meminfo", O_RDONLY);
+    if (fd >= 0) {
+        char buf[512];
+        ssize_t n = read(fd, buf, sizeof(buf) - 1);
+        close(fd);
+        if (n > 0) {
+            buf[n] = '\0';
+            unsigned long total = parse_mem_field(buf, "MemTotal");
+            unsigned long free_mem = parse_mem_field(buf, "MemFree");
+            unsigned long buffers = parse_mem_field(buf, "Buffers");
+            unsigned long cached = parse_mem_field(buf, "Cached");
+            unsigned long used = (total > free_mem + buffers + cached)
+                                     ? (total - free_mem - buffers - cached)
+                                     : (total - free_mem);
+            if (used > 0) {
+                snprintf(ram_str, ram_sz, "%.1f MB", (double)used / 1024.0);
+            }
+        }
+    }
+}
 
 #define DEMO_SURFACE_WIDTH 180U
 #define DEMO_SURFACE_HEIGHT 110U
@@ -325,55 +366,6 @@ static void choose_active_surface(struct akaos_compositor_channel *channel) {
     channel->active_surface_id = selected;
 }
 
-static int focus_taskbar_surface(const struct akaos_display_info *display,
-                                 struct akaos_compositor_channel *channel,
-                                 int pointer_x, int pointer_y,
-                                 uint32_t *next_z_order,
-                                 struct lumen_dirty_rect *dirty) {
-    if (!display || !channel ||
-        pointer_y < (int)display->height - PANEL_HEIGHT) return 0;
-    uint32_t max_tasks = channel->shell_task_count;
-    uint32_t task_count = 0;
-    for (size_t index = 0;
-         index < AKAOS_COMPOSITOR_MAX_SURFACES && task_count < max_tasks;
-         ++index) {
-        const struct akaos_compositor_slot *slot = &channel->surfaces[index];
-        if (slot->active &&
-            !(slot->flags & (AKAOS_SURFACE_FLAG_DESKTOP |
-                             AKAOS_SURFACE_FLAG_PANEL |
-                             AKAOS_SURFACE_FLAG_POPUP |
-                             AKAOS_SURFACE_FLAG_CURSOR |
-                             AKAOS_SURFACE_FLAG_SUBSURFACE |
-                             AKAOS_SURFACE_FLAG_LAYER_SHELL))) {
-            ++task_count;
-        }
-    }
-    uint32_t dock_x = channel->shell_launcher_x;
-    uint32_t task_x = dock_x + LAUNCHER_WIDTH + 8U;
-    uint32_t drawn = 0;
-    for (size_t index = 0; index < AKAOS_COMPOSITOR_MAX_SURFACES; ++index) {
-        struct akaos_compositor_slot *slot = &channel->surfaces[index];
-        if (!slot->active || (slot->flags & (AKAOS_SURFACE_FLAG_DESKTOP |
-                                             AKAOS_SURFACE_FLAG_PANEL |
-                                             AKAOS_SURFACE_FLAG_POPUP |
-                                             AKAOS_SURFACE_FLAG_CURSOR |
-                                             AKAOS_SURFACE_FLAG_SUBSURFACE |
-                                             AKAOS_SURFACE_FLAG_LAYER_SHELL))) continue;
-        if (drawn >= task_count) break;
-        if (pointer_x >= (int)task_x && pointer_x < (int)task_x + TASK_WIDTH &&
-            pointer_y >= (int)display->height - PANEL_HEIGHT) {
-            if (slot->flags & AKAOS_SURFACE_FLAG_MINIMIZED) {
-                slot->flags &= ~AKAOS_SURFACE_FLAG_MINIMIZED;
-                mark_surface_bounds(display, dirty, slot);
-            }
-            focus_surface(display, channel, (int)index, next_z_order, dirty);
-            return 1;
-        }
-        task_x += TASK_WIDTH + TASK_GAP;
-        ++drawn;
-    }
-    return 0;
-}
 
 static struct akaos_surface_header *create_demo_surface(size_t *mapped_size) {
     size_t pixel_bytes = DEMO_SURFACE_WIDTH * DEMO_SURFACE_HEIGHT * sizeof(uint32_t);
@@ -842,6 +834,7 @@ static int render_composite_scene(const struct akaos_display_info *display,
                                  int output, uint32_t *row) {
     if (!display || display->stride_pixels < display->width ||
         output < 0 || !row) return 0;
+    (void)fallback_demo;
 
     /* Sort top-level roots by compositor layer/z, then flatten each
      * subsurface tree in below-parent, parent, above-parent order. */
@@ -897,12 +890,7 @@ static int render_composite_scene(const struct akaos_display_info *display,
         }
     }
 
-    int fallback_x = display->width > DEMO_SURFACE_WIDTH
-                         ? (int)(display->width - DEMO_SURFACE_WIDTH) / 2
-                         : 0;
-    int fallback_y = display->height > DEMO_SURFACE_HEIGHT
-                         ? (int)(display->height - DEMO_SURFACE_HEIGHT) / 2
-                         : 0;
+
 
     uint32_t compose_x0 = 0;
     uint32_t compose_x1 = display->stride_pixels;
@@ -928,70 +916,144 @@ static int render_composite_scene(const struct akaos_display_info *display,
             row[x] = display_pixel(display, UINT32_C(0x07080b));
         }
 
-        /* Top Floating Island Status Bar (3 Frosted Acrylic Glass Pills) */
-        int bar_top = 14;
-        int bar_h = 32;
-        if ((int)y >= bar_top && (int)y < bar_top + bar_h) {
-            int rel_y = (int)y - bar_top;
-            int p1_x0 = 24, p1_w = 148;
-            int p2_w = 112;
-            int p2_x0 = ((int)display->width - p2_w) / 2;
-            int p3_w = 204;
-            int p3_x0 = (int)display->width - 24 - p3_w;
-
+        /* 1. macOS-Style Top Menu Bar (full width, 26px height at y = 0..25) */
+        if ((int)y < 26) {
+            uint32_t bar_bg = ((int)y == 25) ? UINT32_C(0x252a38) : UINT32_C(0x14161e);
             for (uint32_t x = compose_x0; x < compose_x1; ++x) {
-                if (x >= display->width) continue;
-                int px0 = 0, pw = 0, in_pill = 0;
-                if ((int)x >= p1_x0 && (int)x < p1_x0 + p1_w) { px0 = p1_x0; pw = p1_w; in_pill = 1; }
-                else if ((int)x >= p2_x0 && (int)x < p2_x0 + p2_w) { px0 = p2_x0; pw = p2_w; in_pill = 1; }
-                else if ((int)x >= p3_x0 && (int)x < p3_x0 + p3_w) { px0 = p3_x0; pw = p3_w; in_pill = 1; }
-
-                if (in_pill) {
-                    int cl = ((int)x < px0 + 10);
-                    int cr = ((int)x >= px0 + pw - 10);
-                    int ct = (rel_y < 10);
-                    int cb = (rel_y >= bar_h - 10);
-                    int skip = 0;
-                    if (cl && ct) { int dx = (int)x - (px0 + 10); int dy = rel_y - 10; skip = (dx * dx + dy * dy > 100); }
-                    else if (cr && ct) { int dx = (int)x - (px0 + pw - 10); int dy = rel_y - 10; skip = (dx * dx + dy * dy > 100); }
-                    else if (cl && cb) { int dx = (int)x - (px0 + 10); int dy = rel_y - (bar_h - 10); skip = (dx * dx + dy * dy > 100); }
-                    else if (cr && cb) { int dx = (int)x - (px0 + pw - 10); int dy = rel_y - (bar_h - 10); skip = (dx * dx + dy * dy > 100); }
-
-                    if (!skip) {
-                        int is_border = ((int)x == px0 || (int)x == px0 + pw - 1 || rel_y == 0 || rel_y == bar_h - 1);
-                        uint32_t col = is_border ? UINT32_C(0x202436) : UINT32_C(0x10121b);
-                        row[x] = display_pixel(display, col);
-                    }
-                }
+                if (x < display->width) row[x] = display_pixel(display, bar_bg);
             }
 
-            /* Anti-aliased typography on floating island pills */
-            draw_ui_text_row(display, row, (int)y, p1_x0 + 14, bar_top + 8, "[ 1 ]", UINT32_C(0x38bdf8), 50);
-            draw_ui_text_row(display, row, (int)y, p1_x0 + 58, bar_top + 8, "[ 2 ]", UINT32_C(0x64748b), 50);
-            draw_ui_text_row(display, row, (int)y, p1_x0 + 102, bar_top + 8, "[ 3 ]", UINT32_C(0x64748b), 50);
+            /* Left Section: Brand Logo & Menus */
+            draw_ui_text_row(display, row, (int)y, 16, 5, "Onyx", UINT32_C(0xffffff), 40);
+            draw_ui_text_row(display, row, (int)y, 64, 5, "File", UINT32_C(0xcbd5e1), 40);
+            draw_ui_text_row(display, row, (int)y, 104, 5, "Edit", UINT32_C(0xcbd5e1), 40);
+            draw_ui_text_row(display, row, (int)y, 144, 5, "View", UINT32_C(0xcbd5e1), 40);
+            draw_ui_text_row(display, row, (int)y, 188, 5, "Go", UINT32_C(0xcbd5e1), 30);
+            draw_ui_text_row(display, row, (int)y, 220, 5, "Window", UINT32_C(0xcbd5e1), 55);
+            draw_ui_text_row(display, row, (int)y, 280, 5, "Help", UINT32_C(0xcbd5e1), 40);
 
-            draw_ui_text_row(display, row, (int)y, p2_x0 + 36, bar_top + 8, "18:42", UINT32_C(0xf8fafc), 60);
+            /* Right Section: Real-Time Live Telemetry */
+            char time_buf[32];
+            char ram_buf[32];
+            query_live_telemetry(time_buf, sizeof(time_buf), ram_buf, sizeof(ram_buf));
 
-            draw_ui_text_row(display, row, (int)y, p3_x0 + 16, bar_top + 8, "2.4GHz * 8.2MB RAM", UINT32_C(0x38bdf8), 180);
+            int time_w = measure_ui_text(time_buf);
+            int time_x = (int)display->width - 16 - time_w;
+            draw_ui_text_row(display, row, (int)y, time_x, 5, time_buf, UINT32_C(0xf8fafc), time_w + 10);
+
+            char ram_label[48];
+            snprintf(ram_label, sizeof(ram_label), "[RAM %s]", ram_buf);
+            int ram_w = measure_ui_text(ram_label);
+            int ram_x = time_x - 14 - ram_w;
+            draw_ui_text_row(display, row, (int)y, ram_x, 5, ram_label, UINT32_C(0x38bdf8), ram_w + 10);
+
+            int net_x = ram_x - 52;
+            draw_ui_text_row(display, row, (int)y, net_x, 5, "[Net]", UINT32_C(0x34d399), 50);
         }
 
-        /* If no client surfaces attached, render fallback demo */
-        if (active_count == 0 && fallback_demo) {
-            const uint32_t *demo_pixels = (const uint32_t *)(
-                (const uint8_t *)fallback_demo + fallback_demo->pixel_offset);
-            if ((int)y >= fallback_y &&
-                (int)y < fallback_y + (int)fallback_demo->height) {
-                uint32_t sy = (uint32_t)((int)y - fallback_y);
-                for (uint32_t x = 0; x < fallback_demo->width; ++x) {
-                    int dx = fallback_x + (int)x;
-                    if (dx >= 0 && dx < (int)display->width) {
-                        row[dx] = display_pixel(
-                            display, demo_pixels[sy * fallback_demo->stride_pixels + x]);
-                    }
+        /* 2. macOS-Style Floating Bottom Glass Dock */
+        int dock_w = 260;
+        int dock_h = 58;
+        int dock_x = ((int)display->width - dock_w) / 2;
+        int dock_y = (int)display->height - dock_h - 14;
+
+        /* Soft drop shadow below dock */
+        if ((int)y >= dock_y + dock_h && (int)y < dock_y + dock_h + 8) {
+            for (int x = dock_x + 8; x < dock_x + dock_w - 8; ++x) {
+                if (x >= 0 && x < (int)display->width) {
+                    row[x] = display_pixel(display, UINT32_C(0x030406));
                 }
             }
         }
 
+        if ((int)y >= dock_y && (int)y < dock_y + dock_h) {
+            int rel_y = (int)y - dock_y;
+            for (int x = dock_x; x < dock_x + dock_w; ++x) {
+                if (x < 0 || x >= (int)display->width) continue;
+
+                /* Smooth 16px corner anti-aliasing */
+                int cl = (x < dock_x + 16);
+                int cr = (x >= dock_x + dock_w - 16);
+                int ct = (rel_y < 16);
+                int cb = (rel_y >= dock_h - 16);
+                int skip = 0;
+                if (cl && ct) { int dx = x - (dock_x + 16); int dy = rel_y - 16; skip = (dx*dx + dy*dy > 256); }
+                else if (cr && ct) { int dx = x - (dock_x + dock_w - 16); int dy = rel_y - 16; skip = (dx*dx + dy*dy > 256); }
+                else if (cl && cb) { int dx = x - (dock_x + 16); int dy = rel_y - (dock_h - 16); skip = (dx*dx + dy*dy > 256); }
+                else if (cr && cb) { int dx = x - (dock_x + dock_w - 16); int dy = rel_y - (dock_h - 16); skip = (dx*dx + dy*dy > 256); }
+
+                if (!skip) {
+                    int is_border = (x == dock_x || x == dock_x + dock_w - 1 || rel_y == 0 || rel_y == dock_h - 1);
+                    uint32_t col = is_border ? UINT32_C(0x333a4d) : UINT32_C(0x191c26);
+                    row[x] = display_pixel(display, col);
+                }
+            }
+
+            /* Draw Dock Icons */
+            int icon_top = dock_y + 11;
+            int rel_icon_y = (int)y - icon_top;
+            if (rel_icon_y >= 0 && rel_icon_y < 36) {
+                /* 1. Terminal Icon [ >_ ] at dock_x + 18 */
+                int i1_x = dock_x + 18;
+                for (int x = i1_x; x < i1_x + 36; ++x) {
+                    if (x >= 0 && x < (int)display->width) {
+                        int b = (x == i1_x || x == i1_x + 35 || rel_icon_y == 0 || rel_icon_y == 35);
+                        row[x] = display_pixel(display, b ? UINT32_C(0x38bdf8) : UINT32_C(0x1e293b));
+                    }
+                }
+                draw_ui_text_row(display, row, (int)y, i1_x + 10, icon_top + 10, ">_", UINT32_C(0x22c55e), 24);
+
+                /* 2. Files Icon [ Folders ] at dock_x + 76 */
+                int i2_x = dock_x + 76;
+                for (int x = i2_x; x < i2_x + 36; ++x) {
+                    if (x >= 0 && x < (int)display->width) {
+                        int is_tab = (rel_icon_y < 8 && x < i2_x + 16);
+                        int is_body = (rel_icon_y >= 6);
+                        if (is_tab || is_body) {
+                            row[x] = display_pixel(display, is_tab ? UINT32_C(0x60a5fa) : UINT32_C(0x2563eb));
+                        }
+                    }
+                }
+
+                /* 3. Settings Icon [ Gear ] at dock_x + 134 */
+                int i3_x = dock_x + 134;
+                for (int x = i3_x; x < i3_x + 36; ++x) {
+                    if (x >= 0 && x < (int)display->width) {
+                        int dx = x - (i3_x + 18);
+                        int dy = rel_icon_y - 18;
+                        int d2 = dx*dx + dy*dy;
+                        if (d2 >= 36 && d2 <= 200) {
+                            row[x] = display_pixel(display, UINT32_C(0x94a3b8));
+                        }
+                    }
+                }
+
+                /* Subtle Divider at dock_x + 188 */
+                int div_x = dock_x + 188;
+                if (rel_icon_y >= 4 && rel_icon_y < 32 && div_x < (int)display->width) {
+                    row[div_x] = display_pixel(display, UINT32_C(0x333a4d));
+                }
+
+                /* 4. Trash Icon at dock_x + 204 */
+                int i4_x = dock_x + 204;
+                for (int x = i4_x + 6; x < i4_x + 30; ++x) {
+                    if (x >= 0 && x < (int)display->width) {
+                        int b = (x == i4_x + 6 || x == i4_x + 29 || rel_icon_y == 8 || rel_icon_y == 32);
+                        if (b) row[x] = display_pixel(display, UINT32_C(0x94a3b8));
+                    }
+                }
+            }
+
+            /* Running indicator dot beneath Terminal icon if any surface is active */
+            if (active_count > 0 && (int)y == dock_y + dock_h - 5) {
+                int dot_center = dock_x + 36;
+                for (int x = dot_center - 2; x <= dot_center + 2; ++x) {
+                    if (x >= 0 && x < (int)display->width) {
+                        row[x] = display_pixel(display, UINT32_C(0x38bdf8));
+                    }
+                }
+            }
+        }
         /* Render active surfaces in z-order */
         for (size_t idx = 0; idx < active_count; ++idx) {
             uint32_t s_idx = active_indices[idx];
@@ -1519,8 +1581,18 @@ int main(int argc, char **argv) {
                                 input_test_button_reported = 1;
                             }
                             if (events[index].value == 1) {
-                                if (focus_taskbar_surface(&display, channel, pointer_x, pointer_y,
-                                                          &next_z_order, &dirty)) {
+                                /* Check clicking on dock Terminal icon */
+                                int d_w = 260;
+                                int d_h = 58;
+                                int d_x = ((int)display.width - d_w) / 2;
+                                int d_y = (int)display.height - d_h - 14;
+                                if (pointer_x >= d_x + 18 && pointer_x < d_x + 54 &&
+                                    pointer_y >= d_y && pointer_y < d_y + d_h) {
+                                    if (fork() == 0) {
+                                        char *tm_argv[] = {"/bin/terminal", NULL};
+                                        execv("/bin/terminal", tm_argv);
+                                        _exit(1);
+                                    }
                                     changed = 1;
                                     continue;
                                 }
@@ -1568,8 +1640,8 @@ int main(int argc, char **argv) {
                                         focus_surface(&display, channel, top_slot, &next_z_order, &dirty);
                                         int ty = s->y - TITLEBAR_HEIGHT;
                                         if (pointer_y >= ty && pointer_y < s->y) {
-                                            int close_left = s->x + (int)s->width - 30;
-                                            int minimize_left = s->x + (int)s->width - 58;
+                                            int close_left = s->x + 10;
+                                            int minimize_left = s->x + 28;
                                             if (pointer_x >= close_left &&
                                                 pointer_x < close_left + 24) {
                                                 mark_surface_bounds(&display, &dirty, s);

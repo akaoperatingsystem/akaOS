@@ -3992,7 +3992,6 @@ static void print_bash_help(void) {
 }
 
 int main(int argc, char **argv) {
-    write(STDERR_FILENO, "[DEBUG-AKASH-ENTRY] main started\n", 33);
     (void)signal(SIGINT, shell_sigint_handler);
 
     const char *progname = (argc > 0) ? argv[0] : "bash";
