@@ -484,8 +484,8 @@ firmware_set=0
 low_memory_profile=0
 disk_type=auto
 disk_type_set=0
-target_desktop=none
-session_mode=console
+target_desktop=onyx
+session_mode=desktop
 menu_software=all
 menu_custom_packages=""
 boot_mode=splash
@@ -529,13 +529,13 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires lxde, lxqt, xfce, openbox, or none" >&2
+                echo "$1 requires onyx or none" >&2
                 exit 2
             fi
             target_desktop="$2"
             case "$target_desktop" in
-                none|lxde|lxqt|xfce|openbox) ;;
-                *) echo "Unsupported official desktop '$target_desktop'; supported: none, lxde, lxqt, xfce, openbox" >&2; exit 2 ;;
+                none|onyx|default) target_desktop="onyx" ;;
+                *) echo "Unsupported desktop '$target_desktop'; supported: onyx, none" >&2; exit 2 ;;
             esac
             if [[ "$target_desktop" != "none" ]]; then
                 session_mode="desktop"
@@ -648,68 +648,16 @@ case "$arch" in
         exit 2
         ;;
 esac
-if [[ "$target_desktop" != "none" && "$arch" != "x86_64" ]]; then
+if [[ "$target_desktop" != "none" && "$target_desktop" != "onyx" && "$arch" != "x86_64" ]]; then
     echo "Official upstream desktop '$target_desktop' is currently supported only for x86_64; rejecting $arch rather than packaging incompatible binaries." >&2
     exit 2
 fi
-if [[ "$target_desktop" == "none" ]]; then
+if [[ "$target_desktop" == "none" || "$target_desktop" == "onyx" || "$target_desktop" == "default" ]]; then
     :
-elif [[ "$target_desktop" == "openbox" ]]; then
-    for required in \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libobt.so.2" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libobrender.so.32" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxml2.so.2" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpangoxft-1.0.so.0" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpango-1.0.so.0" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libXft.so.2" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6"; do
-        [[ -f "$required" ]] || { echo "[ERROR] Official Openbox runtime missing: $required" >&2; exit 2; }
-    done
-elif [[ "$target_desktop" == "lxde" ]]; then
-    for required in \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgtk-3.so.0" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk-3.so.0" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk_pixbuf-2.0.so.0" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libfm-gtk3.so.4" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxml2.so.2" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/lib/libglib-2.0.so.0"; do
-        [[ -f "$required" ]] || { echo "[ERROR] Official LXDE runtime missing: $required" >&2; exit 2; }
-    done
-elif [[ "$target_desktop" == "lxqt" ]]; then
-    for required in \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libQt6Core.so.6" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libQt6Gui.so.6" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libQt6Widgets.so.6" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/liblxqt.so.2" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libKF6WindowSystem.so.6"; do
-        [[ -f "$required" ]] || { echo "[ERROR] Official LXQt runtime missing: $required" >&2; exit 2; }
-    done
-elif [[ "$target_desktop" == "xfce" ]]; then
-    for required in \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startxfce4" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxfce4ui-2.so.0" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxfce4util.so.7" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libxfconf-0.so.3" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgtk-3.so.0" \
-        "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libgdk-3.so.0"; do
-        [[ -f "$required" ]] || { echo "[ERROR] Official XFCE runtime missing: $required" >&2; exit 2; }
-    done
 else
-    echo "[ERROR] Unsupported official desktop '$target_desktop'; supported: none, lxde, lxqt, xfce, openbox" >&2
+    echo "[ERROR] Unsupported desktop '$target_desktop'; supported: onyx, none" >&2
     exit 2
 fi
-
 case "$disk_type" in
     auto) ;;
     fat32|iso) ;;

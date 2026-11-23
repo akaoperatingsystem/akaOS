@@ -919,45 +919,60 @@ static int render_composite_scene(const struct akaos_display_info *display,
          * input packet. */
         if (dirty && dirty->valid &&
             ((int)y < dirty->y || (int)y >= dirty->y + dirty->height)) continue;
-        /* Native wallpaper.  Lumen owns this full-screen layer so a
-         * 1280x800 desktop does not consume a multi-megabyte SHM object. */
-        uint32_t safe_width = display->width ? display->width : 1U;
-        uint32_t safe_height = display->height ? display->height : 1U;
+        /* Deep obsidian midnight black canvas background (#07080b) */
         for (uint32_t x = compose_x0; x < compose_x1; ++x) {
             if (x >= display->width) {
                 row[x] = display_pixel(display, 0);
                 continue;
             }
-            uint32_t r = g_light_theme ? 224U + y * 8U / safe_height
-                                       : 7U + y * 7U / safe_height;
-            uint32_t g = g_light_theme ? 231U + y * 7U / safe_height
-                                       : 13U + y * 13U / safe_height;
-            uint32_t b = g_light_theme ? 241U + y * 6U / safe_height
-                                       : 27U + y * 20U / safe_height;
-            uint32_t blue = x * 44U / safe_width;
-            uint32_t violet = (safe_width - x) * 18U / safe_width;
-            int ribbon_center = (int)(safe_width * 4U / 5U) - (int)y / 2;
-            int ribbon_distance = (int)x - ribbon_center;
-            if (ribbon_distance < 0) ribbon_distance = -ribbon_distance;
-            uint32_t ribbon = 0;
-            uint32_t ribbon_radius = safe_width / 3U;
-            if ((uint32_t)ribbon_distance < ribbon_radius && ribbon_radius) {
-                ribbon = (ribbon_radius - (uint32_t)ribbon_distance) * 32U /
-                         ribbon_radius;
+            row[x] = display_pixel(display, UINT32_C(0x07080b));
+        }
+
+        /* Top Floating Island Status Bar (3 Frosted Acrylic Glass Pills) */
+        int bar_top = 14;
+        int bar_h = 32;
+        if ((int)y >= bar_top && (int)y < bar_top + bar_h) {
+            int rel_y = (int)y - bar_top;
+            int p1_x0 = 24, p1_w = 148;
+            int p2_w = 112;
+            int p2_x0 = ((int)display->width - p2_w) / 2;
+            int p3_w = 204;
+            int p3_x0 = (int)display->width - 24 - p3_w;
+
+            for (uint32_t x = compose_x0; x < compose_x1; ++x) {
+                if (x >= display->width) continue;
+                int px0 = 0, pw = 0, in_pill = 0;
+                if ((int)x >= p1_x0 && (int)x < p1_x0 + p1_w) { px0 = p1_x0; pw = p1_w; in_pill = 1; }
+                else if ((int)x >= p2_x0 && (int)x < p2_x0 + p2_w) { px0 = p2_x0; pw = p2_w; in_pill = 1; }
+                else if ((int)x >= p3_x0 && (int)x < p3_x0 + p3_w) { px0 = p3_x0; pw = p3_w; in_pill = 1; }
+
+                if (in_pill) {
+                    int cl = ((int)x < px0 + 10);
+                    int cr = ((int)x >= px0 + pw - 10);
+                    int ct = (rel_y < 10);
+                    int cb = (rel_y >= bar_h - 10);
+                    int skip = 0;
+                    if (cl && ct) { int dx = (int)x - (px0 + 10); int dy = rel_y - 10; skip = (dx * dx + dy * dy > 100); }
+                    else if (cr && ct) { int dx = (int)x - (px0 + pw - 10); int dy = rel_y - 10; skip = (dx * dx + dy * dy > 100); }
+                    else if (cl && cb) { int dx = (int)x - (px0 + 10); int dy = rel_y - (bar_h - 10); skip = (dx * dx + dy * dy > 100); }
+                    else if (cr && cb) { int dx = (int)x - (px0 + pw - 10); int dy = rel_y - (bar_h - 10); skip = (dx * dx + dy * dy > 100); }
+
+                    if (!skip) {
+                        int is_border = ((int)x == px0 || (int)x == px0 + pw - 1 || rel_y == 0 || rel_y == bar_h - 1);
+                        uint32_t col = is_border ? UINT32_C(0x202436) : UINT32_C(0x10121b);
+                        row[x] = display_pixel(display, col);
+                    }
+                }
             }
-            if (g_light_theme) {
-                r -= (blue + violet) / 6U;
-                g -= blue / 8U;
-                b += ribbon / 4U;
-            } else {
-                r += violet + ribbon / 3U;
-                g += blue / 2U + ribbon;
-                b += blue + violet * 2U + ribbon * 2U;
-            }
-            if (r > 255U) r = 255U;
-            if (g > 255U) g = 255U;
-            if (b > 255U) b = 255U;
-            row[x] = display_pixel(display, (r << 16) | (g << 8) | b);
+
+            /* Anti-aliased typography on floating island pills */
+            draw_ui_text_row(display, row, (int)y, p1_x0 + 14, bar_top + 8, "[ 1 ]", UINT32_C(0x38bdf8), 50);
+            draw_ui_text_row(display, row, (int)y, p1_x0 + 58, bar_top + 8, "[ 2 ]", UINT32_C(0x64748b), 50);
+            draw_ui_text_row(display, row, (int)y, p1_x0 + 102, bar_top + 8, "[ 3 ]", UINT32_C(0x64748b), 50);
+
+            draw_ui_text_row(display, row, (int)y, p2_x0 + 36, bar_top + 8, "18:42", UINT32_C(0xf8fafc), 60);
+
+            draw_ui_text_row(display, row, (int)y, p3_x0 + 16, bar_top + 8, "2.4GHz * 8.2MB RAM", UINT32_C(0x38bdf8), 180);
         }
 
         /* If no client surfaces attached, render fallback demo */
@@ -1025,53 +1040,45 @@ static int render_composite_scene(const struct akaos_display_info *display,
                 }
             }
 
-            /* Title bar rendering for regular windows */
+            /* Modern Onyx Window Title Bar & Traffic Lights */
             if (is_window && (int)y >= title_y && (int)y < win_y) {
-                int focused = slot->surface_id == channel->active_surface_id;
-                uint32_t acrylic_base = g_light_theme 
-                                         ? (focused ? UINT32_C(0xF0F8FAFC) : UINT32_C(0xF0E8EDF3))
-                                         : (focused ? UINT32_C(0xF01E293B) : UINT32_C(0xF0182232));
-                /* Subtle specular top-border highlight */
-                uint32_t tb_color = ((int)y == title_y) 
-                                    ? (g_light_theme ? UINT32_C(0x40FFFFFF) : UINT32_C(0x30FFFFFF))
-                                    : acrylic_base;
+                int rel_ty = (int)y - title_y;
                 for (int x = win_x; x < win_x + win_w; ++x) {
                     if (x >= 0 && x < (int)display->width) {
-                        uint32_t chrome = tb_color;
-                        int close_left = win_x + win_w - 30;
-                        int minimize_left = win_x + win_w - 58;
-                        /* Modern Rounded Pills */
-                        int in_pill_y = (int)y >= title_y + 6 && (int)y < title_y + 22;
-                        
-                        /* Check hover */
-                        int close_hover = pointer_x >= close_left && pointer_x < close_left + 24 && pointer_y >= title_y && pointer_y < win_y;
-                        int minimize_hover = pointer_x >= minimize_left && pointer_x < minimize_left + 24 && pointer_y >= title_y && pointer_y < win_y;
-                        
-                        /* Render Close Pill (Red) */
-                        if (in_pill_y && x >= close_left && x < close_left + 24) {
-                            int dx = x - (close_left + 12);
-                            int dy = (int)y - (title_y + 14);
-                            if (dx * dx + dy * dy < 80) chrome = close_hover ? UINT32_C(0xFFFF4444) : UINT32_C(0xFF800000);
-                        }
-                        
-                        /* Render Minimize Pill (Amber) */
-                        if (in_pill_y && x >= minimize_left && x < minimize_left + 24) {
-                            int dx = x - (minimize_left + 12);
-                            int dy = (int)y - (title_y + 14);
-                            if (dx * dx + dy * dy < 80) chrome = minimize_hover ? UINT32_C(0xFFFFCC00) : UINT32_C(0xFF806000);
-                        }
-                        row[x] = display_pixel(display, chrome);
+                        /* 12px rounded corner clipping on top of window frame */
+                        int cl = (x < win_x + 12);
+                        int cr = (x >= win_x + win_w - 12);
+                        int skip = 0;
+                        if (cl && rel_ty < 12) { int dx = x - (win_x + 12); int dy = rel_ty - 12; skip = (dx * dx + dy * dy > 144); }
+                        else if (cr && rel_ty < 12) { int dx = x - (win_x + win_w - 12); int dy = rel_ty - 12; skip = (dx * dx + dy * dy > 144); }
+                        if (skip) continue;
+
+                        int is_top_border = (rel_ty == 0 || x == win_x || x == win_x + win_w - 1);
+                        uint32_t pixel_color = is_top_border ? UINT32_C(0x202436) : UINT32_C(0x10121b);
+
+                        /* Modern Traffic Light Dots on Top Left: Close (#ff5f56), Minimize (#ffbd2e), Maximize (#27c93f) */
+                        int dot_y = title_y + 14;
+                        int dy = (int)y - dot_y;
+                        /* Close Dot (#ff5f56) */
+                        int dx_c = x - (win_x + 18);
+                        if (dx_c * dx_c + dy * dy <= 28) pixel_color = UINT32_C(0xFFFF5F56);
+                        /* Minimize Dot (#ffbd2e) */
+                        int dx_m = x - (win_x + 36);
+                        if (dx_m * dx_m + dy * dy <= 28) pixel_color = UINT32_C(0xFFFFBD2E);
+                        /* Maximize Dot (#27c93f) */
+                        int dx_x = x - (win_x + 54);
+                        if (dx_x * dx_x + dy * dy <= 28) pixel_color = UINT32_C(0xFF27C93F);
+
+                        row[x] = display_pixel(display, pixel_color);
                     }
                 }
-                int title_width = measure_ui_text(slot->title[0] ? slot->title : "Window");
+                /* Window title centered */
+                const char *win_title = slot->title[0] ? slot->title : "root@akaos:~";
+                int title_width = measure_ui_text(win_title);
                 int title_x = win_x + (win_w - title_width) / 2;
-                if (title_x < win_x + 60) title_x = win_x + 60;
-                draw_ui_text_row(display, row, (int)y, title_x, title_y + 5,
-                                 slot->title[0] ? slot->title : "Window",
-                                 g_light_theme
-                                     ? (focused ? UINT32_C(0x1f2d40) : UINT32_C(0x687486))
-                                     : (focused ? UINT32_C(0xf3f6fc) : UINT32_C(0x9ba7b9)),
-                                 win_x + win_w - title_x - 64);
+                if (title_x < win_x + 76) title_x = win_x + 76;
+                draw_ui_text_row(display, row, (int)y, title_x, title_y + 6,
+                                 win_title, UINT32_C(0x94a3b8), win_w - 90);
             }
 
             /* Window/surface client area rendering */
@@ -1099,7 +1106,7 @@ static int render_composite_scene(const struct akaos_display_info *display,
             /* Focus ring on the client edge, painted after the surface. */
             if (is_window && slot->surface_id == channel->active_surface_id &&
                 (int)y >= win_y && (int)y < win_y + win_h) {
-                uint32_t edge = display_pixel(display, UINT32_C(0x477ab8));
+                uint32_t edge = display_pixel(display, UINT32_C(0x202436));
                 if ((int)y == win_y || (int)y == win_y + win_h - 1) {
                     for (int x = win_x; x < win_x + win_w; ++x)
                         if (x >= 0 && x < (int)display->width) row[x] = edge;

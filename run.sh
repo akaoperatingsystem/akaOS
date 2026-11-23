@@ -94,8 +94,8 @@ configure_run_interactively() {
     local menu_arch=x86_64
     local menu_firmware=uefi
     local menu_disk=fat32
-    local menu_desktop=none
-    local menu_session=console
+    local menu_desktop=onyx
+    local menu_session=desktop
     local menu_boot_mode=splash
     local menu_display=auto
     local menu_vga=virtio
@@ -243,11 +243,8 @@ configure_run_interactively() {
             desktop)
                 if selection="$(akaos_ui_menu \
                     "Select Desktop Environment" "Choose desktop environment to bundle:" "$menu_desktop" \
-                    "none" "None (Pure Console / No GUI desktop installed) [Default]" \
-                    "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM) [Recommended]" \
-                    "lxqt" "LXQt (Qt6 based modern desktop session)" \
-                    "xfce" "XFCE 4.18 (Full desktop session, panel, xfwm4)" \
-                    "openbox" "Openbox 3.6.1 (Clean lightweight window manager)")"; then
+                    "onyx" "Onyx Minimalist Dark Desktop (Lumen + Terminal) [Default]" \
+                    "none" "None (Pure Console / No GUI desktop installed)")"; then
                     menu_desktop="$selection"
                     if [[ "$menu_desktop" == "none" && "$menu_session" == "desktop" ]]; then
                         menu_session="console"
@@ -421,8 +418,8 @@ firmware=uefi
 firmware_set=0
 disk_type=auto
 disk_type_set=0
-menu_desktop=none
-menu_session=console
+menu_desktop=onyx
+menu_session=desktop
 boot_mode=splash
 menu_software=all
 menu_custom_packages=""
@@ -466,13 +463,13 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires lxde, lxqt, xfce, openbox, or none" >&2
+                echo "$1 requires onyx or none" >&2
                 exit 2
             fi
             menu_desktop="$2"
             case "$menu_desktop" in
-                none|lxde|lxqt|xfce|openbox) ;;
-                *) echo "Unsupported official desktop '$menu_desktop'; supported: none, lxde, lxqt, xfce, openbox" >&2; exit 2 ;;
+                none|onyx|default) menu_desktop="onyx" ;;
+                *) echo "Unsupported desktop '$menu_desktop'; supported: onyx, none" >&2; exit 2 ;;
             esac
             if [[ "$menu_desktop" != "none" ]]; then
                 menu_session="desktop"

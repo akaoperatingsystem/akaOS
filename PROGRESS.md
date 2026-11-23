@@ -1,7 +1,7 @@
 # akaOS Development Progress & Hardware Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.9.17-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.8.17-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.9.18-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.8.18-green.svg)](sdk/include/akaos/version.h)
 [![Architecture Parity](https://img.shields.io/badge/Architectures-6%2F6%20Passed-brightgreen.svg)](tools/build-arch-smoke.sh)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
 
@@ -142,12 +142,9 @@ The following table provides verified **Before vs. After** metrics demonstrating
 
 ---
 
-## 12. Desktop Environments & Window Managers
+## 12. Native Onyx Desktop Shell & Terminal
 
-| Desktop Profile | Components & Upstream Sources | Architecture & Display Servers | Verified Status |
+| Desktop Profile | Components & Architecture | Display Architecture & Compositor | Verified Status |
 | :--- | :--- | :--- | :--- |
-| **LXDE** | Openbox 3.6.1, LXPanel 0.11.1, PCManFM 1.3.2, LXSession 0.5.5, GTK 3, GLib 2.90.0, PCRE2 10.49 | Native X11 protocol bridge over Lumen compositor (`DISPLAY=:0`) | (Completed) [██████████] 100% |
-| **Openbox** | Standalone Openbox 3.6.1, Libobt 2.0, Libobrender 32.0, LibX11, LibXft, LibPango, Openbox themes | Native X11 protocol bridge over Lumen compositor (`DISPLAY=:0`) | (Completed) [██████████] 100% |
-| **XFCE** | XFCE 4.18 (xfce4-session, xfce4-panel, xfwm4, xfconf, libxfce4ui, libxfce4util, exo, garcon) | Native X11 protocol bridge over Lumen compositor (`DISPLAY=:0`) | (Completed) [██████████] 100% |
-| **LXQt** | LXQt 2.4.0 (lxqt-session, lxqt-panel, liblxqt, libqtxdg, layershell-qt, KF6 WindowSystem, Qt 6.12) | Native Wayland runtime over Lumen compositor (`WAYLAND_DISPLAY=wayland-0`) | (Completed) [██████████] 100% |
-| **None (Headless)** | Zero GUI binaries, zero desktop libraries, minimal server/console footprint | Direct text console (`/bin/akash` shell on tty1) | (Completed) [██████████] 100% |
+| **Onyx Minimalist Dark** | Native Onyx Shell, 3 top floating acrylic status bar islands (Workspaces, Clock, System Status), centered floating terminal window with traffic lights, cat ASCII akafetch header, and interactive PTY shell (`/bin/akash`) | Native Lumen hardware display compositor, deep obsidian midnight canvas (`#07080b`), zero legacy desktop dependencies | (Completed) [██████████] 100% |
+| **None (Headless)** | Pure text console, zero GUI overhead, minimal server/bootstrap footprint | Direct text console (`/bin/akash` shell on tty1) | (Completed) [██████████] 100% |

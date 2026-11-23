@@ -70,26 +70,21 @@ else:
 time.sleep(0.4)
 process.stdin.write(keys("root") + keys("root"))
 process.stdin.flush()
-# Wait for desktop session to fully spawn components and map windows
-# Wait for desktop session components to finish mapping
-for _ in range(800):
+# Wait for native Lumen compositor and Onyx desktop to initialize
+for _ in range(300):
     try:
         content = open(log, errors="ignore").read()
-        if "c5 request 8" in content or "c6 request 8" in content or "c7 request 8" in content or "c8 request 8" in content:
-            print("Desktop window mapped!")
+        if "lumen: framebuffer compositor active" in content or "lumen: surface attached" in content:
+            print("Lumen compositor active!")
             break
     except OSError:
         pass
     time.sleep(0.1)
-time.sleep(12.0)
-# Trigger root menu on the desktop via right-click (mouse_button 4 in QEMU HMP)
-process.stdin.write("mouse_button 4\nmouse_button 0\n")
-process.stdin.flush()
-time.sleep(1.5)
+time.sleep(6.0)
 # Capture live desktop frame
 process.stdin.write(f"screendump {ppm}\n")
 process.stdin.flush()
-time.sleep(0.8)
+time.sleep(1.0)
 process.stdin.write("quit\n")
 process.stdin.flush()
 try:

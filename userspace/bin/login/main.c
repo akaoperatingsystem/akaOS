@@ -125,71 +125,27 @@ perform_authenticated_session:
                     }
                 }
             }
-            if (strcmp(env_buf, "lxqt") == 0) {
-                (void)setenv("GDK_BACKEND", "wayland", 1);
-                (void)setenv("QT_QPA_PLATFORM", "wayland", 1);
-            } else {
-                (void)setenv("GDK_BACKEND", "x11,wayland", 1);
-            }
             (void)mkdir("/run", 0755);
             (void)mkdir("/run/user", 0755);
             (void)mkdir("/run/user/0", 0700);
-            /* Start display compositor (lumen) */
+
+            /* Start native Lumen hardware display compositor */
             if (access("/bin/lumen", X_OK) == 0) {
                 char lm_path[] = "/bin/lumen";
                 char *lm_args[] = {lm_path, NULL};
                 (void)spawn(lm_path, lm_args);
-                (void)usleep(300000);
+                (void)usleep(200000);
             }
-            /* Start Wayland server bridge */
-            if (access("/bin/wayland-bridge", X_OK) == 0) {
-                char wb_path[] = "/bin/wayland-bridge";
-                char *wb_args[] = {wb_path, NULL};
-                (void)spawn(wb_path, wb_args);
-                (void)usleep(300000);
-            }
-            /* Start native X11 server */
-            if (access("/bin/xserver", X_OK) == 0) {
-                char xs_path[] = "/bin/xserver";
-                char *xs_args[] = {xs_path, NULL};
-                (void)spawn(xs_path, xs_args);
-                (void)usleep(300000);
-            }
-            /* Fallback protocol bridge if full servers absent */
-            if (access("/bin/wayland-bridge", X_OK) != 0 && access("/bin/xserver", X_OK) != 0 &&
-                access("/bin/display-protocols", X_OK) == 0) {
-                char dp_path[] = "/bin/display-protocols";
-                char dp_opt[] = "--both";
-                char *dp_args[] = {dp_path, dp_opt, NULL};
-                (void)spawn(dp_path, dp_args);
-                (void)usleep(250000);
-            }
-            const char *session_path = NULL;
-            char *dargs[8] = {NULL};
-            if (strcmp(env_buf, "lxde") == 0) {
-                session_path = access("/usr/local/bin/startlxde", X_OK) == 0 ? "/usr/local/bin/startlxde" : "/bin/startlxde";
-                dargs[0] = (char *)session_path;
-                dargs[1] = NULL;
-            } else if (strcmp(env_buf, "lxqt") == 0) {
-                session_path = access("/bin/startlxqt", X_OK) == 0 ? "/bin/startlxqt" : "/usr/local/bin/startlxqt";
-                dargs[0] = (char *)session_path;
-                dargs[1] = NULL;
-            } else if (strcmp(env_buf, "openbox") == 0) {
-                session_path = access("/usr/local/bin/openbox", X_OK) == 0 ? "/usr/local/bin/openbox" : "/bin/openbox";
-                dargs[0] = (char *)session_path;
-                dargs[1] = NULL;
-            } else if (strcmp(env_buf, "xfce") == 0) {
-                session_path = access("/usr/local/bin/xfce4-session", X_OK) == 0 ? "/usr/local/bin/xfce4-session" : "/bin/xfce4-session";
-                dargs[0] = (char *)session_path;
-                dargs[1] = NULL;
-            }
-            if (!session_path || access(session_path, X_OK) != 0) {
-                fprintf(2, "[session] Official %s session is not installed; refusing an imitation.\n", env_buf);
-            } else {
-                printf("[session] Autostart enabled; launching official %s (%s)...\n", env_buf, session_path);
-                pid_t dpid = spawn(session_path, dargs);
-                if (dpid < 0)
-                    fprintf(2, "[session] Unable to launch %s (errno=%d)\n", session_path, errno);
+
+            /* Launch native Onyx minimalist desktop terminal window */
+            if (access("/bin/terminal", X_OK) == 0) {
+                char tm_path[] = "/bin/terminal";
+                char *tm_args[] = {tm_path, NULL};
+                printf("[session] Autostart enabled; launching native Onyx desktop (Lumen + Terminal)...\n");
+                pid_t dpid = spawn(tm_path, tm_args);
+                if (dpid < 0) {
+                    fprintf(2, "[session] Unable to launch Onyx terminal (errno=%d)\n", errno);
+                }
             }
         }
         char *shell_argv[] = {account.shell, NULL};
