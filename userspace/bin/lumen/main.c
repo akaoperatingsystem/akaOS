@@ -59,6 +59,8 @@ static int g_menu_open = 0;
 static int g_about_open = 0;
 static int g_locked = 0;
 
+#include "dock_icons.h"
+
 #define DEMO_SURFACE_WIDTH 180U
 #define DEMO_SURFACE_HEIGHT 110U
 #define DEMO_SURFACE_NAME "/lumen-demo"
@@ -911,13 +913,39 @@ static int render_composite_scene(const struct akaos_display_info *display,
          * input packet. */
         if (dirty && dirty->valid &&
             ((int)y < dirty->y || (int)y >= dirty->y + dirty->height)) continue;
-        /* Deep obsidian midnight black canvas background (#07080b) */
+        /* High-Resolution Modern Dark Wallpaper (Deep Obsidian Monterey Dunes) */
         for (uint32_t x = compose_x0; x < compose_x1; ++x) {
             if (x >= display->width) {
                 row[x] = display_pixel(display, 0);
                 continue;
             }
-            row[x] = display_pixel(display, UINT32_C(0x07080b));
+            uint32_t r_col = 9 + (y * 6) / 800;
+            uint32_t g_col = 11 + (y * 7) / 800;
+            uint32_t b_col = 18 + (y * 14) / 800;
+
+            /* Anti-aliased dune curves using fast integer wave calculation */
+            uint32_t wave1 = (x * 7U) % 360U;
+            int offset1 = (wave1 < 180U) ? (int)(wave1 / 4U) - 22 : (int)((360U - wave1) / 4U) - 22;
+            int d1 = 490 + offset1;
+            if ((int)y >= d1) {
+                int diff1 = (int)y - d1;
+                r_col = 14 + (diff1 * 8) / 320;
+                g_col = 18 + (diff1 * 10) / 320;
+                b_col = 32 + (diff1 * 24) / 320;
+            }
+            uint32_t wave2 = (x * 11U + 80U) % 360U;
+            int offset2 = (wave2 < 180U) ? (int)(wave2 / 5U) - 18 : (int)((360U - wave2) / 5U) - 18;
+            int d2 = 590 + offset2;
+            if ((int)y >= d2) {
+                int diff2 = (int)y - d2;
+                r_col = 18 + (diff2 * 6) / 220;
+                g_col = 22 + (diff2 * 8) / 220;
+                b_col = 40 + (diff2 * 18) / 220;
+            }
+            if (r_col > 255) r_col = 255;
+            if (g_col > 255) g_col = 255;
+            if (b_col > 255) b_col = 255;
+            row[x] = display_pixel(display, (r_col << 16) | (g_col << 8) | b_col);
         }
 
         /* 1. macOS-Style Top Menu Bar (full width, 26px height at y = 0..25) */
@@ -947,21 +975,16 @@ static int render_composite_scene(const struct akaos_display_info *display,
             int time_x = (int)display->width - 16 - time_w;
             draw_ui_text_row(display, row, (int)y, time_x, 5, time_buf, UINT32_C(0xf8fafc), time_w + 10);
 
-            /* Modern Wi-Fi / Network Icon Glyph in emerald #34d399 */
-            int net_x = time_x - 26;
-            if ((int)y >= 7 && (int)y <= 19) {
-                int rel_ny = (int)y - 7;
-                for (int x = net_x; x < net_x + 16; ++x) {
-                    if (x < (int)display->width) {
-                        int dx = x - (net_x + 8);
-                        int dy = rel_ny - 10;
-                        int d2 = dx * dx + dy * dy;
-                        int is_dot = (d2 <= 2);
-                        int is_arc1 = (d2 >= 64 && d2 <= 96 && dy < -1 && dx >= -7 && dx <= 7);
-                        int is_arc2 = (d2 >= 24 && d2 <= 46 && dy < 0 && dx >= -5 && dx <= 5);
-                        if (is_dot || is_arc1 || is_arc2) {
-                            row[x] = display_pixel(display, UINT32_C(0x34d399));
-                        }
+            /* Modern 32-bit RGBA Wi-Fi Icon Glyph in emerald #34d399 */
+            int net_x = time_x - 28;
+            if ((int)y >= 4 && (int)y < 4 + 20) {
+                int rel_ny = (int)y - 4;
+                for (int px = 0; px < 20; ++px) {
+                    int scr_x = net_x + px;
+                    if (scr_x >= 0 && scr_x < (int)display->width) {
+                        uint32_t rgba = icon_wifi[rel_ny * 24 + px];
+                        uint8_t a = (uint8_t)(rgba >> 24);
+                        if (a > 0) row[scr_x] = alpha_blend(row[scr_x], display_pixel(display, rgba & 0x00ffffff), a);
                     }
                 }
             }
@@ -1134,74 +1157,40 @@ static int render_composite_scene(const struct akaos_display_info *display,
                 }
             }
 
-            /* Draw Modern High-Fidelity Dock Icons (36x36 at dock_y + 11) */
+            /* Render Genuine 32-bit RGBA PNG Dock Icons with Alpha Blending */
             int icon_top = dock_y + 11;
             int rel_icon_y = (int)y - icon_top;
             if (rel_icon_y >= 0 && rel_icon_y < 36) {
-                /* 1. Terminal Icon: Shaded Squircle with electric cyan border & sheen */
+                /* 1. Terminal Icon (36x36 at dock_x + 18) */
                 int i1_x = dock_x + 18;
-                for (int x = i1_x; x < i1_x + 36; ++x) {
-                    if (x >= 0 && x < (int)display->width) {
-                        int rel_ix = x - i1_x;
-                        int cl = (rel_ix < 8), cr = (rel_ix >= 28), ct = (rel_icon_y < 8), cb = (rel_icon_y >= 28);
-                        int skip = 0;
-                        if (cl && ct) { int dx = rel_ix - 8; int dy = rel_icon_y - 8; skip = (dx*dx + dy*dy > 64); }
-                        else if (cr && ct) { int dx = rel_ix - 28; int dy = rel_icon_y - 8; skip = (dx*dx + dy*dy > 64); }
-                        else if (cl && cb) { int dx = rel_ix - 8; int dy = rel_icon_y - 28; skip = (dx*dx + dy*dy > 64); }
-                        else if (cr && cb) { int dx = rel_ix - 28; int dy = rel_icon_y - 28; skip = (dx*dx + dy*dy > 64); }
-
-                        if (!skip) {
-                            int b = (rel_ix == 0 || rel_ix == 35 || rel_icon_y == 0 || rel_icon_y == 35);
-                            uint32_t col = b ? UINT32_C(0x38bdf8) : (rel_icon_y <= 2 ? UINT32_C(0x2a3348) : UINT32_C(0x141a26));
-                            row[x] = display_pixel(display, col);
-                        }
+                for (int px = 0; px < 36; ++px) {
+                    int scr_x = i1_x + px;
+                    if (scr_x >= 0 && scr_x < (int)display->width) {
+                        uint32_t rgba = icon_terminal[rel_icon_y * 36 + px];
+                        uint8_t a = (uint8_t)(rgba >> 24);
+                        if (a > 0) row[scr_x] = alpha_blend(row[scr_x], display_pixel(display, rgba & 0x00ffffff), a);
                     }
                 }
-                draw_ui_text_row(display, row, (int)y, i1_x + 10, icon_top + 10, ">_", UINT32_C(0x38bdf8), 24);
 
-                /* 2. Files Icon: Modern macOS Blue Folder with top tab & flap */
+                /* 2. Files Folder Icon (36x36 at dock_x + 76) */
                 int i2_x = dock_x + 76;
-                for (int x = i2_x; x < i2_x + 36; ++x) {
-                    if (x >= 0 && x < (int)display->width) {
-                        int rel_ix = x - i2_x;
-                        int is_tab = (rel_icon_y >= 4 && rel_icon_y < 10 && rel_ix >= 2 && rel_ix < 16);
-                        int is_doc = (rel_icon_y >= 8 && rel_icon_y < 14 && rel_ix >= 14 && rel_ix < 26);
-                        int is_body = (rel_icon_y >= 10 && rel_icon_y < 32 && rel_ix >= 2 && rel_ix < 34);
-                        if (is_tab) {
-                            row[x] = display_pixel(display, UINT32_C(0x60a5fa));
-                        } else if (is_doc) {
-                            row[x] = display_pixel(display, UINT32_C(0xf8fafc));
-                        } else if (is_body) {
-                            uint32_t blue = (rel_icon_y < 14) ? UINT32_C(0x3b82f6) : UINT32_C(0x2563eb);
-                            row[x] = display_pixel(display, blue);
-                        }
+                for (int px = 0; px < 36; ++px) {
+                    int scr_x = i2_x + px;
+                    if (scr_x >= 0 && scr_x < (int)display->width) {
+                        uint32_t rgba = icon_files[rel_icon_y * 36 + px];
+                        uint8_t a = (uint8_t)(rgba >> 24);
+                        if (a > 0) row[scr_x] = alpha_blend(row[scr_x], display_pixel(display, rgba & 0x00ffffff), a);
                     }
                 }
 
-                /* 3. Settings Icon: Metallic Dark Slate with multi-tooth gear emblem */
+                /* 3. Settings Gear Icon (36x36 at dock_x + 134) */
                 int i3_x = dock_x + 134;
-                for (int x = i3_x; x < i3_x + 36; ++x) {
-                    if (x >= 0 && x < (int)display->width) {
-                        int rel_ix = x - i3_x;
-                        int cl = (rel_ix < 8), cr = (rel_ix >= 28), ct = (rel_icon_y < 8), cb = (rel_icon_y >= 28);
-                        int skip = 0;
-                        if (cl && ct) { int dx = rel_ix - 8; int dy = rel_icon_y - 8; skip = (dx*dx + dy*dy > 64); }
-                        else if (cr && ct) { int dx = rel_ix - 28; int dy = rel_icon_y - 8; skip = (dx*dx + dy*dy > 64); }
-                        else if (cl && cb) { int dx = rel_ix - 8; int dy = rel_icon_y - 28; skip = (dx*dx + dy*dy > 64); }
-                        else if (cr && cb) { int dx = rel_ix - 28; int dy = rel_icon_y - 28; skip = (dx*dx + dy*dy > 64); }
-
-                        if (!skip) {
-                            uint32_t col = (rel_icon_y <= 2) ? UINT32_C(0x384158) : UINT32_C(0x222836);
-                            int dx = rel_ix - 18;
-                            int dy = rel_icon_y - 18;
-                            int d2 = dx*dx + dy*dy;
-                            int is_ring = (d2 >= 20 && d2 <= 85);
-                            int is_spoke = ((dx == 0 || dy == 0 || dx == dy || dx == -dy) && d2 <= 110);
-                            int is_hub = (d2 <= 10);
-                            if (is_hub) col = UINT32_C(0x161a24);
-                            else if (is_ring || is_spoke) col = UINT32_C(0xcbd5e1);
-                            row[x] = display_pixel(display, col);
-                        }
+                for (int px = 0; px < 36; ++px) {
+                    int scr_x = i3_x + px;
+                    if (scr_x >= 0 && scr_x < (int)display->width) {
+                        uint32_t rgba = icon_settings[rel_icon_y * 36 + px];
+                        uint8_t a = (uint8_t)(rgba >> 24);
+                        if (a > 0) row[scr_x] = alpha_blend(row[scr_x], display_pixel(display, rgba & 0x00ffffff), a);
                     }
                 }
 
@@ -1211,21 +1200,14 @@ static int render_composite_scene(const struct akaos_display_info *display,
                     row[div_x] = display_pixel(display, UINT32_C(0x333a4d));
                 }
 
-                /* 4. Trash Icon: Translucent Frosted Glass Cylinder with metallic rim & ribs */
+                /* 4. Trash Icon (36x36 at dock_x + 204) */
                 int i4_x = dock_x + 204;
-                for (int x = i4_x; x < i4_x + 36; ++x) {
-                    if (x >= 0 && x < (int)display->width) {
-                        int rel_ix = x - i4_x;
-                        int is_rim = (rel_icon_y >= 6 && rel_icon_y <= 8 && rel_ix >= 6 && rel_ix < 30);
-                        int is_can = (rel_icon_y >= 9 && rel_icon_y <= 29 && rel_ix >= 8 && rel_ix < 28);
-                        int is_rib = (is_can && (rel_ix == 12 || rel_ix == 18 || rel_ix == 24));
-                        if (is_rim) {
-                            row[x] = display_pixel(display, UINT32_C(0x94a3b8));
-                        } else if (is_rib) {
-                            row[x] = display_pixel(display, UINT32_C(0x64748b));
-                        } else if (is_can) {
-                            row[x] = display_pixel(display, UINT32_C(0x2a3244));
-                        }
+                for (int px = 0; px < 36; ++px) {
+                    int scr_x = i4_x + px;
+                    if (scr_x >= 0 && scr_x < (int)display->width) {
+                        uint32_t rgba = icon_trash[rel_icon_y * 36 + px];
+                        uint8_t a = (uint8_t)(rgba >> 24);
+                        if (a > 0) row[scr_x] = alpha_blend(row[scr_x], display_pixel(display, rgba & 0x00ffffff), a);
                     }
                 }
             }
@@ -1796,6 +1778,12 @@ int main(int argc, char **argv) {
                 if (bytes > 0) {
                     size_t count = (size_t)bytes / sizeof(events[0]);
                     for (size_t index = 0; index < count; ++index) {
+                        /* Key or Text event: instant unlock if locked */
+                        if ((events[index].type == AKAOS_EV_KEY || events[index].type == AKAOS_EV_TEXT) && g_locked) {
+                            g_locked = 0;
+                            dirty.x = 0; dirty.y = 0; dirty.width = (int)display.width; dirty.height = (int)display.height; dirty.valid = 1;
+                            changed = 1;
+                        }
                         if (events[index].type == AKAOS_EV_KEY ||
                             events[index].type == AKAOS_EV_TEXT) {
                             struct akaos_shell_event shell_event;
@@ -1854,6 +1842,11 @@ int main(int argc, char **argv) {
                                 /* 1. Lock Screen unlock on click */
                                 if (g_locked) {
                                     g_locked = 0;
+                                    dirty.x = 0;
+                                    dirty.y = 0;
+                                    dirty.width = (int)display.width;
+                                    dirty.height = (int)display.height;
+                                    dirty.valid = 1;
                                     changed = 1;
                                     continue;
                                 }
@@ -1861,6 +1854,11 @@ int main(int argc, char **argv) {
                                 /* 2. Top-Left akaOS Brand Menu click */
                                 if (pointer_y < 26 && pointer_x >= 8 && pointer_x < 76) {
                                     g_menu_open = !g_menu_open;
+                                    dirty.x = 0;
+                                    dirty.y = 0;
+                                    dirty.width = (int)display.width;
+                                    dirty.height = (int)display.height;
+                                    dirty.valid = 1;
                                     changed = 1;
                                     continue;
                                 }

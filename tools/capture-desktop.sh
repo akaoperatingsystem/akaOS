@@ -81,7 +81,7 @@ for _ in range(300):
         pass
     time.sleep(0.1)
 time.sleep(6.0)
-# Capture live desktop frame
+# Capture live desktop frame with dropdown menu open
 process.stdin.write(f"screendump {ppm}\n")
 process.stdin.flush()
 time.sleep(1.0)
