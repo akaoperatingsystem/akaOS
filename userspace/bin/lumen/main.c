@@ -55,6 +55,10 @@ static void query_live_telemetry(char *time_str, size_t time_sz, char *ram_str, 
     }
 }
 
+static int g_menu_open = 0;
+static int g_about_open = 0;
+static int g_locked = 0;
+
 #define DEMO_SURFACE_WIDTH 180U
 #define DEMO_SURFACE_HEIGHT 110U
 #define DEMO_SURFACE_NAME "/lumen-demo"
@@ -923,16 +927,18 @@ static int render_composite_scene(const struct akaos_display_info *display,
                 if (x < display->width) row[x] = display_pixel(display, bar_bg);
             }
 
-            /* Left Section: Brand Logo & Menus */
-            draw_ui_text_row(display, row, (int)y, 16, 5, "Onyx", UINT32_C(0xffffff), 40);
-            draw_ui_text_row(display, row, (int)y, 64, 5, "File", UINT32_C(0xcbd5e1), 40);
-            draw_ui_text_row(display, row, (int)y, 104, 5, "Edit", UINT32_C(0xcbd5e1), 40);
-            draw_ui_text_row(display, row, (int)y, 144, 5, "View", UINT32_C(0xcbd5e1), 40);
-            draw_ui_text_row(display, row, (int)y, 188, 5, "Go", UINT32_C(0xcbd5e1), 30);
-            draw_ui_text_row(display, row, (int)y, 220, 5, "Window", UINT32_C(0xcbd5e1), 55);
-            draw_ui_text_row(display, row, (int)y, 280, 5, "Help", UINT32_C(0xcbd5e1), 40);
+            /* Left Section: akaOS Brand Button with rounded hover pill */
+            int brand_hover = (pointer_x >= 8 && pointer_x < 76 && pointer_y < 26);
+            if (brand_hover || g_menu_open) {
+                for (int x = 8; x < 76; ++x) {
+                    if ((int)y >= 3 && (int)y <= 22 && x < (int)display->width) {
+                        row[x] = display_pixel(display, UINT32_C(0x262c3f));
+                    }
+                }
+            }
+            draw_ui_text_row(display, row, (int)y, 14, 5, "akaOS", UINT32_C(0xf8fafc), 55);
 
-            /* Right Section: Real-Time Live Telemetry */
+            /* Right Section: Real Live Date & Time + Wi-Fi/Network Icon */
             char time_buf[32];
             char ram_buf[32];
             query_live_telemetry(time_buf, sizeof(time_buf), ram_buf, sizeof(ram_buf));
@@ -941,24 +947,163 @@ static int render_composite_scene(const struct akaos_display_info *display,
             int time_x = (int)display->width - 16 - time_w;
             draw_ui_text_row(display, row, (int)y, time_x, 5, time_buf, UINT32_C(0xf8fafc), time_w + 10);
 
-            char ram_label[48];
-            snprintf(ram_label, sizeof(ram_label), "[RAM %s]", ram_buf);
-            int ram_w = measure_ui_text(ram_label);
-            int ram_x = time_x - 14 - ram_w;
-            draw_ui_text_row(display, row, (int)y, ram_x, 5, ram_label, UINT32_C(0x38bdf8), ram_w + 10);
-
-            int net_x = ram_x - 52;
-            draw_ui_text_row(display, row, (int)y, net_x, 5, "[Net]", UINT32_C(0x34d399), 50);
+            /* Modern Wi-Fi / Network Icon Glyph in emerald #34d399 */
+            int net_x = time_x - 26;
+            if ((int)y >= 7 && (int)y <= 19) {
+                int rel_ny = (int)y - 7;
+                for (int x = net_x; x < net_x + 16; ++x) {
+                    if (x < (int)display->width) {
+                        int dx = x - (net_x + 8);
+                        int dy = rel_ny - 10;
+                        int d2 = dx * dx + dy * dy;
+                        int is_dot = (d2 <= 2);
+                        int is_arc1 = (d2 >= 64 && d2 <= 96 && dy < -1 && dx >= -7 && dx <= 7);
+                        int is_arc2 = (d2 >= 24 && d2 <= 46 && dy < 0 && dx >= -5 && dx <= 5);
+                        if (is_dot || is_arc1 || is_arc2) {
+                            row[x] = display_pixel(display, UINT32_C(0x34d399));
+                        }
+                    }
+                }
+            }
         }
 
-        /* 2. macOS-Style Floating Bottom Glass Dock */
+        /* 2. System Dropdown Menu Card (when g_menu_open == 1) */
+        if (g_menu_open) {
+            int menu_x = 8;
+            int menu_y = 28;
+            int menu_w = 196;
+            int menu_h = 168;
+
+            /* Soft drop shadow below dropdown card */
+            if ((int)y >= menu_y + menu_h && (int)y < menu_y + menu_h + 8) {
+                for (int x = menu_x + 8; x < menu_x + menu_w + 8; ++x) {
+                    if (x >= 0 && x < (int)display->width) {
+                        row[x] = display_pixel(display, UINT32_C(0x030406));
+                    }
+                }
+            }
+
+            if ((int)y >= menu_y && (int)y < menu_y + menu_h) {
+                int rel_my = (int)y - menu_y;
+                for (int x = menu_x; x < menu_x + menu_w; ++x) {
+                    if (x < 0 || x >= (int)display->width) continue;
+
+                    /* 10px rounded corners */
+                    int cl = (x < menu_x + 10);
+                    int cr = (x >= menu_x + menu_w - 10);
+                    int ct = (rel_my < 10);
+                    int cb = (rel_my >= menu_h - 10);
+                    int skip = 0;
+                    if (cl && ct) { int dx = x - (menu_x + 10); int dy = rel_my - 10; skip = (dx*dx + dy*dy > 100); }
+                    else if (cr && ct) { int dx = x - (menu_x + menu_w - 10); int dy = rel_my - 10; skip = (dx*dx + dy*dy > 100); }
+                    else if (cl && cb) { int dx = x - (menu_x + 10); int dy = rel_my - (menu_h - 10); skip = (dx*dx + dy*dy > 100); }
+                    else if (cr && cb) { int dx = x - (menu_x + menu_w - 10); int dy = rel_my - (menu_h - 10); skip = (dx*dx + dy*dy > 100); }
+
+                    if (!skip) {
+                        int is_border = (x == menu_x || x == menu_x + menu_w - 1 || rel_my == 0 || rel_my == menu_h - 1);
+                        uint32_t col = is_border ? UINT32_C(0x2a2e3f) : UINT32_C(0x161923);
+
+                        /* Hover highlight over active menu row */
+                        if (!is_border && pointer_x >= menu_x + 4 && pointer_x < menu_x + menu_w - 4) {
+                            int row_idx = -1;
+                            if (pointer_y >= menu_y + 4 && pointer_y < menu_y + 26) row_idx = 0;
+                            else if (pointer_y >= menu_y + 30 && pointer_y < menu_y + 51) row_idx = 1;
+                            else if (pointer_y >= menu_y + 52 && pointer_y < menu_y + 73) row_idx = 2;
+                            else if (pointer_y >= menu_y + 74 && pointer_y < menu_y + 95) row_idx = 3;
+                            else if (pointer_y >= menu_y + 99 && pointer_y < menu_y + 120) row_idx = 4;
+                            else if (pointer_y >= menu_y + 121 && pointer_y < menu_y + 142) row_idx = 5;
+
+                            int cur_idx = -1;
+                            if (rel_my >= 4 && rel_my < 26) cur_idx = 0;
+                            else if (rel_my >= 30 && rel_my < 51) cur_idx = 1;
+                            else if (rel_my >= 52 && rel_my < 73) cur_idx = 2;
+                            else if (rel_my >= 74 && rel_my < 95) cur_idx = 3;
+                            else if (rel_my >= 99 && rel_my < 120) cur_idx = 4;
+                            else if (rel_my >= 121 && rel_my < 142) cur_idx = 5;
+
+                            if (row_idx >= 0 && row_idx == cur_idx) {
+                                col = UINT32_C(0x2b3248);
+                            }
+                        }
+
+                        /* Hairline separators */
+                        if (rel_my == 28 || rel_my == 97) {
+                            col = UINT32_C(0x2a2e3f);
+                        }
+
+                        row[x] = display_pixel(display, col);
+                    }
+                }
+
+                /* Text labels */
+                draw_ui_text_row(display, row, (int)y, menu_x + 14, menu_y + 7, "About akaOS", UINT32_C(0xf8fafc), 160);
+                draw_ui_text_row(display, row, (int)y, menu_x + 14, menu_y + 33, "Sleep", UINT32_C(0xf8fafc), 160);
+                draw_ui_text_row(display, row, (int)y, menu_x + 14, menu_y + 55, "Restart...", UINT32_C(0xf8fafc), 160);
+                draw_ui_text_row(display, row, (int)y, menu_x + 14, menu_y + 77, "Shut Down...", UINT32_C(0xf8fafc), 160);
+                draw_ui_text_row(display, row, (int)y, menu_x + 14, menu_y + 102, "Lock Screen", UINT32_C(0xf8fafc), 160);
+                draw_ui_text_row(display, row, (int)y, menu_x + 14, menu_y + 124, "Log Out root...", UINT32_C(0xf8fafc), 160);
+            }
+        }
+
+        /* 3. About akaOS Information Card */
+        if (g_about_open) {
+            int card_w = 340;
+            int card_h = 190;
+            int card_x = ((int)display->width - card_w) / 2;
+            int card_y = ((int)display->height - card_h) / 2;
+
+            /* Soft drop shadow */
+            if ((int)y >= card_y + card_h && (int)y < card_y + card_h + 10) {
+                for (int x = card_x + 8; x < card_x + card_w + 8; ++x) {
+                    if (x >= 0 && x < (int)display->width) {
+                        row[x] = display_pixel(display, UINT32_C(0x030406));
+                    }
+                }
+            }
+
+            if ((int)y >= card_y && (int)y < card_y + card_h) {
+                int rel_cy = (int)y - card_y;
+                for (int x = card_x; x < card_x + card_w; ++x) {
+                    if (x < 0 || x >= (int)display->width) continue;
+
+                    /* 12px rounded corners */
+                    int cl = (x < card_x + 12);
+                    int cr = (x >= card_x + card_w - 12);
+                    int ct = (rel_cy < 12);
+                    int cb = (rel_cy >= card_h - 12);
+                    int skip = 0;
+                    if (cl && ct) { int dx = x - (card_x + 12); int dy = rel_cy - 12; skip = (dx*dx + dy*dy > 144); }
+                    else if (cr && ct) { int dx = x - (card_x + card_w - 12); int dy = rel_cy - 12; skip = (dx*dx + dy*dy > 144); }
+                    else if (cl && cb) { int dx = x - (card_x + 12); int dy = rel_cy - (card_h - 12); skip = (dx*dx + dy*dy > 144); }
+                    else if (cr && cb) { int dx = x - (card_x + card_w - 12); int dy = rel_cy - (card_h - 12); skip = (dx*dx + dy*dy > 144); }
+
+                    if (!skip) {
+                        int is_border = (x == card_x || x == card_x + card_w - 1 || rel_cy == 0 || rel_cy == card_h - 1);
+                        uint32_t col = is_border ? UINT32_C(0x2a2e3f) : UINT32_C(0x161923);
+                        row[x] = display_pixel(display, col);
+                    }
+                }
+
+                draw_ui_text_row(display, row, (int)y, card_x + 24, card_y + 18, "akaOS", UINT32_C(0x38bdf8), 100);
+                draw_ui_text_row(display, row, (int)y, card_x + 24, card_y + 48, "Version 1.0 (Onyx + Lumen)", UINT32_C(0xf8fafc), 280);
+                draw_ui_text_row(display, row, (int)y, card_x + 24, card_y + 74, "Kernel: XSCore Native (x86_64)", UINT32_C(0x94a3b8), 280);
+                char ram_str[32], t_dummy[32];
+                query_live_telemetry(t_dummy, sizeof(t_dummy), ram_str, sizeof(ram_str));
+                char mem_line[48];
+                snprintf(mem_line, sizeof(mem_line), "Memory: %s Active", ram_str);
+                draw_ui_text_row(display, row, (int)y, card_x + 24, card_y + 100, mem_line, UINT32_C(0x94a3b8), 280);
+                draw_ui_text_row(display, row, (int)y, card_x + card_w - 32, card_y + 16, "[x]", UINT32_C(0x94a3b8), 24);
+            }
+        }
+
+        /* 4. macOS-Style Floating Bottom Glass Dock */
         int dock_w = 260;
         int dock_h = 58;
         int dock_x = ((int)display->width - dock_w) / 2;
         int dock_y = (int)display->height - dock_h - 14;
 
-        /* Soft drop shadow below dock */
-        if ((int)y >= dock_y + dock_h && (int)y < dock_y + dock_h + 8) {
+        /* Soft multi-layered drop shadow below dock */
+        if ((int)y >= dock_y + dock_h && (int)y < dock_y + dock_h + 10) {
             for (int x = dock_x + 8; x < dock_x + dock_w - 8; ++x) {
                 if (x >= 0 && x < (int)display->width) {
                     row[x] = display_pixel(display, UINT32_C(0x030406));
@@ -971,16 +1116,16 @@ static int render_composite_scene(const struct akaos_display_info *display,
             for (int x = dock_x; x < dock_x + dock_w; ++x) {
                 if (x < 0 || x >= (int)display->width) continue;
 
-                /* Smooth 16px corner anti-aliasing */
-                int cl = (x < dock_x + 16);
-                int cr = (x >= dock_x + dock_w - 16);
-                int ct = (rel_y < 16);
-                int cb = (rel_y >= dock_h - 16);
+                /* Smooth 18px corner anti-aliasing */
+                int cl = (x < dock_x + 18);
+                int cr = (x >= dock_x + dock_w - 18);
+                int ct = (rel_y < 18);
+                int cb = (rel_y >= dock_h - 18);
                 int skip = 0;
-                if (cl && ct) { int dx = x - (dock_x + 16); int dy = rel_y - 16; skip = (dx*dx + dy*dy > 256); }
-                else if (cr && ct) { int dx = x - (dock_x + dock_w - 16); int dy = rel_y - 16; skip = (dx*dx + dy*dy > 256); }
-                else if (cl && cb) { int dx = x - (dock_x + 16); int dy = rel_y - (dock_h - 16); skip = (dx*dx + dy*dy > 256); }
-                else if (cr && cb) { int dx = x - (dock_x + dock_w - 16); int dy = rel_y - (dock_h - 16); skip = (dx*dx + dy*dy > 256); }
+                if (cl && ct) { int dx = x - (dock_x + 18); int dy = rel_y - 18; skip = (dx*dx + dy*dy > 324); }
+                else if (cr && ct) { int dx = x - (dock_x + dock_w - 18); int dy = rel_y - 18; skip = (dx*dx + dy*dy > 324); }
+                else if (cl && cb) { int dx = x - (dock_x + 18); int dy = rel_y - (dock_h - 18); skip = (dx*dx + dy*dy > 324); }
+                else if (cr && cb) { int dx = x - (dock_x + dock_w - 18); int dy = rel_y - (dock_h - 18); skip = (dx*dx + dy*dy > 324); }
 
                 if (!skip) {
                     int is_border = (x == dock_x || x == dock_x + dock_w - 1 || rel_y == 0 || rel_y == dock_h - 1);
@@ -989,57 +1134,98 @@ static int render_composite_scene(const struct akaos_display_info *display,
                 }
             }
 
-            /* Draw Dock Icons */
+            /* Draw Modern High-Fidelity Dock Icons (36x36 at dock_y + 11) */
             int icon_top = dock_y + 11;
             int rel_icon_y = (int)y - icon_top;
             if (rel_icon_y >= 0 && rel_icon_y < 36) {
-                /* 1. Terminal Icon [ >_ ] at dock_x + 18 */
+                /* 1. Terminal Icon: Shaded Squircle with electric cyan border & sheen */
                 int i1_x = dock_x + 18;
                 for (int x = i1_x; x < i1_x + 36; ++x) {
                     if (x >= 0 && x < (int)display->width) {
-                        int b = (x == i1_x || x == i1_x + 35 || rel_icon_y == 0 || rel_icon_y == 35);
-                        row[x] = display_pixel(display, b ? UINT32_C(0x38bdf8) : UINT32_C(0x1e293b));
+                        int rel_ix = x - i1_x;
+                        int cl = (rel_ix < 8), cr = (rel_ix >= 28), ct = (rel_icon_y < 8), cb = (rel_icon_y >= 28);
+                        int skip = 0;
+                        if (cl && ct) { int dx = rel_ix - 8; int dy = rel_icon_y - 8; skip = (dx*dx + dy*dy > 64); }
+                        else if (cr && ct) { int dx = rel_ix - 28; int dy = rel_icon_y - 8; skip = (dx*dx + dy*dy > 64); }
+                        else if (cl && cb) { int dx = rel_ix - 8; int dy = rel_icon_y - 28; skip = (dx*dx + dy*dy > 64); }
+                        else if (cr && cb) { int dx = rel_ix - 28; int dy = rel_icon_y - 28; skip = (dx*dx + dy*dy > 64); }
+
+                        if (!skip) {
+                            int b = (rel_ix == 0 || rel_ix == 35 || rel_icon_y == 0 || rel_icon_y == 35);
+                            uint32_t col = b ? UINT32_C(0x38bdf8) : (rel_icon_y <= 2 ? UINT32_C(0x2a3348) : UINT32_C(0x141a26));
+                            row[x] = display_pixel(display, col);
+                        }
                     }
                 }
-                draw_ui_text_row(display, row, (int)y, i1_x + 10, icon_top + 10, ">_", UINT32_C(0x22c55e), 24);
+                draw_ui_text_row(display, row, (int)y, i1_x + 10, icon_top + 10, ">_", UINT32_C(0x38bdf8), 24);
 
-                /* 2. Files Icon [ Folders ] at dock_x + 76 */
+                /* 2. Files Icon: Modern macOS Blue Folder with top tab & flap */
                 int i2_x = dock_x + 76;
                 for (int x = i2_x; x < i2_x + 36; ++x) {
                     if (x >= 0 && x < (int)display->width) {
-                        int is_tab = (rel_icon_y < 8 && x < i2_x + 16);
-                        int is_body = (rel_icon_y >= 6);
-                        if (is_tab || is_body) {
-                            row[x] = display_pixel(display, is_tab ? UINT32_C(0x60a5fa) : UINT32_C(0x2563eb));
+                        int rel_ix = x - i2_x;
+                        int is_tab = (rel_icon_y >= 4 && rel_icon_y < 10 && rel_ix >= 2 && rel_ix < 16);
+                        int is_doc = (rel_icon_y >= 8 && rel_icon_y < 14 && rel_ix >= 14 && rel_ix < 26);
+                        int is_body = (rel_icon_y >= 10 && rel_icon_y < 32 && rel_ix >= 2 && rel_ix < 34);
+                        if (is_tab) {
+                            row[x] = display_pixel(display, UINT32_C(0x60a5fa));
+                        } else if (is_doc) {
+                            row[x] = display_pixel(display, UINT32_C(0xf8fafc));
+                        } else if (is_body) {
+                            uint32_t blue = (rel_icon_y < 14) ? UINT32_C(0x3b82f6) : UINT32_C(0x2563eb);
+                            row[x] = display_pixel(display, blue);
                         }
                     }
                 }
 
-                /* 3. Settings Icon [ Gear ] at dock_x + 134 */
+                /* 3. Settings Icon: Metallic Dark Slate with multi-tooth gear emblem */
                 int i3_x = dock_x + 134;
                 for (int x = i3_x; x < i3_x + 36; ++x) {
                     if (x >= 0 && x < (int)display->width) {
-                        int dx = x - (i3_x + 18);
-                        int dy = rel_icon_y - 18;
-                        int d2 = dx*dx + dy*dy;
-                        if (d2 >= 36 && d2 <= 200) {
-                            row[x] = display_pixel(display, UINT32_C(0x94a3b8));
+                        int rel_ix = x - i3_x;
+                        int cl = (rel_ix < 8), cr = (rel_ix >= 28), ct = (rel_icon_y < 8), cb = (rel_icon_y >= 28);
+                        int skip = 0;
+                        if (cl && ct) { int dx = rel_ix - 8; int dy = rel_icon_y - 8; skip = (dx*dx + dy*dy > 64); }
+                        else if (cr && ct) { int dx = rel_ix - 28; int dy = rel_icon_y - 8; skip = (dx*dx + dy*dy > 64); }
+                        else if (cl && cb) { int dx = rel_ix - 8; int dy = rel_icon_y - 28; skip = (dx*dx + dy*dy > 64); }
+                        else if (cr && cb) { int dx = rel_ix - 28; int dy = rel_icon_y - 28; skip = (dx*dx + dy*dy > 64); }
+
+                        if (!skip) {
+                            uint32_t col = (rel_icon_y <= 2) ? UINT32_C(0x384158) : UINT32_C(0x222836);
+                            int dx = rel_ix - 18;
+                            int dy = rel_icon_y - 18;
+                            int d2 = dx*dx + dy*dy;
+                            int is_ring = (d2 >= 20 && d2 <= 85);
+                            int is_spoke = ((dx == 0 || dy == 0 || dx == dy || dx == -dy) && d2 <= 110);
+                            int is_hub = (d2 <= 10);
+                            if (is_hub) col = UINT32_C(0x161a24);
+                            else if (is_ring || is_spoke) col = UINT32_C(0xcbd5e1);
+                            row[x] = display_pixel(display, col);
                         }
                     }
                 }
 
-                /* Subtle Divider at dock_x + 188 */
+                /* Subtle Hairline Divider at dock_x + 188 */
                 int div_x = dock_x + 188;
                 if (rel_icon_y >= 4 && rel_icon_y < 32 && div_x < (int)display->width) {
                     row[div_x] = display_pixel(display, UINT32_C(0x333a4d));
                 }
 
-                /* 4. Trash Icon at dock_x + 204 */
+                /* 4. Trash Icon: Translucent Frosted Glass Cylinder with metallic rim & ribs */
                 int i4_x = dock_x + 204;
-                for (int x = i4_x + 6; x < i4_x + 30; ++x) {
+                for (int x = i4_x; x < i4_x + 36; ++x) {
                     if (x >= 0 && x < (int)display->width) {
-                        int b = (x == i4_x + 6 || x == i4_x + 29 || rel_icon_y == 8 || rel_icon_y == 32);
-                        if (b) row[x] = display_pixel(display, UINT32_C(0x94a3b8));
+                        int rel_ix = x - i4_x;
+                        int is_rim = (rel_icon_y >= 6 && rel_icon_y <= 8 && rel_ix >= 6 && rel_ix < 30);
+                        int is_can = (rel_icon_y >= 9 && rel_icon_y <= 29 && rel_ix >= 8 && rel_ix < 28);
+                        int is_rib = (is_can && (rel_ix == 12 || rel_ix == 18 || rel_ix == 24));
+                        if (is_rim) {
+                            row[x] = display_pixel(display, UINT32_C(0x94a3b8));
+                        } else if (is_rib) {
+                            row[x] = display_pixel(display, UINT32_C(0x64748b));
+                        } else if (is_can) {
+                            row[x] = display_pixel(display, UINT32_C(0x2a3244));
+                        }
                     }
                 }
             }
@@ -1052,6 +1238,90 @@ static int render_composite_scene(const struct akaos_display_info *display,
                         row[x] = display_pixel(display, UINT32_C(0x38bdf8));
                     }
                 }
+            }
+        }
+
+        /* 5. Native Frosted Glass Lock Screen */
+        if (g_locked) {
+            for (uint32_t x = compose_x0; x < compose_x1; ++x) {
+                if (x < display->width) {
+                    row[x] = display_pixel(display, UINT32_C(0x0a0c12));
+                }
+            }
+
+            /* Centered Login Card */
+            int card_w = 300;
+            int card_h = 240;
+            int card_x = ((int)display->width - card_w) / 2;
+            int card_y = ((int)display->height - card_h) / 2;
+
+            if ((int)y >= card_y + card_h && (int)y < card_y + card_h + 10) {
+                for (int x = card_x + 8; x < card_x + card_w + 8; ++x) {
+                    if (x >= 0 && x < (int)display->width) {
+                        row[x] = display_pixel(display, UINT32_C(0x030406));
+                    }
+                }
+            }
+
+            if ((int)y >= card_y && (int)y < card_y + card_h) {
+                int rel_cy = (int)y - card_y;
+                for (int x = card_x; x < card_x + card_w; ++x) {
+                    if (x < 0 || x >= (int)display->width) continue;
+
+                    int cl = (x < card_x + 16);
+                    int cr = (x >= card_x + card_w - 16);
+                    int ct = (rel_cy < 16);
+                    int cb = (rel_cy >= card_h - 16);
+                    int skip = 0;
+                    if (cl && ct) { int dx = x - (card_x + 16); int dy = rel_cy - 16; skip = (dx*dx + dy*dy > 256); }
+                    else if (cr && ct) { int dx = x - (card_x + card_w - 16); int dy = rel_cy - 16; skip = (dx*dx + dy*dy > 256); }
+                    else if (cl && cb) { int dx = x - (card_x + 16); int dy = rel_cy - (card_h - 16); skip = (dx*dx + dy*dy > 256); }
+                    else if (cr && cb) { int dx = x - (card_x + card_w - 16); int dy = rel_cy - (card_h - 16); skip = (dx*dx + dy*dy > 256); }
+
+                    if (!skip) {
+                        int is_border = (x == card_x || x == card_x + card_w - 1 || rel_cy == 0 || rel_cy == card_h - 1);
+                        uint32_t col = is_border ? UINT32_C(0x2a2e3f) : UINT32_C(0x161923);
+                        row[x] = display_pixel(display, col);
+                    }
+                }
+
+                /* Modern User Avatar */
+                int av_cx = card_x + 150;
+                int av_cy = card_y + 48;
+                int dy_av = (int)y - av_cy;
+                if (dy_av >= -24 && dy_av <= 24) {
+                    for (int x = av_cx - 24; x <= av_cx + 24; ++x) {
+                        if (x >= 0 && x < (int)display->width) {
+                            int dx = x - av_cx;
+                            int d2 = dx*dx + dy_av*dy_av;
+                            if (d2 <= 576) {
+                                int is_ring = (d2 >= 480);
+                                uint32_t col = is_ring ? UINT32_C(0x38bdf8) : UINT32_C(0x252e42);
+                                if ((dx*dx + (dy_av + 6)*(dy_av + 6)) <= 64) col = UINT32_C(0x64748b);
+                                if (dy_av >= 8 && (dx*dx + (dy_av - 16)*(dy_av - 16)) <= 120) col = UINT32_C(0x64748b);
+                                row[x] = display_pixel(display, col);
+                            }
+                        }
+                    }
+                }
+
+                draw_ui_text_row(display, row, (int)y, card_x + 134, card_y + 88, "root", UINT32_C(0xf8fafc), 60);
+
+                int pw_x = card_x + 55;
+                int pw_y = card_y + 116;
+                int rel_py = (int)y - pw_y;
+                if (rel_py >= 0 && rel_py < 32) {
+                    for (int x = pw_x; x < pw_x + 190; ++x) {
+                        if (x >= 0 && x < (int)display->width) {
+                            int is_b = (x == pw_x || x == pw_x + 189 || rel_py == 0 || rel_py == 31);
+                            uint32_t col = is_b ? UINT32_C(0x38bdf8) : UINT32_C(0x10131c);
+                            row[x] = display_pixel(display, col);
+                        }
+                    }
+                }
+
+                draw_ui_text_row(display, row, (int)y, card_x + 104, card_y + 124, "••••••••", UINT32_C(0xf8fafc), 120);
+                draw_ui_text_row(display, row, (int)y, card_x + 220, card_y + 124, "->", UINT32_C(0x38bdf8), 30);
             }
         }
         /* Render active surfaces in z-order */
@@ -1581,7 +1851,59 @@ int main(int argc, char **argv) {
                                 input_test_button_reported = 1;
                             }
                             if (events[index].value == 1) {
-                                /* Check clicking on dock Terminal icon */
+                                /* 1. Lock Screen unlock on click */
+                                if (g_locked) {
+                                    g_locked = 0;
+                                    changed = 1;
+                                    continue;
+                                }
+
+                                /* 2. Top-Left akaOS Brand Menu click */
+                                if (pointer_y < 26 && pointer_x >= 8 && pointer_x < 76) {
+                                    g_menu_open = !g_menu_open;
+                                    changed = 1;
+                                    continue;
+                                }
+
+                                /* 3. System Dropdown Menu Items click */
+                                if (g_menu_open) {
+                                    int m_x = 8, m_y = 28, m_w = 196, m_h = 168;
+                                    if (pointer_x >= m_x && pointer_x < m_x + m_w &&
+                                        pointer_y >= m_y && pointer_y < m_y + m_h) {
+                                        int rel_my = pointer_y - m_y;
+                                        if (rel_my >= 4 && rel_my < 26) {
+                                            g_about_open = 1;
+                                        } else if (rel_my >= 52 && rel_my < 73) {
+                                            if (fork() == 0) { char *a[] = {"/bin/reboot", NULL}; execv("/bin/reboot", a); _exit(0); }
+                                        } else if (rel_my >= 74 && rel_my < 95) {
+                                            if (fork() == 0) { char *a[] = {"/bin/poweroff", NULL}; execv("/bin/poweroff", a); _exit(0); }
+                                        } else if (rel_my >= 99 && rel_my < 120) {
+                                            g_locked = 1;
+                                        }
+                                        g_menu_open = 0;
+                                        changed = 1;
+                                        continue;
+                                    } else {
+                                        g_menu_open = 0;
+                                        changed = 1;
+                                    }
+                                }
+
+                                /* 4. About akaOS card dismiss */
+                                if (g_about_open) {
+                                    int c_w = 340, c_h = 190;
+                                    int c_x = ((int)display.width - c_w) / 2;
+                                    int c_y = ((int)display.height - c_h) / 2;
+                                    if (pointer_x < c_x || pointer_x >= c_x + c_w ||
+                                        pointer_y < c_y || pointer_y >= c_y + c_h ||
+                                        (pointer_x >= c_x + c_w - 36 && pointer_y < c_y + 36)) {
+                                        g_about_open = 0;
+                                        changed = 1;
+                                        continue;
+                                    }
+                                }
+
+                                /* 5. Check clicking on dock Terminal icon */
                                 int d_w = 260;
                                 int d_h = 58;
                                 int d_x = ((int)display.width - d_w) / 2;

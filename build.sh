@@ -484,8 +484,8 @@ firmware_set=0
 low_memory_profile=0
 disk_type=auto
 disk_type_set=0
-target_desktop=onyx
-session_mode=desktop
+target_desktop=none
+session_mode=console
 menu_software=all
 menu_custom_packages=""
 boot_mode=splash
@@ -534,11 +534,14 @@ while [[ $# -gt 0 ]]; do
             fi
             target_desktop="$2"
             case "$target_desktop" in
-                none|onyx|default) target_desktop="onyx" ;;
+                none) target_desktop="none" ;;
+                onyx|default) target_desktop="onyx" ;;
                 *) echo "Unsupported desktop '$target_desktop'; supported: onyx, none" >&2; exit 2 ;;
             esac
             if [[ "$target_desktop" != "none" ]]; then
                 session_mode="desktop"
+            else
+                session_mode="console"
             fi
             shift 2
             ;;
@@ -3763,7 +3766,15 @@ initramfs_profile_args=()
 if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
     initramfs_profile_args+=(--profile minimal)
 fi
+desktop_files=()
+if [[ "$target_desktop" == "onyx" ]]; then
+    desktop_files=(
+        --file "/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec"
+        --file "/bin/terminal:$BUILD_DIR/TERMINAL.ELF:exec"
+    )
+fi
 python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initramfs_args) \
+    "${desktop_files[@]}" \
     --exclude-long-vfs-names \
     "${initramfs_profile_args[@]}" \
     --dir "/bin" \
@@ -3813,9 +3824,6 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/bin/sudo:$BUILD_DIR/SUDO.ELF:4755" \
     --file "/bin/reboot:$BUILD_DIR/REBOOT.ELF:exec" \
     --file "/bin/poweroff:$BUILD_DIR/POWEROFF.ELF:exec" \
-    --file "/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec" \
-    --file "/bin/palette:$BUILD_DIR/PALETTE.ELF:exec" \
-    --file "/bin/terminal:$BUILD_DIR/TERMINAL.ELF:exec" \
     --file "/bin/notify:$BUILD_DIR/NOTIFY.ELF:exec" \
     --file "/bin/beep:$BUILD_DIR/BEEP.ELF:exec" \
     --file "/bin/ping:$BUILD_DIR/PING.ELF:exec" \
@@ -3840,17 +3848,6 @@ python3 "$ROOT_DIR/tools/mkinitramfs.py" "$BUILD_DIR/initramfs.img" $(get_initra
     --file "/bin/telnetd:$BUILD_DIR/TELNETD.ELF:exec" \
     --file "/bin/tftpd:$BUILD_DIR/TFTPD.ELF:exec" \
     --file "/bin/tftp:$BUILD_DIR/TFTP.ELF:exec" \
-    $([[ "$target_desktop" == "lxqt" && -f "$BUILD_DIR/STARTLXQT.ELF" ]] && echo "--file /bin/startlxqt:$BUILD_DIR/STARTLXQT.ELF:exec") \
-    $([[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde" ]] && echo "--file /usr/local/bin/startlxde:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/startlxde:exec") \
-    $([[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession" ]] && echo "--file /usr/local/bin/lxsession:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxsession:exec") \
-    $([[ ( "$target_desktop" == "openbox" || "$target_desktop" == "lxde" ) && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]] && echo "--file /bin/openbox:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox:exec") \
-    $([[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm" ]] && echo "--file /bin/pcmanfm:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/pcmanfm:exec") \
-    $([[ "$target_desktop" == "lxde" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel" ]] && echo "--file /bin/lxpanel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxpanel:exec") \
-    $([[ "$target_desktop" == "lxqt" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel" ]] && echo "--file /bin/lxqt-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-panel:exec") \
-    $([[ "$target_desktop" == "lxqt" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session" ]] && echo "--file /bin/lxqt-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/lxqt-session:exec") \
-    $([[ "$target_desktop" == "xfce" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4" ]] && echo "--file /bin/xfwm4:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfwm4:exec") \
-    $([[ "$target_desktop" == "xfce" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel" ]] && echo "--file /bin/xfce4-panel:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-panel:exec") \
-    $([[ "$target_desktop" == "xfce" && -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session" ]] && echo "--file /bin/xfce4-session:$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/xfce4-session:exec") \
     --file "/bin/notepad:$BUILD_DIR/NOTEPAD.ELF:exec" \
     --file "/bin/taskmgr:$BUILD_DIR/TASKMGR.ELF:exec" \
     --file "/bin/webviewer:$BUILD_DIR/WEBVIEWER.ELF:exec" \

@@ -94,8 +94,8 @@ configure_run_interactively() {
     local menu_arch=x86_64
     local menu_firmware=uefi
     local menu_disk=fat32
-    local menu_desktop=onyx
-    local menu_session=desktop
+    local menu_desktop=none
+    local menu_session=console
     local menu_boot_mode=splash
     local menu_display=auto
     local menu_vga=virtio
@@ -418,8 +418,8 @@ firmware=uefi
 firmware_set=0
 disk_type=auto
 disk_type_set=0
-menu_desktop=onyx
-menu_session=desktop
+menu_desktop=none
+menu_session=console
 boot_mode=splash
 menu_software=all
 menu_custom_packages=""
@@ -468,11 +468,14 @@ while [[ $# -gt 0 ]]; do
             fi
             menu_desktop="$2"
             case "$menu_desktop" in
-                none|onyx|default) menu_desktop="onyx" ;;
+                none) menu_desktop="none" ;;
+                onyx|default) menu_desktop="onyx" ;;
                 *) echo "Unsupported desktop '$menu_desktop'; supported: onyx, none" >&2; exit 2 ;;
             esac
             if [[ "$menu_desktop" != "none" ]]; then
                 menu_session="desktop"
+            else
+                menu_session="console"
             fi
             shift 2
             ;;
