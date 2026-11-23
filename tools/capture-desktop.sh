@@ -25,12 +25,14 @@ rm -f "$SCREEN_PPM" "$SCREEN_PNG" "$RUN_LOG"
 : > "$RUN_LOG"
 
 python3 - "$ROOT_DIR" "$OVMF_CODE" "$OVMF_VARS" "$SCREEN_PPM" "$SCREEN_PNG" "$RUN_LOG" "$DISK_IMAGE" <<'EOF'
+import os
 import subprocess
 import sys
 import time
 from PIL import Image
 
 root, ovmf_code, ovmf_vars, ppm, png, log, disk_image = sys.argv[1:8]
+build = os.path.dirname(ppm)
 
 def keys(value):
     result = []
@@ -80,9 +82,29 @@ for _ in range(300):
     except OSError:
         pass
     time.sleep(0.1)
-time.sleep(6.0)
-# Capture live desktop frame with dropdown menu open
+time.sleep(3.0)
+# 1. Capture Graphical Lock Screen UI
+lock_ppm = os.path.join(build, "akaos-lockscreen.ppm")
+lock_png = os.path.join(build, "akaos-lockscreen-onyx.png")
+process.stdin.write(f"screendump {lock_ppm}\n")
+process.stdin.flush()
+time.sleep(1.0)
+
+# 2. Unlock to clean desktop session via Enter key
+process.stdin.write("sendkey ret\n")
+process.stdin.flush()
+time.sleep(2.0)
 process.stdin.write(f"screendump {ppm}\n")
+process.stdin.flush()
+time.sleep(1.0)
+
+# 3. Toggle akaOS dropdown menu via F1 key
+menu_ppm = os.path.join(build, "akaos-menu.ppm")
+menu_png = os.path.join(build, "akaos-menu-onyx.png")
+process.stdin.write("sendkey f1\n")
+process.stdin.flush()
+time.sleep(1.5)
+process.stdin.write(f"screendump {menu_ppm}\n")
 process.stdin.flush()
 time.sleep(1.0)
 process.stdin.write("quit\n")
@@ -92,8 +114,15 @@ try:
 except subprocess.TimeoutExpired:
     process.kill()
 
-Image.open(ppm).convert("RGB").save(png)
-print("saved", png)
+if os.path.exists(lock_ppm):
+    Image.open(lock_ppm).convert("RGB").save(lock_png)
+    print("saved", lock_png)
+if os.path.exists(ppm):
+    Image.open(ppm).convert("RGB").save(png)
+    print("saved", png)
+if os.path.exists(menu_ppm):
+    Image.open(menu_ppm).convert("RGB").save(menu_png)
+    print("saved", menu_png)
 EOF
 
 echo "[PASS] LXDE desktop screenshot captured"
