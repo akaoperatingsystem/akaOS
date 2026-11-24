@@ -5,6 +5,7 @@
 #include <xscore/serial.h>
 #include <xscore/thread.h>
 #include <xscore/process.h>
+#include <xscore/vfs.h>
 #include <akaos/errno.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -170,6 +171,9 @@ int64_t xscore_socket_bind_unix(int sock_id, const char *path) {
         sock->local_path[i] = path[i];
     sock->state = SOCKET_STATE_BOUND;
     xscore_spin_unlock_irqrestore(&socket_pool_lock, flags);
+    /* The socket of the Unix domain is reached through a node in the file
+     * system, so the node is added once the lock of the sockets is free. */
+    (void)xscore_vfs_add_socket(path, 0755);
     return 0;
 }
 
@@ -1088,6 +1092,16 @@ size_t xscore_socket_close_collect(int sock_id,
     }
     struct xscore_socket *sock = &socket_pool[sock_id];
     size_t released_count = 0U;
+    /* The path of a socket of the Unix domain that listens on it is kept, so
+     * that the node of the socket can be removed when the socket goes away. */
+    char bound_path[AKAOS_UNIX_PATH_MAX];
+    bound_path[0] = '\0';
+    if (sock->domain == AKAOS_AF_UNIX && sock->local_path[0] != '\0') {
+        for (size_t index = 0; index + 1U < AKAOS_UNIX_PATH_MAX; ++index) {
+            bound_path[index] = sock->local_path[index];
+            if (bound_path[index] == '\0') break;
+        }
+    }
     while (sock->rights_record_count != 0U) {
         released_count += socket_rights_remove_locked(
             sock, 0U, released_files + released_count,
@@ -1112,6 +1126,11 @@ size_t xscore_socket_close_collect(int sock_id,
     sock->rx_read_position = 0U;
     sock->rx_write_position = 0U;
     xscore_spin_unlock_irqrestore(&socket_pool_lock, flags);
+    /* The node of the socket leaves the file system with the socket, and the
+     * lock of the sockets is free by now. */
+    if (bound_path[0] != '\0') {
+        (void)xscore_vfs_unlink_at(0, bound_path);
+    }
     return released_count;
 }
 

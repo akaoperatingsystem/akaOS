@@ -24,7 +24,7 @@ if [[ -n "${AKAOS_PANGO_WORKROOT:-}" ]]; then
     SOURCE_TREE="$AKAOS_PANGO_WORKROOT/source"
     BUILD_TREE="$AKAOS_PANGO_WORKROOT/build"
     mkdir -p "$AKAOS_PANGO_WORKROOT"
-    if [[ ! -f "$SOURCE_TREE/meson.build" ]]; then
+    if [[ ! -f "$SOURCE_TREE/meson.build" && -f "$PROJECT_SOURCE_TREE/meson.build" ]]; then
         mkdir -p "$SOURCE_TREE"
         cp -a "$PROJECT_SOURCE_TREE/." "$SOURCE_TREE/"
     fi
@@ -46,12 +46,13 @@ for required_file in \
     "$BUILD_DIR/libc.so.6" "$BUILD_DIR/libm.so.6" \
     "$BUILD_DIR/libc++.so.1" "$BUILD_DIR/libc++abi.so.1" \
     "$BUILD_DIR/libunwind.so.1" \
-    "$GLIB_BUILD/build.ninja" \
+    "$GRAPHICS_SYSROOT/usr/lib/pkgconfig/glib-2.0.pc" \
     "$GRAPHICS_SYSROOT/usr/local/lib/libcairo.so.2.11806.6" \
     "$GRAPHICS_SYSROOT/usr/local/lib/libfontconfig.so.1.17.0" \
     "$GRAPHICS_SYSROOT/usr/local/lib/libfribidi.so.0.4.0" \
     "$GRAPHICS_SYSROOT/usr/local/lib/libharfbuzz.so.0.61450.0" \
     "$GRAPHICS_SYSROOT/usr/local/lib/libfreetype.so.6.20.6" \
+    "$GRAPHICS_SYSROOT/usr/local/lib/pkgconfig/xft.pc" \
     "$PCRE2_SYSROOT/usr/lib/libpcre2-8.so.0.16.1"; do
     if [[ ! -f "$required_file" ]]; then
         echo "Missing akaOS x86_64 upstream prerequisite: $required_file" >&2
@@ -61,17 +62,19 @@ for required_file in \
 done
 
 mkdir -p "$SOURCE_DIR" "$SOURCE_TREE" "$BUILD_TREE"
-if [[ ! -f "$SOURCE_DIR/pango-1.58.2.tar.xz" ]]; then
+# The archive is kept beside the source tree it is unpacked into, so that the
+# work root on the ext4 partition holds the archive as well.
+ARCHIVE="$(dirname "$SOURCE_TREE")/pango-1.58.2.tar.xz"
+if [[ ! -f "$ARCHIVE" ]]; then
     curl -fL --retry 2 \
         https://download.gnome.org/sources/pango/1.58/pango-1.58.2.tar.xz \
-        -o "$SOURCE_DIR/pango-1.58.2.tar.xz"
+        -o "$ARCHIVE"
 fi
 printf '%s  %s\n' \
     342385b6ca3b7c73455d7c80a13b7dbe4489e00bc3bd4c5bd6ed4dce421e374a \
-    "$SOURCE_DIR/pango-1.58.2.tar.xz" | sha256sum -c -
+    "$ARCHIVE" | sha256sum -c -
 if [[ ! -f "$SOURCE_TREE/meson.build" ]]; then
-    tar -xf "$SOURCE_DIR/pango-1.58.2.tar.xz" \
-        -C "$SOURCE_TREE" --strip-components=1
+    tar -xf "$ARCHIVE" -C "$SOURCE_TREE" --strip-components=1
 fi
 
 # Pango's Meson probes need GLib's installed headers/pkg-config metadata in the

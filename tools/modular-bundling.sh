@@ -26,11 +26,13 @@ get_initramfs_args() {
         )
     fi
 
-    # 2. If not Onyx desktop, exclude Lumen & Terminal
-    if [[ "$dt" != "onyx" ]]; then
+    # 2. If not the helloDesktop desktop, exclude the desktop programs
+    if [[ "$dt" != "hellodesktop" ]]; then
         args+=(
             --exclude-prefix "/bin/lumen"
             --exclude-prefix "/bin/terminal"
+            --exclude-prefix "/bin/xserver"
+            --exclude-prefix "/bin/hellodesktop-session"
         )
     fi
 

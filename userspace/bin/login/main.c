@@ -129,8 +129,15 @@ perform_authenticated_session:
             (void)mkdir("/run/user", 0755);
             (void)mkdir("/run/user/0", 0700);
 
-            /* Start native Lumen hardware display compositor */
-            if (access("/bin/lumen", X_OK) == 0) {
+            /* Start the helloDesktop session: the display server, the window
+             * manager and the components of the desktop. */
+            if (access("/bin/hellodesktop-session", X_OK) == 0) {
+                char session_path[] = "/bin/hellodesktop-session";
+                char *session_args[] = {session_path, NULL};
+                (void)spawn(session_path, session_args);
+                (void)usleep(200000);
+            } else if (access("/bin/lumen", X_OK) == 0) {
+                /* Start native Lumen hardware display compositor */
                 char lm_path[] = "/bin/lumen";
                 char *lm_args[] = {lm_path, NULL};
                 (void)spawn(lm_path, lm_args);

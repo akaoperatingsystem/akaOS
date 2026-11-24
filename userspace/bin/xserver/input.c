@@ -123,7 +123,9 @@ static const struct key_entry extended_key_table[] = {
     {103, 111, XK_Up},
     {108, 116, XK_Down},
     {105, 114, XK_Right},
-    {106, 113, XK_Left}
+    {106, 113, XK_Left},
+    {0x5b, 134, XK_Super_L},
+    {0x5c, 135, XK_Super_R}
 };
 
 static const struct key_entry *lookup_key(uint8_t scan, uint8_t *xcode) {
@@ -156,6 +158,29 @@ uint32_t x_keysym_for_keycode(struct x_server *server, uint32_t xcode) {
         }
     }
     (void)server;
+    return 0U;
+}
+
+/* The symbols of the keys that the shift key holds.
+ *
+ * A keyboard reports the symbol of a key and the symbol of the same key
+ * with the shift key held.  A client that reads a symbol it does not know
+ * walks out of the table of its own symbols, so a key that the server does
+ * not know reports no symbol at all for the shifted column. */
+static const uint32_t shifted_symbols[] = {
+    '1', '!', '2', '@', '3', '#', '4', '$', '5', '%', '6', '^', '7', '&',
+    '8', '*', '9', '(', '0', ')', '-', '_', '=', '+', '[', '{', ']', '}',
+    '\\', '|', ';', ':', '\'', '"', ',', '<', '.', '>', '/', '?'
+};
+
+uint32_t x_shifted_keysym_for_keycode(struct x_server *server, uint32_t xcode) {
+    uint32_t lower = x_keysym_for_keycode(server, xcode);
+    if (lower >= 'a' && lower <= 'z') return lower & ~0x20U;
+    for (size_t index = 0U;
+         index < sizeof(shifted_symbols) / sizeof(shifted_symbols[0]);
+         index += 2U) {
+        if (shifted_symbols[index] == lower) return shifted_symbols[index + 1U];
+    }
     return 0U;
 }
 

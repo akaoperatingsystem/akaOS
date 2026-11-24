@@ -264,6 +264,35 @@ while IFS= read -r entry; do
     }
 done < <(selected_packages)
 
+echo "[x11] installing the locale data of the X Window System"
+# The client library of the X Window System builds its locale database from
+# the files of the locale directory, and the input method of a client that
+# asks for one reads the same files.  Without them the library walks into a
+# half built database.
+LOCALE_DATA_VERSION="1.8.12-1"
+LOCALE_DATA_URL="http://deb.debian.org/debian/pool/main/libx/libx11/libx11-data_${LOCALE_DATA_VERSION}_all.deb"
+LOCALE_DATA_ARCHIVE="$WORKROOT/src/libx11-data_${LOCALE_DATA_VERSION}_all.deb"
+if [[ ! -s "$LOCALE_DATA_ARCHIVE" ]]; then
+    curl -fL --retry 3 --max-time 600 -o "$LOCALE_DATA_ARCHIVE.part" "$LOCALE_DATA_URL" ||
+        { echo "[x11] download failed: $LOCALE_DATA_URL" >&2; exit 1; }
+    mv "$LOCALE_DATA_ARCHIVE.part" "$LOCALE_DATA_ARCHIVE"
+fi
+LOCALE_DATA_DIR="$WORKROOT/libx11-data"
+rm -rf "$LOCALE_DATA_DIR"
+mkdir -p "$LOCALE_DATA_DIR"
+(
+    cd "$LOCALE_DATA_DIR"
+    ar x "$LOCALE_DATA_ARCHIVE"
+    tar xf data.tar.*
+)
+if [[ ! -d "$LOCALE_DATA_DIR/usr/share/X11/locale" ]]; then
+    echo "[x11] the locale data carries no locale directory" >&2
+    exit 1
+fi
+mkdir -p "$STAGE/usr/local/share/X11"
+rm -rf "$STAGE/usr/local/share/X11/locale"
+cp -a "$LOCALE_DATA_DIR/usr/share/X11/locale" "$STAGE/usr/local/share/X11/locale"
+
 echo "[x11] publishing staged tree to $SYSROOT"
 mkdir -p "$SYSROOT/usr/local"
 # Merge into the graphics sysroot.  The X11 stack shares that tree with the

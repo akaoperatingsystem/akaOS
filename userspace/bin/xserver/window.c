@@ -131,7 +131,7 @@ int x_window_redirect_clients(struct x_server *server, int index, int *clients,
 int x_window_create(struct x_server *server, struct x_client *client,
                     xid_t id, int parent_index, int16_t x, int16_t y,
                     uint16_t width, uint16_t height, uint16_t border_width,
-                    uint16_t input_class, uint32_t visual_id) {
+                    uint16_t input_class, uint32_t visual_id, uint8_t depth) {
     int index = -1;
     for (int candidate = 0; candidate < X_MAX_WINDOWS; ++candidate) {
         if (server->windows[candidate].id == 0U) { index = candidate; break; }
@@ -150,6 +150,7 @@ int x_window_create(struct x_server *server, struct x_client *client,
     window->border_width = border_width;
     window->input_class = input_class;
     window->visual_id = visual_id;
+    window->depth = depth;
     window->background_pixel = 0U;
     window->border_pixel = 0U;
     window->colormap = 0U;
@@ -631,6 +632,13 @@ void x_server_damage(struct x_server *server, int window_index, int16_t x,
     }
     if (end_x > current_end_x) server->dirty_width = end_x - server->dirty_x;
     if (end_y > current_end_y) server->dirty_height = end_y - server->dirty_y;
+
+    /* The clients that asked for reports about the window learn that the
+     * window changed. */
+    if (window_index >= 0) {
+        x_server_report_damage(server, server->windows[window_index].id, x, y,
+                               (uint16_t)width, (uint16_t)height);
+    }
 }
 
 void x_server_repaint(struct x_server *server) {

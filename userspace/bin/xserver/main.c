@@ -223,8 +223,18 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    int toolkit_rc = akaos_toolkit_connect(&server.channel);
-    if (toolkit_rc != 0) {
+    /* The compositor owns the framebuffer, and the display server publishes
+     * the root window of the screen onto it.  The compositor may still be
+     * starting when the session brings the display server up, so the
+     * connection is tried for a while before the server gives up. */
+    int toolkit_rc = -1;
+    for (int attempt = 0; attempt < 100; ++attempt) {
+        toolkit_rc = akaos_toolkit_connect(&server.channel);
+        if (toolkit_rc == 0 && server.channel) break;
+        server.channel = NULL;
+        poll(NULL, 0, 100);
+    }
+    if (toolkit_rc != 0 || !server.channel) {
         fprintf(stderr, "xserver: cannot reach the compositor channel (rc=%d, errno=%d)\n", toolkit_rc, errno);
         return 1;
     }
@@ -264,7 +274,7 @@ int main(int argc, char **argv) {
     int root_index = x_window_create(&server, NULL, X_ROOT_WINDOW_ID, -1, 0, 0,
                                       (uint16_t)server.width,
                                       (uint16_t)server.height, 0,
-                                      InputOutput, X_ROOT_VISUAL_ID);
+                                      InputOutput, X_ROOT_VISUAL_ID, 24U);
     if (root_index < 0) {
         fprintf(stderr, "xserver: cannot create the root window\n");
         return 1;

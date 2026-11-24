@@ -43,6 +43,7 @@ enum xscore_vnode_type {
     XSCORE_VNODE_DIRECTORY,
     XSCORE_VNODE_REGULAR,
     XSCORE_VNODE_CHARACTER,
+    XSCORE_VNODE_SOCKET,
 };
 
 struct xscore_vnode {
@@ -1081,6 +1082,61 @@ int xscore_vfs_add_character_device(const char *path, uint32_t mode) {
     node->references = 0;
     node->unlinked = 0;
     node->mode = AKAOS_MODE_CHARACTER | (mode & UINT32_C(07777));
+    if ((uint32_t)slot >= node_count) node_count = (uint32_t)slot + 1;
+    return 1;
+}
+
+/* Add the node of a socket that listens on a path.
+ *
+ * A socket of the Unix domain is reached through a node in the file system,
+ * so that the programs that look for it find it where the protocol of the
+ * Unix domain puts it. */
+int xscore_vfs_add_socket(const char *path, uint32_t mode) {
+    if (!vfs_initialized || node_count >= XSCORE_VFS_MAX_NODES) return 0;
+    char parent_buf[128];
+    char name_buf[XSCORE_VFS_NAME_MAX + 1];
+    if (!split_path(path, parent_buf, sizeof(parent_buf), name_buf, sizeof(name_buf))) {
+        return 0;
+    }
+    uint32_t parent_node;
+    if (xscore_vfs_resolve_path_at(0, parent_buf, &parent_node) != 0 ||
+        nodes[parent_node].type != XSCORE_VNODE_DIRECTORY) return 0;
+    size_t name_len = 0;
+    while (name_buf[name_len]) ++name_len;
+    int existing = find_child(parent_node, name_buf, name_len);
+    if (existing >= 0) {
+        /* The node of a socket that is bound again belongs to the new
+         * socket. */
+        if (nodes[existing].type != XSCORE_VNODE_SOCKET) return 0;
+        nodes[existing].mode = AKAOS_MODE_SOCKET | (mode & UINT32_C(07777));
+        return 1;
+    }
+
+    int slot = -1;
+    for (uint32_t index = 1; index < XSCORE_VFS_MAX_NODES; ++index) {
+        if (nodes[index].type == XSCORE_VNODE_UNUSED) {
+            slot = (int)index;
+            break;
+        }
+    }
+    if (slot < 0) return 0;
+
+    struct xscore_vnode *node = &nodes[slot];
+    free_vnode_blocks(node);
+    node->type = XSCORE_VNODE_SOCKET;
+    node->parent = parent_node;
+    for (size_t index = 0; index < name_len; ++index) {
+        node->name[index] = name_buf[index];
+    }
+    node->name[name_len] = 0;
+    node->data = NULL;
+    node->size = 0;
+    node->uid = 0;
+    node->gid = 0;
+    node->is_dynamic = 0;
+    node->references = 0;
+    node->unlinked = 0;
+    node->mode = AKAOS_MODE_SOCKET | (mode & UINT32_C(07777));
     if ((uint32_t)slot >= node_count) node_count = (uint32_t)slot + 1;
     return 1;
 }

@@ -1668,7 +1668,10 @@ uint64_t xscore_syscall_dispatch(uint64_t number, uint64_t argument0,
         return (uint64_t)xscore_process_ftruncate((int)argument0, argument1);
     }
     if (number == AKAOS_SYSCALL_POLL) {
-        if (!table || argument1 > AKAOS_POLL_MAX_FDS) {
+        /* A wait without any descriptor is a sleep, and it carries no table
+         * of its own. */
+        if (argument1 > AKAOS_POLL_MAX_FDS ||
+            (argument1 != 0 && !table)) {
             return (uint64_t)-AKAOS_EINVAL;
         }
         size_t bytes = (size_t)argument1 * sizeof(struct akaos_pollfd);

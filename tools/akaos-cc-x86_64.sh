@@ -27,14 +27,26 @@ while (($#)); do
             ;;
         -Wl,*)
             if (( compile_mode || has_source )); then args+=("$arg"); else
-                forwarded="${arg#-Wl,}"
-                IFS=',' read -r -a pieces <<<"$forwarded"
-                args+=("${pieces[@]}")
+                # The link step takes the options of the compiler driver
+                # directly, so the prefix of the driver is removed and the
+                # rest of the option keeps its own form.
+                args+=("${arg#-Wl,}")
             fi
             ;;
-        -I|-D|-include|-isystem|-idirafter|-x|-T|-z|-m|-soname|-version-script)
-            if (( compile_mode )); then args+=("$arg" "$1");
-            elif [[ "$arg" == -T || "$arg" == -z || "$arg" == -m || "$arg" == -soname || "$arg" == -version-script ]]; then args+=("$1"); fi
+        -I|-D|-include|-isystem|-idirafter|-x)
+            # The include paths and the definitions belong to the compiler,
+            # and a test that compiles and links in one step needs them as
+            # well.  A step that only links does not.
+            if (( compile_mode || has_source )); then args+=("$arg" "$1"); fi
+            shift
+            ;;
+        -I*|-D*)
+            # The build systems pass the include paths and the definitions
+            # with the value attached to the option.
+            if (( compile_mode || has_source )); then args+=("$arg"); fi
+            ;;
+        -T|-z|-m|-soname|-version-script)
+            if (( compile_mode )); then args+=("$arg" "$1"); fi
             shift
             ;;
         -nostdinc|-f*|-O*|-std=*|-W*) if (( compile_mode )); then args+=("$arg"); fi ;;

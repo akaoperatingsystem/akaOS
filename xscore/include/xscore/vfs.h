@@ -73,6 +73,8 @@ int xscore_vfs_add_directory(const char *path, uint32_t mode);
 int xscore_vfs_add_file(const char *path, const uint8_t *data, size_t size,
                         uint32_t mode);
 int xscore_vfs_add_character_device(const char *path, uint32_t mode);
+/* The node of a socket of the Unix domain that listens on a path. */
+int xscore_vfs_add_socket(const char *path, uint32_t mode);
 int xscore_vfs_install_devfs(void);
 /* Internal PTY lifetime/authorization helpers; prepare returns a held vnode. */
 int xscore_vfs_prepare_pts(uint32_t number, uint32_t *node_id);

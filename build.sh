@@ -134,11 +134,8 @@ Target Architecture & Firmware:
 
 Desktop & Session Configuration:
   --desktop, --desktop-env NAME
-                               Upstream desktop selection (official profiles are rejected until fully integrated):
-                                 lxde    : Official LXDE
-                                 lxqt    : Official LXQt
-                                 xfce    : Official XFCE
-                                 openbox : Official Openbox window manager
+                               Upstream desktop selection:
+                                 hellodesktop : Official helloDesktop (Menu, Dock, Filer, Openbox)
                                  none    : No upstream desktop (headless/console)
   --session-mode NAME          Default boot session mode:
                                  console : Direct tty1 shell login (default)
@@ -365,10 +362,7 @@ configure_build_interactively() {
                 if selection="$(akaos_ui_menu \
                     "Select Desktop Environment" "Choose desktop environment to bundle:" "$menu_desktop" \
                     "none" "None (Pure Console / No GUI desktop installed) [Default]" \
-                    "lxde" "LXDE Suite (Openbox, LXPanel, PCManFM) [Recommended]" \
-                    "lxqt" "LXQt (Qt6 based modern desktop session)" \
-                    "xfce" "XFCE 4.18 (Full desktop session, panel, xfwm4)" \
-                    "openbox" "Openbox 3.6.1 (Clean lightweight window manager)")"; then
+                    "hellodesktop" "helloDesktop (Menu, Dock, Filer, Openbox) [Recommended]")"; then
                     menu_desktop="$selection"
                     if [[ "$menu_desktop" == "none" && "$menu_session" == "desktop" ]]; then
                         menu_session="console"
@@ -529,14 +523,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires onyx or none" >&2
+                echo "$1 requires hellodesktop or none" >&2
                 exit 2
             fi
             target_desktop="$2"
             case "$target_desktop" in
                 none) target_desktop="none" ;;
-                onyx|default) target_desktop="onyx" ;;
-                *) echo "Unsupported desktop '$target_desktop'; supported: onyx, none" >&2; exit 2 ;;
+                hellodesktop|default) target_desktop="hellodesktop" ;;
+                *) echo "Unsupported desktop '$target_desktop'; supported: hellodesktop, none" >&2; exit 2 ;;
             esac
             if [[ "$target_desktop" != "none" ]]; then
                 session_mode="desktop"
@@ -651,14 +645,14 @@ case "$arch" in
         exit 2
         ;;
 esac
-if [[ "$target_desktop" != "none" && "$target_desktop" != "onyx" && "$arch" != "x86_64" ]]; then
+if [[ "$target_desktop" != "none" && "$target_desktop" != "hellodesktop" && "$arch" != "x86_64" ]]; then
     echo "Official upstream desktop '$target_desktop' is currently supported only for x86_64; rejecting $arch rather than packaging incompatible binaries." >&2
     exit 2
 fi
-if [[ "$target_desktop" == "none" || "$target_desktop" == "onyx" || "$target_desktop" == "default" ]]; then
+if [[ "$target_desktop" == "none" || "$target_desktop" == "hellodesktop" || "$target_desktop" == "default" ]]; then
     :
 else
-    echo "[ERROR] Unsupported desktop '$target_desktop'; supported: onyx, none" >&2
+    echo "[ERROR] Unsupported desktop '$target_desktop'; supported: hellodesktop, none" >&2
     exit 2
 fi
 case "$disk_type" in
@@ -899,7 +893,18 @@ build_xserver() {
     local name="xserver"
     local source_dir="$ROOT_DIR/userspace/bin/xserver"
     local output="XSERVER.ELF"
-    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/$output" && "$BUILD_DIR/$output" -nt "$source_dir/main.c" && "$BUILD_DIR/$output" -nt "$BUILD_DIR/libc.a" ]]; then
+    # The display server is made of several units, and a change in any of them
+    # has to reach the program, so the newest source of the server decides
+    # whether the program is built again.
+    local newer_source
+    newer_source=""
+    if [[ -f "$BUILD_DIR/$output" ]]; then
+        newer_source="$(find "$source_dir" -type f \
+            \( -name '*.c' -o -name '*.inc' -o -name '*.h' \) \
+            -newer "$BUILD_DIR/$output" -print -quit 2>/dev/null)"
+    fi
+    if [[ "${AKAOS_REBUILD_USER:-0}" != "1" && -f "$BUILD_DIR/$output" &&
+          -z "$newer_source" && "$BUILD_DIR/$output" -nt "$BUILD_DIR/libc.a" ]]; then
         return 0
     fi
     local objects=()
@@ -1901,6 +1906,7 @@ build_account_program sudo "$ROOT_DIR/userspace/bin/sudo/main.c" SUDO.ELF
 build_user_program reboot "$ROOT_DIR/userspace/bin/reboot/main.c" REBOOT.ELF
 build_user_program poweroff "$ROOT_DIR/userspace/bin/poweroff/main.c" POWEROFF.ELF
 build_user_program lumen "$ROOT_DIR/userspace/bin/lumen/main.c" LUMEN.ELF
+build_user_program hellodesktop-session "$ROOT_DIR/userspace/bin/hellodesktop-session/main.c" HELLODESKTOP_SESSION.ELF
 build_user_program palette "$ROOT_DIR/userspace/bin/palette/main.c" PALETTE.ELF
 build_user_program terminal "$ROOT_DIR/userspace/bin/terminal/main.c" TERMINAL.ELF
 build_user_program notify "$ROOT_DIR/userspace/bin/notify/main.c" NOTIFY.ELF
@@ -2452,14 +2458,21 @@ else
     echo "[INFO] Upstream X11 client libraries are not built"
 fi
 
-# The upstream Openbox window manager is the window manager of the LXDE
-# desktop environment.
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
+# The upstream Openbox window manager is the window manager of the
+# helloDesktop session.  The build of the window manager also installs the
+# helloDesktop theme and points the window manager at it, so it runs again
+# when the theme of the session changed.
+if [[ "$target_desktop" == "hellodesktop" ]]; then
+    if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" &&
+          -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpng16.so.16" &&
+          -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/pkgconfig/pangoxft.pc" ]]; then
+        echo "[BUILD] Upstream Openbox window manager"
+        bash "$ROOT_DIR/tools/build-upstream-openbox.sh"
+    else
+        echo "[INFO] The upstream X11 client stack is not built; the window manager of the session is missing"
+    fi
+elif [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
     echo "[INFO] Upstream Openbox window manager is already staged: $UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox"
-elif [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" &&
-        -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libpng16.so.16" ]]; then
-    echo "[BUILD] Upstream Openbox window manager"
-    bash "$ROOT_DIR/tools/build-upstream-openbox.sh"
 fi
 
 fi
@@ -3388,7 +3401,7 @@ if [[ "$UPSTREAM_CAIRO_ENABLED" -eq 1 ]]; then
     fi
 fi
 UPSTREAM_OPENBOX_INITRAMFS_ARGS=()
-if [[ "$target_desktop" == "openbox" || "$target_desktop" == "lxde" ]]; then
+if [[ "$target_desktop" == "hellodesktop" ]]; then
 if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/bin/openbox" ]]; then
     echo "[BUILD] Staging the upstream Openbox window manager"
     # The window manager and the libraries it needs travel in the local
@@ -3709,7 +3722,10 @@ if [[ "$UPSTREAM_FREETYPE_ENABLED" -eq 1 ]]; then
 fi
 
 UPSTREAM_X11_INITRAMFS_ARGS=()
-if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
+# The console profile packages no desktop files, and the client libraries of
+# the X Window System belong to the desktop.
+if [[ "$target_desktop" != "none" &&
+      -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
     echo "[BUILD] Staging the upstream X11 client libraries"
     for x11_library in \
         libX11.so.6 libX11-xcb.so.1 libSM.so.6 libICE.so.6 libXext.so.6 libXRes.so.1 libXrender.so.1 libXfixes.so.3 \
@@ -3733,6 +3749,17 @@ if [[ -f "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/lib/libX11.so.6" ]]; then
             --file "/bin/x11-wm-client:$BUILD_DIR/X11_WM_CLIENT.ELF:exec"
         )
     fi
+    # The client library of the X Window System builds its locale database
+    # from the files of the locale directory, and a client that asks for an
+    # input method reads the same files.
+    if [[ -d "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/X11/locale" ]]; then
+        while IFS= read -r locale_file; do
+            locale_relative="${locale_file#"$UPSTREAM_GRAPHICS_SYSROOT/usr/local/"}"
+            UPSTREAM_X11_INITRAMFS_ARGS+=(
+                --file "/usr/local/$locale_relative:$locale_file:0444"
+            )
+        done < <(find "$UPSTREAM_GRAPHICS_SYSROOT/usr/local/share/X11/locale" -type f | sort)
+    fi
 fi
 
 echo "[BUILD] akaOS initramfs archive (Desktop: $target_desktop, Session: $session_mode, Software: $menu_software)"
@@ -3741,7 +3768,7 @@ echo "[BUILD] akaOS initramfs archive (Desktop: $target_desktop, Session: $sessi
 autostart_val=0
 conf_desktop="$target_desktop"
 if [[ "$conf_desktop" == "none" ]]; then
-    conf_desktop="lxde"
+    conf_desktop="hellodesktop"
 elif [[ "$session_mode" == "desktop" || "$target_desktop" != "none" ]]; then
     autostart_val=1
 fi
@@ -3767,9 +3794,14 @@ if [[ "${AKAOS_LOW_MEMORY_PROFILE:-0}" == "1" ]]; then
     initramfs_profile_args+=(--profile minimal)
 fi
 desktop_files=()
-if [[ "$target_desktop" == "onyx" ]]; then
+if [[ "$target_desktop" == "hellodesktop" ]]; then
+    # The helloDesktop session needs the compositor that owns the framebuffer,
+    # the display server that speaks X11, and the window manager that draws
+    # the frames of the windows.
     desktop_files=(
         --file "/bin/lumen:$BUILD_DIR/LUMEN.ELF:exec"
+        --file "/bin/xserver:$BUILD_DIR/XSERVER.ELF:exec"
+        --file "/bin/hellodesktop-session:$BUILD_DIR/HELLODESKTOP_SESSION.ELF:exec"
         --file "/bin/terminal:$BUILD_DIR/TERMINAL.ELF:exec"
     )
 fi
@@ -4272,6 +4304,18 @@ if [[ "$need_fat32_image" -eq 1 ]]; then
     fi
 fi
 
+# METRICS LOGGING (akaOS Minimization Directive)
+log_artifact_sizes() {
+    echo "--- Artifact Sizes ---" >> build_metrics.log
+    find build/ -maxdepth 1 -name "*.iso" -o -name "*.img" -o -name "*.ELF" -exec du -h {} + >> build_metrics.log
+    echo "----------------------" >> build_metrics.log
+}
+
+# POST-BUILD STRIPPING (akaOS Minimization Directive)
+strip_artifacts() {
+    find build/ -name "*.ELF" -exec strip --strip-all {} +
+}
+
 if [[ "$need_iso_image" -eq 1 ]]; then
     echo "[BUILD] akaOS dual-firmware ISO"
     bios_args=(--no-build)
@@ -4286,15 +4330,3 @@ if [[ "$need_iso_image" -eq 1 ]]; then
 bash "$ROOT_DIR/tools/build-bios.sh" "${bios_args[@]}"
 log_artifact_sizes
 fi
-
-# METRICS LOGGING (akaOS Minimization Directive)
-log_artifact_sizes() {
-    echo "--- Artifact Sizes ---" >> build_metrics.log
-    find build/ -maxdepth 1 -name "*.iso" -o -name "*.img" -o -name "*.ELF" -exec du -h {} + >> build_metrics.log
-    echo "----------------------" >> build_metrics.log
-}
-
-# POST-BUILD STRIPPING (akaOS Minimization Directive)
-strip_artifacts() {
-    find build/ -name "*.ELF" -exec strip --strip-all {} +
-}

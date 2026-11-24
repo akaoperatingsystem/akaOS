@@ -23,11 +23,8 @@ Target Architecture & Firmware:
 
 Desktop & Session Options:
   --desktop, --desktop-env NAME
-                               Upstream desktop selection (official profiles are rejected until fully integrated):
-                                 lxde    : Official LXDE
-                                 lxqt    : Official LXQt
-                                 xfce    : Official XFCE
-                                 openbox : Official Openbox window manager
+                               Upstream desktop selection:
+                                 hellodesktop : Official helloDesktop (Menu, Dock, Filer, Openbox)
                                  none    : No upstream desktop (headless/console)
   --session-mode NAME          Default boot session mode:
                                  console : Direct tty1 shell login
@@ -243,7 +240,7 @@ configure_run_interactively() {
             desktop)
                 if selection="$(akaos_ui_menu \
                     "Select Desktop Environment" "Choose desktop environment to bundle:" "$menu_desktop" \
-                    "onyx" "Onyx Minimalist Dark Desktop (Lumen + Terminal) [Default]" \
+                    "hellodesktop" "helloDesktop (Menu, Dock, Filer, Openbox) [Recommended]" \
                     "none" "None (Pure Console / No GUI desktop installed)")"; then
                     menu_desktop="$selection"
                     if [[ "$menu_desktop" == "none" && "$menu_session" == "desktop" ]]; then
@@ -463,14 +460,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop|--desktop-env)
             if [[ $# -lt 2 ]]; then
-                echo "$1 requires onyx or none" >&2
+                echo "$1 requires hellodesktop or none" >&2
                 exit 2
             fi
             menu_desktop="$2"
             case "$menu_desktop" in
                 none) menu_desktop="none" ;;
-                onyx|default) menu_desktop="onyx" ;;
-                *) echo "Unsupported desktop '$menu_desktop'; supported: onyx, none" >&2; exit 2 ;;
+                hellodesktop|default) menu_desktop="hellodesktop" ;;
+                *) echo "Unsupported desktop '$menu_desktop'; supported: hellodesktop, none" >&2; exit 2 ;;
             esac
             if [[ "$menu_desktop" != "none" ]]; then
                 menu_session="desktop"
@@ -881,6 +878,11 @@ if [[ "$boot_firmware" == "bios" ]]; then
     qemu_machine=pc
 fi
 qemu_memory=512M
+if [[ "$menu_desktop" == "hellodesktop" ]]; then
+    # The session of the desktop holds the compositor, the display server, the
+    # window manager and the components of the desktop in memory.
+    qemu_memory=1G
+fi
 if [[ -n "$custom_memory" ]]; then
     qemu_memory="$custom_memory"
 fi

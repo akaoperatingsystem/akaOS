@@ -233,8 +233,20 @@ static void request_create_window(struct x_server *server,
         return;
     }
 
+    /* The depth of the window.
+     *
+     * A client that names a depth uses it, and a client that asks for the
+     * depth of the parent takes the depth of the parent, unless it names a
+     * visual of its own. */
+    uint8_t depth = server->windows[parent_index].depth;
+    if (client->request_minor != CopyFromParent) {
+        depth = (uint8_t)client->request_minor;
+    } else if (visual != CopyFromParent) {
+        depth = x_visual_depth(visual);
+    }
+
     int index = x_window_create(server, client, id, parent_index, x, y, width,
-                                 height, border, input_class, visual);
+                                 height, border, input_class, visual, depth);
     if (index < 0) {
         x_reply_error(client, BadAlloc, 0, 0U);
         return;
@@ -1565,6 +1577,12 @@ static void request_get_keyboard_mapping(struct x_server *server,
      * keysyms than the reply announces leaves the client reading the rest of
      * the answer at the wrong place. */
     uint32_t per_keycode = 2U;
+    if (server_trace_enabled) {
+        printf("xserver: keyboard mapping first=%u count=%u produced=%u per=%u\n",
+               (unsigned)first_keycode, (unsigned)count, (unsigned)produced,
+               (unsigned)per_keycode);
+        fflush(stdout);
+    }
     xGetKeyboardMappingReply reply;
     memset(&reply, 0, sizeof(reply));
     reply.type = X_Reply;
@@ -1577,7 +1595,7 @@ static void request_get_keyboard_mapping(struct x_server *server,
     for (uint32_t index = 0U; index < produced; ++index) {
         uint32_t code = keycodes[index];
         uint32_t lower = x_keysym_for_keycode(server, code);
-        uint32_t upper = lower | 0xff00U;
+        uint32_t upper = x_shifted_keysym_for_keycode(server, code);
         uint8_t entry[8];
         reply_put_u32(client, entry, 0, (uint32_t)client_u32(client, lower));
         reply_put_u32(client, entry, 4, (uint32_t)client_u32(client, upper));
@@ -1590,20 +1608,25 @@ static void request_get_keyboard_mapping(struct x_server *server,
  * key codes, and the reply announces that number, because a client reads
  * exactly that many bytes for each group.  A reply that announces a number
  * other than the one it carries makes the client reject the whole map, and a
- * client that is handed no map dereferences the empty result. */
+ * client that is handed no map dereferences the empty result.
+ *
+ * Every group names a key of its own.  A group with an empty slot makes the
+ * client look up the key symbol of the key code zero, which lies in front of
+ * the table of the key symbols, and the lookup then reaches outside of the
+ * memory of the client. */
 #define X_MODIFIER_GROUPS 8U
 #define X_MODIFIER_KEYS_PER_GROUP 2U
 
 static const uint8_t modifier_keycodes[X_MODIFIER_GROUPS *
                                        X_MODIFIER_KEYS_PER_GROUP] = {
     50, 62,   /* Shift */
-    66, 0,    /* Lock (Caps Lock) */
-    37, 105,  /* Control */
-    64, 108,  /* Mod1 (Alt) */
-    77, 0,    /* Mod2 (Num Lock) */
-    78, 0,    /* Mod3 (Scroll Lock) */
-    0, 0,     /* Mod4 (Super) */
-    0, 0      /* Mod5 */
+    66, 66,   /* Lock (Caps Lock) */
+    37, 37,   /* Control */
+    64, 64,   /* Mod1 (Alt) */
+    77, 77,   /* Mod2 (Num Lock) */
+    78, 78,   /* Mod3 (Scroll Lock) */
+    134, 134, /* Mod4 (Super) */
+    135, 135  /* Mod5 (Menu) */
 };
 
 static void request_get_modifier_mapping(struct x_server *server,
@@ -1620,6 +1643,11 @@ static void request_get_modifier_mapping(struct x_server *server,
      * the length counts four byte units of it. */
     reply.length = (CARD32)((X_MODIFIER_GROUPS * X_MODIFIER_KEYS_PER_GROUP) /
                              4U);
+    if (server_trace_enabled) {
+        printf("xserver: modifier mapping per=%u length=%u\n",
+               (unsigned)X_MODIFIER_KEYS_PER_GROUP, (unsigned)reply.length);
+        fflush(stdout);
+    }
     x_reply_bytes(client, &reply, sizeof(reply));
     for (uint32_t index = 0U;
          index < X_MODIFIER_GROUPS * X_MODIFIER_KEYS_PER_GROUP; ++index) {
@@ -1993,6 +2021,21 @@ static void request_query_extension(struct x_server *server,
         reply.major_opcode = (CARD8)client_u8(client, X_EXT_XRES_OPCODE);
         reply.first_event = (CARD8)client_u8(client, 0U);
         reply.first_error = (CARD8)client_u8(client, 0U);
+    } else if (name_length == 6 && memcmp(name, "RENDER", 6) == 0) {
+        reply.present = (BOOL)client_u8(client, 1U);
+        reply.major_opcode = (CARD8)client_u8(client, X_EXT_RENDER_OPCODE);
+        reply.first_event = (CARD8)client_u8(client, 0U);
+        reply.first_error = (CARD8)client_u8(client, BadPictFormat);
+    } else if (name_length == 6 && memcmp(name, "XFIXES", 6) == 0) {
+        reply.present = (BOOL)client_u8(client, 1U);
+        reply.major_opcode = (CARD8)client_u8(client, X_EXT_FIXES_OPCODE);
+        reply.first_event = (CARD8)client_u8(client, 0U);
+        reply.first_error = (CARD8)client_u8(client, BadRegion);
+    } else if (name_length == 8 && memcmp(name, "X-DAMAGE", 8) == 0) {
+        reply.present = (BOOL)client_u8(client, 1U);
+        reply.major_opcode = (CARD8)client_u8(client, X_EXT_DAMAGE_OPCODE);
+        reply.first_event = (CARD8)client_u8(client, X_EXT_DAMAGE_EVENT);
+        reply.first_error = (CARD8)client_u8(client, 0U);
     } else {
         reply.present = (BOOL)client_u8(client, 0U);
         reply.major_opcode = (CARD8)client_u8(client, 0U);
@@ -2007,7 +2050,8 @@ static void request_list_extensions(struct x_server *server,
                                     struct x_reader *reader) {
     (void)server;
     (void)reader;
-    static const char *exts[] = {"SHAPE", "X-Resource"};
+    static const char *exts[] = {"SHAPE", "X-Resource", "RENDER", "XFIXES",
+                                 "X-DAMAGE"};
     size_t count = sizeof(exts) / sizeof(exts[0]);
     uint8_t buffer[64];
     size_t used = 0U;
@@ -2033,6 +2077,8 @@ static void request_list_extensions(struct x_server *server,
 }
 
 /* --------------------------------------------------------------- dispatcher */
+#include "extensions.inc"
+
 static void x_dispatch(struct x_server *server, struct x_client *client,
                         const struct x_request *request) {
     struct x_reader reader;
@@ -2473,6 +2519,15 @@ static void x_dispatch(struct x_server *server, struct x_client *client,
         break;
     case X_EXT_XRES_OPCODE:
         dispatch_xres_request(server, client, &reader);
+        break;
+    case X_EXT_RENDER_OPCODE:
+        dispatch_render_request(server, client, &reader);
+        break;
+    case X_EXT_FIXES_OPCODE:
+        dispatch_fixes_request(server, client, &reader);
+        break;
+    case X_EXT_DAMAGE_OPCODE:
+        dispatch_damage_request(server, client, &reader);
         break;
     default:
         x_reply_error(client, BadRequest, request->type, 0U);

@@ -21,6 +21,13 @@
  * per connected client. */
 #define X_MAX_WINDOW_SELECTIONS 8
 
+/* Pictures of the RENDER extension, damage reports of the X-DAMAGE
+ * extension and shared memory segments of the MIT-SHM extension. */
+#define X_MAX_PICTURES 256
+#define X_MAX_DAMAGES 64
+#define X_MAX_SHM_SEGMENTS 32
+#define X_MAX_CURSOR_NAMES 64
+
 #define X_SCREEN_WIDTH 1024
 #define X_SCREEN_HEIGHT 768
 
@@ -51,6 +58,20 @@ extern int server_trace_enabled;
 #define X_ROOT_VISUAL_ID 0x21u
 #define X_ROOT_DEPTH 24
 
+/* The visual of depth thirty two bits.
+ *
+ * The visual carries an alpha channel, and the window manager renders the
+ * decorations of a window with it, so that the transparent parts of the
+ * decorations show the window below. */
+#define X_ARGB_VISUAL_ID 0x22u
+#define X_ARGB_DEPTH 32
+
+/* The depth of a visual of the server. */
+static inline uint8_t x_visual_depth(uint32_t visual_id) {
+    return visual_id == X_ARGB_VISUAL_ID ? (uint8_t)X_ARGB_DEPTH
+                                          : (uint8_t)X_ROOT_DEPTH;
+}
+
 /* One client selection on a window.
  *
  * X11 event selection belongs to a (client, window) pair, so the server keeps
@@ -74,6 +95,13 @@ struct x_window {
     uint16_t border_width;
     uint16_t input_class;
     uint16_t visual_id;
+    /* The depth of the window.
+     *
+     * A window that uses the visual of its parent inherits the depth of that
+     * parent, and a window that names a visual of its own takes the depth of
+     * that visual.  The depth decides whether the pixels of the backing store
+     * carry an alpha channel. */
+    uint8_t depth;
     uint32_t background_pixel;
     uint32_t border_pixel;
     /* The mask the owner of the window selected and the union of every
@@ -161,6 +189,54 @@ struct x_selection {
     xid_t selection;
 };
 
+/* A picture of the RENDER extension.
+ *
+ * A picture binds a drawable to a pixel format.  The window manager renders
+ * its decorations into a picture and composites that picture onto the frame
+ * of the window it decorates. */
+struct x_picture {
+    xid_t id;
+    int client;            /* owning client index */
+    xid_t drawable;        /* the window or pixmap the picture draws into */
+    uint32_t format;       /* the picture format identifier */
+    uint16_t width, height;
+    uint8_t repeat;
+    uint8_t graphics_exposures;
+    uint8_t subpixel_order;
+    int16_t clip_x, clip_y;
+    uint16_t clip_width, clip_height;
+    xid_t clip_mask;       /* the region identifier, zero for no clip */
+    uint32_t border_width;
+    uint8_t border_clip;
+    xid_t alpha_map;
+};
+
+/* A damage report of the X-DAMAGE extension.
+ *
+ * The client asks for reports about the parts of a drawable that changed, and
+ * the server answers with a damage event when the drawable is drawn into. */
+struct x_damage {
+    xid_t id;
+    int client;            /* owning client index */
+    xid_t drawable;
+    uint8_t level;         /* 0 destroy, 1 bounding box, 2 non empty */
+};
+
+/* A shared memory segment of the MIT-SHM extension.
+ *
+ * The client allocates the segment, maps it into its own address space and
+ * hands the server the address, so that the server reads the pixels of the
+ * segment without copying them. */
+struct x_shm_segment {
+    xid_t id;
+    int client;            /* owning client index */
+    uint32_t shm_id;       /* the identifier the client allocated */
+    uint64_t address;      /* the address of the segment in the client */
+    uint32_t size;
+    uint8_t read_only;
+    uint8_t attached;
+};
+
 struct x_client {
     int in_use;
     int fd;
@@ -241,6 +317,9 @@ struct x_server {
     struct x_selection selections[X_MAX_SELECTIONS];
     struct x_client clients[X_MAX_CLIENTS];
     struct x_key_grab key_grabs[X_MAX_KEY_GRABS];
+    struct x_picture pictures[X_MAX_PICTURES];
+    struct x_damage damages[X_MAX_DAMAGES];
+    struct x_shm_segment shm_segments[X_MAX_SHM_SEGMENTS];
     size_t backing_used;
     uint32_t next_atom;
     uint32_t sequence;
@@ -297,7 +376,7 @@ static inline int x_window_index(struct x_server *server, xid_t id) {
 int x_window_create(struct x_server *server, struct x_client *client,
                     xid_t id, int parent_index, int16_t x, int16_t y,
                     uint16_t width, uint16_t height, uint16_t border_width,
-                    uint16_t input_class, uint32_t visual_id);
+                    uint16_t input_class, uint32_t visual_id, uint8_t depth);
 void x_window_destroy(struct x_server *server, int index);
 int x_window_map(struct x_server *server, int index);
 void x_window_unmap(struct x_server *server, int index);
@@ -313,6 +392,11 @@ void x_server_repaint_rect(struct x_server *server, int16_t x, int16_t y,
                            uint16_t width, uint16_t height);
 void x_server_damage(struct x_server *server, int window_index, int16_t x,
                      int16_t y, int16_t width, int16_t height);
+/* Tell the clients that asked for reports that a part of a drawable changed.
+ *
+ * The report is the event of the X-DAMAGE extension. */
+void x_server_report_damage(struct x_server *server, xid_t drawable, int16_t x,
+                             int16_t y, uint16_t width, uint16_t height);
 void x_window_fill_backing(struct x_server *server, int index, uint32_t pixel);
 void x_window_absolute_origin(struct x_server *server, int index,
                               int16_t *out_x, int16_t *out_y);
@@ -487,6 +571,7 @@ void x_input_handle_button(struct x_server *server, uint16_t code, uint8_t value
 void x_input_handle_motion(struct x_server *server, int32_t dx, int32_t dy);
 void x_input_handle_absolute(struct x_server *server, int32_t x, int32_t y);
 uint32_t x_keysym_for_keycode(struct x_server *server, uint32_t xcode);
+uint32_t x_shifted_keysym_for_keycode(struct x_server *server, uint32_t xcode);
 
 /* ------------------------------------------------------------------ atoms */
 void x_server_install_atoms(struct x_server *server);

@@ -1,0 +1,74 @@
+!! helloDesktop theme for Openbox
+!! The window frames follow the macOS class look of helloSystem:
+!! a dark title bar and the three traffic light buttons.
+
+!! General
+border.width: 1
+padding.width: 6
+window.handle.width: 0
+window.client.padding.width: 0
+window.client.padding.height: 0
+menu.overlap: 0
+border.color: #1c1c1c
+window.*.client.color: #1e1e1e
+
+!! Title bar
+window.active.title.bg: flat solid
+window.active.title.bg.color: #2d2d2d
+window.active.label.bg: parentrelative
+window.active.label.text.color: #f2f2f2
+window.active.label.text.justify: center
+window.inactive.title.bg: flat solid
+window.inactive.title.bg.color: #232323
+window.inactive.label.bg: parentrelative
+window.inactive.label.text.color: #8a8a8a
+window.inactive.label.text.justify: center
+
+!! The traffic lights of the buttons
+!! The colour of every button is the colour of its mask, so the
+!! three buttons of the window frame carry their own colour.
+window.active.button.*.bg: parentrelative
+window.active.button.close.unpressed.image.color: #ff5f57
+window.active.button.close.hover.image.color: #ff6b63
+window.active.button.close.pressed.image.color: #ff6b63
+window.active.button.iconify.unpressed.image.color: #febc2e
+window.active.button.iconify.hover.image.color: #ffc744
+window.active.button.iconify.pressed.image.color: #ffc744
+window.active.button.max.unpressed.image.color: #28c840
+window.active.button.max.hover.image.color: #3ad45c
+window.active.button.max.pressed.image.color: #3ad45c
+window.active.button.desk.unpressed.image.color: #9a9a9a
+window.active.button.shade.unpressed.image.color: #9a9a9a
+
+!! A window that lost the focus keeps the traffic lights, but
+!! they lose their colour, the way macOS draws them.
+window.inactive.button.*.bg: parentrelative
+window.inactive.button.close.unpressed.image.color: #8f8f8f
+window.inactive.button.close.hover.image.color: #b4b4b4
+window.inactive.button.iconify.unpressed.image.color: #8f8f8f
+window.inactive.button.iconify.hover.image.color: #b4b4b4
+window.inactive.button.max.unpressed.image.color: #8f8f8f
+window.inactive.button.max.hover.image.color: #b4b4b4
+window.inactive.button.desk.unpressed.image.color: #6d6d6d
+window.inactive.button.shade.unpressed.image.color: #6d6d6d
+
+!! Menu
+menu.title.bg: flat solid
+menu.title.bg.color: #2d2d2d
+menu.title.text.color: #f2f2f2
+menu.title.text.justify: center
+menu.items.bg: flat solid
+menu.items.bg.color: #232323
+menu.items.text.color: #d8d8d8
+menu.items.justify: left
+menu.items.disabled.text.color: #6d6d6d
+menu.items.active.bg: flat solid
+menu.items.active.bg.color: #3d6ea5
+menu.items.active.text.color: #ffffff
+menu.border.color: #1c1c1c
+
+!! Fonts
+window.active.label.text.font: DejaVu Sans-10
+window.inactive.label.text.font: DejaVu Sans-10
+menu.items.font: DejaVu Sans-9
+menu.title.text.font: DejaVu Sans-9

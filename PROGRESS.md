@@ -1,7 +1,7 @@
 # akaOS Development Progress & Hardware Roadmap
 
-[![akaOS Version](https://img.shields.io/badge/akaOS-v0.9.22-blue.svg)](sdk/include/akaos/version.h)
-[![XSCore Version](https://img.shields.io/badge/XSCore-v0.8.22-green.svg)](sdk/include/akaos/version.h)
+[![akaOS Version](https://img.shields.io/badge/akaOS-v0.9.23-blue.svg)](sdk/include/akaos/version.h)
+[![XSCore Version](https://img.shields.io/badge/XSCore-v0.8.23-green.svg)](sdk/include/akaos/version.h)
 [![Architecture Parity](https://img.shields.io/badge/Architectures-6%2F6%20Passed-brightgreen.svg)](tools/build-arch-smoke.sh)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
 
@@ -142,9 +142,18 @@ The following table provides verified **Before vs. After** metrics demonstrating
 
 ---
 
-## 12. 2026-Class Onyx Modern Desktop Aesthetics & High-Fidelity Asset Engine
+## 12. 2026-Class helloDesktop Session, X11 Extension Layer & Upstream Openbox
 
-| Desktop Profile | Components & Architecture | Display Architecture & Compositor | Verified Status |
+| Desktop Profile | Components & Architecture | Display Architecture & Window Manager | Verified Status |
 | :--- | :--- | :--- | :--- |
-| **Onyx** | Ultra-smooth silk gradient wallpaper (`#06080e` -> `#121626` -> `#1b2034`, zero sawtooth wave artifacts), 48x48 3D squircle PNG icons with specular glass sheen, multi-tooth metallic gear, sapphire folder, and frosted cylinder trash, floating glass dock (66px, 18px rounded corners, multi-layer ambient drop shadow), gamma-corrected subpixel vector typography, and interactive `akaOS` system dropdown menu | Native Lumen hardware display compositor with alpha compositing engine (2,649 gradient colors, zero crude geometric drawing hacks), boot separation with Graphical Lock Screen UI in desktop mode | (Completed) [██████████] 100% |
-| **None (Headless)** | Pure text console, zero GUI overhead, zero desktop binaries packaged, minimal server/bootstrap footprint | Direct text console (`/bin/akash` shell on tty1, clean text `login:` prompt with zero graphical screens) | (Completed) [██████████] 100% |
+| **helloDesktop** | Global menu bar, floating dock and spatial file manager of the upstream helloSystem (`Menu`, `Dock`, `Filer`) as real X11 clients of the display server, started by the session program `hellodesktop-session` | Native Lumen framebuffer compositor with the akaOS X11 display server, the unmodified upstream Openbox 3.6.1 and the helloDesktop theme whose title bar carries the traffic light buttons of macOS | (In Progress) [██████░░░░] 60% |
+| **None (Headless)** | Pure text console, zero GUI overhead, zero desktop binaries packaged, no X11 library and no Qt library in the image, minimal server/bootstrap footprint | Direct text console (`/bin/akash` shell on tty1, clean text `login:` prompt with zero graphical screens) | (Completed) [██████████] 100% |
+
+### 12.1 X11 Extension Layer of the Display Server
+
+| Extension | Requests & Behaviour | Verified Status |
+| :--- | :--- | :--- |
+| **RENDER** | QueryVersion, QueryPictFormats, QueryPictIndexValues, QueryFilters, CreatePicture, ChangePicture, SetPictureClipRectangles, FreePicture, Composite, FillRectangles, CreateCursor; pictures of the RGB24 and ARGB32 formats, the composite operators of the extension over a window or a pixmap | (Completed) [██████████] 100% |
+| **XFIXES** | QueryVersion, SelectCursorInput, GetCursorImage, ExpandMacros, SetCursorName, GetCursorName | (Completed) [██████████] 100% |
+| **X-DAMAGE** | QueryVersion, Create, Destroy, Subtract, Add, and the DamageNotify event when a watched window is drawn into | (Completed) [██████████] 100% |
+| **MIT-SHM** | Needs System V shared memory in the kernel, which is still a stub in the C library | (Open) [░░░░░░░░░░] 0% |

@@ -55,6 +55,14 @@ typedef CARD32 KeySym;
 #define BadLength 16
 #define BadImplementation 17
 
+/* The error codes of the extensions.
+ *
+ * The extensions report their own errors above the codes of the core
+ * protocol, and every extension holds a range of its own. */
+#define BadPictFormat 128
+#define BadPicture 129
+#define BadRegion 140
+
 /* Event codes. */
 #define KeyPress 2
 #define KeyRelease 3
@@ -144,6 +152,21 @@ typedef CARD32 KeySym;
 /* Property change notifications. */
 #define PropertyNewValue 0
 #define PropertyDelete 1
+
+/* The major opcodes of the extensions.
+ *
+ * The values follow the assignment of the X Window System protocol, and they
+ * avoid the opcodes of the keyboard extension and of the input extension,
+ * which the client library of the X Window System holds in its own tables.
+ * Every client library finds the extension through the QueryExtension
+ * request, so the value only has to be stable and unique on the server. */
+#define X_EXT_SHM_OPCODE    130
+#define X_EXT_FIXES_OPCODE  138
+#define X_EXT_RENDER_OPCODE 139
+#define X_EXT_DAMAGE_OPCODE 140
+
+/* The first event number of the X-DAMAGE extension. */
+#define X_EXT_DAMAGE_EVENT 90
 
 /* Predefined atoms. */
 #define XA_PRIMARY ((Atom)1)

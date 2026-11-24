@@ -34,7 +34,9 @@
 #define X_SETUP_MAJOR 11
 #define X_SETUP_MINOR 0
 #define X_SETUP_ROOT_VISUAL 0x21u
+#define X_SETUP_ARGB_VISUAL 0x22u
 #define X_SETUP_ROOT_DEPTH 24u
+#define X_SETUP_ARGB_DEPTH 32u
 #define X_SETUP_MAX_REQUEST 65535u
 #define X_SETUP_MIN_KEYCODE 8u
 #define X_SETUP_MAX_KEYCODE 255u
@@ -67,7 +69,7 @@ size_t x_setup_build(uint8_t *out, size_t capacity, int width, int height,
     x_writer_u16(&writer, order16(byte_order, (uint16_t)vendor_length));
     x_writer_u16(&writer, order16(byte_order, X_SETUP_MAX_REQUEST));
     x_writer_u8(&writer, 1U);                                   /* screens */
-    x_writer_u8(&writer, 1U);                                   /* formats */
+    x_writer_u8(&writer, 2U);                                   /* formats */
     x_writer_u8(&writer, byte_order == 0x42 ? 0x42 : 0x6c);     /* image */
     x_writer_u8(&writer, 0U);                                   /* bit order */
     x_writer_u8(&writer, 32U);                                  /* unit */
@@ -80,8 +82,14 @@ size_t x_setup_build(uint8_t *out, size_t capacity, int width, int height,
         x_writer_u8(&writer, (uint8_t)vendor[index]);
     }
     x_writer_pad(&writer, 4U);
-    /* One pixmap format: depth 24 at 32 bits per pixel. */
+    /* Two pixmap formats: depth 24 and depth 32, both at 32 bits per pixel.
+     * The depth of thirty two bits carries an alpha channel. */
     x_writer_u8(&writer, X_SETUP_ROOT_DEPTH);
+    x_writer_u8(&writer, 32U);
+    x_writer_u8(&writer, 32U);
+    x_writer_u8(&writer, 0U);
+    x_writer_u32(&writer, 0U);
+    x_writer_u8(&writer, X_SETUP_ARGB_DEPTH);
     x_writer_u8(&writer, 32U);
     x_writer_u8(&writer, 32U);
     x_writer_u8(&writer, 0U);
@@ -103,14 +111,30 @@ size_t x_setup_build(uint8_t *out, size_t capacity, int width, int height,
     x_writer_u8(&writer, 0U);                                   /* backing */
     x_writer_u8(&writer, 0U);                                   /* save under */
     x_writer_u8(&writer, X_SETUP_ROOT_DEPTH);
-    x_writer_u8(&writer, 1U);                                   /* depths */
+    x_writer_u8(&writer, 2U);                                   /* depths */
 
-    /* One depth with one visual. */
+    /* Two depths, each with one visual. */
     x_writer_u8(&writer, X_SETUP_ROOT_DEPTH);
     x_writer_u8(&writer, 0U);
     x_writer_u16(&writer, order16(byte_order, 1U));              /* visuals */
     x_writer_u32(&writer, 0U);
     x_writer_u32(&writer, order32(byte_order, X_SETUP_ROOT_VISUAL));
+    x_writer_u8(&writer, 4U);                                   /* TrueColor */
+    x_writer_u8(&writer, 8U);                                   /* bits/rgb */
+    x_writer_u16(&writer, order16(byte_order, 256U));           /* entries */
+    x_writer_u32(&writer, order32(byte_order, 0x00ff0000U));
+    x_writer_u32(&writer, order32(byte_order, 0x0000ff00U));
+    x_writer_u32(&writer, order32(byte_order, 0x000000ffU));
+    x_writer_u32(&writer, 0U);
+
+    /* The depth of thirty two bits carries an alpha channel, which the
+     * window manager needs for the decorations that are drawn with
+     * transparent pixels. */
+    x_writer_u8(&writer, X_SETUP_ARGB_DEPTH);
+    x_writer_u8(&writer, 0U);
+    x_writer_u16(&writer, order16(byte_order, 1U));              /* visuals */
+    x_writer_u32(&writer, 0U);
+    x_writer_u32(&writer, X_SETUP_ARGB_VISUAL);
     x_writer_u8(&writer, 4U);                                   /* TrueColor */
     x_writer_u8(&writer, 8U);                                   /* bits/rgb */
     x_writer_u16(&writer, order16(byte_order, 256U));           /* entries */
